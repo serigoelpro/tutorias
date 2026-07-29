@@ -1,0 +1,127 @@
+﻿@model IEnumerable<ProyectoIntegracion.Models.GestionUsuarios.Docente>
+
+@{
+    ViewBag.Title = "Asignar Docente como Coordinador";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <h2>Asignar Docente como Coordinador</h2>
+
+    <p>
+        @Html.ActionLink("Volver a la lista", "Index", null, new { @class = "btn btn-default" })
+    </p>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Mensaje"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="alert alert-info">
+            @ViewBag.Mensaje
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.Error
+        </div>
+    }
+
+    @if (Model.Any())
+    {
+        <div class="alert alert-info">
+            <strong>Instrucciones:</strong> Selecciona un docente de la lista para asignarlo como coordinador.
+            <br><strong>Importante:</strong> Solo se muestran docentes que tienen un Microsoft Identifier (OID) asignado.
+            <br><strong>Nota:</strong> El correo electrónico y demás información del docente se copiará automáticamente al usuario coordinador.
+        </div>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nombre Completo</th>
+                    <th>Número de Empleado</th>
+                    <th>Correo Electrónico</th>
+                    <th>Estado</th>
+                    <th>Microsoft ID (OID)</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var docente in Model)
+                {
+                    <tr>
+                        <td>@docente.Nombre</td>
+                        <td>@docente.NumeroEmpleado</td>
+                        <td>@docente.CorreoElectronico</td>
+                        <td>
+                            @if (docente.Habilitado && docente.Autorizado)
+                            {
+                                <span class="label label-success">Habilitado y Autorizado</span>
+                            }
+                            else if (docente.Habilitado)
+                            {
+                                <span class="label label-warning">Solo Habilitado</span>
+                            }
+                            else
+                            {
+                                <span class="label label-danger">Deshabilitado</span>
+                            }
+                        </td>
+                        <td>
+                            <small style="font-family: monospace; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px;">
+                                @(docente.MicrosoftIdentifier.Length > 10
+                        ? docente.MicrosoftIdentifier.Substring(0, 4) + "..." + docente.MicrosoftIdentifier.Substring(docente.MicrosoftIdentifier.Length - 4)
+                        : "••••••••")
+                            </small>
+                        </td>
+                        <td>
+                            @using (Html.BeginForm("AsignarCoordinador", "AsignarCoordinadoresMaster", FormMethod.Post, new { style = "display: inline;" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                @Html.Hidden("idDocente", docente.IdDocente)
+                                <button type="submit" class="btn btn-primary btn-sm"
+                                        onclick="return confirm('¿Está seguro de asignar a @docente.Nombre como coordinador?\n\nSe copiará la siguiente información:\n• Correo: @docente.CorreoElectronico\n• OID: @docente.MicrosoftIdentifier')">
+                                    Asignar como Coordinador
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <strong>No hay docentes disponibles</strong><br />
+            <p>No se encontraron docentes que cumplan con los siguientes criterios:</p>
+            <ul>
+                <li>✅ Estar habilitados y autorizados en el sistema</li>
+                <li>✅ Tener un Microsoft Identifier (OID) asignado</li>
+                <li>✅ No estar ya asignados como coordinadores</li>
+            </ul>
+            <p><strong>Nota:</strong> Los docentes sin OID no pueden ser asignados como coordinadores ya que el sistema requiere esta identificación para el funcionamiento correcto.</p>
+        </div>
+    }
+</div>
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+}
+
+

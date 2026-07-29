@@ -1,0 +1,75 @@
+﻿@using Plataforma_Web.Models
+@{
+    ViewBag.Title = "Estadias";
+    Usuario usuario = Session["Usuario"] as Usuario;
+}
+
+<style>
+    div {
+    }
+
+    }
+
+    h1 {
+        color: #2a75c5;
+    }
+
+    p1 {
+    }
+</style>
+
+
+@*<h2>Entrada Pagina</h2>*@
+
+
+<div class="row" style=" text-align:justify; font-family:Arial;">
+    <div class="col-md-1 col-sm-1"></div>
+    <div class="col-md-10 col-sm-10">
+        <br />
+
+        @*=======================Restriccion de usuario=============================*@
+
+        @if (usuario != null)
+        {
+
+            if (usuario.IdNivel <= 3)
+            {
+
+                <h1 style="color:#ff9400; font-family:Arial; font-size:40px;">Estadías</h1>
+                <h4 style="line-height:200%;"><p1>Su función principal es la de digitalizar los formatos que lleven las áreas de estadías, su finalidad es permitir que las todo las hojas las cuales se utilizan en dicho procesos se eliminen y sean suplantadas por la plataforma, en la cual el usuario accede a realizar diferentes funciones.</p1></h4>
+                <center><img class="img-responsive" src="~/Imagenes/ImagenesPagina/LogoPlataE2.jpg" width="770" height="370" /></center>
+
+
+                <a class="btn btn-success" href="~/Views/AprobacionDeProyectos/Index.cshtml">Aprobacion de Proyecto | F-PSE-DICA-2000</a>
+                
+                <a class="btn btn-success" href="~/Views/ConstanciaDeNoAdeudos/Index.cshtml">Constancia de no Adeudo | F-PSE-DICA-2301</a>
+                
+                <a class="btn btn-success" href="~/Views/EstadiasEnElSectorProductivo/Index.cshtml">Estadias en el Sector Productivo | F-PSE-DICA-2000</a>
+
+            }
+        }
+        else
+        {
+
+            <center>
+                <a class="btn btn-primary" href="@Url.Action("Login")"
+                   role="button">
+                    <span class="glyphicon glyphicon-log-in"></span>
+                    Iniciar Sesion
+                </a>
+            </center>
+
+        }
+
+
+    </div>
+
+    <div class="col-md-1 col-sm-1"></div>
+</div>
+<br>
+<a class="btn btn-warning" href="@Url.Action("Index")"
+   role="button">
+    <span class="glyphicon glyphicon-arrow-left"></span>
+    Regresar
+
+</a>

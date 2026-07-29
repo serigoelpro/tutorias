@@ -1,0 +1,681 @@
+﻿@model PlataformaWeb.Models.Materia
+
+@{
+    ViewBag.Title = "Editar Materia";
+}
+
+<h2>
+    <span class="glyphicon glyphicon-edit"></span> Editar Materia
+</h2>
+
+@if (!string.IsNullOrEmpty(ViewBag.Error as string))
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @ViewBag.Error
+    </div>
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <hr />
+        <input name="IdMateria" type="hidden" value="@Model.IdMateria" />
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-edit"></span> Nombre de la Materia *
+            </label>
+            <div class="col-md-10">
+                <input name="Nombre" type="text" class="form-control" value="@Model.Nombre" required
+                       placeholder="Ingrese el nombre de la materia" />
+                <small class="text-muted">Modifique el nombre de la asignatura según sea necesario</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-education"></span> Carrera *
+            </label>
+            <div class="col-md-10">
+                @Html.DropDownList("IdCarrera", null, "-- Seleccionar Carrera --",
+                    new { @class = "form-control", @id = "carreraSelect", @required = "required" })
+                <small class="text-muted">Programa educativo al que pertenece la asignatura</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-cog"></span> Especialidad *
+            </label>
+            <div class="col-md-10">
+                @Html.DropDownList("IdEspecialidad", null, "-- Seleccionar Especialidad --",
+                    new { @class = "form-control", @id = "especialidadSelect", @required = "required" })
+                <small class="text-muted">Área específica dentro del programa educativo</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-signal"></span> Grado *
+            </label>
+            <div class="col-md-10">
+                @Html.DropDownList("IdGrado", null, "-- Seleccionar Grado --",
+                    new { @class = "form-control", @required = "required" })
+                <small class="text-muted">Cuatrimestre académico de la asignatura</small>
+            </div>
+        </div>
+
+        <!-- PLAN DE ESTUDIO -->
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-calendar"></span> Plan de Estudio *
+            </label>
+            <div class="col-md-10">
+                @Html.DropDownList("IdPlanEstudio", null, "-- Seleccionar Plan de Estudio --",
+                    new { @class = "form-control", @id = "planEstudioSelect", @required = "required" })
+                <small class="text-muted">Plan que determinará las reglas de calificación para esta asignatura</small>
+            </div>
+        </div>
+
+        <!-- INFORMACIÓN DEL PLAN SELECCIONADO -->
+        <div id="infoPlanEstudio" class="form-group" style="display: none;">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-info-sign"></span> Información del Plan
+            </label>
+            <div class="col-md-10">
+                <div class="alert alert-warning plan-info-alert">
+                    <div id="detallesPlan">
+                        <!-- Información del plan se cargará aquí via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARACIÓN DE PLANES (si hay cambio) -->
+        <div id="comparacionPlanes" class="form-group" style="display: none;">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-transfer"></span> Cambio de Plan
+            </label>
+            <div class="col-md-10">
+                <div class="alert alert-info">
+                    <h5><span class="glyphicon glyphicon-exclamation-sign"></span> ¡Atención! Está cambiando el plan de estudio</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Plan Anterior:</h6>
+                            <div id="planAnterior">
+                                <!-- Información del plan anterior -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Plan Nuevo:</h6>
+                            <div id="planNuevo">
+                                <!-- Información del plan nuevo -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning" style="margin-top: 10px; margin-bottom: 0;">
+                        <small>
+                            <strong>Importante:</strong> El cambio de plan afectará las reglas de calificación.
+                            Verifique que esto sea lo que desea hacer.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-ok-circle"></span> Estado
+            </label>
+            <div class="col-md-10">
+                <div class="checkbox">
+                    <label>
+                        <input name="Activo" type="checkbox" value="true" @(Model.Activo ? "checked" : "") />
+                        <input name="Activo" type="hidden" value="false" />
+                        <strong>Materia Activa</strong>
+                        <small class="text-muted">(Desmarque para desactivar la materia)</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <button type="submit" class="btn btn-success">
+                    <span class="glyphicon glyphicon-floppy-disk"></span> Guardar Cambios
+                </button>
+                @Html.ActionLink("Cancelar", "Index", null, new { @class = "btn btn-default" })
+                <button type="button" class="btn btn-info" onclick="mostrarHistorialCambios()" style="margin-left: 10px;">
+                    <span class="glyphicon glyphicon-time"></span> Ver Historial
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- INFORMACIÓN ACTUAL DE LA MATERIA -->
+<div class="well well-sm">
+    <h4><span class="glyphicon glyphicon-info-sign"></span> Información Actual de la Materia</h4>
+    <div class="row">
+        <div class="col-md-6">
+            <p><strong>ID:</strong> @Model.IdMateria</p>
+            <p>
+                <strong>Estado Actual:</strong>
+                <span class="label @(Model.Activo ? "label-success" : "label-danger")">
+                    @(Model.Activo ? "Activa" : "Inactiva")
+                </span>
+            </p>
+            @if (!string.IsNullOrEmpty(Model.NombrePlanEstudio))
+            {
+                <p>
+                    <strong>Plan Actual:</strong>
+                    <span class="label @(Model.LabelPlan ?? "label-default")">@Model.NombrePlanEstudio</span>
+                </p>
+            }
+        </div>
+        <div class="col-md-6">
+            @if (Model.CalificacionMinima.HasValue)
+            {
+                <p><strong>Calificación Mínima:</strong> @Model.CalificacionMinima puntos</p>
+            }
+            @if (Model.PermiteDecimales.HasValue)
+            {
+                <p><strong>Tipo de Calificación:</strong> @(Model.TipoCalificacion ?? "N/A")</p>
+            }
+            @if (Model.AñoPlan.HasValue)
+            {
+                <p><strong>Año del Plan:</strong> @Model.AñoPlan</p>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PARA HISTORIAL DE CAMBIOS -->
+<div class="modal fade" id="modalHistorial" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">
+                    <span class="glyphicon glyphicon-time"></span> Historial de Cambios - @Model.Nombre
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div id="contenidoHistorial">
+                    <div class="alert alert-info">
+                        <span class="glyphicon glyphicon-info-sign"></span>
+                        El historial detallado de cambios se implementará en una futura actualización.
+                        Por ahora, puede ver la información actual de la materia arriba.
+                    </div>
+
+                    <!-- Información básica del historial -->
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h5>Creación de la Materia</h5>
+                            <p><strong>Materia creada:</strong> @Model.Nombre</p>
+                            <p><strong>Estado inicial:</strong> Activa</p>
+                            <small class="text-muted">Sistema automático</small>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.NombrePlanEstudio))
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h5>Asignación de Plan de Estudio</h5>
+                                <p><strong>Plan asignado:</strong> @Model.NombrePlanEstudio</p>
+                                <p><strong>Calificación mínima:</strong> @(Model.CalificacionMinima?.ToString() ?? "N/A")</p>
+                                <p><strong>Permite decimales:</strong> @(Model.PermiteDecimales == true ? "Sí" : "No")</p>
+                                <small class="text-muted">Sistema automático</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    var planOriginal = '@Model.IdPlanEstudio'; // Plan original para comparación
+    var currentEspecialidad = '@Model.IdEspecialidad';
+
+    // Cargar especialidades al inicio si hay una carrera seleccionada
+    var carreraId = $('#carreraSelect').val();
+    if (carreraId) {
+        loadEspecialidades(carreraId, currentEspecialidad);
+    }
+
+    // Mostrar información del plan actual al cargar
+    var planActual = $('#planEstudioSelect').val();
+    if (planActual) {
+        $('#planEstudioSelect').trigger('change');
+    }
+
+    // Cargar especialidades cuando cambia la carrera
+    $('#carreraSelect').change(function() {
+        var carreraId = $(this).val();
+        $('#especialidadSelect').prop('disabled', true);
+
+        if (carreraId) {
+            loadEspecialidades(carreraId, null);
+        } else {
+            $('#especialidadSelect').empty();
+            $('#especialidadSelect').append('<option value="">-- Seleccionar Especialidad --</option>');
+            $('#especialidadSelect').prop('disabled', true);
+        }
+    });
+
+    function loadEspecialidades(carreraId, selectedEspecialidad) {
+        $.ajax({
+            url: '@Url.Action("GetEspecialidades", "Materias")',
+            type: 'GET',
+            data: { carreraId: carreraId },
+            success: function(data) {
+                $('#especialidadSelect').empty();
+                $('#especialidadSelect').append('<option value="">-- Seleccionar Especialidad --</option>');
+
+                if (data && data.length > 0) {
+                    $.each(data, function(i, especialidad) {
+                        var selected = selectedEspecialidad == especialidad.Id ? 'selected' : '';
+                        $('#especialidadSelect').append('<option value="' + especialidad.Id + '" ' + selected + '>' + especialidad.Nombre + '</option>');
+                    });
+                    $('#especialidadSelect').prop('disabled', false);
+                } else {
+                    $('#especialidadSelect').append('<option value="">-- No hay especialidades disponibles --</option>');
+                }
+            },
+            error: function() {
+                $('#especialidadSelect').empty();
+                $('#especialidadSelect').append('<option value="">-- Error al cargar especialidades --</option>');
+            }
+        });
+    }
+
+    // Mostrar información del plan de estudio y detectar cambios
+    $('#planEstudioSelect').change(function() {
+        var planId = $(this).val();
+
+        if (planId) {
+            $.ajax({
+                url: '@Url.Action("GetPlanEstudioInfo", "Materias")',
+                type: 'GET',
+                data: { planEstudioId: planId },
+                success: function(result) {
+                    if (result.success) {
+                        var plan = result.plan;
+                        mostrarInfoPlan(plan);
+
+                        // Detectar cambio de plan
+                        if (planId != planOriginal) {
+                            mostrarComparacionPlanes(planOriginal, planId);
+                        } else {
+                            $('#comparacionPlanes').hide();
+                        }
+                    } else {
+                        $('#infoPlanEstudio').hide();
+                        $('#comparacionPlanes').hide();
+                    }
+                },
+                error: function() {
+                    $('#infoPlanEstudio').hide();
+                    $('#comparacionPlanes').hide();
+                }
+            });
+        } else {
+            $('#infoPlanEstudio').hide();
+            $('#comparacionPlanes').hide();
+        }
+    });
+
+    function mostrarInfoPlan(plan) {
+        var html = '';
+
+        html += '<div class="row">';
+        html += '<div class="col-md-6">';
+        html += '<h5><span class="label ' + (plan.labelClass || 'label-default') + '">' + plan.nombre + '</span></h5>';
+        html += '<p><strong>Año:</strong> ' + plan.año + '</p>';
+        html += '<p><strong>Calificación mínima:</strong> ' + plan.calificacionMinima + ' puntos</p>';
+        html += '</div>';
+        html += '<div class="col-md-6">';
+        html += '<p><strong>Tipo de calificación:</strong> ' + (plan.tipoCalificacion || 'N/A') + '</p>';
+        html += '<p><strong>Requisito:</strong> ' + (plan.requisitoAprobacion || 'N/A') + '</p>';
+        if (plan.descripcion) {
+            html += '<p><strong>Descripción:</strong><br/><small>' + plan.descripcion + '</small></p>';
+        }
+        html += '</div>';
+        html += '</div>';
+
+        // Agregar ejemplo práctico
+        html += '<div class="alert alert-info" style="margin-top: 10px; margin-bottom: 0;">';
+        html += '<h6><span class="glyphicon glyphicon-lightbulb"></span> Reglas de calificación:</h6>';
+        if (plan.permiteDecimales) {
+            html += '<p>Permite calificaciones decimales: <strong>7.0, 7.5, 8.3, 9.7</strong>, etc.</p>';
+            html += '<p>Calificación mínima para aprobar: <strong>' + plan.calificacionMinima + '</strong></p>';
+        } else {
+            html += '<p>Solo números enteros. Las calificaciones se redondean automáticamente.</p>';
+            html += '<p>Ejemplo: <strong>7.8 → 8, 8.4 → 8, 8.6 → 9</strong></p>';
+            html += '<p>Calificación mínima para aprobar: <strong>' + plan.calificacionMinima + '</strong></p>';
+        }
+        html += '</div>';
+
+        $('#detallesPlan').html(html);
+        $('#infoPlanEstudio').show();
+    }
+
+    function mostrarComparacionPlanes(planAnteriorId, planNuevoId) {
+        // Obtener información de ambos planes para comparar
+        $.when(
+            $.ajax({
+                url: '@Url.Action("GetPlanEstudioInfo", "Materias")',
+                type: 'GET',
+                data: { planEstudioId: planAnteriorId }
+            }),
+            $.ajax({
+                url: '@Url.Action("GetPlanEstudioInfo", "Materias")',
+                type: 'GET',
+                data: { planEstudioId: planNuevoId }
+            })
+        ).done(function(respuestaAnterior, respuestaNueva) {
+            if (respuestaAnterior[0].success && respuestaNueva[0].success) {
+                var planAnterior = respuestaAnterior[0].plan;
+                var planNuevo = respuestaNueva[0].plan;
+
+                var htmlAnterior = '<span class="label ' + (planAnterior.labelClass || 'label-default') + '">' + planAnterior.nombre + '</span><br/>';
+                htmlAnterior += 'Mínima: <strong>' + planAnterior.calificacionMinima + '</strong><br/>';
+                htmlAnterior += 'Decimales: <strong>' + (planAnterior.permiteDecimales ? 'Sí' : 'No') + '</strong>';
+
+                var htmlNuevo = '<span class="label ' + (planNuevo.labelClass || 'label-default') + '">' + planNuevo.nombre + '</span><br/>';
+                htmlNuevo += 'Mínima: <strong>' + planNuevo.calificacionMinima + '</strong><br/>';
+                htmlNuevo += 'Decimales: <strong>' + (planNuevo.permiteDecimales ? 'Sí' : 'No') + '</strong>';
+
+                $('#planAnterior').html(htmlAnterior);
+                $('#planNuevo').html(htmlNuevo);
+                $('#comparacionPlanes').show();
+            }
+        });
+    }
+
+    // Validar formulario antes de enviar
+    $('form').submit(function(e) {
+        var nombre = $('input[name="Nombre"]').val().trim();
+        var carrera = $('#carreraSelect').val();
+        var especialidad = $('#especialidadSelect').val();
+        var grado = $('select[name="IdGrado"]').val();
+        var planEstudio = $('#planEstudioSelect').val();
+
+        if (!nombre) {
+            alert('Por favor ingrese el nombre de la materia');
+            $('input[name="Nombre"]').focus();
+            e.preventDefault();
+            return false;
+        }
+        if (!carrera) {
+            alert('Por favor seleccione una carrera');
+            $('#carreraSelect').focus();
+            e.preventDefault();
+            return false;
+        }
+        if (!especialidad) {
+            alert('Por favor seleccione una especialidad');
+            $('#especialidadSelect').focus();
+            e.preventDefault();
+            return false;
+        }
+        if (!grado) {
+            alert('Por favor seleccione un grado');
+            $('select[name="IdGrado"]').focus();
+            e.preventDefault();
+            return false;
+        }
+        if (!planEstudio) {
+            alert('Por favor seleccione un plan de estudio');
+            $('#planEstudioSelect').focus();
+            e.preventDefault();
+            return false;
+        }
+
+        // Confirmar cambio de plan si es diferente
+        if (planEstudio != planOriginal) {
+            var confirmacion = confirm('¿Está seguro que desea cambiar el plan de estudio?\n\nEsto puede afectar las reglas de calificación para esta materia.');
+            if (!confirmacion) {
+                e.preventDefault();
+                return false;
+            }
+        }
+
+        // Mostrar indicador de carga
+        $('button[type="submit"]').prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Guardando...');
+        return true;
+    });
+});
+
+// Mostrar modal de historial
+function mostrarHistorialCambios() {
+    $('#modalHistorial').modal('show');
+}
+</script>
+
+<style>
+    .glyphicon-refresh-animate {
+        -animation: spin .7s infinite linear;
+        -webkit-animation: spin2 .7s infinite linear;
+    }
+
+    @@-webkit-keyframes spin2 {
+        from {
+            -webkit-transform: rotate(0deg);
+        }
+
+        to {
+            -webkit-transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes spin {
+        from {
+            transform: scale(1) rotate(0deg);
+        }
+
+        to {
+            transform: scale(1) rotate(360deg);
+        }
+    }
+
+    .well {
+        margin-top: 20px;
+    }
+
+    .form-group small {
+        display: block;
+        margin-top: 5px;
+    }
+
+    /* Para información de planes de estudio */
+    .plan-info-alert {
+        margin-bottom: 0;
+        border-left: 4px solid #f0ad4e;
+    }
+
+    /* Para comparación de planes */
+    #comparacionPlanes .alert-info {
+        border-left: 4px solid #1ab192;
+    }
+
+    #planAnterior, #planNuevo {
+        background-color: #f9f9f9;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+
+    /* Para timeline del historial */
+    .timeline-item {
+        position: relative;
+        padding-left: 25px;
+        margin-bottom: 20px;
+        border-left: 2px solid #1ab192;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -6px;
+        top: 6px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #1ab192;
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px #1ab192;
+    }
+
+    .timeline-content {
+        background-color: #f9f9f9;
+        padding: 10px 15px;
+        border-radius: 4px;
+        border: 1px solid #e1e1e8;
+    }
+
+    .timeline-content h5 {
+        margin-top: 0;
+        color: #1ab192;
+        font-size: 14px;
+    }
+
+    .timeline-content p {
+        margin-bottom: 5px;
+        font-size: 13px;
+    }
+
+    /* Mejorar la presentación de etiquetas */
+    .label {
+        font-size: 12px;
+        padding: 4px 8px;
+        margin-right: 5px;
+    }
+
+    .label-warning {
+        background-color: #f0ad4e;
+    }
+
+    .label-success {
+        background-color: #5cb85c;
+    }
+
+    .label-info {
+        background-color: #5bc0de;
+    }
+
+    .label-default {
+        background-color: #777;
+    }
+
+    /* Estilo para alertas anidadas */
+    .alert .alert {
+        margin-bottom: 0;
+        padding: 8px 12px;
+    }
+
+    /* Mejorar espaciado en formularios */
+    .form-horizontal .form-group {
+        margin-bottom: 20px;
+    }
+
+    /* Estilos responsivos */
+    @@media (max-width: 768px) {
+        .col-md-6 {
+            margin-bottom: 15px;
+        }
+
+        .form-group .control-label {
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        .timeline-item {
+            padding-left: 20px;
+        }
+
+        .timeline-content {
+            padding: 8px 12px;
+        }
+
+        .timeline-content h5 {
+            font-size: 13px;
+        }
+
+        .timeline-content p {
+            font-size: 12px;
+        }
+    }
+
+    /* Mejoras visuales */
+    .alert-info h6 {
+        margin-top: 0;
+        color: #31708f;
+    }
+
+    .alert-warning h5 {
+        margin-top: 0;
+        color: #8a6d3b;
+    }
+
+    /* Animaciones para cambios de estado */
+    .plan-info-alert,
+    #comparacionPlanes .alert-info {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Focus states para accesibilidad */
+    .form-control:focus {
+        border-color: #1ab192;
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 0 3px rgba(26, 177, 146, 0.1);
+    }
+
+    /* Estilo para modal de historial */
+    .modal-lg .modal-content {
+        border-radius: 6px;
+    }
+
+    .modal-header {
+        background-color: #f5f5f5;
+        border-bottom: 1px solid #ddd;
+    }
+
+    /* Mejorar botones */
+    .btn {
+        transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Estilo para checkboxes */
+    input[type="checkbox"] {
+        transform: scale(1.1);
+        margin-right: 8px;
+    }
+</style>

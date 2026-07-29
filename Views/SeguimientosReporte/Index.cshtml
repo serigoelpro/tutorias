@@ -1,0 +1,524 @@
+﻿@model PlataformaWeb.Controllers.SeguimientosReporteController.SeguimientosReporteViewModel
+
+@{
+    ViewBag.Title = "Reporte de Seguimientos";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
+    <style>
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            margin: 10px 0;
+        }
+
+        .btn-compact {
+            padding: 2px 6px;
+            font-size: 11px;
+            margin: 1px;
+        }
+
+        .export-btn {
+            background-color: #5cb85c;
+            border-color: #4cae4c;
+            color: white;
+        }
+
+            .export-btn:hover {
+                background-color: #449d44;
+                border-color: #398439;
+                color: white;
+            }
+
+        .tutor-header .pull-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pagination-info {
+            margin-bottom: 15px;
+        }
+
+        .pagination {
+            margin: 0;
+        }
+
+            .pagination > li > a,
+            .pagination > li > span {
+                color: #337ab7;
+                border: 1px solid #ddd;
+            }
+
+                .pagination > li > a:hover,
+                .pagination > li > span:hover {
+                    color: #23527c;
+                    background-color: #eee;
+                    border-color: #ddd;
+                }
+
+            .pagination > .active > a,
+            .pagination > .active > span {
+                background-color: #337ab7;
+                border-color: #337ab7;
+            }
+
+            .pagination > .disabled > a,
+            .pagination > .disabled > span {
+                color: #777;
+                background-color: #fff;
+                border-color: #ddd;
+                cursor: not-allowed;
+            }
+
+        #resultadosBusqueda .alert {
+            margin-bottom: 20px;
+        }
+
+        .glyphicon-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        #limpiarBusqueda {
+            margin-left: 10px;
+        }
+    </style>
+}
+
+<h2>Reporte de Seguimientos Individuales</h2>
+
+<div class="panel panel-default">
+    <div class="panel-heading">Filtros</div>
+    <div class="panel-body">
+        @using (Html.BeginForm("Index", "SeguimientosReporte", FormMethod.Get, new { @class = "form-inline" }))
+        {
+            <div class="form-group" style="margin-right:10px;">
+                <label for="año">Año</label>
+                @Html.DropDownList("año", Model.Años, new { @class = "form-control", @id = "año" })
+            </div>
+            <div class="form-group" style="margin-right:10px;">
+                <label for="idPeriodo">Periodo</label>
+                @Html.DropDownList("idPeriodo", Model.Periodos, new { @class = "form-control", @id = "idPeriodo" })
+            </div>
+            <div class="form-group" style="margin-right:10px;">
+                <label for="idCarrera">Carrera</label>
+                @Html.DropDownList("idCarrera", Model.Carreras, new { @class = "form-control", @id = "idCarrera" })
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <span class="glyphicon glyphicon-filter"></span> Aplicar
+            </button>
+            @Html.ActionLink("Exportar a Excel", "ExportarExcel", new
+            {
+                año = Model.Filtro.Año,
+                idPeriodo = Model.Filtro.IdPeriodo,
+                idCarrera = Model.Filtro.IdCarrera
+            }, new
+            {
+                @class = "btn btn-success export-btn",
+                @style = "margin-left: 10px;",
+                @title = "Exportar todos los seguimientos"
+            })
+        }
+    </div>
+</div>
+
+@if (Model.Detalles != null && Model.Detalles.Any())
+{
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h4 style="margin: 0;">
+                <span class="glyphicon glyphicon-search"></span>
+                Controles de Navegación
+            </h4>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="globalSearch">Búsqueda Global:</label>
+                        <input type="text" id="globalSearch" class="form-control" placeholder="Buscar por grupo, estudiante, matrícula, carrera..." value="@Request.QueryString["busqueda"]">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Acciones:</label><br>
+                        <button type="button" id="expandAllTutors" class="btn btn-success btn-sm">
+                            <span class="glyphicon glyphicon-expand"></span> Expandir Todos
+                        </button>
+                        <button type="button" id="collapseAllTutors" class="btn btn-warning btn-sm">
+                            <span class="glyphicon glyphicon-collapse-down"></span> Colapsar Todos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Request.QueryString["busqueda"]))
+{
+    <div class="alert alert-info">
+        <span class="glyphicon glyphicon-search"></span>
+        <strong>Resultados de búsqueda:</strong> "@Request.QueryString["busqueda"]"
+        <a href="@Url.Action("Index", new {
+            año = Model.Filtro.Año,
+            idPeriodo = Model.Filtro.IdPeriodo,
+            idCarrera = Model.Filtro.IdCarrera,
+            idTutor = Model.Filtro.IdTutor
+        })" class="btn btn-xs btn-default pull-right">
+            <span class="glyphicon glyphicon-remove"></span> Limpiar búsqueda
+        </a>
+    </div>
+}
+@if (Model.Detalles != null && Model.Detalles.Any())
+{
+    // Agrupar por tutor primero
+    var seguimientosPorTutor = Model.Detalles
+        .GroupBy(s => new { s.IdTutor, s.Tutor })
+        .OrderBy(g => g.Key.Tutor)
+        .ToList();
+
+    foreach (var grupoTutor in seguimientosPorTutor)
+    {
+        <div class="panel panel-primary" style="margin-bottom: 20px;">
+            <div class="panel-heading tutor-header" style="cursor: pointer;">
+                <h4 style="margin: 0;">
+                    <span class="glyphicon glyphicon-education"></span>
+                    <strong>@grupoTutor.Key.Tutor</strong>
+                    <span class="badge" style="background-color: #fff; color: #337ab7;">@grupoTutor.Count() seguimiento(s)</span>
+                    <div class="pull-right">
+                        @{
+                            // Extraer el nombre del grupo del tutor (ej: "Grupo: MTI4A" -> "MTI4A")
+                            var nombreGrupo = grupoTutor.Key.Tutor.Replace("Grupo: ", "");
+                        }
+                        @Html.ActionLink("Exportar Excel", "ExportarExcelGrupo", new
+                        {
+                            año = Model.Filtro.Año,
+                            idPeriodo = Model.Filtro.IdPeriodo,
+                            idCarrera = Model.Filtro.IdCarrera,
+                            grupo = nombreGrupo
+                        }, new
+                        {
+                            @class = "btn btn-success btn-sm export-btn",
+                            @style = "margin-right: 10px;",
+                            @title = "Exportar seguimientos de este grupo"
+                        })
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </div>
+                </h4>
+            </div>
+            <div class="panel-body tutor-body" style="display: none; padding: 0;">
+                @{
+                    // Agrupar por estudiante dentro del tutor
+                    var estudiantesDelTutor = grupoTutor
+                        .GroupBy(s => new { s.Matricula, s.Alumno, s.Carrera, s.Grado, s.Grupo })
+                        .OrderBy(g => g.Key.Alumno)
+                        .ToList();
+                }
+
+                @foreach (var estudiante in estudiantesDelTutor)
+                {
+                    <div class="panel panel-default" style="margin: 10px; border-left: 4px solid #337ab7;">
+                        <div class="panel-heading student-header" style="background-color: #f8f9fa; cursor: pointer;">
+                            <h5 style="margin: 0;">
+                                <span class="glyphicon glyphicon-user"></span>
+                                <strong>@estudiante.Key.Alumno</strong>
+                                <small class="pull-right">
+                                    Matrícula: @estudiante.Key.Matricula |
+                                    @estudiante.Key.Carrera |
+                                    @estudiante.Key.Grado @estudiante.Key.Grupo
+                                </small>
+                                <span class="badge" style="background-color: #337ab7;">@estudiante.Count() seguimiento(s)</span>
+                                <span class="glyphicon glyphicon-chevron-down pull-right"></span>
+                            </h5>
+                        </div>
+                        <div class="panel-body student-body" style="display: none; padding: 0;">
+                            @{
+                                // Agrupar seguimientos del estudiante por periodo/año
+                                var seguimientosPorPeriodo = estudiante
+                                    .GroupBy(s => new { s.Año, s.PeriodoNombre })
+                                    .OrderByDescending(g => g.Key.Año)
+                                    .ThenBy(g => g.Key.PeriodoNombre)
+                                    .ToList();
+                            }
+
+                            @foreach (var periodo in seguimientosPorPeriodo)
+                            {
+                                <div style="border-bottom: 1px solid #ddd; padding: 15px;">
+                                    <h6 style="margin: 0 0 10px 0; color: #337ab7;">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                        <strong>@periodo.Key.PeriodoNombre @periodo.Key.Año</strong>
+                                        <span class="badge" style="background-color: #337ab7;">@periodo.Count() seguimiento(s)</span>
+                                    </h6>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-condensed table-hover seguimientos-table" style="margin-bottom: 0;">
+                                            <thead>
+                                                <tr style="background-color: #f9f9f9;">
+                                                    <th style="width: 15%;">Fecha</th>
+                                                    <th style="width: 15%;">Vulnerabilidad</th>
+                                                    <th style="width: 25%;">Problemática</th>
+                                                    <th style="width: 35%;">Acción</th>
+                                                    <th style="width: 10%;">Grado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var seguimiento in periodo.OrderBy(s => s.Fecha))
+                                                {
+                                                    <tr>
+                                                        <td>@seguimiento.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                                        <td>
+                                                            <span class="label @(seguimiento.Vulnerabilidad == "No vulnerable" ? "label-success" : "label-warning")">
+                                                                @seguimiento.Vulnerabilidad
+                                                            </span>
+                                                        </td>
+                                                        <td>@seguimiento.Problematica</td>
+                                                        <td>@seguimiento.Accion</td>
+                                                        <td class="text-center">@seguimiento.Grado</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+</div>
+
+@if (Model.Detalles != null && Model.Detalles.Any() && Model.Paginacion != null && string.IsNullOrEmpty(Request.QueryString["busqueda"]))
+{
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body text-center">
+                    <div class="pagination-info" style="margin-bottom: 15px;">
+                        <p class="text-muted">
+                            Mostrando <strong>@((Model.Paginacion.PaginaActual - 1) * Model.Paginacion.RegistrosPorPagina + 1)</strong>
+                            a <strong>@Math.Min(Model.Paginacion.PaginaActual * Model.Paginacion.RegistrosPorPagina, Model.Paginacion.TotalRegistros)</strong>
+                            de <strong>@Model.Paginacion.TotalRegistros</strong> grupos
+                        </p>
+                    </div>
+
+                    @if (Model.Paginacion.TotalPaginas > 1)
+                    {
+                        <nav aria-label="Paginación de grupos">
+                            <ul class="pagination pagination-sm">
+                                @* Botón Primera Página *@
+                                @if (Model.Paginacion.TienePaginaAnterior)
+                                {
+                                    <li>
+                                        <a href="@Url.Action("Index", new {
+                                            año = Model.Filtro.Año,
+                                            idPeriodo = Model.Filtro.IdPeriodo,
+                                            idCarrera = Model.Filtro.IdCarrera,
+                                            idTutor = Model.Filtro.IdTutor,
+                                            pagina = 1
+                                        })" aria-label="Primera página">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("Index", new {
+                                            año = Model.Filtro.Año,
+                                            idPeriodo = Model.Filtro.IdPeriodo,
+                                            idCarrera = Model.Filtro.IdCarrera,
+                                            idTutor = Model.Filtro.IdTutor,
+                                            pagina = Model.Paginacion.PaginaActual - 1
+                                        })" aria-label="Página anterior">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="disabled">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </li>
+                                    <li class="disabled">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </li>
+                                }
+
+                                @* Números de página *@
+                                @{
+                                    int inicio = Math.Max(1, Model.Paginacion.PaginaActual - 2);
+                                    int fin = Math.Min(Model.Paginacion.TotalPaginas, Model.Paginacion.PaginaActual + 2);
+                                }
+
+                                @for (int i = inicio; i <= fin; i++)
+                                {
+                                    <li class="@(i == Model.Paginacion.PaginaActual ? "active" : "")">
+                                        <a href="@Url.Action("Index", new {
+                                            año = Model.Filtro.Año,
+                                            idPeriodo = Model.Filtro.IdPeriodo,
+                                            idCarrera = Model.Filtro.IdCarrera,
+                                            idTutor = Model.Filtro.IdTutor,
+                                            pagina = i
+                                        })">@i</a>
+                                    </li>
+                                }
+
+                                @* Botón Siguiente Página *@
+                                @if (Model.Paginacion.TienePaginaSiguiente)
+                                {
+                                    <li>
+                                        <a href="@Url.Action("Index", new {
+                                            año = Model.Filtro.Año,
+                                            idPeriodo = Model.Filtro.IdPeriodo,
+                                            idCarrera = Model.Filtro.IdCarrera,
+                                            idTutor = Model.Filtro.IdTutor,
+                                            pagina = Model.Paginacion.PaginaActual + 1
+                                        })" aria-label="Página siguiente">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="@Url.Action("Index", new {
+                                            año = Model.Filtro.Año,
+                                            idPeriodo = Model.Filtro.IdPeriodo,
+                                            idCarrera = Model.Filtro.IdCarrera,
+                                            idTutor = Model.Filtro.IdTutor,
+                                            pagina = Model.Paginacion.TotalPaginas
+                                        })" aria-label="Última página">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="disabled">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </li>
+                                    <li class="disabled">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (Model.Detalles == null || !Model.Detalles.Any())
+{
+    <div class="alert alert-info">
+        <span class="glyphicon glyphicon-info-sign"></span>
+        No hay resultados para los filtros seleccionados.
+    </div>
+}
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Función para expandir/colapsar paneles de tutores
+            $('.tutor-header').click(function () {
+                $(this).next('.tutor-body').slideToggle();
+                $(this).find('.glyphicon-chevron-down, .glyphicon-chevron-up').toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
+            });
+
+            // Función para expandir/colapsar paneles de estudiantes
+            $('.student-header').click(function () {
+                $(this).next('.student-body').slideToggle();
+                $(this).find('.glyphicon-chevron-down, .glyphicon-chevron-up').toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
+            });
+
+            // Aplicar DataTables a todas las tablas de seguimientos cuando se expandan
+            $('.student-body').on('shown.bs.collapse', function () {
+                var $table = $(this).find('.seguimientos-table');
+                if ($table.length && !$.fn.DataTable.isDataTable($table)) {
+                    $table.DataTable({
+                        "language": {
+                            "url": "//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json"
+                        },
+                        "pageLength": 10,
+                        "lengthMenu": [[5, 10, 25, 50], [5, 10, 25, 50]],
+                        "order": [[0, 'asc']], // Ordenar por fecha
+                        "columnDefs": [
+                            { "orderable": true, "targets": "_all" },
+                            { "className": "text-center", "targets": [4] }, // Grado centrado
+                            { "width": "15%", "targets": [0] }, // Fecha
+                            { "width": "15%", "targets": [1] }, // Vulnerabilidad
+                            { "width": "25%", "targets": [2] }, // Problemática
+                            { "width": "35%", "targets": [3] }, // Acción
+                            { "width": "10%", "targets": [4] }  // Grado
+                        ],
+                        "scrollX": true,
+                        "dom": 'rtip', // Solo mostrar tabla, sin controles adicionales
+                        "paging": true,
+                        "searching": true,
+                        "info": true
+                    });
+                }
+            });
+
+            // Búsqueda global con redirección
+            var searchTimeout;
+            $('#globalSearch').on('keyup', function (e) {
+                var searchTerm = $(this).val().trim();
+
+                // Limpiar timeout anterior
+                clearTimeout(searchTimeout);
+
+                // Si presiona Enter o el campo está vacío
+                if (e.keyCode === 13 || searchTerm.length === 0) {
+                    realizarBusqueda(searchTerm);
+                    return;
+                }
+
+                // Esperar 1000ms antes de hacer la búsqueda automática
+                searchTimeout = setTimeout(function() {
+                    realizarBusqueda(searchTerm);
+                }, 1000);
+            });
+
+            // Función para realizar la búsqueda
+            function realizarBusqueda(termino) {
+                // Obtener parámetros de filtro actuales
+                var año = $('#año').val();
+                var idPeriodo = $('#idPeriodo').val();
+                var idCarrera = $('#idCarrera').val();
+                var idTutor = $('#idTutor').val();
+
+                // Construir URL con parámetros
+                var url = '@Url.Action("Index", "SeguimientosReporte")' + '?' +
+                    'año=' + encodeURIComponent(año) +
+                    '&idPeriodo=' + encodeURIComponent(idPeriodo) +
+                    '&idCarrera=' + encodeURIComponent(idCarrera) +
+                    '&idTutor=' + encodeURIComponent(idTutor) +
+                    '&busqueda=' + encodeURIComponent(termino);
+
+                // Redirigir a la página con los parámetros de búsqueda
+                window.location.href = url;
+            }
+
+            // Función para expandir todos los tutores
+            $('#expandAllTutors').click(function () {
+                $('.tutor-body').slideDown();
+                $('.tutor-header .glyphicon-chevron-down').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+            });
+
+            // Función para colapsar todos los tutores
+            $('#collapseAllTutors').click(function () {
+                $('.tutor-body').slideUp();
+                $('.tutor-header .glyphicon-chevron-up').removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+            });
+        });
+    </script>
+}

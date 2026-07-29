@@ -1,0 +1,488 @@
+﻿@{
+    ViewData["Title"] = "Gestión de Alumnos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+}
+
+<div class="sga-scope">
+    <div class="container-fluid usuarios-container">
+        <!-- Header Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-header-modern">
+                    <div class="header-content">
+                        <div class="header-icon">
+                            <i class="fa fa-user-graduate"></i>
+                        </div>
+                        <div class="header-text">
+                            <h1>Gestión de Alumnos</h1>
+                            <p class="subtitle">Sistema de Tutorías - Datos Académicos</p>
+                        </div>
+                    </div>
+                    <div class="header-divider"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas (se actualizarán con AJAX) -->
+        <!--<div class="row stats-section">
+            <div class="col-md-6">
+                <div class="stat-card-improved">
+                    <div class="stat-icon-large">
+                        <i class="fa fa-users"></i>
+                    </div>
+                    <div class="stat-details">
+                        <div class="stat-label">Total de Alumnos</div>
+                        <div class="stat-value" id="totalAlumnos">
+                            <i class="fa fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (ViewBag.UserNivel == 4)
+            {
+                <div class="col-md-6">
+                    <div class="stat-card-improved">
+                        <div class="stat-icon-large">
+                            <i class="fa fa-globe"></i>
+                        </div>
+                        <div class="stat-details">
+                            <div class="stat-label">Acceso</div>
+                            <div class="stat-value" style="font-size: 20px;">
+                                Todas las Carreras
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="col-md-6">
+                    <div class="stat-card-improved">
+                        <div class="stat-icon-large">
+                            <i class="fa fa-graduation-cap"></i>
+                        </div>
+                        <div class="stat-details">
+                            <div class="stat-label">Carrera Asignada</div>
+                            <div class="stat-value" style="font-size: 18px;">
+                                @ViewBag.UserCarreraNombre
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>-->
+
+        <!-- Tabla de Alumnos -->
+        <section class="data-block">
+            <h3 class="section-title">
+                <i class="fa fa-list"></i>
+                Datos de Alumnos
+            </h3>
+
+            <div class="row" style="margin-bottom:12px;">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="buscarAlumnos" class="control-label">Buscar:</label>
+                        <input id="buscarAlumnos" type="text" class="form-control" placeholder="Escribe para filtrar alumnos..." />
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="tablaAlumnos" class="table table-striped table-modern">
+                    <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Matrícula</th>
+                            <th>Área</th>
+                            <th>Turno</th>
+                            <th>Grado</th>
+                            <th>Grupo</th>
+                            <th>Estado</th>
+                            <th>Correo Electrónico</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Inicializar DataTable con Server-Side Processing
+            const tablaAlumnos = $('#tablaAlumnos').DataTable({
+                processing: true,
+                serverSide: true,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                dom: 'rtip',
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json",
+                    processing: "Cargando...",
+                    "infoFiltered": ""
+                },
+                ajax: {
+                    url: "@Url.Action("GetAlumnos", "Alumnos")",
+                    type: "POST",
+                    error: function (xhr, error, code) {
+                        console.log('Error al cargar alumnos:', error);
+                        alert('Error al cargar los datos de alumnos');
+                    },
+                    dataSrc: function (json) {
+                        // Actualizar estadística de total
+                        $('#totalAlumnos').text(json.recordsFiltered);
+                        return json.data;
+                    }
+                },
+                columns: [
+                    { data: "NombreCompleto", width: "20%" },
+                    { data: "Matricula", width: "12%" },
+                    {
+                        data: "EspecialidadNombre",
+                        width: "15%",
+                        render: function (data, type, row) {
+                            return !row.TieneEspecialidad
+                                ? '<span class="text-muted">' + data + '</span>'
+                                : data;
+                        }
+                    },
+                    {
+                        data: "TurnoNombre",
+                        width: "10%",
+                        render: function(data, type, row) {
+                            return row.IdTurno == 0
+                                ? '<span class="text-muted">' + data + '</span>'
+                                : data;
+                        }
+                    },
+                    {
+                        data: "GradoNombre",
+                        width: "8%",
+                        render: function(data, type, row) {
+                            return row.IdGrado == 0
+                                ? '<span class="text-muted">' + data + '</span>'
+                                : data;
+                        }
+                    },
+                    {
+                        data: "GrupoNombre",
+                        width: "8%",
+                        render: function(data, type, row) {
+                            return row.IdGrupo == 0
+                                ? '<span class="text-muted">' + data + '</span>'
+                                : data;
+                        }
+                    },
+                    {
+                        data: "Estado",
+                        width: "10%",
+                        render: function (data) {
+                            return data
+                                ? '<span class="status-badge status-active"><i class="fa fa-check"></i> Habilitado</span>'
+                                : '<span class="status-badge status-inactive"><i class="fa fa-times"></i> Deshabilitado</span>';
+                        }
+                    },
+                    { data: "CorreoElectronico", width: "17%" }
+                ],
+                order: [[0, "asc"]],
+                responsive: true,
+                columnDefs: [
+                    { targets: [0, 1, 2, 7], className: 'text-left' },
+                    { targets: [3, 4, 5, 6], className: 'text-center' }
+                ]
+            });
+
+            // Buscar en la tabla
+            $('#buscarAlumnos').on('keyup', function () {
+                tablaAlumnos.search(this.value).draw();
+            });
+        });
+    </script>
+}
+
+<style>
+    :root {
+        --primary-color: #1ab192;
+        --primary-dark: #169073;
+        --primary-light: #e8f8f5;
+        --secondary-color: #f8f9fa;
+        --border-color: #e9ecef;
+        --text-dark: #2c3e50;
+        --text-muted: #6c757d;
+        --shadow-light: 0 2px 4px rgba(0,0,0,0.1);
+        --shadow-medium: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .usuarios-container {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .page-header-modern {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 30px 35px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        box-shadow: var(--shadow-medium);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .header-icon {
+        background: rgba(255, 255, 255, 0.2);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .header-text h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .subtitle {
+        margin: 3px 0 0 0;
+        opacity: 0.9;
+        font-size: 16px;
+    }
+
+    .header-divider {
+        height: 3px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        margin-top: 15px;
+    }
+
+    .stats-section {
+        margin-bottom: 30px;
+    }
+
+    .stat-card-improved {
+        background: white;
+        border-radius: 12px;
+        padding: 20px 25px;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        margin-bottom: 20px;
+    }
+
+        .stat-card-improved:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-medium);
+        }
+
+    .stat-icon-large {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        width: 70px;
+        height: 70px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(26, 177, 146, 0.3);
+    }
+
+    .stat-details {
+        flex: 1;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-dark);
+        line-height: 1.2;
+    }
+
+    .data-block {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--shadow-light);
+        margin-bottom: 30px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 14px 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+        .section-title i {
+            font-size: 20px;
+            line-height: 1;
+            color: inherit;
+        }
+
+    .table-modern {
+        margin-bottom: 0;
+        background: white;
+    }
+
+        .table-modern thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--text-dark);
+            font-weight: 600;
+            border: none;
+            padding: 15px 12px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 14px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .table-modern tbody td {
+            padding: 12px;
+            vertical-align: middle;
+            border-color: var(--border-color);
+            font-size: 14px;
+        }
+
+        .table-modern tbody tr:hover {
+            background-color: var(--primary-light);
+        }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+        min-width: 90px;
+    }
+
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .dataTables_wrapper {
+        position: relative;
+        font-family: inherit;
+    }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 20px;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 20px;
+        }
+
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                padding: 8px 16px;
+                margin: 0 2px;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+                background: white;
+                color: var(--text-dark);
+            }
+
+                .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+                    background: var(--primary-color);
+                    color: white;
+                    border-color: var(--primary-color);
+                }
+
+                .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+                    background: var(--primary-color);
+                    color: white;
+                    border-color: var(--primary-color);
+                }
+
+    .data-block .form-group .control-label {
+        font-weight: 600;
+        margin-bottom: .35rem;
+    }
+
+    .data-block .form-control {
+        padding: .5rem .75rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .dataTables_processing {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%);
+        padding: 12px 20px;
+        background: white;
+        border: 2px solid var(--primary-color);
+        border-radius: 8px;
+        color: var(--primary-color);
+        font-weight: 600;
+        box-shadow: var(--shadow-medium);
+    }
+
+    @@media (max-width: 768px) {
+        .usuarios-container {
+            padding: 15px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stat-card-improved {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+        }
+    }
+</style>

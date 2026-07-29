@@ -1,0 +1,509 @@
+﻿@model IEnumerable<PlataformaWeb.Models.Materia>
+@using PlataformaWeb.Models.Materias
+
+@{
+    var _usrSesion = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var esDirector = _usrSesion != null && _usrSesion.EsDirector;
+}
+
+@section Styles{
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+<table id="tablaMaterias" class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Asignatura</th>
+            <th>Programa Educativo</th>
+            <th>Área</th>
+            <th>Cuatrimestre</th>
+            <th>Plan de Estudio</th>
+            <th>Unidades</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            bool hayMaterias = false;
+            if (Model != null)
+            {
+                foreach (var dummy in Model)
+                {
+                    hayMaterias = true;
+                    break;
+                }
+            }
+        }
+
+        @if (hayMaterias)
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td><strong>@item.Nombre</strong></td>
+                    <td>@(item.NombreCarrera ?? "N/A")</td>
+                    <td>@(item.NombreEspecialidad ?? "N/A")</td>
+                    <td>@(item.NombreGrado ?? "N/A")</td>
+                    <td>
+                        <div class="plan-info-container">
+                            @if (!string.IsNullOrEmpty(item.NombrePlanEstudio))
+                            {
+                                <span class="label @(item.LabelPlan ?? "label-default")">
+                                    @item.NombrePlanEstudio
+                                </span>
+                                <br />
+                                <small class="text-muted plan-details">
+                                    @if (item.AñoPlan.HasValue)
+                                    {
+                                        <span class="glyphicon glyphicon-time" title="Año del plan"></span>
+                                        <span>@item.AñoPlan</span>
+                                    }
+                                    @if (item.CalificacionMinima.HasValue)
+                                    {
+                                        <span class="separator">|</span>
+                                        <span class="glyphicon glyphicon-ok-sign" title="Calificación mínima"></span>
+                                        <span>@(item.RequisitoTexto ?? "N/A")</span>
+                                    }
+                                    @if (item.PermiteDecimales.HasValue)
+                                    {
+                                        <span class="separator">|</span>
+                                        <span class="glyphicon glyphicon-cog" title="Tipo de calificación"></span>
+                                        <span>@(item.TipoCalificacion ?? "N/A")</span>
+                                    }
+                                </small>
+                            }
+                            else
+                            {
+                                <span class="label label-default">Sin Plan</span>
+                            }
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="label @item.LabelUnidades" title="Número de unidades de la materia">
+                            <span class="glyphicon glyphicon-list-alt"></span> @item.NumeroUnidades
+                        </span>
+                        <br />
+                        <small class="text-muted">@item.TextoUnidades</small>
+                    </td>
+                    <td>
+                        <div class="estado-inner">
+                            @if (!esDirector)
+                            {
+                            <input type="checkbox"
+                                   @(item.Activo ? "checked" : "")
+                                   onchange="toggleActivo(@item.IdMateria, this)"
+                                   title="Click para activar/desactivar" />
+                            }
+                            <span class="label @(item.Activo ? "label-success" : "label-danger")">
+                                @(item.Activo ? "Activa" : "Inactiva")
+                            </span>
+                        </div>
+                    </td>
+                    <td class="acciones-col">
+                        @if (!esDirector)
+                        {
+                        <button type="button" class="btn btn-sm btn-warning"
+                                onclick="abrirModalEditar(@item.IdMateria, '@Html.Raw(item.Nombre.Replace("'", "\\'").Replace("\"", "&quot;"))', @item.IdCarrera, @item.IdEspecialidad, @item.IdGrado, @(item.IdPlanEstudio), @item.NumeroUnidades, @item.Activo.ToString().ToLower())"
+                                title="Editar asignatura">
+                            <span class="glyphicon glyphicon-edit"></span> Editar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger"
+                                onclick="abrirModalEliminar(@item.IdMateria, '@Html.Raw(item.Nombre.Replace("'", "\\'").Replace("\"", "&quot;"))')"
+                                title="Eliminar asignatura">
+                            <span class="glyphicon glyphicon-trash"></span> Eliminar
+                        </button>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="8" class="text-center">
+                    <div class="sga-filter-bar" style="margin-bottom: 20px;">
+                        <span class="glyphicon glyphicon-info-sign"></span>
+                        <strong>No se encontraron asignaturas</strong> que coincidan con los filtros aplicados.
+                        <br><small>Intente ajustar los criterios de búsqueda o limpie los filtros.</small>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@{
+    int totalMaterias = 0;
+    var planesInfo = new List<PlanInfo>();
+    int totalUnidades = 0;
+    var unidadesPorPlan = new Dictionary<string, int>();
+
+    if (Model != null)
+    {
+        foreach (var item in Model)
+        {
+            totalMaterias++;
+            totalUnidades += item.NumeroUnidades;
+
+            if (!string.IsNullOrEmpty(item.NombrePlanEstudio))
+            {
+                bool planExiste = false;
+                foreach (var planItem in planesInfo)
+                {
+                    if (planItem.NombrePlan == item.NombrePlanEstudio &&
+                        planItem.AñoPlan == (item.AñoPlan ?? 0))
+                    {
+                        planExiste = true;
+                        break;
+                    }
+                }
+
+                if (!planExiste)
+                {
+                    planesInfo.Add(new PlanInfo
+                    {
+                        NombrePlan = item.NombrePlanEstudio,
+                        AñoPlan = item.AñoPlan ?? 0,
+                        IdPlan = item.IdPlanEstudio
+                    });
+                }
+
+                // Contar unidades por plan
+                if (!unidadesPorPlan.ContainsKey(item.NombrePlanEstudio))
+                {
+                    unidadesPorPlan[item.NombrePlanEstudio] = 0;
+                }
+                unidadesPorPlan[item.NombrePlanEstudio] += item.NumeroUnidades;
+            }
+        }
+    }
+}
+
+<div class="sga-filter-bar" style="margin-bottom: 20px; margin-top: 15px;">
+    <div class="col-md-6">
+        <span class="glyphicon glyphicon-info-sign"></span>
+        <strong>@totalMaterias</strong> asignatura(s) encontrada(s).
+        <br />
+    </div>
+    <div class="col-md-6">
+        @if (planesInfo.Count > 0)
+        {
+            <div class="plan-summary">
+                <strong>Distribución por planes:</strong>
+                @foreach (var planData in planesInfo)
+                {
+                    var labelClass = "";
+                    if (planData.AñoPlan >= 2024) { labelClass = "label-success"; }
+                    else if (planData.AñoPlan >= 2020) { labelClass = "label-warning"; }
+                    else { labelClass = "label-info"; }
+
+                    // Contar materias de este plan
+                    int cantidadPlan = 0;
+                    int activasPlan = 0;
+                    if (Model != null)
+                    {
+                        foreach (var item in Model)
+                        {
+                            if (item.NombrePlanEstudio == planData.NombrePlan)
+                            {
+                                cantidadPlan++;
+                                if (item.Activo)
+                                {
+                                    activasPlan++;
+                                }
+                            }
+                        }
+                    }
+
+
+                    <span class="label @labelClass plan-summary-label" title="@activasPlan activas de @cantidadPlan totales">
+                        @planData.NombrePlan: @cantidadPlan
+                    </span>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .plan-info-container {
+        position: relative;
+        min-width: 140px;
+    }
+
+    .plan-details {
+        display: block;
+        margin-top: 3px;
+        font-size: 10px;
+        line-height: 1.2;
+        color: #666;
+    }
+
+        .plan-details .glyphicon {
+            font-size: 9px;
+            margin-right: 2px;
+        }
+
+        .plan-details .separator {
+            margin: 0 3px;
+            color: #ccc;
+        }
+
+    .plan-tooltip {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        cursor: help;
+    }
+
+        .plan-tooltip .glyphicon {
+            font-size: 10px;
+        }
+
+    /* Para unidades Bajas (1-2) */
+    .label-info {
+        background-color: #20c997 !important;
+    }
+
+    /* Para unidades Medias (3-4) */
+    .label-primary {
+        background-color: #4DB6AC !important;
+    }
+
+    /* Para unidades Altas (5-6) */
+    .label-warning {
+        background-color: #09a787 !important;
+    }
+
+    .plan-summary {
+        border-top: 1px solid #ddd;
+        padding-top: 8px;
+        margin-top: 8px;
+    }
+
+    .plan-summary-label {
+        margin-right: 8px;
+        margin-bottom: 4px;
+        display: inline-block;
+        font-size: 11px;
+        padding: 3px 6px;
+        cursor: help;
+    }
+
+        .plan-summary-label:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+    @@media (max-width: 768px) {
+        .plan-info-container {
+            min-width: auto;
+        }
+
+        .plan-details {
+            font-size: 9px;
+        }
+
+            .plan-details .separator {
+                display: none;
+            }
+
+        .plan-summary-label {
+            font-size: 10px;
+            padding: 2px 4px;
+            margin-right: 4px;
+        }
+
+        .table td {
+            padding: 6px 4px;
+            font-size: 12px;
+        }
+
+        .table th {
+            padding: 8px 4px;
+            font-size: 12px;
+        }
+
+        @@media (max-width: 480px) {
+            .table th:nth-child(3),
+            .table td:nth-child(3) {
+                display: none;
+            }
+        }
+    }
+
+    [title] {
+        cursor: help;
+    }
+
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 11px;
+        margin-right: 4px;
+        margin-bottom: 2px;
+    }
+
+        .btn-sm .glyphicon {
+            font-size: 10px;
+            margin-right: 3px;
+        }
+
+    .table > tbody > tr > td {
+        vertical-align: middle;
+        padding: 8px;
+    }
+
+    .table > thead > tr > th {
+        vertical-align: middle;
+        text-align: center;
+        padding: 10px 8px;
+        font-weight: bold;
+    }
+
+    input[type="checkbox"] {
+        margin-right: 6px;
+        transform: scale(1.1);
+    }
+
+    .table-hover > tbody > tr:hover {
+        background-color: #f0f7ff;
+        transition: background-color 0.2s ease;
+    }
+
+    .table th:nth-child(5),
+    .table td:nth-child(5) {
+        min-width: 160px;
+        max-width: 200px;
+    }
+
+    .table th:nth-child(6),
+    .table td:nth-child(6) {
+        min-width: 100px;
+        text-align: center;
+    }
+
+    .table td:first-child {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+        .table td:first-child:hover {
+            overflow: visible;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+    .label {
+        transition: all 0.2s ease;
+    }
+
+        .label:hover {
+            transform: scale(1.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+    .btn {
+        transition: all 0.2s ease;
+    }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+    .plan-details span[title] {
+        border-bottom: 1px dotted #ccc;
+        cursor: help;
+    }
+
+    .btn:focus,
+    input[type="checkbox"]:focus {
+        outline: 2px solid #1ab192;
+        outline-offset: 2px;
+    }
+
+    .sga-scope .sga-filter-bar {
+        border: 1px solid #cfe8e2;
+        color: var(--primary);
+        background: #e9f8f4;
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 10px 15px;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px 10px;
+    }
+
+        .sga-scope .sga-filter-bar strong {
+            margin-right: 5px;
+        }
+
+        .sga-scope .sga-filter-bar .btn-utt-outline {
+            padding: 4px 10px;
+            font-size: 1.2rem;
+        }
+
+    /* Color para los planes 2024+ */
+    .sga-scope .plan-summary-label.label-success {
+        background-color: #20c997 !important;
+    }
+
+    /* Color para los planes 2020+ */
+    .sga-scope .plan-summary-label.label-warning {
+        background-color: #4DB6AC !important;
+    }
+
+    .plan-info-container .label-success {
+        background-color: #20c997 !important;
+    }
+
+    .plan-info-container .label-warning {
+        background-color: #4DB6AC !important;
+    }
+
+    .sga-scope .table th,
+    .sga-scope .table td {
+        font-size: 12px !important;
+    }
+
+    .table > tbody > tr > td.acciones-col .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+        box-sizing: border-box;
+    }
+
+        .table > tbody > tr > td.acciones-col .btn:last-child {
+            margin-bottom: 0;
+        }
+
+    .estado-inner {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+</style>
+
+<script>
+    // Tooltips para nombres largos
+    $('.table td:first-child').each(function () {
+        var text = $(this).text();
+        if (text.length > 30) {
+            $(this).attr('title', text);
+        }
+    });
+
+    // Forzar container:'body' en todos los tooltips de la tabla para evitar
+    // que Bootstrap inyecte el div.tooltip dentro de las celdas (rectángulo blanco)
+    $('#tablaMaterias [title]').tooltip('destroy').tooltip({
+        placement: 'auto',
+        trigger: 'hover',
+        delay: { show: 500, hide: 100 },
+        container: 'body'
+    });
+</script>

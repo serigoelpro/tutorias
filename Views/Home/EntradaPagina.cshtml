@@ -1,0 +1,61 @@
+﻿@using Plataforma_Web.Models
+@{
+    ViewBag.Title = "EntradaPagina";
+    Usuario usuario = Session["Usuario"] as Usuario;
+}
+
+@*<h2>Entrada Pagina</h2>*@
+
+<style>
+    div {
+    }
+
+    }
+
+    h1 {
+        color: #2a75c5;
+    }
+
+    p1 {
+    }
+</style>
+
+
+
+<div class="row" style=" text-align:justify; font-family:Arial;">
+    <div class="col-md-1"></div>
+    <div class="col-md-10">
+        <br />
+
+        @*=======================Restriccion de usuario=============================*@
+
+        @if (usuario != null)
+        {
+
+            if (usuario.IdNivel <= 3)
+            {
+
+                <h1 style="color:#ff9400; font-family:Arial; font-size:40px;">Tutorías</h1>
+                <h4 style="line-height:200%;"><p1>Su función principal es la de digitalizar los formatos que lleven las áreas de tutorías, su finalidad es permitir que las todo las hojas las cuales se utilizan en dicho procesos se eliminen y sean suplantadas por la plataforma, en la cual el usuario accede a realizar diferentes funciones.</p1></h4>
+                <center><img class="img-responsive"  src="~/Imagenes/ImagenesPagina/LogoPlataT.jpg"  width="770" height="370" /></center>
+
+            }
+        }
+        else
+        {
+
+            <center>
+                <a class="btn btn-primary" href="@Url.Action("Login")"
+                   role="button">
+                    <span class="glyphicon glyphicon-log-in"></span>
+                    Iniciar Sesion
+                </a>
+            </center>
+
+        }
+
+
+    </div>
+
+    <div class="col-md-1"></div>
+</div>

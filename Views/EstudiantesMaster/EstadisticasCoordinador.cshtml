@@ -1,0 +1,155 @@
+@{
+<<<<<<< HEAD
+    Layout = "~/Views/Shared/_Layout.cshtml";
+=======
+    Layout = "~/Views/Shared/_SGALayout.cshtml";
+>>>>>>> ed6bc8305f16c485fc4f73afc4930f3d32ff181e
+}
+
+@{
+    ViewBag.Title = "Estadísticas - Coordinador";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/estadisticas-styles.css" rel="stylesheet" />
+}
+
+<!-- INICIO: BLOQUE EXPORTABLE -->
+<div id="bloque-exportable">
+    <div class="header-section">
+        <h1 class="main-title">
+            <i class="fas fa-chart-bar"></i>
+            Estadísticas de Becas y Transporte
+        </h1>
+
+        <!-- Usa la MISMA clase que el master -->
+        <div class="master-badge">
+            <i class="fas fa-graduation-cap"></i>
+            @ViewBag.NombreCarrera
+        </div>
+    </div>
+
+    <!-- MISMA estructura y clases que el master -->
+    <div class="stats-grid master-grid">
+        <div class="stat-card primary large">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Estudiantes</h3>
+                <div class="stat-number" id="totalEstudiantes">@ViewBag.EstudiantesPorCarrera</div>
+            </div>
+        </div>
+
+        <div class="stat-card success large">
+            <div class="stat-icon">
+                <i class="fas fa-award"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Con Beca</h3>
+                <div class="stat-number" id="conBeca">@ViewBag.cantidadAlumnosBeca</div>
+                <div class="stat-percentage">
+                    @{
+                        double porcentajeBeca = ViewBag.EstudiantesPorCarrera > 0
+                            ? (double)ViewBag.cantidadAlumnosBeca / ViewBag.EstudiantesPorCarrera * 100
+                            : 0;
+                    }
+                    @porcentajeBeca.ToString("F1")%
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card info large">
+            <div class="stat-icon">
+                <i class="fas fa-bus"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Con Transporte</h3>
+                <div class="stat-number" id="conTransporte">@ViewBag.cantidadAlumnosTransporte</div>
+                <div class="stat-percentage">
+                    @{
+                        double porcentajeTransporte = ViewBag.EstudiantesPorCarrera > 0
+                            ? (double)ViewBag.cantidadAlumnosTransporte / ViewBag.EstudiantesPorCarrera * 100
+                            : 0;
+                    }
+                    @porcentajeTransporte.ToString("F1")%
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card warning large">
+            <div class="stat-icon">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Monto Total</h3>
+                <div class="stat-number" id="montoTotal">@ViewBag.montoTotalPorCuatrimestre</div>
+                <div class="stat-subtitle">Por cuatrimestre</div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- FIN: BLOQUE EXPORTABLE -->
+
+<div class="charts-section">
+    <div class="chart-container">
+        <div class="chart-header">
+            <h3>Distribución de Estudiantes</h3>
+        </div>
+        <div class="chart-content">
+            <canvas id="distributionChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-header">
+            <h3>Comparativa de Apoyo</h3>
+        </div>
+        <div class="chart-content">
+            <canvas id="supportChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="actions-section">
+    <a href="@Url.Action("DetallesBeca")" class="btn btn-primary">
+        <i class="fas fa-chart-pie"></i>
+        Ver Detalles por Grupo
+    </a>
+    <a href="@Url.Action("DetallesBecaGrado")" class="btn btn-secondary">
+        <i class="fas fa-layer-group"></i>
+        Ver Detalles por Grado
+    </a>
+    <a href="@Url.Action("DetallesBecaEspecialidad")" class="btn btn-info">
+        <i class="fas fa-cogs"></i>
+        Ver Detalles por Especialidad
+    </a>
+</div>
+
+<div class="export-section">
+    <h3>Exportar Datos</h3>
+    <div class="export-buttons">
+        <button id="export-pdf-btn" class="btn btn-danger">
+            <i class="fas fa-file-pdf"></i>
+            Exportar como PDF
+        </button>
+    </div>
+</div>
+
+<!-- Librerías -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="~/ViewsStyles/Master/estadisticas-coordinador.js"></script>
+
+<script>
+    // Pass data to JavaScript
+    window.estadisticasData = {
+        totalEstudiantes: @ViewBag.EstudiantesPorCarrera,
+        conBeca: @ViewBag.cantidadAlumnosBeca,
+        conTransporte: @ViewBag.cantidadAlumnosTransporte,
+        sinApoyo: @(ViewBag.EstudiantesPorCarrera - ViewBag.cantidadAlumnosBeca - ViewBag.cantidadAlumnosTransporte +
+                     Math.Min(ViewBag.cantidadAlumnosBeca, ViewBag.cantidadAlumnosTransporte))
+    };
+</script>

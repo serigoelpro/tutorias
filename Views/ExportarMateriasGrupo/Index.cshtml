@@ -1,0 +1,306 @@
+﻿@model IEnumerable<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>
+@{
+    ViewBag.Title = "Grupo";
+    int i = 0;
+
+    // ✅ OBTENER DATOS DEL GRUPO PARA EXPORTACIÓN - SIN OPERADORES NULOS
+    var grupoInfo = ViewBag.GrupoInfo;
+    int idGrupo = 1;
+    int idCarrera = 1;
+    int idGrado = 1;
+    string nombreGrupo = "Grupo";
+
+    if (grupoInfo != null)
+    {
+        try
+        {
+            var grupoInfoObj = (dynamic)grupoInfo;
+            idGrupo = (int)grupoInfoObj.IdGrupo;
+            idCarrera = (int)grupoInfoObj.IdCarrera;
+            idGrado = (int)grupoInfoObj.IdGrado;
+            nombreGrupo = (string)grupoInfoObj.NombreGrupo;
+        }
+        catch
+        {
+            // Usar valores por defecto si hay error
+            idGrupo = 1;
+            idCarrera = 1;
+            idGrado = 1;
+            nombreGrupo = "Grupo";
+        }
+    }
+
+    var alumnos = ViewBag.Alumnos as List<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>;
+    if (alumnos == null)
+    {
+        alumnos = new List<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>();
+    }
+}
+
+<h2>Grupo</h2>
+
+<!-- ✅ BOTÓN DE EXPORTAR MATERIAS - SIN CAMBIAR DISEÑO ORIGINAL -->
+@if (idGrupo > 0 && idCarrera > 0 && idGrado > 0)
+{
+    <div style="margin-bottom: 15px;">
+        <button type="button" class="btn btn-success" onclick="exportarMateriasGrupo()">
+            <span class="glyphicon glyphicon-download-alt"></span> Exportar Materias del Grupo
+        </button>
+    </div>
+}
+
+<table class="table">
+    <tr>
+        <th>#</th>
+        <th>@Html.DisplayNameFor(model => model.Matricula)</th>
+        <th>@Html.DisplayNameFor(model => model.Nombre)</th>
+        <th>@Html.DisplayNameFor(model => model.Estado)</th>
+        <th>Detalles</th>
+        <th>Imprimir</th>
+        <th>Seguimiento individual</th>
+        <th><b>Materias</b></th>
+        <th>Tramitar baja de alumno</th>
+        <th>Remover del grupo</th>
+        <th>Eliminacion definitiva</th>
+    </tr>
+
+    @foreach (var item in alumnos)
+    {
+        i++;
+        <tr>
+            <th>@i.ToString()</th>
+            <td>@Html.DisplayFor(modelItem => item.Matricula)</td>
+            <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+
+            @if (item.Estado == true)
+            {
+                <td>
+                    <span class="glyphicon glyphicon-eye-open" style="color:green"></span>
+                    Revisado
+                </td>
+            }
+            else
+            {
+                <td>
+                    <span class="glyphicon glyphicon-edit" style="color:red"></span>
+                    Sin Revisar
+                </td>
+            }
+
+            @if (item.Estado == true)
+            {
+                <td>
+                    <a class="btn btn-primary" href="@Url.Action("Detalles", new { id = item.IdPersona })">
+                        <span class="glyphicon glyphicon-eye-open"></span> Ver
+                    </a>
+                </td>
+            }
+            else
+            {
+                <td></td>
+            }
+
+            @if (item.Estado == true)
+            {
+                <td>
+                    <a class="btn btn-primary" href="@Url.Action("ReporteEntrevista", new { id = item.IdPersona })">
+                        <span class="glyphicon glyphicon-paperclip"></span> Imprimir
+                    </a>
+                </td>
+            }
+            else
+            {
+                <td></td>
+            }
+
+            <td>
+                <a class="btn btn-primary" href="@Url.Action("Index", "Individuals", new { id = item.IdPersona })">
+                    <span class="glyphicon glyphicon-file"></span> Seguimiento individual
+                </a>
+            </td>
+
+            <td>
+                <a class="btn btn-primary" href="@Url.Action("Index", "MateriasAlumno", new { id = item.IdPersona })">
+                    <span class="glyphicon glyphicon-book"></span> Materias
+                </a>
+            </td>
+
+            <td>
+                <a class="btn btn-primary" href="@Url.Action("Index", "Bajas", new { id = item.IdPersona })">
+                    <span class="glyphicon glyphicon-file"></span> Tramitar baja
+                </a>
+            </td>
+
+            @if (item.Grado != null)
+            {
+                <td>
+                    <a class="btn btn-danger" href="@Url.Action("Opcion1", "Reportar", new { id = item.IdPersona })">
+                        <span class="glyphicon glyphicon-exclamation-sign"></span> Remover del grupo
+                    </a>
+                </td>
+            }
+            else
+            {
+                <td>Removido</td>
+            }
+
+            <td>
+                <a class="btn btn-danger" href="@Url.Action("Eliminar", new { id = item.IdPersona })">
+                    <span class="glyphicon glyphicon-exclamation-sign"></span> Eliminación
+                </a>
+            </td>
+        </tr>
+    }
+</table>
+
+<!-- ✅ MODAL PARA CONFIRMACIÓN DE EXPORTACIÓN -->
+<div class="modal fade" id="modalExportacion" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">
+                    <span class="glyphicon glyphicon-download-alt"></span>
+                    Exportar Materias del Grupo
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <span class="glyphicon glyphicon-info-sign"></span>
+                    <strong>¿Confirmar exportación?</strong>
+                    <p>Se generará un archivo Excel con las calificaciones de todos los alumnos del grupo.</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Grupo:</strong> @nombreGrupo
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Total Alumnos:</strong> @alumnos.Count
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <h5><strong>El archivo Excel contendrá:</strong></h5>
+                    <ul>
+                        <li>✅ Matrícula y nombre de cada alumno</li>
+                        <li>✅ Calificaciones de todas las materias del grado</li>
+                        <li>✅ Estados: Acreditada, Reprobada, Extraordinario, Pendiente</li>
+                        <li>✅ Colores por estado para fácil identificación</li>
+                        <li>✅ Resumen estadístico del grupo</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    <span class="glyphicon glyphicon-remove"></span> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmarExportacion()" id="btnConfirmarExportacion">
+                    <span class="glyphicon glyphicon-download-alt"></span> Descargar Excel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ JAVASCRIPT PARA FUNCIONALIDADES -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+// ====================================================================
+// ✅ FUNCIÓN PARA EXPORTAR MATERIAS DEL GRUPO
+// ====================================================================
+function exportarMateriasGrupo() {
+    var idGrupo = @idGrupo;
+    var idCarrera = @idCarrera;
+    var idGrado = @idGrado;
+
+    console.log('Datos para exportar:');
+    console.log('ID Grupo:', idGrupo);
+    console.log('ID Carrera:', idCarrera);
+    console.log('ID Grado:', idGrado);
+
+    if (idGrupo <= 0 || idCarrera <= 0 || idGrado <= 0) {
+        alert('❌ Error: No se encontraron datos válidos del grupo para la exportación.\nGrupo: ' + idGrupo + ', Carrera: ' + idCarrera + ', Grado: ' + idGrado);
+        return;
+    }
+
+    $('#modalExportacion').modal('show');
+}
+
+// ====================================================================
+// ✅ FUNCIÓN PARA CONFIRMAR Y EJECUTAR EXPORTACIÓN
+// ====================================================================
+function confirmarExportacion() {
+    var btnConfirmar = $('#btnConfirmarExportacion');
+    var textoOriginal = btnConfirmar.html();
+
+    // Mostrar indicador de carga
+    btnConfirmar.prop('disabled', true)
+               .html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Generando Excel...');
+
+    // ✅ USAR EL MISMO CONTROLADOR PARA EXPORTACIÓN
+    var url = '@Url.Action("ExportarMateriasGrupo", "ExportarMateriasGrupo")' +
+              '?idGrupo=' + @idGrupo +
+              '&idCarrera=' + @idCarrera +
+              '&idGrado=' + @idGrado;
+
+    console.log('URL de exportación:', url);
+
+    // Crear enlace temporal para descarga
+    var linkDescarga = document.createElement('a');
+    linkDescarga.href = url;
+    linkDescarga.download = '';
+    linkDescarga.style.display = 'none';
+    document.body.appendChild(linkDescarga);
+
+    // Iniciar descarga
+    linkDescarga.click();
+
+    // Limpiar elemento temporal
+    setTimeout(function() {
+        document.body.removeChild(linkDescarga);
+        btnConfirmar.prop('disabled', false).html(textoOriginal);
+        $('#modalExportacion').modal('hide');
+
+        // Mostrar notificación de éxito
+        alert('✅ Archivo Excel generado correctamente');
+    }, 1000);
+}
+
+// ====================================================================
+// ✅ INICIALIZACIÓN
+// ====================================================================
+$(document).ready(function() {
+    console.log('=== Vista de Grupo Cargada con Exportación de Materias ===');
+    console.log('Controlador: ExportarMateriasGrupo');
+    console.log('Grupo ID:', @idGrupo);
+    console.log('Carrera ID:', @idCarrera);
+    console.log('Grado ID:', @idGrado);
+    console.log('Nombre Grupo:', '@nombreGrupo');
+    console.log('Total Alumnos:', @alumnos.Count);
+
+    // Verificar que el botón aparezca
+    if (@idGrupo > 0 && @idCarrera > 0 && @idGrado > 0) {
+        console.log('✅ Botón de exportación debería estar visible');
+    } else {
+        console.log('❌ Datos insuficientes para mostrar botón de exportación');
+    }
+});
+</script>
+
+<!-- ✅ ESTILOS MÍNIMOS PARA MODAL Y NOTIFICACIONES -->
+<style>
+    .glyphicon-refresh-animate {
+        animation: spin .7s infinite linear;
+    }
+
+    @@keyframes spin {
+        from {
+            transform: scale(1) rotate(0deg);
+        }
+
+        to {
+            transform: scale(1) rotate(360deg);
+        }
+    }
+</style>

@@ -1,0 +1,86 @@
+﻿@using Plataforma_Web.Models.PrimeraEntrevista
+@model PlataformaWeb.Models.Seguimiento
+
+@{
+    DatosPersonales Alumno = ViewBag.Alumno as DatosPersonales;
+    ViewBag.Title = "Edit";
+}
+
+<h2>Editar</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Seguimiento de @ViewBag.Alumno.Nombre</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.IdSeguimiento)
+        @Html.HiddenFor(model => model.IdIndividual)
+        @Html.HiddenFor(model => model.Fecha)
+        @*<div class="form-group">
+                @Html.LabelFor(model => model.IdIndividual, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.IdIndividual, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.IdIndividual, "", new { @class = "text-danger" })
+                </div>
+            </div>*@
+
+        @*<div class="form-group">
+                @Html.LabelFor(model => model.Fecha, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Fecha, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.Fecha, "", new { @class = "text-danger" })
+                </div>
+            </div>*@
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Vulnerabilidad, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownList("Vulnerabilidad", new List<SelectListItem>
+                 {
+                    new SelectListItem{ Text="No vulnerable", Value = "No vulnerable" },
+                    new SelectListItem{ Text="Economico", Value = "Economico" },
+                    new SelectListItem{ Text="Academico", Value = "Academico" },
+                    new SelectListItem{ Text="Personal", Value = "Personal" }
+                 }, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.Vulnerabilidad, "", new { @class = "text-danger" })
+                @*@Html.EditorFor(model => model.Vulnerabilidad, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.Vulnerabilidad, "", new { @class = "text-danger" })*@
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Problematica, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Problematica, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Problematica, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Accion, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Accion, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Accion, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Guardar" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+
+<div>
+    @Html.ActionLink(
+        "Regresar",
+        "Index",
+        "Individuals",
+        new { id = ViewBag.IdPersona },   // <-- usa IdPersona, no IdIndividual
+        null)
+</div>

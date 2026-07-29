@@ -1,0 +1,60 @@
+﻿@model PlataformaWeb.BecasTransporte.Models.Estudiante
+
+@{
+    ViewBag.Title = "Estadisticas";
+    //int IdCarrera = (int)ViewBag.IdCarrea;
+}
+
+<br />
+<br />
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h2 class="text-center">Estadística Actual De Alumnos</h2>
+    </div>
+    <div class="text-center">
+        <br />
+        <h3>Cantidad De Alumnos Total de la Carrera: <b>@ViewBag.EstudiantesPorCarrera</b></h3>
+        <h3>Monto que Recibe la Carrera Por Becas: <b>@ViewBag.montoTotalPorCuatrimestre</b></h3>
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="caption text-center">
+                        <h3 class="text-primary">Alumnos Con Beca</h3>
+                        <h4 class="" style="font-weight:bold">@ViewBag.cantidadAlumnosBeca</h4>
+                        <p>
+                            <a href="@Url.Action("DetallesBeca","Estudiantes")" class="btn btn-primary" role="button">Detalles</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="caption text-center">
+                        <h3 class="text-primary">Alumnos Con Transporte</h3>
+                        <h4 class="" style="font-weight:bold">@ViewBag.cantidadAlumnosTransporte</h4>
+                        <p>
+                            <a href="@Url.Action("MapaTransporte","Estudiantes")" class="btn btn-primary" role="button">Detalles</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="thumbnail">
+                    <div class="caption text-center">
+                        <h3 class="text-primary">Historial</h3>
+                        <h4 class="" style="font-weight:bold">Ver Meses Anteriores</h4>
+                        <p>
+                            <a href="@Url.Action("HistoiralBecasTransporte","Estudiantes")" class="btn btn-primary" role="button">Ver</a>
+
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel-footer">
+        <p></p>
+    </div>
+</div>

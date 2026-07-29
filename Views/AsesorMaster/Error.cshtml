@@ -1,0 +1,22 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Error";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-dashboard.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <div class="container mt-5">
+        <div class="alert alert-danger shadow p-4 rounded">
+            <h1 class="display-4">Error</h1>
+            <p class="lead">
+                Ocurrió un error al procesar los datos del alumno.<br />
+                Pida al alumno completar la entrevista y vuelva a intentarlo.
+            </p>
+        </div>
+    </div>
+</div>
+    @section Scripts {
+        <script src="~/viewstyles/sga-theme.js"></script>
+    }

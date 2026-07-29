@@ -1,0 +1,460 @@
+﻿@{
+    ViewBag.Title = "Canalización Estudiantil";
+}
+
+<style>
+    #psicologo-selector-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .psico-tarjeta {
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+        .psico-tarjeta:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .psico-tarjeta.recomendado {
+            border-color: #28a745;
+            background-color: #f8fff8;
+        }
+
+        .psico-tarjeta.seleccionada {
+            border-color: #007bff;
+            background-color: #f0f7ff;
+            box-shadow: 0 0 10px rgba(0,123,255,0.3);
+            border-width: 3px;
+        }
+
+        .psico-tarjeta h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .psico-tarjeta .tag-rec {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #28a745;
+            background-color: #e9f9ec;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .psico-tarjeta h5 {
+            margin: 10px 0 5px 0;
+            font-size: 0.9rem;
+            color: #555;
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 3px;
+        }
+
+        .psico-tarjeta ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 0.85rem;
+            color: #444;
+        }
+
+            .psico-tarjeta ul li {
+                margin-bottom: 5px;
+            }
+</style>
+
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/Canalizaciones.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/CanalizacionesFix.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<div class="container" style="margin-top: 50px;">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h1 style="color: #1ab192; margin-bottom: 30px; font-weight: bold;">
+                <i class="glyphicon glyphicon-send" style="margin-right: 10px;"></i>
+                Bienvenido al portal de Canalización
+            </h1>
+            <h3 style="margin-bottom: 40px; color: #555;">¿Qué desea realizar?</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 text-center">
+            <a href="#" class="btn-card" data-toggle="modal" data-target="#TutorModal">
+                <div class="card" style="border-radius: 15px; padding: 30px; background-color: #f8f9fa; border: 2px solid #1ab192; height: 250px; transition: all 0.3s ease;">
+                    <div class="card-body">
+                        <i class="glyphicon glyphicon-user" style="font-size: 50px; color: #1ab192; margin-bottom: 20px;"></i>
+                        <h3 style="color: #333; font-weight: bold;">Solicitar canalización</h3>
+                        <h4 style="color: #666;">por medio del tutor</h4>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 text-center">
+            <a href="#" class="btn-card" data-toggle="modal" data-target="#IndividualModal">
+                <div class="card" style="border-radius: 15px; padding: 30px; background-color: #f8f9fa; border: 2px solid #1ab192; height: 250px; transition: all 0.3s ease;">
+                    <div class="card-body">
+                        <i class="glyphicon glyphicon-pencil" style="font-size: 50px; color: #1ab192; margin-bottom: 20px;"></i>
+                        <h3 style="color: #333; font-weight: bold;">Solicitar canalización</h3>
+                        <h4 style="color: #666;">por iniciativa propia</h4>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="TutorModal" tabindex="-1" role="dialog" aria-labelledby="modal1Label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom: 2px solid #1ab192; display: flex; justify-content: space-between; align-items: center;">
+                <h4 class="modal-title" id="modal2Label" style="color: #1ab192;">Notificar al tutor</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="padding: 0.5rem; margin: -0.5rem -0.5rem -0.5rem auto;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p style="color: #555;">Escribe un mensaje para notificar al tutor sobre esta solicitud de canalización. El tutor recibirá un aviso con tu texto.</p>
+                <input type="hidden" id="tutorIdPersona" value="@(ViewBag.IdPersona ?? 0)" />
+                <div style="margin-bottom: 20px;">
+                    <h6 style="color: #555; margin-bottom: 10px;">Mensaje para el tutor:</h6>
+                    <textarea class="form-control" id="tutorMessage" rows="4" placeholder="Escribe tu mensaje aquí..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: none; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="confirmTutorNotification" style="background-color: #1ab192; border-color: #1ab192;">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="IndividualModal" tabindex="-1" role="dialog" aria-labelledby="modal2Label" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom: 2px solid #1ab192; display: flex; justify-content: space-between; align-items: center;">
+                <h4 class="modal-title" id="modal2Label" style="color: #1ab192;">Solicitar canalización por iniciativa propia</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="padding: 0.5rem; margin: -0.5rem -0.5rem -0.5rem auto;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="individualCanalizationForm" action="@Url.Action("SolicitarCanalizacionIndividual", "CanalizacionesE")" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="IdPersona" id="IdPersona" value="@(ViewBag.IdPersona ?? 0)" />
+
+                    <h5 style="color: #555; font-weight: bold;" class="mt-0 mb-3">Tus datos personales (revisa que estén correctos):</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 style="color: #555; margin-bottom: 5px;">Nombre del Estudiante:</h6>
+                            <input type="text" class="form-control" value="@(ViewBag.Nombre ?? "")" disabled />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 style="color: #555; margin-bottom: 5px;">Matrícula:</h6>
+                            <input type="text" class="form-control" value="@(ViewBag.Matricula ?? "")" disabled />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 style="color: #555; margin-bottom: 5px;">Carrera:</h6>
+                            <input type="text" class="form-control" value="@(ViewBag.Carrera ?? "")" disabled />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 style="color: #555; margin-bottom: 5px;">Grupo:</h6>
+                            <input type="text" class="form-control" value="@(ViewBag.Grupo ?? "")" disabled />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <h5 style="color: #555; font-weight: bold;" class="mt-4 mb-3">Describe tu situación para los psicopedagogos:</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 style="color: #555; margin-bottom: 5px;">Referencia a una Vulnerabilidad Pasada (Opcional):</h6>
+                            <select name="SelectedPastVulnerabilityId" id="pastVulnerabilities" class="form-control">
+                                <option value="">Ninguna</option>
+                                @if (ViewBag.PastVulnerabilities != null)
+                                {
+                                    foreach (var item in (List<SelectListItem>)ViewBag.PastVulnerabilities)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 style="color: #555; margin-bottom: 5px;">Tipo de Canalización:</h6>
+                            <select name="IdTipoCanalizacion" id="IdTipoCanalizacion" class="form-control" required>
+                                <option value="">-- Seleccione un tipo --</option>
+                                @if (ViewBag.TiposDeCanalizacion != null)
+                                {
+                                    foreach (var tipo in (List<SelectListItem>)ViewBag.TiposDeCanalizacion)
+                                    {
+                                        <option value="@tipo.Value">@tipo.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3" id="psicologo-section-container" style="display: none; margin-top: 15px;">
+                        <label class="form-label" style="color: #555; font-weight: bold;">Asignar psicólogo (opcional):</label>
+
+                        <input type="hidden" name="IdPsicologo" id="IdPsicologo" />
+                        <input type="hidden" id="SelectedPsicologoNombre" />
+
+                        <div id="psicologo-selector-container">
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <h6 style="color: #555; margin-bottom: 5px;">Motivo de la Canalización:</h6>
+                        <textarea class="form-control" name="MotivoCanalizacion" id="MotivoCanalizacion" rows="5" placeholder="Escriba el motivo de la canalización..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: none; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success" style="background-color: #1ab192; border-color: #1ab192;">Enviar Canalización</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#IndividualModal').on('show.bs.modal', function (event) {
+            var idPersona = $('#IdPersona').val();
+            if (idPersona == 0 || idPersona == null) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo identificar al estudiante.', confirmButtonColor: '#1ab192' })
+                    .then(() => { window.location.href = '@Url.Action("Login", "Account")'; });
+                event.preventDefault();
+            }
+        });
+
+        $('#TutorModal').on('show.bs.modal', function (event) {
+            var idPersona = $('#tutorIdPersona').val();
+            if (idPersona == 0 || idPersona == null) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo identificar al estudiante.', confirmButtonColor: '#1ab192' })
+                    .then(() => { window.location.href = '@Url.Action("Login", "Account")'; });
+                event.preventDefault();
+            }
+        });
+
+        $('#pastVulnerabilities').change(function () {
+        });
+
+        // --- AQUÍ ESTABA EL ERROR, YA FUE ELIMINADO ---
+
+        $('#confirmTutorNotification').on('click', function () {
+            var idPersona = $('#tutorIdPersona').val();
+            var mensaje = $('#tutorMessage').val().trim();
+
+            if (!mensaje) {
+                Swal.fire({ icon: 'warning', title: 'Advertencia', text: 'Por favor, ingrese un mensaje para el tutor.', confirmButtonColor: '#1ab192' });
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("NotificarTutor", "CanalizacionesE")',
+                type: 'POST',
+                data: {
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
+                    idEstudiante: idPersona,
+                    mensaje: mensaje
+                },
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({ icon: 'success', title: 'Éxito', text: response.message, confirmButtonColor: '#1ab192' })
+                            .then(() => {
+                                $('#TutorModal').modal('hide');
+                                $('#tutorMessage').val('');
+                            });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: response.message, confirmButtonColor: '#1ab192' });
+                    }
+                },
+                error: function (xhr) {
+                    var errorMessage = xhr.responseJSON?.message || 'Error al notificar al tutor.';
+                    Swal.fire({ icon: 'error', title: 'Error', text: errorMessage, confirmButtonColor: '#1ab192' });
+                }
+            });
+        });
+
+        $('#IdTipoCanalizacion').change(function () {
+            var tipoId = $(this).val();
+            var $sectionContainer = $('#psicologo-section-container');
+            var $cardContainer = $('#psicologo-selector-container');
+
+            if (tipoId && tipoId !== "") {
+                $sectionContainer.show();
+                $cardContainer.empty();
+                $('#IdPsicologo').val('');
+                $cardContainer.html('<p>Cargando psicólogos...</p>');
+
+                $.ajax({
+                    url: '@Url.Action("GetPsicologosPorTipo", "CanalizacionesE")',
+                    type: 'GET',
+                    data: { tipoId: tipoId },
+                    success: function (data) {
+                        $cardContainer.empty();
+                        if (data && data.length > 0) {
+                            $.each(data, function (i, psico) {
+                                var recomendadoTag = psico.EsRecomendado ? '<span class="tag-rec">✅ Recomendado</span>' : '';
+                                var recomendadoClass = psico.EsRecomendado ? 'recomendado' : '';
+
+                                var cardHtml = '<div class="psico-tarjeta ' + recomendadoClass + '" data-id="' + psico.IdPsicologo + '">';
+                                cardHtml += '<h4>' + psico.NombreCompleto + recomendadoTag + '</h4>';
+
+                                // AGREGAMOS EL HORARIO AQUÍ
+                                cardHtml += '<p style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">' +
+                                    '<i class="fas fa-clock"></i> <strong>Horario:</strong> ' + psico.Horario +
+                                    '</p>';
+
+                                if (psico.Areas && psico.Areas.length > 0) {
+                                    $.each(psico.Areas, function (j, area) {
+                                        cardHtml += '<h5>' + area.NombreArea + '</h5><ul>';
+                                        $.each(area.Detalles, function (k, detalle) { cardHtml += '<li>' + detalle + '</li>'; });
+                                        cardHtml += '</ul>';
+                                    });
+                                } else {
+                                    cardHtml += '<p><i>No hay detalles.</i></p>';
+                                }
+                                cardHtml += '</div>';
+                                $cardContainer.append(cardHtml);
+                            });
+                        } else {
+                            $cardContainer.html('<p>No se encontraron psicólogos.</p>');
+                        }
+                    },
+                    error: function () {
+                        $cardContainer.html('<p style="color: red;">Error al cargar.</p>');
+                    }
+                });
+            } else {
+                $sectionContainer.hide();
+                $cardContainer.empty();
+                $('#IdPsicologo').val('');
+            }
+        });
+
+        $(document).on('click', '.psico-tarjeta', function () {
+            var $card = $(this);
+            $('.psico-tarjeta').removeClass('seleccionada');
+            $card.addClass('seleccionada');
+            $('#IdPsicologo').val($card.data('id'));
+        });
+
+        $('#IndividualModal').on('hidden.bs.modal', function () {
+            $('#individualCanalizationForm')[0].reset();
+            $('#psicologo-section-container').hide();
+            $('#psicologo-selector-container').empty();
+        });
+
+        // Evento Submit Corregido con Confirmación
+        $('#individualCanalizationForm').on('submit', function (e) {
+            e.preventDefault();
+            var form = $(this);
+            var motivo = $('#MotivoCanalizacion').val().trim();
+            var tipo = $('#IdTipoCanalizacion').val();
+
+            if (!motivo || !tipo) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Advertencia',
+                    text: 'Por favor, seleccione un tipo y describa el motivo de la canalización.',
+                    confirmButtonColor: '#1ab192'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: '¿Confirmar solicitud?',
+                html: "¿Estás seguro de que deseas enviar esta solicitud?<br><br><b>Nota:</b> Solo puedes realizar una solicitud por día.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#1ab192',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, enviar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: form.attr('action'),
+                        type: form.attr('method'),
+                        data: form.serialize(),
+                        beforeSend: function() {
+                             Swal.fire({
+                                title: 'Enviando...',
+                                allowOutsideClick: false,
+                                didOpen: () => { Swal.showLoading() }
+                            });
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Éxito',
+                                    text: response.message,
+                                    confirmButtonColor: '#1ab192'
+                                }).then(() => {
+                                    $('#IndividualModal').modal('hide');
+                                    form[0].reset();
+                                    $('#psicologo-section-container').hide();
+                                    $('#psicologo-selector-container').empty();
+                                    $('#IdPsicologo').val('');
+                                });
+                            } else {
+                                var esAviso = response.message && response.message.includes("Aviso");
+                                Swal.fire({
+                                    icon: esAviso ? 'warning' : 'error',
+                                    title: esAviso ? 'Atención' : 'Error',
+                                    text: response.message,
+                                    confirmButtonColor: '#1ab192'
+                                });
+                            }
+                        },
+                        error: function (xhr) {
+                            var errorMessage = xhr.responseJSON?.message || 'Error al enviar la canalización.';
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: errorMessage,
+                                confirmButtonColor: '#1ab192'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>
+            Swal.fire({ icon: 'success', title: 'Éxito', text: '@TempData["SuccessMessage"]', confirmButtonColor: '#1ab192' });
+            </text>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <text>
+            Swal.fire({ icon: 'error', title: 'Error', text: '@TempData["ErrorMessage"]', confirmButtonColor: '#1ab192' });
+            </text>
+        }
+    });
+</script>

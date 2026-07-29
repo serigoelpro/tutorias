@@ -1,0 +1,636 @@
+﻿@model List<PlataformaWeb.Models.Materias.MateriaAlumno>
+@{
+    ViewBag.Title = "Mis Materias";
+
+    string nombreAlumno = ViewBag.AlumnoNombre as string ?? "Alumno";
+    string matricula = ViewBag.Matricula as string ?? "";
+    string carrera = ViewBag.Carrera as string ?? "";
+    int idPersona = ViewBag.IdPersona != null ? (int)ViewBag.IdPersona : 0;
+
+    // OBTENER EL GRADO ACTUAL DEL ALUMNO DESDE VIEWBAG
+    int gradoActualAlumno = ViewBag.IdGrado != null ? (int)ViewBag.IdGrado : 0;
+
+    // ESTADO ACTUAL DEL ALUMNO
+    int totalReprobadas = ViewBag.TotalReprobadas != null ? (int)ViewBag.TotalReprobadas : 0;
+    int totalExtraordinarios = ViewBag.TotalExtraordinarios != null ? (int)ViewBag.TotalExtraordinarios : 0;
+
+    // LÍMITES CORREGIDOS: >=4 arrastre O >=4 extraordinario = BAJA
+    bool dadoDeBajaPorArrastre = totalReprobadas >= 4;
+    bool dadoDeBajaPorExtraordinarios = totalExtraordinarios >= 4;
+    bool alumnoReprobado = dadoDeBajaPorArrastre || dadoDeBajaPorExtraordinarios;
+
+    // Determinar motivo de reprobación
+    string motivoReprobacion = "";
+    if (dadoDeBajaPorArrastre && dadoDeBajaPorExtraordinarios)
+    {
+        motivoReprobacion = "Excedió límite de materias en arrastre (≥4) y extraordinario (≥4)";
+    }
+    else if (dadoDeBajaPorArrastre)
+    {
+        motivoReprobacion = "Excedió límite de materias en arrastre (≥4)";
+    }
+    else if (dadoDeBajaPorExtraordinarios)
+    {
+        motivoReprobacion = "Excedió límite de materias en extraordinario (≥4)";
+    }
+
+    // INDICADORES DE LÍMITE
+    bool enElLimiteArrastre = totalReprobadas == 2;
+    bool enElLimiteExtraordinarios = totalExtraordinarios == 3;
+    bool cercaDelLimite = enElLimiteArrastre || enElLimiteExtraordinarios;
+
+    // Separar materias por estado
+    var materiasReprobadas = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+    var materiasExtraordinario = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+    var materiasAcreditadas = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+    var materiasPendientes = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+    var materiasNoAcreditadas = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+
+    // ✅ NUEVA LISTA PARA ARRASTRE DE CUATRIMESTRES ANTERIORES
+    var materiasArrastreAnteriores = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+
+    decimal suma = 0;
+    int contador = 0;
+    decimal promedioFinal = 0;
+
+    // Contadores para determinar plan predominante
+    int materiasPlan2020 = 0;
+    int materiasPlan2024 = 0;
+
+    // DECLARAR CALIFICACIÓN MÍNIMA DEL PLAN
+    decimal calificacionMinimaDelPlan = 7.0m;
+
+    if (Model != null)
+    {
+        foreach (var item in Model)
+        {
+            // Contar materias por plan de estudio Y CALCULAR PROMEDIO
+            if (item.IdGrado == gradoActualAlumno)
+            {
+                string nombrePlan = item.NombrePlan ?? "";
+                if (nombrePlan.Contains("2020"))
+                {
+                    materiasPlan2020++;
+                }
+                else if (nombrePlan.Contains("2024"))
+                {
+                    materiasPlan2024++;
+                }
+
+                // Sumar calificaciones para el promedio
+                if (item.Calificacion.HasValue && item.Estado != null && item.Estado.ToLower() != "pendiente")
+                {
+                    suma += item.Calificacion.Value;
+                    contador++;
+                }
+            }
+
+            // Separar materias por estado
+            var estado = item.Estado != null ? item.Estado.ToLower() : null;
+            switch (estado)
+            {
+                case "reprobada":
+                    materiasReprobadas.Add(item);
+                    break;
+                case "extraordinario":
+                    materiasExtraordinario.Add(item);
+                    break;
+                case "acreditada":
+                    materiasAcreditadas.Add(item);
+                    break;
+                default:
+                    materiasPendientes.Add(item);
+                    break;
+            }
+
+            // ✅ LÓGICA MEJORADA PARA CAPTURAR MATERIAS DE ARRASTRE ANTERIORES
+            // Una materia es de arrastre anterior si:
+            // 1. Es de un grado MENOR al actual del alumno
+            // 2. Su estado es Reprobada o Extraordinario
+            if (item.IdGrado < gradoActualAlumno)
+            {
+                if (estado == "reprobada" || estado == "extraordinario")
+                {
+                    materiasArrastreAnteriores.Add(item);
+                }
+            }
+
+            // Solo agregar materias que NO estén acreditadas
+            if (estado != "acreditada")
+            {
+                materiasNoAcreditadas.Add(item);
+            }
+        }
+
+        // Determinar plan predominante
+        bool usarPlan2020 = materiasPlan2020 > materiasPlan2024;
+        bool usarPlan2024 = materiasPlan2024 >= materiasPlan2020;
+
+        string planPredominante = usarPlan2020 ? "Plan 2020" : "Plan 2024";
+
+        // Determinar calificación mínima según plan predominante
+        calificacionMinimaDelPlan = usarPlan2020 ? 8.0m : 7.0m;
+
+        // Lógica del promedio según plan predominante
+        if (contador > 0)
+        {
+            decimal promedioBase = suma / contador;
+            if (usarPlan2020)
+            {
+                // PLAN 2020: Redondeo especial
+                if (promedioBase < 8.0m)
+                {
+                    promedioFinal = Math.Floor(promedioBase);
+                }
+                else
+                {
+                    promedioFinal = Math.Round(promedioBase, 0);
+                }
+            }
+            else
+            {
+                // PLAN 2024: Mantener con decimales
+                promedioFinal = Math.Round(promedioBase, 2);
+            }
+        }
+        else
+        {
+            promedioFinal = 0;
+        }
+    }
+
+    bool tieneMaterias = Model != null && Model.Count > 0;
+
+    // ✅ PREPARAR LISTAS ORDENADAS AQUÍ PARA EVITAR ERRORES DE LINQ EN LA VISTA
+    List<PlataformaWeb.Models.Materias.MateriaAlumno> materiasCuatrimestreActual = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+    List<PlataformaWeb.Models.Materias.MateriaAlumno> materiasOrdenadas = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+
+    if (Model != null)
+    {
+        // Filtrar materias del cuatrimestre actual
+        foreach (var m in Model)
+        {
+            if (m.IdGrado == gradoActualAlumno)
+            {
+                materiasCuatrimestreActual.Add(m);
+            }
+        }
+
+        // Ordenar manualmente por nombre (sin LINQ)
+        materiasCuatrimestreActual.Sort((a, b) => string.Compare(a.NombreMateria, b.NombreMateria));
+
+        // Ordenar materias de arrastre manualmente (sin LINQ)
+        foreach (var m in materiasArrastreAnteriores)
+        {
+            materiasOrdenadas.Add(m);
+        }
+
+        // Ordenar por IdGrado primero, luego por nombre
+        materiasOrdenadas.Sort((a, b) =>
+        {
+            int gradoComparison = a.IdGrado.CompareTo(b.IdGrado);
+            if (gradoComparison != 0)
+                return gradoComparison;
+            return string.Compare(a.NombreMateria, b.NombreMateria);
+        });
+    }
+}
+
+<div class="sga-scope">
+    <h2>
+        Materias de @nombreAlumno
+        @if (!string.IsNullOrEmpty(matricula))
+        {
+            <small class="text-muted">(@matricula - @carrera)</small>
+        }
+    </h2>
+
+    @if (!string.IsNullOrEmpty(ViewBag.Error as string))
+    {
+        <div class="alert alert-danger">
+            <strong>Error:</strong> @ViewBag.Error
+        </div>
+    }
+
+    @if (alumnoReprobado)
+    {
+        <div class="alert alert-danger" style="border: 3px solid #d9534f;">
+            <h3><span class="glyphicon glyphicon-ban-circle"></span> <strong>LÍMITES ACADÉMICOS EXCEDIDOS</strong></h3>
+            <h4>@motivoReprobacion</h4>
+            <p><strong>El sistema detectó automáticamente que se excedieron los límites permitidos.</strong></p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><strong>Límites Excedidos:</strong></h5>
+                    <ul style="font-size: 14px;">
+                        @if (dadoDeBajaPorArrastre)
+                        {
+                            <li style="color: #d9534f;"><strong>✗ Materias en Arrastre:</strong> @totalReprobadas/3 </li>
+                        }
+                        @if (dadoDeBajaPorExtraordinarios)
+                        {
+                            <li style="color: #d9534f;"><strong>✗ Materias en Extraordinario:</strong> @totalExtraordinarios/3</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="panel @(alumnoReprobado ? "panel-danger" : (cercaDelLimite ? "panel-warning" : "panel-info"))">
+        <div class="panel-heading">
+            <h4>
+                <span class="glyphicon @(alumnoReprobado ? "glyphicon-exclamation-sign" : "glyphicon-info-sign")"></span>
+                Estado Académico
+            </h4>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5><strong>Materias en Arrastre</strong></h5>
+                    <span class="badge @(totalReprobadas >= 4 ? "badge-danger" : (totalReprobadas == 3 ? "badge-warning" : "badge-success"))" style="font-size: 18px;">
+                        @totalReprobadas / 3
+                    </span>
+                    @if (totalReprobadas >= 4)
+                    {
+                        <br /><small class="text-danger">
+                            <strong>
+                                <span class="glyphicon glyphicon-ban-circle"></span> LÍMITE EXCEDIDO
+                            </strong>
+                        </small>
+                    }
+                    else if (totalReprobadas == 3)
+                    {
+                        <br /><small class="text-warning"><strong><span class="glyphicon glyphicon-warning-sign"></span> EN EL LÍMITE</strong></small>
+                    }
+                    else
+                    {
+                        <br /><small class="text-success"><strong><span class="glyphicon glyphicon-ok-circle"></span> Dentro del límite</strong></small>
+                    }
+                </div>
+
+                <div class="col-md-4">
+                    <h5><strong>Materias en Extraordinario</strong></h5>
+                    <span class="badge @(totalExtraordinarios >= 4 ? "badge-danger" : (totalExtraordinarios == 3 ? "badge-warning" : "badge-success"))" style="font-size: 18px;">
+                        @totalExtraordinarios / 3
+                    </span>
+                    @if (totalExtraordinarios >= 4)
+                    {
+                        <br /><small class="text-danger"><strong><span class="glyphicon glyphicon-ban-circle"></span> LÍMITE EXCEDIDO</strong></small>
+                    }
+                    else if (totalExtraordinarios == 3)
+                    {
+                        <br /><small class="text-warning"><strong><span class="glyphicon glyphicon-warning-sign"></span> EN EL LÍMITE</strong></small>
+                    }
+                    else
+                    {
+                        <br /><small class="text-success"><strong><span class="glyphicon glyphicon-ok-circle"></span> Dentro del límite</strong></small>
+                    }
+                </div>
+
+                <div class="col-md-4">
+                    <h5><strong>Estado del Sistema</strong></h5>
+                    <span class="badge @(alumnoReprobado ? "badge-danger" : "badge-success")" style="font-size: 18px;">
+                        @(alumnoReprobado ? "REPROBADO" : "ACTIVO")
+                    </span>
+                    @if (cercaDelLimite && !alumnoReprobado)
+                    {
+                        <br /><small class="text-warning"><strong><span class="glyphicon glyphicon-warning-sign"></span> EN RIESGO CRÍTICO</strong></small>
+                    }
+                    else if (!alumnoReprobado)
+                    {
+                        <br /><small class="text-success"><strong><span class="glyphicon glyphicon-ok-circle"></span> En buen estado</strong></small>
+                    }
+                </div>
+            </div>
+
+            <div class="alert @(alumnoReprobado ? "alert-danger" : "sga-filter-bar")" style="margin-top: 15px; margin-bottom: 0;">
+                @if (alumnoReprobado)
+                {
+                    <strong><span class="glyphicon glyphicon-ban-circle"></span> SISTEMA ACTIVADO:</strong> <text>Se detectó exceso de límites.</text>
+                }
+                else
+                {
+                    if (cercaDelLimite)
+                    {
+                        <br /><strong><span class="glyphicon glyphicon-warning-sign"></span> ALERTA:</strong> <text>Estás en el límite crítico.</text>
+                    }
+                    else
+                    {
+                        <br /><strong><span class="glyphicon glyphicon-ok-circle"></span></strong> <text>Tu situación académica está en orden.</text>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <h4><span class="glyphicon glyphicon-list-alt text-success"></span> Estado de Materias del Cuatrimestre Actual</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover" id="tabla-mis-materias">
+            <thead style="background-color: #5cb85c; color: white;">
+                <tr>
+                    <th>Materia</th>
+                    <th class="text-center">Calificación Final</th>
+                    <th class="text-center">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!tieneMaterias)
+                {
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">
+                            <span class="glyphicon glyphicon-info-sign"></span>
+                            No tienes materias registradas para este cuatrimestre
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    if (materiasCuatrimestreActual.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                <span class="glyphicon glyphicon-info-sign"></span>
+                                No tienes materias registradas para este cuatrimestre
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var materia in materiasCuatrimestreActual)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@materia.NombreMateria</strong>
+                                    @if (!materia.MateriaActiva)
+                                    {
+                                        <br /><span class="label label-warning">Materia Desactivada</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge badge-info" style="font-size: 16px;">
+                                        @(materia.Calificacion?.ToString("0.00") ?? "---")
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if (materia.Estado == "Acreditada")
+                                    {
+                                        <span class="label label-success">
+                                            <span class="glyphicon glyphicon-ok-circle"></span> Acreditada
+                                        </span>
+                                    }
+                                    else if (materia.Estado == "Extraordinario")
+                                    {
+                                        <span class="label label-warning">
+                                            <span class="glyphicon glyphicon-time"></span> Extraordinario
+                                        </span>
+                                    }
+                                    else if (materia.Estado == "Reprobada")
+                                    {
+                                        <span class="label label-danger">
+                                            <span class="glyphicon glyphicon-remove-circle"></span> Reprobada
+                                        </span>
+                                        if (materia.DiasRestantesArrastre > 0)
+                                        {
+                                            <br /><small class="text-muted">Días restantes: @materia.DiasRestantesArrastre</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="label label-default">
+                                            <span class="glyphicon glyphicon-time"></span> Pendiente
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+            @if (contador > 0)
+            {
+                <tfoot style="background-color: #f9f9f9; border-top: 2px solid #5cb85c;">
+                    <tr>
+                        <td colspan="1" class="text-right" style="vertical-align: middle;">
+                            <strong>Promedio del Cuatrimestre:</strong>
+                            <br />
+                        </td>
+                        <td class="text-center" style="vertical-align: middle;">
+                            <span class="badge @(promedioFinal >= calificacionMinimaDelPlan ? "badge-success" : "badge-danger")" style="font-size: 18px;">
+                                @promedioFinal.ToString("0.00")
+                            </span>
+                        </td>
+                        <td class="text-center" style="vertical-align: middle;">
+                            @if (promedioFinal >= calificacionMinimaDelPlan)
+                            {
+                                <span class="label label-success">APROBATORIO</span>
+                            }
+                            else
+                            {
+                                <span class="label label-warning" title="Mínima requerida: @calificacionMinimaDelPlan">NO APROBATORIO</span>
+                            }
+                        </td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+
+    @if (materiasArrastreAnteriores.Count > 0)
+    {
+        <h4 style="margin-top: 30px;">
+            <span class="glyphicon glyphicon-warning-sign text-danger"></span>
+            Materias en Arrastre
+        </h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="tabla-materias-arrastre">
+                <thead style="background-color: #d9534f; color: white;">
+                    <tr>
+                        <th>Materia</th>
+                        <th class="text-center">Fecha Límite</th>
+                        <th class="text-center">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var materia in materiasOrdenadas)
+                    {
+                        <tr class="@(materia.DiasRestantesArrastre <= 30 ? "danger" : "warning")">
+                            <td>
+                                <strong>@materia.NombreMateria</strong>
+                                <br /><small class="text-muted">Del @materia.IdGrado° Cuatrimestre</small>
+                                @if (!materia.MateriaActiva)
+                                {
+                                    <br /><span class="label label-warning">Materia Desactivada</span>
+                                }
+                            </td>
+                            <td class="text-center" style="vertical-align: middle;">
+                                @if (materia.FechaLimiteArrastre.HasValue)
+                                {
+                                    <strong style="font-size: 16px; color: #a94442;">@materia.FechaLimiteArrastre.Value.ToString("dd/MM/yyyy")</strong>
+                                    <br />
+                                    if (materia.DiasRestantesArrastre <= 0)
+                                    {
+                                        <span class="label label-danger">VENCIDO</span>
+                                    }
+                                    else if (materia.DiasRestantesArrastre <= 30)
+                                    {
+                                        <small class="text-danger"><strong>Quedan @materia.DiasRestantesArrastre días</strong></small>
+                                    }
+                                    else if (materia.DiasRestantesArrastre <= 60)
+                                    {
+                                        <small class="text-warning">Quedan @materia.DiasRestantesArrastre días</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">Quedan @materia.DiasRestantesArrastre días</small>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">---</span>
+                                }
+                            </td>
+                            <td class="text-center" style="vertical-align: middle;">
+                                @if (materia.Estado == "Extraordinario")
+                                {
+                                    <span class="label label-warning">
+                                        <span class="glyphicon glyphicon-time"></span> Extraordinario
+                                    </span>
+                                }
+                                else if (materia.Estado == "Reprobada")
+                                {
+                                    <span class="label label-danger">
+                                        <span class="glyphicon glyphicon-remove-circle"></span> Reprobada
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <p class="text-center text-muted" style="margin-top: 20px;">
+        <small>
+            <span class="glyphicon glyphicon-info-sign"></span>
+            Esta información se actualiza conforme tu tutor registra tus calificaciones.
+            Si encuentras algún error, por favor comunícalo a tu tutor académico.
+        </small>
+    </p>
+</div>
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+
+    <style>
+        .sga-scope {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+            .sga-scope .badge {
+                padding: 8px 12px;
+            }
+
+        .badge-danger {
+            background-color: #d9534f;
+        }
+
+        .badge-warning {
+            background-color: #f0ad4e;
+        }
+
+        .badge-success {
+            background-color: #5cb85c;
+        }
+
+        .badge-info {
+            background-color: #5bc0de;
+        }
+
+        .sga-scope .panel-info {
+            border-color: #cfe8e2;
+        }
+
+            .sga-scope .panel-info > .panel-heading {
+                background-color: #e9f8f4;
+                border-color: #cfe8e2;
+                color: #09a787;
+                font-weight: 600;
+            }
+
+                .sga-scope .panel-info > .panel-heading h4 {
+                    color: #09a787;
+                    font-weight: 600;
+                }
+
+        .progress {
+            height: 20px;
+            margin-bottom: 0;
+        }
+
+        #tabla-mis-materias thead th, #tabla-materias-arrastre thead th {
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .label-success {
+            background-color: #5cb85c;
+        }
+
+        .label-warning {
+            background-color: #f0ad4e;
+        }
+
+        .label-info {
+            background-color: #5bc0de;
+        }
+
+        .sga-scope .panel-info {
+            border-color: #cfe8e2;
+        }
+
+            .sga-scope .panel-info > .panel-heading {
+                background-color: #e9f8f4;
+                border-color: #cfe8e2;
+                color: #09a787;
+                font-weight: 600;
+            }
+
+                .sga-scope .panel-info > .panel-heading h4 {
+                    color: #09a787;
+                    font-weight: 600;
+                }
+
+            .sga-scope .panel-info > .panel-body {
+                color: #004D40;
+            }
+
+                .sga-scope .panel-info > .panel-body strong {
+                    color: #00695C;
+                }
+
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 1.20rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+    </style>
+}

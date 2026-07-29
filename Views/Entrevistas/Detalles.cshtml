@@ -1,0 +1,1167 @@
+﻿@model Plataforma_Web.Models.EntrevistaInicial
+@using Plataforma_Web.Models.PrimeraEntrevista
+@{
+    // Obtener datos personales desde el ViewBag
+    DatosPersonales datos = ViewBag.datos as DatosPersonales;
+
+    // Variable segura para el ID de persona
+    int idPersonaActual = (datos != null) ? datos.IdPersona : 0;
+
+    // Título de la vista
+    ViewBag.Title = "Ver Detalles";
+
+    // Token seguro
+    string token = ViewBag.Token as string ?? "";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    .navegacion-entrevistas button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .navegacion-entrevistas button:not(:disabled):hover {
+        transform: scale(1.05);
+        transition: transform 0.2s;
+    }
+
+    .btn-navegando {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+    #btnAnterior, #btnSiguiente,
+    a.btn-primary[href*="Grupo"] {
+        background-color: #09a787 !important;
+        border-color: #09a787 !important;
+        color: white !important;
+    }
+
+        #btnAnterior:hover:not(:disabled),
+        #btnSiguiente:hover:not(:disabled),
+        a.btn-primary[href*="Grupo"]:hover {
+            background-color: #078c71 !important;
+            border-color: #078c71 !important;
+        }
+
+        #btnAnterior:focus, #btnSiguiente:focus,
+        a.btn-primary[href*="Grupo"]:focus {
+            background-color: #078c71 !important;
+            border-color: #078c71 !important;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(9, 167, 135, 0.5) !important;
+        }
+</style>
+
+@* MENSAJE DE ERROR SI NO HAY TOKEN VÁLIDO *@
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert" style="margin: 20px;">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>¡Error!</strong> @TempData["Error"]
+    </div>
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    @Html.AntiForgeryToken()
+    @Html.Hidden("token", token)
+
+    <div id="studentId" data-id="@(Model?.IdPersona ?? 0)"></div>
+    <div id="entrevistaId" data-id="@(Model?.IdEntrevistaInicial ?? 0)"></div>
+
+    <h2>Ver Detalles</h2>
+    <br />
+    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+        <a class="btn btn-primary" role="button" href="@Url.Action("Grupo", "Entrevistas")">
+            <span class="glyphicon glyphicon-arrow-left"></span>
+            Regresar
+        </a>
+        <div class="btn-group navegacion-entrevistas" role="group" style="margin-left: 15px;">
+            <button type="button" id="btnAnterior" class="btn btn-info" disabled>
+                <span class="glyphicon glyphicon-chevron-left"></span>
+            </button>
+            <button type="button" id="posicionActual" class="btn btn-default" disabled
+                    title="Posición en el grupo">
+                Cargando...
+            </button>
+            <button type="button" id="btnSiguiente" class="btn btn-info" disabled>
+                <span class="glyphicon glyphicon-chevron-right"></span>
+            </button>
+        </div>
+        <div style="margin-left: auto; width: 200px;">
+            <select id="selectEntrevista" class="form-control">
+                <option selected>Entrevistas...</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="container-fluid" style="margin-top:30px">
+        <section class="content">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    @if (Model?.Grados?.Nombre == "1")
+                                    {
+                                        <h2>Entrevista Inicial - @Model.Fecha.ToString("dd/MM/yyyy")</h2>
+                                    }
+                                    else
+                                    {
+                                        <h2>Entrevista de Seguimiento - @(Model?.Grados?.Nombre ?? "N/A")&deg; - @(Model?.Fecha.ToString("dd/MM/yyyy") ?? "Fecha N/A")</h2>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+                        <div class="row">
+                            <div class="col-md-12 col-md-push-1">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="row">
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Matrícula</label>
+                                                    <br />
+                                                    @Model.Matricula
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Nombre</label>
+                                                    <br />
+                                                    @Model.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Edad</label>
+                                                    <br />
+                                                    @Model.Edad AÑOS
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Sexo</label>
+                                                    <br />
+                                                    @if (Model.Sexo != null)
+                                                    {
+                                                        @Model.Sexo
+                                                    }
+                                                    else
+                                                    {
+                                                        <label class="text-danger">Sin actualizar</label>
+                                                    }
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Grado</label>
+                                                    <br />
+                                                    @(Model?.Grados?.Nombre ?? "Sin asignar")
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Grupo</label>
+                                                    <br />
+                                                    @(Model?.Grupos?.Nombre ?? "Sin asignar")
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Carrera</label>
+                                                    <br />
+                                                    @if (Model.CarreraNom != null)
+                                                    {
+                                                        @Model.CarreraNom
+                                                    }
+                                                    else
+                                                    {
+                                                        @(Model?.Carreras?.Nombre ?? "Sin asignar")
+                                                    }
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Área</label>
+                                                    <br />
+                                                    @if (Model.Area != null)
+                                                    {
+                                                        if (Model.Area == "")
+                                                        {
+                                                            <div>N/A</div>
+                                                        }
+                                                        else
+                                                        {
+                                                            @Model.Area
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <label class="text-danger">Sin actualizar</label>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Turno</label>
+                                                    <br />
+                                                    @(Model?.Turnos?.Nombre ?? "Sin asignar")
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Teléfono celular</label>
+                                                    <br />
+                                                    @Model.Celular
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Teléfono de casa</label>
+                                                    <br />
+                                                    @Model.Telefono
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Teléfono de emergencia</label>
+                                                    <br />
+                                                    @Model.TelEmergencia
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="row">
+
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Correo electrónico</label>
+                                                    <br />
+                                                    @Model.Email
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    @if (Model.Sexo == "HOMBRE")
+                                                    {
+                                                        <label>¿Está casado?</label>
+                                                    }
+                                                    else
+                                                    {
+                                                        <label>¿Está casada?</label>
+                                                    }
+
+                                                    <br />
+                                                    @(Model?.Respuesta4?.Nombre ?? "Sin especificar")
+
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>¿Tiene hijos?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta5?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                            @if (Model.Sexo == "MUJER")
+                                            {
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label>¿Está embarazada?</label>
+                                                        <br />
+                                                        @(Model?.Respuesta11?.Nombre ?? "Sin especificar")
+                                                    </div>
+                                                </div>
+                                            }
+
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label>Fotografía</label>
+                                                    <br />
+                                                    @if (datos.Foto == "")
+                                                    {
+                                                        <p>Imagen Inexistente</p>
+                                                    }
+                                                    else
+                                                    {
+                                                        <img src="@datos.Foto" style="width:100%;height:100%;">
+                                                    }
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <!--div.row>div.col-md-12-->
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h2>Aspectos Económicos</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+                        <div class="row">
+                            <div class="col-md-12 col-md-push-1">
+                                <div class="row">
+                                    @if (Model.IdCiudad == 1)
+                                    {
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Reside en esta ciudad?</label>
+                                                <br />
+                                                @(Model?.Respuesta1?.Nombre ?? "Sin especificar")
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Reside en esta ciudad?</label>
+                                                <br />
+                                                @(Model?.Respuesta1?.Nombre ?? "Sin especificar")
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Especifique en qué ciudad reside</label>
+                                                <br />
+                                                @Model.Ciudad
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (Model.IdTipoFamiliar == 1)
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Con quién vive actualmente?</label>
+                                                <br />
+                                                @(Model?.Respuesta16?.Nombre ?? "Sin especificar")
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Especifique con quién vive</label>
+                                                <br />
+                                                @Model.Familiar
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Con quién vive actualmente?</label>
+                                                <br />
+                                                @(Model?.Respuesta16?.Nombre ?? "Sin especificar")
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>¿Trabaja?</label>
+                                            <br />
+                                            @(Model?.Respuesta2?.Nombre ?? "Sin especificar")
+
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="row">
+
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>¿A qué se dedica el papá?</label>
+                                            <br />
+                                            @Model.OcupacionPapa
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>¿A qué se dedica la mamá?</label>
+                                            <br />
+                                            @Model.OcupacionMama
+
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Cantidad de hermanos</label>
+                                            <br />
+                                            @Model.CantidadHermano
+
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Ingreso mensual aproximado por miembro</label>
+                                                <br />
+                                                @(Model?.Respuesta17?.Nombre ?? "Sin especificar")
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (Model.Grados.Nombre != "1")
+                                {
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Cuántas personas viven en casa? (Incluyéndole)</label>
+                                                <br />
+                                                @Model.CantidadPersonas
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Cuántas personas trabajan? (Incluyéndole)</label>
+                                                <br />
+                                                @Model.CantidadTrabajan
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Considera que necesita beca o algún tipo de apoyo?</label>
+                                                <br />
+                                                @(Model?.Respuesta18?.Nombre ?? "Sin especificar")
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <!--div.row>div.col-md-12-->
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h2>Aspectos Académicos</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+                        <div class="row">
+                            <div class="col-md-12 col-md-push-1">
+                                @if (Model.IdGrado == 1)
+                                {
+                                    <div class="row">
+                                        @if (Model.IdListaBachillerato == 1)
+                                        {
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>¿De qué bachillerato egresó?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta12?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Bachillerato específico</label>
+                                                    <br />
+                                                    @Model.Bachillerato
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Especialidad en el bachillerato</label>
+                                                    <br />
+                                                    @Model.Especialidad
+                                                </div>
+                                            </div>
+
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label>¿De qué bachillerato egresó?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta12?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>Especialidad en el bachillerato</label>
+                                                    <br />
+                                                    @Model.Especialidad
+                                                </div>
+                                            </div>
+                                        }
+
+                                    </div>
+                                }
+
+                                <div class="row">
+                                    @if (Model.IdGrado == 1)
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Promedio general (Bachillerato)</label>
+                                                <br />
+                                                @Model.Promedio
+                                            </div>
+                                        </div>
+
+                                    }
+                                    else
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Promedio general (Universidad)</label>
+                                                <br />
+                                                @Model.Promedio
+                                            </div>
+                                        </div>
+
+                                    }
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>¿Cuenta con equipo de cómputo para estudiar?</label>
+                                            <br />
+                                            @(Model?.Respuesta13?.Nombre ?? "Sin especificar")
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Tipo de dispositivo específico</label>
+                                            <br />
+                                            @(Model?.Respuesta14?.Nombre ?? "Sin especificar")
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>¿Cuenta con servicio de conexión a internet?</label>
+                                            <br />
+                                            @(Model?.Respuesta15?.Nombre ?? "Sin especificar")
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (Model.IdGrado != 1)
+                                {
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Cómo es el rendimiento en clase?</label>
+                                                <br />
+                                                @Model.RendimientoClase
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Cómo es la experiencia con los profesores?</label>
+                                                <br />
+                                                @Model.ExperienciaProfe
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Qué materias reprobó el periodo anterior?</label>
+                                                <br />
+                                                @Model.MateriasRepro
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Qué materia se le dificulta más actualmente?</label>
+                                                <br />
+                                                @Model.MateriasDif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                }
+                            </div>
+                        </div>
+                        <!--div.row>div.col-md-12-->
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h2>Aspectos Personales</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+                        <div class="row">
+                            <div class="col-md-12 col-md-push-1">
+                                @if (Model.IdGrado == 1)
+                                {
+                                    <div class="row">
+
+                                        @if (Model.IdEnfermedad == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Padece alguna enfermedad?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta6?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Enfermedad o alergia específica</label>
+                                                    <br />
+                                                    @Model.Especifica
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Padece alguna enfermedad?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta6?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (Model.IdFuma == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Fuma?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta7?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Cantidad y frecuencia</label>
+                                                    <br />
+                                                    @Model.CantidadFuma
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Fuma?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta7?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @if (Model.IdBebida == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ingiere bebidas alcohólicas?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta8?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Cantidad y frecuencia</label>
+                                                    <br />
+                                                    @Model.CantidadBedida
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ingiere bebidas alcohólicas?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta8?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                        }
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿En la familia ha observado que hay violencia?</label>
+                                                <br />
+                                                @(Model?.Observacio?.Nombre ?? "Sin especificar")
+                                            </div>
+                                        </div>
+
+                                        @if (Model.IdVidaSinSentido == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ha pensado que la vida no tiene sentido?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta9?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>¿Por qué?</label>
+                                                    <br />
+                                                    @Model.Porque
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ha pensado que la vida no tiene sentido?</label>
+                                                    <br />
+                                                    @(Model?.Respuesta9?.Nombre ?? "Sin especificar")
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="row">
+
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Considera que el apoyo de la familia es el adecuado cuando tiene un problema?</label>
+                                                <br />
+                                                @Model.ApoyoFamiliaEnProblemas
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Por qué?</label>
+                                                <br />
+                                                @Model.ApoyoFamiliaEnProblemasPorque
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Los problemas económicos de la familia le desconcentran?</label>
+                                                <br />
+                                                @Model.ProblemasEconomicosFamilia
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Por qué?</label>
+                                                <br />
+                                                @Model.ProblemasEconomicosFamiliaPorque
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+                                        @if (Model.IdEnfermedad == 1)
+                                        {
+
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Padece alguna enfermedad?</label>
+                                                    <br />
+                                                    @Model.Respuesta6.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Enfermedad o alergia específica</label>
+                                                    <br />
+                                                    @Model.Especifica
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Padece alguna enfermedad?</label>
+                                                    <br />
+                                                    @Model.Respuesta6.Nombre
+                                                </div>
+                                            </div>
+
+                                        }
+
+                                        @if (Model.IdFuma == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Fuma?</label>
+                                                    <br />
+                                                    @Model.Respuesta7.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Cantidad y frecuencia</label>
+                                                    <br />
+                                                    @Model.CantidadFuma
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Fuma?</label>
+                                                    <br />
+                                                    @Model.Respuesta7.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (Model.IdBebida == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ingiere bebidas alcohólicas?</label>
+                                                    <br />
+                                                    @Model.Respuesta8.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Cantidad y frecuencia</label>
+                                                    <br />
+                                                    @Model.CantidadBedida
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ingiere bebidas alcohólicas?</label>
+                                                    <br />
+                                                    @Model.Respuesta8.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿En la familia ha observado que hay violencia?</label>
+                                                <br />
+                                                @Model.Observacio.Nombre
+                                            </div>
+                                        </div>
+
+                                        @if (Model.IdVidaSinSentido == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ha pensado que la vida no tiene sentido?</label>
+                                                    <br />
+                                                    @Model.Respuesta9.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>¿Por qué?</label>
+                                                    <br />
+                                                    @Model.Porque
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ha pensado que la vida no tiene sentido?</label>
+                                                    <br />
+                                                    @Model.Respuesta9.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="row">
+
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Considera que el apoyo de la familia es el adecuado cuando tiene un problema?</label>
+                                                <br />
+                                                @Model.ApoyoFamiliaEnProblemas
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Por qué?</label>
+                                                <br />
+                                                @Model.ApoyoFamiliaEnProblemasPorque
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Los problemas económicos de la familia le desconcentran?</label>
+                                                <br />
+                                                @Model.ProblemasEconomicosFamilia
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Por qué?</label>
+                                                <br />
+                                                @Model.ProblemasEconomicosFamiliaPorque
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Qué hace en un día común?</label>
+                                                <br />
+                                                @Model.DiaComun
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Qué es lo que más le gusta de la escuela?</label>
+                                                <br />
+                                                @Model.GustoEscuela
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Cómo se lleva con los padres / hermanos?</label>
+                                                <br />
+                                                @Model.AmbienteFamiliar
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Tiene algún pasatiempo?</label>
+                                                <br />
+                                                @Model.Responsabilidades
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Cómo es su estado de salúd en general?</label>
+                                                <br />
+                                                @Model.SentidoUltimamente
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                }
+
+
+                            </div>
+                        </div>
+                        <!--div.row>div.col-md-12-->
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+}
+
+<div class="modal fade" id="yesNoModal" tabindex="-1" role="dialog" aria-labelledby="yesNoModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="yesNoModalLabel">Confirmation</h4>
+            </div>
+            <div class="modal-body">
+                <p>Esta seguro de eliminar este registro?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="yesBtn" type="button" class="btn btn-success">Aceptar</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a class="btn btn-primary" role="button" href="@Url.Action("Grupo", "Entrevistas")">
+    <span class="glyphicon glyphicon-arrow-left"></span>
+    Regresar
+</a>
+
+<a class="btn btn-primary" role="button" href="@if (Model.IdGrado == 1) { @Url.Action("ReporteEntrevista", "Entrevistas", new { id = Model.IdPersona, entrevistaId = Model.IdEntrevistaInicial, token = token }) }else{
+    @Url.Action("ReporteEntrevistaSegumiento", "Entrevistas", new { id = Model.IdPersona, entrevistaId = Model.IdEntrevistaInicial, token = token })
+    }">
+    <span class="glyphicon glyphicon-paperclip"></span>
+    Imprimir
+</a>
+
+@{
+    var usuarioDetalles = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+}
+@if (usuarioDetalles != null && (usuarioDetalles.IdNivel == 3 || usuarioDetalles.IdNivel == 4))
+{
+    <a class="btn btn-success" role="button" href="@Url.Action("ExportarDetallesExcel", "Entrevistas", new { id = Model.IdEntrevistaInicial, idPersona = Model.IdPersona, token = token })">
+        <span class="glyphicon glyphicon-export"></span>
+        Exportar Excel
+    </a>
+}
+
+
+<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#yesNoModal">
+    Eliminar
+</button>
+
+@if (!string.IsNullOrEmpty(ViewBag.Mensaje))
+{
+    <script type="text/javascript">
+        alert("@ViewBag.Mensaje");
+    </script>
+}
+
+<script src="~/ViewScripts/Entrevista/EntrevistaDetalles.js?v=3"></script>
+<script>
+    $(document).ready(function () {
+        // USANDO LA VARIABLE DE RAZOR SEGURA
+        var currentIdPersona = @idPersonaActual;
+
+        // 1. Verificar si tenemos un ID de persona válido
+        if (currentIdPersona <= 0) {
+            console.error('El IdPersona es inválido (datos fue null en ViewBag).');
+            $('#posicionActual').text('ID Inválido');
+            $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+            return;
+        }
+
+        try {
+            // 2. LLAMADA AJAX para obtener los IDs de navegación
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("ObtenerNavegacionEntrevistas", "Entrevistas")',
+                data: { idPersona: currentIdPersona },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        // Actualizar la posición
+                        $('#posicionActual').text(response.posicion + ' de ' + response.total);
+
+                        // --- Botón ANTERIOR ---
+                        if (response.idAnterior) {
+                            $('#btnAnterior')
+                                .data('id', response.idAnterior)
+                                .data('token', response.tokenAnterior)
+                                .prop('disabled', false);
+                        } else {
+                            $('#btnAnterior').prop('disabled', true);
+                        }
+
+                        // --- Botón SIGUIENTE ---
+                        if (response.idSiguiente) {
+                            $('#btnSiguiente')
+                                .data('id', response.idSiguiente)
+                                .data('token', response.tokenSiguiente)
+                                .prop('disabled', false);
+                        } else {
+                            $('#btnSiguiente').prop('disabled', true);
+                        }
+                    } else {
+                        console.error('Error lógico al obtener navegación:', response.message);
+                        $('#posicionActual').text('Error');
+                        $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error de red/servidor en la llamada AJAX:', error);
+                    $('#posicionActual').text('Error AJAX');
+                    $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+                }
+            });
+
+            // 3. FUNCIÓN DE NAVEGACIÓN
+            function navegar(idDestino, token) {
+                if (idDestino && token) {
+                    $('.navegacion-entrevistas button').addClass('btn-navegando');
+
+                    var url = '@Url.Action("Detalles", "Entrevistas")' +
+                        '?idPersona=' + idDestino +
+                        '&token=' + encodeURIComponent(token);
+
+                    window.location.href = url;
+                }
+            }
+
+            // 4. EVENTOS CLICK de los botones
+            $('#btnAnterior').click(function (e) {
+                e.preventDefault();
+                var idAnterior = $(this).data('id');
+                var tokenAnterior = $(this).data('token');
+                navegar(idAnterior, tokenAnterior);
+            });
+
+            $('#btnSiguiente').click(function (e) {
+                e.preventDefault();
+                var idSiguiente = $(this).data('id');
+                var tokenSiguiente = $(this).data('token');
+                navegar(idSiguiente, tokenSiguiente);
+            });
+
+        } catch (ex) {
+            console.error('Error en inicialización de navegación:', ex);
+            $('#posicionActual').text('Error JS');
+            $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+        }
+    });
+</script>

@@ -1,0 +1,171 @@
+﻿@model IEnumerable<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>
+@using PlataformaWeb.BecasTransporte.Models;
+@using Plataforma_Web.Models;
+@{
+    ViewBag.Title = "Grupo";
+
+
+    int i = 0;
+
+    var matriculaTransporte = ViewBag.AlumnosConTransporte as List<String>;
+    var matriculaBeca = ViewBag.AlumnosConBeca as List<String>;
+    List<SelectListItem> Becas = ViewBag.Becas as List<SelectListItem>;
+    List<SelectListItem> Transportes = ViewBag.Transportes as List<SelectListItem>;
+    Usuario user = (Usuario)Session["Usuario"];
+}
+
+
+<script>
+$(document).ready(function(){
+  $("#myInput").on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+    $("#myTable tr").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
+});
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+
+<div class="row">
+    <div class="col-md-9">
+        <h2>Grupo: @ViewBag.Grupo <a class="btn btn-default" href="@Url.Action("GruposPorTutor", "Estudiantes")"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a></h2>
+    </div>
+    <div class="col-md-3">
+        <br />
+        <input class="form-control" id="myInput" type="text" placeholder="Buscar...">
+    </div>
+</div>
+
+
+
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    N°
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Matricula)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Nombre)
+                </th>
+                <th class="text-center">
+                    Beca
+                </th>
+                <th>
+
+                </th>
+                <th class="text-center">
+                    Ruta De Transporte
+                </th>
+                <th>
+
+                </th>
+            </tr>
+
+        </thead>
+
+
+        @foreach (var item in Model)
+        {
+            i++;
+            <tbody id="myTable">
+
+                <tr>
+                    <td>
+                        @i.ToString()
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Matricula)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Nombre)
+                    </td>
+                    <td>
+                        @foreach (var beca in Becas)
+                {
+                    if (beca.Value == item.Matricula)
+                    {
+                                <center>
+                                    <label>@beca.Text.ToString()</label>
+                                </center>
+                            }
+                        }
+                    </td>
+                    <td>
+                        <center>
+                            @{
+
+                                if (matriculaBeca.Contains(item.Matricula))
+                                {
+                                    <a href="@Url.Action("AsignarBeca", "Estudiantes", new { id = item.IdPersona })" class="btn btn-success"><span class="glyphicon glyphicon-ok-sign"></span> Ver</a>
+                                    if (user.IdNivel >= 3)
+                                    {
+                                        <a href="@Url.Action("RemoverBeca","Estudiantes", new { id = item.IdPersona })" class="btn btn-sm btn-default" data-toggle="tooltip" title="Remover beca."><span class="glyphicon glyphicon-remove-circle"></span></a>
+                                    }
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("AsignarBeca", "Estudiantes", new { id = item.IdPersona })" class="btn btn-danger"><span class="glyphicon glyphicon-remove-sign"></span> Asignar Beca</a>
+                                }
+
+                            }
+                        </center>
+                    </td>
+                    <td>
+                        @foreach (var ruta in Transportes)
+                {
+                    if (ruta.Value == item.Matricula)
+                    {
+                                <center>
+                                    <label>@ruta.Text.ToString()</label>
+                                </center>
+                            }
+                        }
+                    </td>
+                    <td>
+                        <center>
+                            @{
+                                if (matriculaTransporte.Contains(item.Matricula))
+                                {
+
+                                    <a href="@Url.Action("AsignarTransporte","Estudiantes", new { id = item.IdPersona })" class="btn btn-success"><span class="glyphicon glyphicon-ok-sign"></span> Ver</a>
+                                    if (user.IdNivel >= 3)
+                                    {
+                                        <a href="@Url.Action("RemoverTransporte","Estudiantes", new { id = item.IdPersona })" class="btn btn-sm btn-default" data-toggle="tooltip" title="Remover transporte."><span class="glyphicon glyphicon-remove-circle"></span></a>
+                                    }
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("AsignarTransporte","Estudiantes", new { id = item.IdPersona })" class="btn btn-danger"><span class="glyphicon glyphicon-remove-sign"></span> Asignar Transporte</a>
+                                }
+                            }
+                        </center>
+                    </td>
+                </tr>
+            </tbody>
+
+                                }
+    </table>
+
+</div>
+
+
+
+
+@*@if (Session["Mensaje"] != null)
+    {
+        <div class="alert alert-success">@Convert.ToString(Session["Mensaje"])</div>
+
+        Session["Mensaje"] = null;
+    }*@
+

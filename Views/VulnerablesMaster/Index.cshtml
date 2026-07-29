@@ -1,0 +1,226 @@
+﻿@model List<PlataformaWeb.Models.AlumnoVulnerableViewModel>
+@{
+    ViewBag.Title = "Alumnos Vulnerables";
+    Layout = "~/Views/Shared/_SGALayout.cshtml";
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var pageSize = ViewBag.PageSize ?? 50;
+    var usuario = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    bool esTutor = usuario != null && usuario.IdNivel == 2;
+    bool esCoordinador = usuario != null && usuario.IdNivel == 3;
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+<div class="sga-vulnerables-card">
+
+    <div class="sga-vulnerables-header">
+        <div>
+            <h2>Historial de Alumnos Vulnerables</h2>
+            <small>
+                @switch (ViewBag.NivelUsuario)
+                {
+                    case 2:
+                        <span class="badge badge-info" style="background:#e4f4ff; color:#256c9e;">Vista Tutor</span>
+                        <span>Mostrando a todos los alumnos vulnerables que han estado bajo tu tutoría</span>
+                        break;
+                    case 3:
+                        <span class="badge badge-warning" style="background:#fff2cc; color:#b87700;">Vista Coordinador</span>
+                        <span>Carrera: <strong>@ViewBag.CarreraCoordinador</strong></span>
+                        break;
+                    case 4:
+                        <span class="badge badge-success" style="background:#e6f8ef; color:#09a787;">Vista Master</span>
+                        <span>Mostrando todos los registros</span>
+                        break;
+                }
+            </small>
+        </div>
+        <div style="min-width:180px;text-align:right">
+            <small>
+                Total de registros: <strong>@ViewBag.TotalRegistros</strong><br>
+                Usuario: <strong>@ViewBag.NombreUsuario</strong>
+            </small>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.Error as string))
+    {
+        <div class="sga-vulnerables-alert" style="background:#fde7e7;border:1px solid #f2bbbb;color:#a12929;">
+            @ViewBag.Error
+        </div>
+    }
+
+    <form method="get" class="sga-vulnerables-form">
+        <label for="pageSize">Mostrar</label>
+        <select name="pageSize" id="pageSize" onchange="this.form.submit()">
+            <option value="10" @(pageSize == 10 ? "selected" : "")>10</option>
+            <option value="20" @(pageSize == 20 ? "selected" : "")>20</option>
+            <option value="50" @(pageSize == 50 ? "selected" : "")>50</option>
+            <option value="100" @(pageSize == 100 ? "selected" : "")>100</option>
+        </select>
+        <input type="text" name="search" value="@ViewBag.Search" placeholder="Matrícula o Nombre" />
+
+        @if (esCoordinador)
+        {
+            @Html.DropDownList("grupo", (SelectList)ViewBag.Grupos, "Grupo", new { @value = ViewBag.CurrentGrupo })
+            @Html.DropDownList("cuatrimestre", (SelectList)ViewBag.Cuatrimestres, "Cuatrimestre", new { @value = ViewBag.CurrentCuatrimestre })
+            @Html.DropDownList("turno", (SelectList)ViewBag.Turnos, "Turno", new { @value = ViewBag.CurrentTurno })
+            @Html.DropDownList("tipoVulnerabilidad", (SelectList)ViewBag.TiposVulnerabilidad, "Tipo de vulnerabilidad", new { @value = ViewBag.CurrentTipoVulnerabilidad })
+        }
+        else if (esTutor)
+        {
+            @Html.DropDownList("carrera", (SelectList)ViewBag.Carreras, "Carrera", new { @value = ViewBag.CurrentCarrera })
+            @Html.DropDownList("grupo", (SelectList)ViewBag.Grupos, "Grupo", new { @value = ViewBag.CurrentGrupo })
+            @Html.DropDownList("cuatrimestre", (SelectList)ViewBag.Cuatrimestres, "Cuatrimestre", new { @value = ViewBag.CurrentCuatrimestre })
+            @Html.DropDownList("turno", (SelectList)ViewBag.Turnos, "Turno", new { @value = ViewBag.CurrentTurno })
+            @Html.DropDownList("tipoVulnerabilidad", (SelectList)ViewBag.TiposVulnerabilidad, "Tipo de vulnerabilidad", new { @value = ViewBag.CurrentTipoVulnerabilidad })
+        }
+        else
+        {
+            @Html.DropDownList("carrera", (SelectList)ViewBag.Carreras, "Carrera", new { @value = ViewBag.CurrentCarrera })
+            @Html.DropDownList("grupo", (SelectList)ViewBag.Grupos, "Grupo", new { @value = ViewBag.CurrentGrupo })
+            @Html.DropDownList("cuatrimestre", (SelectList)ViewBag.Cuatrimestres, "Cuatrimestre", new { @value = ViewBag.CurrentCuatrimestre })
+            @Html.DropDownList("turno", (SelectList)ViewBag.Turnos, "Turno", new { @value = ViewBag.CurrentTurno })
+            @Html.DropDownList("tipoVulnerabilidad", (SelectList)ViewBag.TiposVulnerabilidad, "Tipo de vulnerabilidad", new { @value = ViewBag.CurrentTipoVulnerabilidad })
+        }
+
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        @if (!string.IsNullOrWhiteSpace(ViewBag.Search as string)
+            || ViewBag.CurrentCarrera != null
+            || ViewBag.CurrentGrupo != null
+            || ViewBag.CurrentCuatrimestre != null
+            || ViewBag.CurrentTurno != null
+            || ViewBag.CurrentTipoVulnerabilidad != null)
+        {
+            <a href="@Url.Action("Index")" class="btn btn-secondary ml-2">Limpiar filtros</a>
+        }
+        <input type="hidden" name="page" value="1" />
+    </form>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="sga-vulnerables-table-wrapper">
+            <table id="tablaVulnerables" class="sga-vulnerables-table">
+                <thead>
+                    <tr>
+                        <th>Matrícula</th>
+                        <th>Nombre completo</th>
+                        <th>Carrera</th>
+                        <th>Grupo</th>
+                        <th>Cuatrimestre</th>
+                        <th>Turno</th>
+                        <th>Año</th>
+                        <th>¿Es vulnerable?</th>
+                        <th>Tipo de vulnerabilidad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var alumno in Model)
+                    {
+                        <tr>
+                            <td>@alumno.Matricula</td>
+                            <td>@alumno.Nombre</td>
+                            <td>@(!string.IsNullOrWhiteSpace(alumno.Carrera) ? alumno.Carrera : "No registrado")</td>
+                            <td>@(!string.IsNullOrWhiteSpace(alumno.Grupo) ? alumno.Grupo : "No registrado")</td>
+                            <td>@(!string.IsNullOrWhiteSpace(alumno.Cuatrimestre) ? alumno.Cuatrimestre : "No registrado")</td>
+                            <td>@(!string.IsNullOrWhiteSpace(alumno.Turno) ? alumno.Turno : "No registrado")</td>
+                            <td>@alumno.Anio</td>
+                            <td>@(alumno.IdVulnerable == 1 ? "Sí" : "No")</td>
+                            <td>@(!string.IsNullOrWhiteSpace(alumno.NombreVulnerabilidad) ? alumno.NombreVulnerabilidad : "No registrado")</td>
+                            <td>
+                                @Html.ActionLink("Editar", "Edit", new { id = alumno.IdEntrevistaInicial }, new { @class = "sga-vulnerables-btn sga-vulnerables-btn-edit" })
+                                @using (Html.BeginForm("QuitarVulnerabilidad", "VulnerablesMaster", FormMethod.Post, new { @style = "display:inline" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    @Html.Hidden("id", alumno.IdEntrevistaInicial)
+                                    <button type="submit" class="sga-vulnerables-btn sga-vulnerables-btn-danger" onclick="return confirm('¿Deseas quitar la vulnerabilidad de este alumno?');">
+                                        Quitar vulnerabilidad
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="sga-vulnerables-alert">
+            @if (esCoordinador && ViewBag.CarreraCoordinador == "Sin carrera asignada")
+            {
+                <strong>No tienes una carrera asignada.</strong><br />
+                <em>Contacta al administrador para que te asigne una carrera.</em>
+            }
+            else
+            {
+                <strong>No se encontraron alumnos vulnerables</strong><br />
+                <em>No hay registros que coincidan con los criterios de búsqueda especificados.</em>
+            }
+        </div>
+    }
+
+    @if (totalPages > 1)
+    {
+        <nav aria-label="Paginador">
+            <ul class="sga-vulnerables-pagination">
+                @if (currentPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Url.Action("Index", new {
+                        page = currentPage - 1,
+                        pageSize = pageSize,
+                        search = ViewBag.Search,
+                        carrera = ViewBag.CurrentCarrera,
+                        grupo = ViewBag.CurrentGrupo,
+                        cuatrimestre = ViewBag.CurrentCuatrimestre,
+                        turno = ViewBag.CurrentTurno,
+                        tipoVulnerabilidad = ViewBag.CurrentTipoVulnerabilidad
+                    })">Anterior</a>
+                    </li>
+                }
+                <li class="page-item active" style="pointer-events:none;">
+                    <span class="page-link">Página @currentPage de @totalPages</span>
+                </li>
+                @if (currentPage < totalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Url.Action("Index", new {
+                        page = currentPage + 1,
+                        pageSize = pageSize,
+                        search = ViewBag.Search,
+                        carrera = ViewBag.CurrentCarrera,
+                        grupo = ViewBag.CurrentGrupo,
+                        cuatrimestre = ViewBag.CurrentCuatrimestre,
+                        turno = ViewBag.CurrentTurno,
+                        tipoVulnerabilidad = ViewBag.CurrentTipoVulnerabilidad
+                    })">Siguiente</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Solo inicializar DataTables si la tabla existe y tiene datos
+            if ($('#tablaVulnerables').length && $('#tablaVulnerables tbody tr').length > 0) {
+                $('#tablaVulnerables').DataTable({
+                    "paging": false,
+                    "info": false,
+                    "searching": false,
+                    "ordering": true,
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json"
+                    }
+                });
+            }
+        });
+    </script>
+}

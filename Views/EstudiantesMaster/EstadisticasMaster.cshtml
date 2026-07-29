@@ -1,0 +1,382 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    ViewBag.Title = "Estadísticas Master - Todas las Carreras";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/estadisticas-styles.css" rel="stylesheet" />
+    <style>
+        /* Estilos para tablas de datos */
+        .data-table-container {
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+            .data-table th,
+            .data-table td {
+                border: 1px solid #ddd;
+                padding: 8px 12px;
+                text-align: center;
+            }
+
+            .data-table th {
+                background-color: #f8f9fa;
+                font-weight: 600;
+                color: #495057;
+            }
+
+            .data-table tbody tr:nth-child(even) {
+                background-color: #f8f9fa;
+            }
+
+            .data-table tbody tr:hover {
+                background-color: #e9ecef;
+            }
+
+        .export-section {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+            .btn-primary:hover {
+                background-color: #0056b3;
+                color: white;
+            }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+            .btn-danger:hover {
+                background-color: #c82333;
+                color: white;
+            }
+
+        /* Estilos para la tabla de estadísticas detalladas */
+        .detailed-stats-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .section-header h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .stats-grid-detailed {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card-detailed {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+            .stat-card-detailed .stat-label {
+                font-size: 0.9em;
+                color: #6c757d;
+                margin-bottom: 5px;
+                font-weight: 500;
+            }
+
+            .stat-card-detailed .stat-value {
+                font-size: 1.6em;
+                font-weight: bold;
+                color: #28a745;
+            }
+
+            .stat-card-detailed.primary {
+                border-left-color: #007bff;
+            }
+
+                .stat-card-detailed.primary .stat-value {
+                    color: #007bff;
+                }
+
+            .stat-card-detailed.success {
+                border-left-color: #28a745;
+            }
+
+                .stat-card-detailed.success .stat-value {
+                    color: #28a745;
+                }
+
+            .stat-card-detailed.warning {
+                border-left-color: #ffc107;
+            }
+
+                .stat-card-detailed.warning .stat-value {
+                    color: #ffc107;
+                }
+
+            .stat-card-detailed.danger {
+                border-left-color: #dc3545;
+            }
+
+                .stat-card-detailed.danger .stat-value {
+                    color: #dc3545;
+                }
+
+            .stat-card-detailed.info {
+                border-left-color: #17a2b8;
+            }
+
+                .stat-card-detailed.info .stat-value {
+                    color: #17a2b8;
+                }
+    </style>
+}
+<div class="sga-scope">
+    <!-- INICIO: BLOQUE EXPORTABLE -->
+    <div id="bloque-exportable">
+        <div class="header-section">
+            <h1 class="main-title">
+                <i class="fas fa-crown"></i>
+                Panel Master - Estadísticas
+            </h1>
+            <div class="master-badge">
+                <i class="fas fa-globe"></i>
+                Todas las Carreras
+            </div>
+            <div class="print-info">
+                <small>Generado el: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</small>
+            </div>
+        </div>
+
+        <div class="stats-grid master-grid">
+            <div class="stat-card primary large">
+                <div class="stat-icon">
+                    <i class="fas fa-university"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Total Carreras</h3>
+                    <div class="stat-number" id="totalCarreras">@ViewBag.Carreras.Count</div>
+                </div>
+            </div>
+            <div class="stat-card success large">
+                <div class="stat-icon">
+                    <i class="fas fa-award"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Estudiantes Becados</h3>
+                    <div class="stat-number" id="totalBecados">@ViewBag.TotalEstudiantesBecados</div>
+                </div>
+            </div>
+            <div class="stat-card info large">
+                <div class="stat-icon">
+                    <i class="fas fa-bus"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Con Transporte</h3>
+                    <div class="stat-number" id="totalTransporte">@ViewBag.TotalEstudiantesTransporte</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- FIN: BLOQUE EXPORTABLE -->
+
+    <div class="charts-section master-charts">
+        <div class="chart-container full-width">
+            <div class="chart-header">
+                <h3>Comparativa por Carreras</h3>
+            </div>
+            <div class="chart-content">
+                <canvas id="carrerasChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Tendencias</h3>
+            </div>
+            <div class="chart-content">
+                <canvas id="trendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVA SECCIÓN: Tabla de Estadísticas Detalladas -->
+    <div class="detailed-stats-section">
+        <div class="section-header">
+            <h3><i class="fas fa-chart-bar"></i> Estadísticas Generales:</h3>
+        </div>
+        <div class="stats-grid-detailed" id="estadisticasDetalladas">
+            <!-- Se llenará dinámicamente -->
+        </div>
+    </div>
+
+    <div class="actions-section">
+        <a href="@Url.Action("DetallesBecaMaster", "EstudiantesMaster")" class="btn btn-primary">
+            <i class="fas fa-chart-pie"></i>
+            Ver Detalles de Becas por Carrera y Especialidad
+        </a>
+    </div>
+
+    <div class="export-section">
+        <h3>Exportar Datos</h3>
+        <div class="export-buttons">
+            <button id="export-pdf-btn" class="btn btn-danger">
+                <i class="fas fa-file-pdf"></i>
+                Exportar como PDF
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Librerías -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="~/ViewsStyles/Master/estadisticas-master.js"></script>
+
+<script>
+window.masterData = {
+    totalCarreras: '@ViewBag.Carreras.Count',
+    totalBecados: '@ViewBag.TotalEstudiantesBecados',
+    totalTransporte: '@ViewBag.TotalEstudiantesTransporte',
+    totalSinApoyo: '@ViewBag.TotalEstudiantesSinApoyo',
+    montoTotal: '@ViewBag.MontoTotalGeneral'
+};
+
+// Cargar datos para las gráficas al iniciar
+$(document).ready(function() {
+    cargarDatosParaGraficas();
+    cargarEstadisticasDetalladas();
+});
+
+function cargarDatosParaGraficas() {
+    $.ajax({
+        url: '@Url.Action("GetDatosParaGraficas", "EstudiantesMaster")',
+        type: 'POST',
+        success: function(response) {
+            if (response.success) {
+                actualizarGraficas(response.carreras, response.tendencias);
+            } else {
+                console.error('Error al cargar datos para gráficas:', response.error);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error en la petición:', error);
+        }
+    });
+}
+
+function cargarEstadisticasDetalladas() {
+    $.ajax({
+        url: '@Url.Action("GetEstadisticasDetalladas", "EstudiantesMaster")',
+        type: 'POST',
+        success: function(response) {
+            if (response.success) {
+                mostrarEstadisticasDetalladas(response.data);
+            } else {
+                console.error('Error al cargar estadísticas detalladas:', response.error);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error en la petición:', error);
+        }
+    });
+}
+
+function mostrarEstadisticasDetalladas(data) {
+    const container = $('#estadisticasDetalladas');
+    container.empty();
+
+    // Definir las estadísticas en el orden que aparecen en la imagen
+    const estadisticas = [
+        { label: 'Total Estudiantes', value: data.totalEstudiantes, class: 'primary' },
+        { label: 'Hombres', value: data.totalHombres, class: 'info' },
+        { label: 'Mujeres', value: data.totalMujeres, class: 'info' },
+        { label: 'Total Vulnerables', value: data.totalVulnerables, class: 'warning' },
+        { label: 'Vulnerables Económicos', value: data.vulnerablesEconomicos, class: 'warning' },
+        { label: 'Vulnerables Personales', value: data.vulnerablesPersonales, class: 'warning' },
+        { label: 'Vulnerables Académicos', value: data.vulnerablesAcademicos, class: 'warning' },
+        { label: 'No Vulnerables', value: data.noVulnerables, class: 'success' },
+        { label: 'Padres de Familias', value: data.padresFamilia, class: 'danger' },
+        { label: 'Alumnos Trabajando', value: data.alumnosTrabajando, class: 'info' },
+        { label: 'Alumnos Becados', value: data.alumnosBecados, class: 'success' }
+    ];
+
+    estadisticas.forEach(function(stat) {
+        const html = `
+            <div class="stat-card-detailed ${stat.class}">
+                <div class="stat-label">${stat.label}:</div>
+                <div class="stat-value">${stat.value}</div>
+            </div>
+        `;
+        container.append(html);
+    });
+}
+
+function actualizarGraficas(datosCarreras, datosTendencias) {
+    // Actualizar gráfica de comparativa por carreras
+    if (window.carrerasChart) {
+        window.carrerasChart.data.labels = datosCarreras.map(c => c.codigoCarrera);
+        window.carrerasChart.data.datasets[0].data = datosCarreras.map(c => c.totalBecados);
+        window.carrerasChart.data.datasets[1].data = datosCarreras.map(c => c.totalTransporte);
+        window.carrerasChart.update();
+    }
+
+    // Actualizar gráfica de tendencias
+    if (window.trendsChart) {
+        window.trendsChart.data.labels = datosTendencias.map(t => t.mes);
+        window.trendsChart.data.datasets[0].data = datosTendencias.map(t => t.becas);
+        window.trendsChart.data.datasets[1].data = datosTendencias.map(t => t.transporte);
+        window.trendsChart.update();
+    }
+}
+</script>
+

@@ -1,0 +1,625 @@
+﻿@{
+    ViewBag.Title = "Importar Calificaciones desde Excel";
+
+    // ✅ OBTENER PARÁMETROS DEL GRUPO SEGÚN ESPECIFICACIÓN
+    int idGrupoActual = ViewBag.IdGrupo ?? 1;
+    int idCarreraActual = ViewBag.IdCarrera ?? 1;
+    int idGradoActual = ViewBag.IdGrado ?? 1;
+    string nombreGrupo = ViewBag.NombreGrupo ?? "Grupo " + idGrupoActual.ToString();
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+
+            <!-- ✅ ENCABEZADO PRINCIPAL -->
+            <div class="page-header">
+                <h2>
+                    <span class="glyphicon glyphicon-cloud-upload text-primary"></span>
+                    Importar Calificaciones desde Excel
+                    <small class="text-muted">@nombreGrupo</small>
+                </h2>
+                <p class="lead">Sube el archivo Excel con las calificaciones completadas para registrarlas automáticamente en el sistema.</p>
+            </div>
+
+            <!-- ✅ NUEVO: INFORMACIÓN SOBRE MODAL DISPONIBLE -->
+            <div class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4><span class="glyphicon glyphicon-info-sign"></span> <strong>Nuevo: Importación Modal Disponible</strong></h4>
+                <p>
+                    Ahora puedes importar calificaciones directamente desde la vista del grupo usando una ventana modal,
+                    sin necesidad de navegar a esta página.
+                    <a href="javascript:history.back()" class="btn btn-sm btn-info">
+                        <span class="glyphicon glyphicon-arrow-left"></span> Volver al Grupo para usar Modal
+                    </a>
+                </p>
+                <p><small><strong>Ventajas del Modal:</strong> Flujo más rápido, sin cambio de página, progreso visual en tiempo real.</small></p>
+            </div>
+
+            <!-- ✅ PANEL DE INSTRUCCIONES -->
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h4><span class="glyphicon glyphicon-info-sign"></span> Flujo de Usuario</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><strong>📤 Paso 1: Exportar Plantilla</strong></h5>
+                            <ul class="list-unstyled">
+                                <li><span class="text-success">✓</span> Descarga la plantilla con <strong>"Exportar Excel"</strong></li>
+                                <li><span class="text-success">✓</span> Incluye datos de alumnos y materias</li>
+                                <li><span class="text-success">✓</span> Celdas de calificación vacías para llenar</li>
+                                <li><span class="text-success">✓</span> <strong>No alterar encabezados ni matrículas</strong></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><strong>📥 Paso 2: Importar Calificaciones</strong></h5>
+                            <ul class="list-unstyled">
+                                <li><span class="text-info">🔄</span> Llena calificaciones en la plantilla</li>
+                                <li><span class="text-info">🔄</span> Calificaciones numéricas válidas (0-10)</li>
+                                <li><span class="text-info">🔄</span> Sube el archivo usando el formulario</li>
+                                <li><span class="text-info">🔄</span> El sistema registra automáticamente</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- ✅ COMPARACIÓN MODAL VS PÁGINA TRADICIONAL -->
+                    <div class="row" style="margin-top: 20px;">
+                        <div class="col-md-12">
+                            <h5><strong>💡 Opciones de Importación:</strong></h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-condensed">
+                                    <thead>
+                                        <tr>
+                                            <th>Característica</th>
+                                            <th class="text-center">
+                                                <span class="glyphicon glyphicon-modal-window"></span>
+                                                Modal (Recomendado)
+                                            </th>
+                                            <th class="text-center">
+                                                <span class="glyphicon glyphicon-file"></span>
+                                                Página Tradicional
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Navegación</td>
+                                            <td class="text-center text-success">
+                                                <span class="glyphicon glyphicon-ok"></span> Sin cambio de página
+                                            </td>
+                                            <td class="text-center text-warning">
+                                                <span class="glyphicon glyphicon-share"></span> Requiere navegación
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Progreso Visual</td>
+                                            <td class="text-center text-success">
+                                                <span class="glyphicon glyphicon-ok"></span> Barra en tiempo real
+                                            </td>
+                                            <td class="text-center text-warning">
+                                                <span class="glyphicon glyphicon-minus"></span> Solo al finalizar
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Velocidad</td>
+                                            <td class="text-center text-success">
+                                                <span class="glyphicon glyphicon-ok"></span> Más rápido
+                                            </td>
+                                            <td class="text-center text-info">
+                                                <span class="glyphicon glyphicon-ok"></span> Estándar
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Resultados</td>
+                                            <td class="text-center text-success">
+                                                <span class="glyphicon glyphicon-ok"></span> Modal compacto
+                                            </td>
+                                            <td class="text-center text-success">
+                                                <span class="glyphicon glyphicon-ok"></span> Página completa
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ✅ BENEFICIOS SEGÚN ESPECIFICACIÓN -->
+                    <div class="alert alert-success" style="margin-top: 15px;">
+                        <h5><span class="glyphicon glyphicon-ok"></span> <strong>Beneficios:</strong></h5>
+                        <ul style="margin-bottom: 0;">
+                            <li><strong>Agiliza la carga masiva</strong> de calificaciones</li>
+                            <li><strong>Evita captura manual individual</strong> de cada alumno</li>
+                            <li><strong>Mantiene coherencia</strong> con la lógica existente de exportación</li>
+                            <li><strong>Procesamiento automático</strong> con resumen de resultados</li>
+                            <li><strong>Nuevo: Modalidad sin cambio de página</strong> para mejor experiencia</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ FORMULARIO PARA SUBIR ARCHIVO EXCEL -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4><span class="glyphicon glyphicon-upload"></span> Subir Archivo Excel (Método Tradicional)</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="alert alert-warning">
+                        <h5><span class="glyphicon glyphicon-info-sign"></span> <strong>Recomendación:</strong></h5>
+                        <p style="margin-bottom: 0;">
+                            Para una experiencia más fluida, considera usar el
+                            <a href="javascript:history.back()" class="btn btn-sm btn-warning">
+                                <span class="glyphicon glyphicon-modal-window"></span> Modal de Importación
+                            </a>
+                            disponible en la vista del grupo.
+                        </p>
+                    </div>
+
+                    @using (Html.BeginForm("ProcesarExcel", "Importar", FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal" }))
+                    {
+                        <!-- ✅ PARÁMETROS DEL GRUPO ENVIADOS -->
+                        <input type="hidden" name="idGrupo" value="@idGrupoActual" />
+                        <input type="hidden" name="idCarrera" value="@idCarreraActual" />
+                        <input type="hidden" name="idGrado" value="@idGradoActual" />
+
+                        <!-- ✅ INFORMACIÓN DEL GRUPO DESTINO -->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label"><strong>Grupo Destino:</strong></label>
+                            <div class="col-sm-9">
+                                <p class="form-control-static">
+                                    <span class="label label-info">@nombreGrupo</span>
+                                    <small class="text-muted">(Grupo: @idGrupoActual, Carrera: @idCarreraActual, Grado: @idGradoActual)</small>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- ✅ SELECTOR DE ARCHIVO CON VALIDACIONES -->
+                        <div class="form-group">
+                            <label for="archivoExcel" class="col-sm-3 control-label">
+                                <span class="glyphicon glyphicon-file"></span> <strong>Archivo Excel:</strong>
+                            </label>
+                            <div class="col-sm-9">
+                                <div class="input-group">
+                                    <input type="file"
+                                           id="archivoExcel"
+                                           name="archivoExcel"
+                                           class="form-control"
+                                           accept=".xlsx,.xls"
+                                           required
+                                           onchange="validarArchivo(this)" />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-folder-open"></span>
+                                    </span>
+                                </div>
+                                <small class="help-block">Archivo Excel (.xlsx o .xls) con las calificaciones completadas.</small>
+
+                                <!-- ✅ INFORMACIÓN DEL ARCHIVO SELECCIONADO -->
+                                <div id="info-archivo" class="alert alert-info" style="display: none; margin-top: 10px;">
+                                    <h5><span class="glyphicon glyphicon-file"></span> <strong>Archivo seleccionado:</strong></h5>
+                                    <p id="nombre-archivo"></p>
+                                    <p id="tamaño-archivo"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ✅ BOTONES DE ACCIÓN -->
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-9">
+                                <button type="submit" class="btn btn-success btn-lg" id="btn-procesar">
+                                    <span class="glyphicon glyphicon-cog"></span> PROCESAR E IMPORTAR
+                                </button>
+
+                                <a href="javascript:history.back()" class="btn btn-default btn-lg">
+                                    <span class="glyphicon glyphicon-arrow-left"></span> Volver al Grupo
+                                </a>
+
+                                <!-- ✅ ENLACE PARA DESCARGAR PLANTILLA -->
+                                <a href="@Url.Action("MateriasGrupo", "Exportar", new { idGrupo = idGrupoActual, idCarrera = idCarreraActual, idGrado = idGradoActual })"
+                                   class="btn btn-info btn-lg" target="_blank">
+                                    <span class="glyphicon glyphicon-download-alt"></span> Descargar Plantilla
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ✅ VALIDACIONES SEGÚN ESPECIFICACIÓN -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4><span class="glyphicon glyphicon-check"></span> Validaciones del Sistema</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h5><strong>📄 Archivo:</strong></h5>
+                            <ul>
+                                <li>Que sea un archivo Excel (.xlsx o .xls)</li>
+                                <li>Estructura correcta de columnas</li>
+                                <li>Encabezados sin modificar</li>
+                                <li>Tamaño de archivo válido</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h5><strong>👥 Alumnos:</strong></h5>
+                            <ul>
+                                <li>Que las matrículas coincidan con el grupo</li>
+                                <li>Validación de existencia en BD</li>
+                                <li>Correspondencia con carrera y grado</li>
+                                <li>No se permiten matrículas alteradas</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h5><strong>📊 Calificaciones:</strong></h5>
+                            <ul>
+                                <li>Que sean numéricas y válidas (0-10)</li>
+                                <li>Formato decimal permitido</li>
+                                <li>Celdas vacías se ignoran</li>
+                                <li>Estados asignados automáticamente</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ NUEVO: INFORMACIÓN SOBRE FUNCIONALIDADES -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4><span class="glyphicon glyphicon-cog"></span> Funcionalidades Disponibles</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><strong>🚀 Importación Modal (Nuevo):</strong></h5>
+                            <ul>
+                                <li><strong>Acceso:</strong> Desde la vista del grupo</li>
+                                <li><strong>Progreso:</strong> Barra visual en tiempo real</li>
+                                <li><strong>Navegación:</strong> Sin cambio de página</li>
+                                <li><strong>Resultados:</strong> Modal compacto y legible</li>
+                                <li><strong>Velocidad:</strong> Procesamiento más rápido</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><strong>📋 Importación Tradicional:</strong></h5>
+                            <ul>
+                                <li><strong>Acceso:</strong> Esta página completa</li>
+                                <li><strong>Progreso:</strong> Solo al completarse</li>
+                                <li><strong>Navegación:</strong> Cambio de página</li>
+                                <li><strong>Resultados:</strong> Página completa detallada</li>
+                                <li><strong>Compatibilidad:</strong> Sistemas antiguos</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="alert alert-info" style="margin-top: 15px;">
+                        <h5><span class="glyphicon glyphicon-lightbulb"></span> <strong>Recomendación:</strong></h5>
+                        <p style="margin-bottom: 0;">
+                            Para la mayoría de casos, usa la <strong>importación modal</strong> desde la vista del grupo.
+                            Reserva esta página para casos específicos donde necesites ver resultados muy detallados
+                            o cuando tengas problemas con JavaScript.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ✅ JAVASCRIPT PARA VALIDACIONES Y UX -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+$(document).ready(function() {
+    console.log('=== Importar Calificaciones - Sistema cargado ===');
+    console.log('Grupo destino:', '@nombreGrupo');
+    console.log('Parámetros - Grupo:', @idGrupoActual, 'Carrera:', @idCarreraActual, 'Grado:', @idGradoActual);
+
+    // Mostrar notificación sobre modal disponible
+    setTimeout(function() {
+        showNotification('💡 Tip: Ahora puedes importar usando el modal desde la vista del grupo para una experiencia más rápida', 'info', 8000);
+    }, 2000);
+});
+
+// ✅ FUNCIÓN PARA VALIDAR ARCHIVO SEGÚN ESPECIFICACIÓN
+function validarArchivo(input) {
+    var archivo = input.files[0];
+    var infoDiv = $('#info-archivo');
+    var btnProcesar = $('#btn-procesar');
+
+    if (archivo) {
+        // ✅ VALIDACIÓN: Que sea un archivo Excel (.xlsx o .xls)
+        var extension = archivo.name.toLowerCase().split('.').pop();
+        if (extension !== 'xlsx' && extension !== 'xls') {
+            alert('❌ Error: El archivo debe ser un Excel (.xlsx o .xls)');
+            input.value = '';
+            infoDiv.hide();
+            btnProcesar.prop('disabled', true);
+            return;
+        }
+
+        // Validar tamaño (máximo 10MB)
+        var tamañoMB = (archivo.size / 1024 / 1024).toFixed(2);
+        if (archivo.size > 10 * 1024 * 1024) {
+            alert('❌ Error: El archivo es demasiado grande. Máximo 10MB permitido.');
+            input.value = '';
+            infoDiv.hide();
+            btnProcesar.prop('disabled', true);
+            return;
+        }
+
+        // Mostrar información del archivo válido
+        $('#nombre-archivo').html('<strong>Nombre:</strong> ' + archivo.name);
+        $('#tamaño-archivo').html('<strong>Tamaño:</strong> ' + tamañoMB + ' MB');
+        infoDiv.show();
+        btnProcesar.prop('disabled', false);
+
+        console.log('✓ Archivo Excel válido seleccionado:', archivo.name);
+    } else {
+        infoDiv.hide();
+        btnProcesar.prop('disabled', true);
+    }
+}
+
+// ✅ FUNCIÓN PARA MOSTRAR PROGRESO DURANTE PROCESAMIENTO
+$('form').on('submit', function() {
+    var btnProcesar = $('#btn-procesar');
+    var textoOriginal = btnProcesar.html();
+
+    // Deshabilitar botón y mostrar progreso
+    btnProcesar.prop('disabled', true)
+                .html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Procesando Excel...');
+
+    // Actualizar mensaje progresivamente
+    setTimeout(function() {
+        if (btnProcesar.prop('disabled')) {
+            btnProcesar.html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Validando alumnos y materias...');
+        }
+    }, 3000);
+
+    setTimeout(function() {
+        if (btnProcesar.prop('disabled')) {
+            btnProcesar.html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Guardando calificaciones...');
+        }
+    }, 6000);
+
+    // En caso de error, restaurar botón después de 30 segundos
+    setTimeout(function() {
+        if (btnProcesar.prop('disabled')) {
+            btnProcesar.prop('disabled', false).html(textoOriginal);
+            alert('⏰ El proceso está tardando más de lo esperado. Verifica la conexión e intenta nuevamente.');
+        }
+    }, 30000);
+
+    return true; // Permitir envío del formulario
+});
+
+// ✅ VALIDAR FORMULARIO ANTES DE ENVIAR
+function validarFormulario() {
+    var archivo = $('#archivoExcel')[0].files[0];
+
+    if (!archivo) {
+        alert('❌ Por favor selecciona un archivo Excel para importar.');
+        return false;
+    }
+
+    var extension = archivo.name.toLowerCase().split('.').pop();
+    if (extension !== 'xlsx' && extension !== 'xls') {
+        alert('❌ Solo se permiten archivos Excel (.xlsx o .xls).');
+        return false;
+    }
+
+    // ✅ CONFIRMACIÓN FINAL SEGÚN FLUJO DE USUARIO
+    return confirm('¿Estás seguro de que deseas importar las calificaciones desde este archivo?\n\n' +
+                   'Archivo: ' + archivo.name + '\n' +
+                   'Grupo: ' + '@nombreGrupo' + '\n\n' +
+                   '⚠️ IMPORTANTE:\n' +
+                   '• Las calificaciones existentes podrían ser sobrescritas\n' +
+                   '• Se validarán las matrículas con los alumnos del grupo\n' +
+                   '• El sistema mostrará un resumen de resultados al finalizar\n\n' +
+                   '💡 Tip: También puedes usar el modal desde la vista del grupo para una experiencia más rápida');
+}
+
+// ✅ FUNCIÓN PARA MOSTRAR NOTIFICACIONES
+function showNotification(message, type, duration) {
+    $('.notification').remove();
+
+    var alertClass = type === 'success' ? 'alert-success' :
+                    type === 'error' ? 'alert-danger' :
+                    type === 'warning' ? 'alert-warning' : 'alert-info';
+
+    var notification = $(`
+        <div class="alert ${alertClass} notification" style="position: fixed; top: 15px; right: 15px; z-index: 9999; min-width: 300px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            ${message}
+        </div>
+    `);
+
+    $('body').append(notification);
+
+    if (duration > 0) {
+        setTimeout(() => notification.fadeOut(300, () => notification.remove()), duration);
+    }
+}
+
+// Agregar validación al formulario
+$('form').on('submit', validarFormulario);
+</script>
+
+<!-- ✅ ESTILOS ADICIONALES -->
+<style>
+    .page-header {
+        border-bottom: 2px solid #1ab192;
+        margin-bottom: 30px;
+    }
+
+        .page-header h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+    .panel-primary > .panel-heading {
+        background-color: #1ab192;
+        border-color: #1ab192;
+    }
+
+    .btn-success {
+        background-color: #1ab192;
+        border-color: #1ab192;
+    }
+
+        .btn-success:hover {
+            background-color: #16a085;
+            border-color: #16a085;
+        }
+
+    .glyphicon-refresh-animate {
+        animation: spin 1s infinite linear;
+    }
+
+    @@keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .form-control-static .label {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+
+    .help-block {
+        color: #7f8c8d;
+        font-size: 12px;
+    }
+
+    .alert h5 {
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .alert ul {
+        margin-bottom: 0;
+    }
+
+    .panel-body ol, .panel-body ul {
+        padding-left: 20px;
+    }
+
+    .text-success {
+        color: #27ae60 !important;
+    }
+
+    .text-info {
+        color: #3498db !important;
+    }
+
+    .text-warning {
+        color: #f39c12 !important;
+    }
+
+    .text-danger {
+        color: #e74c3c !important;
+    }
+
+    #info-archivo {
+        border-left: 4px solid #3498db;
+    }
+
+    .input-group-addon {
+        background-color: #ecf0f1;
+        color: #2c3e50;
+    }
+
+    .alert-success {
+        background-color: #dff0d8;
+        border-color: #d6e9c6;
+        color: #3c763d;
+    }
+
+        .alert-success h5 {
+            color: #2d5016;
+        }
+
+    /* ✅ NUEVOS ESTILOS PARA TABLA COMPARATIVA */
+    .table-bordered th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .table-condensed > thead > tr > th,
+    .table-condensed > tbody > tr > th,
+    .table-condensed > tfoot > tr > th,
+    .table-condensed > thead > tr > td,
+    .table-condensed > tbody > tr > td,
+    .table-condensed > tfoot > tr > td {
+        padding: 8px;
+    }
+
+    /* Iconos de comparación */
+    .text-center .glyphicon-ok {
+        color: #5cb85c;
+    }
+
+    .text-center .glyphicon-share {
+        color: #f0ad4e;
+    }
+
+    .text-center .glyphicon-minus {
+        color: #d9534f;
+    }
+
+    /* Estilos para alertas informativas */
+    .alert-warning h5 {
+        color: #8a6d3b;
+    }
+
+    .alert-info h5 {
+        color: #31708f;
+    }
+
+    /* Mejoras responsive */
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 12px;
+        }
+
+        .btn-lg {
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+
+        .col-md-4 ul {
+            font-size: 13px;
+        }
+
+        .notification {
+            right: 5px !important;
+            left: 5px !important;
+            min-width: auto !important;
+        }
+    }
+
+    /* Animaciones suaves */
+    .alert {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @@keyframes slideIn {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style>

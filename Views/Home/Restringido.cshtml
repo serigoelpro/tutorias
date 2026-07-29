@@ -1,0 +1,22 @@
+﻿@using Plataforma_Web.Models
+@{
+    /**/
+
+    ViewBag.Title = "Restringido";
+    Usuario usuario = Session["Usuario"] as Usuario;
+}
+
+<h2>Restringido</h2>
+
+        <b>
+            El usuario no tiene acceso al modulo solicitado. Acceda con otro Nivel de Usuario
+        </b>
+        <center>
+            <a class="btn btn-primary" href="@Url.Action("Login")"
+               role="button">
+                <span class="glyphicon glyphicon-log-in"></span>
+                Iniciar Sesion
+            </a>
+        </center>
+
+

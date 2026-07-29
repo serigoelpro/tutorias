@@ -1,0 +1,301 @@
+﻿@using Plataforma_Web.Models.PrimeraEntrevista
+@using Plataforma_Web.Models
+@model IEnumerable<PlataformaWeb.Models.Baja>
+
+@{
+    DatosPersonales Alumno = ViewBag.Alumno as DatosPersonales;
+    ViewBag.Title = "Index";
+    Usuario usuario = Session["Usuario"] as Usuario;
+    string userCarreraNombre = ViewBag.UserCarreraNombre as string;
+    bool esMaster = (usuario != null && usuario.IdNivel == 4);
+    // esMismaCarreraActual indica si el alumno pertenece actualmente a la carrera del coordinador.
+    // Controla si se muestran los botones de "Tramitar baja" / "Tramitar nueva baja".
+    bool esMismaCarreraActual = esMaster || (ViewBag.EsMismaCarreraActual is bool b && b);
+}
+
+<h2 style="text-transform: uppercase;">Tramitar baja de @ViewBag.Alumno.Nombre</h2>
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+<style>
+    .baja-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .form-label {
+        margin-bottom: .25rem;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+
+    .baja-card h4 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-weight: 600;
+        color: #2d6a4f;
+    }
+
+    .baja-card .dl-horizontal dt {
+        width: 120px; /* ancho etiqueta */
+    }
+
+    .baja-card .dl-horizontal dd {
+        margin-left: 140px; /* 120 + 20px separación */
+    }
+
+    @@media (max-width:768px) {
+        .baja-card .dl-horizontal dt {
+            width: auto;
+        }
+
+        .baja-card .dl-horizontal dd {
+            margin-left: 0;
+        }
+    }
+
+    .sga-scope {
+        text-transform: uppercase;
+    }
+</style>
+
+<div class="sga-scope">
+
+    @if (!Model.Any())
+    {
+        <div class="table-responsive">
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label class="form-label"><strong>Nombre del Alumno:</strong></label>
+                    <input class="form-control" value="@(Alumno?.Nombre ?? "-")" readonly />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label"><strong>No. de matrícula:</strong></label>
+                    <input class="form-control" value="@(Alumno?.Matricula ?? "-")" readonly />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2 mb-3">
+                    <label class="form-label"><strong>Grupo:</strong></label>
+                    <input class="form-control" value="@(Alumno?.Grupo?.Nombre ?? "-")" readonly />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label"><strong>Carrera:</strong></label>
+                    <input class="form-control" value="@(Alumno?.CarreraNom ?? Alumno?.Carrera?.Nombre ?? "-")" readonly />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label"><strong>Área:</strong></label>
+                    <input class="form-control" value="@(Alumno?.Area ?? "-")" readonly />
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label"><strong>Cuatrimestre:</strong></label>
+                    <input class="form-control" value="@(Alumno?.Grado?.Nombre ?? "-")" readonly />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label"><strong>Turno:</strong></label>
+                    <input class="form-control" value="@(Alumno?.Turno?.Nombre ?? "-")" readonly />
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <div class="text-muted mb-2">
+                    No se ha tramitado ninguna baja para este alumno.
+                </div>
+                @if (esMismaCarreraActual)
+                {
+                    @Html.ActionLink(
+                        "Tramitar baja",
+                        "Create",
+                        new { matricula = Alumno?.Matricula },
+                        new { @class = "btn btn-primary btn-lg" }
+                    )
+                }
+            </div>
+        </div>
+    }
+
+    <div class="table-responsive">
+
+
+        @if (Model.Any())
+        {
+
+            <table id="tablaTutorias" class="table table-striped">
+                <thead>
+                    <tr>
+
+                        <th>
+                            @Html.DisplayNameFor(model => model.Folio)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Fecha)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Nombre)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Matricula)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Grupo)
+                        </th>
+
+
+                        <th>
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        @* Estilo condicional: Si Activo es false (null se asume true/activo para viejos registros) *@
+                        @* REVOCADA solo si Activo=false Y NO es reingreso (Reingreso != 1) *@
+                        bool esRevocada = item.Activo == false && item.Reingreso != 1;
+                        bool esReincorporado = item.Reingreso == 1;
+
+                        @* Solo las REVOCADAS tienen estilo rojo/tachado, las reincorporadas se ven normales *@
+                        string claseFila = esRevocada ? "danger" : "";
+                        string estiloTexto = esRevocada ? "text-decoration: line-through; color: #888;" : "";
+
+                        @* Coordinador solo puede editar bajas de su propia carrera; Master puede editar todas. *@
+                        bool puedeEditarEstaBaja = esMaster ||
+                            (usuario != null && usuario.IdNivel == 3 &&
+                             (string.IsNullOrEmpty(userCarreraNombre) ||
+                              (item.Carrera != null && item.Carrera.Trim() == userCarreraNombre.Trim())));
+
+                        <tr class="@claseFila">
+                            <td style="@estiloTexto">
+                                @Html.DisplayFor(modelItem => item.Folio)
+                                @if (esRevocada)
+                                {<span class="label label-danger">REVOCADA</span>}
+                                @if (esReincorporado)
+                                {<span class="label label-success" style="background-color: #28a745;">REINGRESADO</span>}
+                            </td>
+                            <td style="@estiloTexto">@Html.DisplayFor(modelItem => item.Fecha)</td>
+                            <td style="@estiloTexto">@Html.DisplayFor(modelItem => item.Nombre)</td>
+                            <td style="@estiloTexto">@Html.DisplayFor(modelItem => item.Matricula)</td>
+                            <td style="@estiloTexto">@Html.DisplayFor(modelItem => item.Grupo)</td>
+                            <td>
+                                @if (!esRevocada)
+                                {
+                                    @* Botones normales si está activa *@
+
+                                    if (puedeEditarEstaBaja)
+                                    {
+                                        <a class="btn btn-sm btn-warning" href="@Url.Action("Edit", new { id = item.IdBaja })" title="Editar">
+                                            <i class="fa fa-pencil"></i>
+                                        </a>
+
+                                        @* BOTÓN REVOCAR - Ocultar si es Reingreso *@
+                                        if (item.Reingreso != 1)
+                                        {
+                                            <a class="btn btn-sm"
+                                               href="@Url.Action("Revocar", new { id = item.IdBaja })"
+                                               title="Revocar / Cancelar"
+                                               style="background-color: #d35400; color: white; border: none;">
+                                                <i class="fa fa-ban"></i>
+                                            </a>
+                                        }
+                                    }
+
+                                    <a class="btn btn-sm btn-info" href="@Url.Action("Details", new { id = item.IdBaja })" title="Imprimir">
+                                        <i class="fa fa-print"></i>
+                                    </a>
+
+                                    @* ELIMINAR REAL: SOLO MASTER (NIVEL 4) *@
+                                    if (usuario != null && usuario.IdNivel == 4)
+                                    {
+                                        <a class="btn btn-sm btn-danger" href="@Url.Action("Delete", new { id = item.IdBaja })" title="Eliminar permanentemente">
+                                            <i class="fa fa-trash"></i>
+                                        </a>
+                                    }
+                                }
+                                else
+                                {
+                                    @* Si está revocada, solo mostramos info o restaurar si quisieras *@
+                                    <span class="text-muted">Inactiva</span>
+                                    @* Opcional: Permitir eliminar el registro basura al Master *@
+                                    if (usuario != null && usuario.IdNivel == 4)
+                                    {
+                                        <a class="btn btn-sm btn-danger" href="@Url.Action("Delete", new { id = item.IdBaja })" title="Eliminar registro">
+                                            <i class="fa fa-trash"></i>
+                                        </a>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+
+            </table>
+
+        }
+        <div class="mt-2 mb-3 px-3">
+            @* Verificar si todas las bajas están revocadas para mostrar el botón *@
+            @if (Model.Any())
+            {
+                // Corregido: Si es reingreso (1), también cuenta como "ya no activa" para permitir crear otra.
+                bool todasRevocadas = Model.All(bj => bj.Activo == false || bj.Reingreso == 1);
+                // Si es reingreso (1), no cuenta como baja activa para bloquear el botón de nueva baja
+                bool hayBajaActiva = Model.Any(bj => bj.Activo != false && bj.Reingreso != 1);
+
+                @* Solo mostrar el botón si TODAS las bajas están revocadas, el usuario tiene permiso
+                    y el alumno pertenece actualmente a la carrera del coordinador. *@
+                if (todasRevocadas && !hayBajaActiva && usuario != null && usuario.IdNivel >= 2 && esMismaCarreraActual)
+                {
+                    <div class="text-center mb-3" style="padding: 15px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
+                        <p class="text-muted mb-2" style="color: #856404 !important;">
+                            @{
+                                var ultimaBaja = Model.OrderByDescending(bj => bj.IdBaja).FirstOrDefault();
+                                bool esReincorporadoMsg = ultimaBaja != null && ultimaBaja.Reingreso == 1;
+                                string mensajeEstado = esReincorporadoMsg ? "El alumno fue reincorporado." : "El alumno no cuenta con bajas activas.";
+                            }
+                            <i class="fa fa-info-circle"></i> @mensajeEstado
+                        </p>
+                        @Html.ActionLink(
+                            "Tramitar nueva baja",
+                            "Create",
+                            new { matricula = Alumno?.Matricula },
+                            new { @class = "btn btn-primary btn-lg" }
+                        )
+                    </div>
+                }
+            }
+
+            @* Botones de navegación *@
+            @if (ViewBag.FromReporte == true)
+            {
+                <a href="@Url.Action("ReporteBajas", "Bajas")" class="btn btn-sm btn-info mt-2 mb-3">
+                    Regresar al reporte
+                </a>
+            }
+            else if (ViewBag.Nivel == 3)
+            {
+                <a href="@Url.Action("Grupo","Entrevistas")" class="btn btn-sm btn-info mt-2 mb-3">
+                    Regresar
+                </a>
+            }
+            else
+            {
+                <a href="@Url.Action("Grupo","Entrevistas")" class="btn btn-sm btn-info mt-2 mb-3">
+                    Regresar
+                </a>
+            }
+        </div>
+    </div>
+
+</div>

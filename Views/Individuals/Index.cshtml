@@ -1,0 +1,252 @@
+﻿@using Plataforma_Web.Models.PrimeraEntrevista
+@model IEnumerable<PlataformaWeb.Models.SeguimientoPlanoVM>
+
+@{
+    DatosPersonales Alumno = ViewBag.Alumno as DatosPersonales;
+    ViewBag.Title = "Index";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <style>
+        /* UNA sola banda: el encabezado de cada hoja */
+        tr.sheet-header > td {
+            color: #0b5e55;
+            font-weight: 600;
+            border-top: 2px solid rgba(24,165,143,.35);
+            border-bottom: 2px solid rgba(24,165,143,.35);
+            padding: 8px 12px; /* hace de “separador” + header */
+        }
+
+            /* opcional: bordes redondeados a los lados */
+            tr.sheet-header > td:first-child {
+                border-left: 0;
+                border-right: 0;
+            }
+
+        /* fila compacta: filtros + botones en línea */
+        .filters-inline {
+            display: flex;
+            align-items: flex-end; /* alinea con la base del input */
+            gap: 12px;
+            flex-wrap: wrap; /* en móvil puede saltar abajo */
+        }
+
+            .filters-inline .form-group {
+                display: flex;
+                flex-direction: column; /* label arriba, control abajo */
+                margin: 0;
+            }
+
+            .filters-inline .form-control {
+                min-width: 260px;
+                height: 34px;
+            }
+
+        /* botones pegados al input, alineados por la base */
+        .btns-inline {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            padding-bottom: 2px; /* pequeño ajuste visual */
+        }
+
+        /* Tono verde claro para las filas de cuatrimestres pasados */
+        tr.fila-pasada > td {
+            background-color: rgba(211, 239, 213, 0.5) !important; /* Un verde claro translúcido */
+        }
+    </style>
+
+}
+
+
+<div class="sga-scope">
+    <h2>Seguimiento individual de @ViewBag.AlumnoNombre</h2>
+
+    @if (TempData["ToastOk"] != null)
+    {
+        <div class="alert alert-success alert-dismissible no-print" role="alert" style="max-width:720px">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"
+                    onclick="this.parentElement.remove();">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            @TempData["ToastOk"]
+        </div>
+    }
+
+
+    @{
+        var selectedSort = (string)(ViewBag.SortBy ?? "fecha");
+        var selectedDir = (string)(ViewBag.Dir ?? "desc");
+        var searchQ = (string)(ViewBag.SearchQ ?? "");   // <- usar SearchQ
+        var hasFilters = !string.IsNullOrEmpty(searchQ)
+                           || !string.Equals(selectedSort, "fecha", StringComparison.OrdinalIgnoreCase)
+                           || !string.Equals(selectedDir, "desc", StringComparison.OrdinalIgnoreCase);
+    }
+    <div class="no-print mb-3">
+        @using (Html.BeginForm("Index", "Individuals", FormMethod.Get))
+        {
+            @Html.Hidden("id", Alumno?.IdPersona)
+
+            <div class="filters-inline" style="margin-bottom: 10px;">
+                <div class="form-group">
+                    <label for="sortBy" class="control-label">Ordenar por</label>
+                    <select id="sortBy" name="sortBy" class="form-control">
+                        <option value="fecha" @(selectedSort == "fecha" ? "selected" : "")>Fecha</option>
+                        <option value="grupo" @(selectedSort == "grupo" ? "selected" : "")>Grupo</option>
+                        <option value="cuatri" @(selectedSort == "cuatri" ? "selected" : "")>Cuatrimestre/Año</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="dir" class="control-label">Dirección</label>
+                    <select id="dir" name="dir" class="form-control">
+                        <option value="asc" @(selectedDir == "asc" ? "selected" : "")>Ascendente</option>
+                        <option value="desc" @(selectedDir == "desc" ? "selected" : "")>Descendente</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="searchQ" class="control-label">Buscar</label>
+                    <input id="searchQ" name="searchQ" value="@searchQ"
+                           class="form-control" placeholder="Texto, grupo, cuatrimestre o año..." />
+                </div>
+
+                <div class="btns-inline">
+                    <button type="submit" class="btn btn-utt-outline">Aplicar</button>
+
+                    @if (hasFilters)
+                    {
+                        <a class="btn btn-default"
+                           href="@Url.Action("Index","Individuals", new { id = Alumno?.IdPersona })">
+                            Limpiar
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+
+
+
+
+    @* --- INICIO DE CAMBIOS --- *@
+    <div class="no-print d-flex gap-2 mb-2">
+
+        @* 1. ELIMINA COMPLETAMENTE este ActionLink (el botón "Crear hoja nueva") *@
+        @*
+            @Html.ActionLink(
+                 "Crear hoja nueva",
+                 "Create",
+                 new { id = Alumno?.IdPersona },
+                 new
+                 {
+                     @class = "btn btn-utt-outline",
+                     onclick = "return confirm('¿Crear una nueva hoja? ...');"
+                 }
+            )
+        *@
+
+        @* 2. REEMPLAZA el antiguo "Agregar seguimiento" por este *@
+        @if (Alumno != null)
+        {
+            <a class="btn btn-info" style="margin-bottom: 15px;"
+               href="@Url.Action("Grupo","Entrevistas", new { id = ViewBag.Grupo })">Regresar</a>
+
+            <a class="btn btn-utt-outline" style="margin-bottom: 15px;"
+               href="@Url.Action("PrepararNuevoSeguimiento", "Individuals", new { id = Alumno.IdPersona })">
+                Agregar seguimiento
+            </a>
+        }
+
+        @* 3. ELIMINA COMPLETAMENTE la lógica anterior del botón "Agregar seguimiento" *@
+        @*
+            @if ((int)(ViewBag.IdIndReciente ?? 0) > 0)
+            {
+                <a class="btn btn-utt-outline"
+                   href="@Url.Action("Create", "Seguimientoes", new { id = (int)ViewBag.IdIndReciente })">
+                    Agregar seguimiento
+                </a>
+            }
+        *@
+    </div>
+    @* --- FIN DE CAMBIOS --- *@
+
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo de Vulnerabilidad</th>
+                    <th>Acción / Problemática</th>
+                    <th>Acciones y/o Canalizaciones</th>
+                    <th>Grupo</th>
+                    <th>Cuatrimestre</th>
+                    <th>Año</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    // --- INICIO DE CÓDIGO NUEVO ---
+                    // Recuperar los datos del cuatrimestre actual desde el ViewBag
+                    var grupoActual = (string)ViewBag.GrupoActual;
+                    var cuatriActual = (string)ViewBag.CuatriActual;
+                    var anioActual = (int)(ViewBag.AnioActual ?? 0);
+                    // --- FIN DE CÓDIGO NUEVO ---
+
+                    foreach (var item in Model)
+                    {
+                        // --- INICIO DE CÓDIGO NUEVO ---
+                        // Comparar si la fila actual es del periodo actual
+                        bool esActual = item.Grupo == grupoActual &&
+                                        item.Cuatrimestre == cuatriActual &&
+                                        item.Anio == anioActual;
+                        // --- FIN DE CÓDIGO NUEVO ---
+
+                        // --- LÍNEA MODIFICADA ---
+                        // Añadimos la clase 'fila-pasada' si NO es actual
+                        <tr class="@(esActual ? "" : "fila-pasada")">
+                            <td>@item.Fecha</td>
+                            <td>@item.Vulnerabilidad</td>
+                            <td style="max-width:380px;overflow:hidden;text-overflow:ellipsis;">@item.Problematica</td>
+                            <td style="max-width:380px;overflow:hidden;text-overflow:ellipsis;">@item.Accion</td>
+                            <td>@item.Grupo</td>
+                            <td>@item.Cuatrimestre</td>
+                            <td>@item.Anio</td>
+                            <td>
+                                <a class="btn btn-warning" href="@Url.Action("Edit","Seguimientoes", new { id = item.IdSeguimiento })">
+                                    <span class="glyphicon glyphicon-pencil"></span> Editar
+                                </a>
+
+                                @* El botón "Ver Hoja" ya lo habíamos quitado *@
+
+                                <a class="btn btn-info" href="@Url.Action("Details","Individuals", new { id = item.IdSeguimiento })">
+                                    <span class="glyphicon glyphicon-print"></span> Imprimir
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-muted">Sin seguimientos registrados.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="gtco-section">
+        <div class="gtco-container">
+            <div class="row">
+                <a class="btn btn-info" href="@Url.Action("Grupo","Entrevistas", new { id = ViewBag.Grupo })">Regresar</a>
+            </div>
+        </div>
+    </div>
+</div>

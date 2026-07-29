@@ -1,0 +1,1061 @@
+﻿@model IEnumerable<PlataformaWeb.Controllers.TutorConEstadisticas>
+
+@{
+    ViewBag.Title = "Seguimiento de Tutores"; // Titulo para la pestaña
+    var userNivel = ViewBag.UserNivel as int? ?? 0;
+    var carrerasSL = ViewBag.CarrerasSelectList as SelectList; // Lista de carreras para filtrar mediante ID
+    var carrerasDict = ViewBag.Carreras as IDictionary<int, string>;
+
+    var _usrSesion = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var esDirector = _usrSesion != null && _usrSesion.EsDirector;
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <style>
+        :root {
+            --utColor: #1ab192;
+        }
+
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+
+        /* Evita un error en donde no se puede presionar la paginacion de la tabla */
+        .sga-scope .dataTables_wrapper {
+            position: unset !important;
+        }
+
+        .sga-scope h3 {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        /* Tabla con celdas mas pequeñas */
+        .sga-scope table.dataTable tbody td {
+            padding: 10px 18px !important;
+        }
+
+        #tutoresTable th, #tutoresTable td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+            #tutoresTable td[data-label="Acciones"] {
+                white-space: normal;
+                text-align: center;
+                display: flex;
+                flex-wrap: nowrap;
+                justify-content: center;
+                gap: 5px;
+            }
+
+                #tutoresTable td[data-label="Acciones"] .btn {
+                    margin: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0.9rem 1.0rem;
+                }
+
+        .number-data {
+            text-align: center !important;
+        }
+
+        .column-header-big {
+            width: 100px !important;
+            white-space: wrap !important;
+        }
+
+        .export-buttons {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .row-spacing {
+            margin-bottom: 16px;
+        }
+
+        .grafica-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 150px;
+        }
+
+        .grafica-label,
+        .grafica-val {
+            font-size: 1.3rem;
+        }
+
+        .grafica-label {
+            font-weight: 600;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .grafica-val {
+            color: #555;
+            text-align: center;
+        }
+
+        .grafica-item {
+            position: relative;
+            width: 120px;
+            text-align: center;
+        }
+
+            .grafica-item.loading::after {
+                content: '';
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                width: 60px;
+                height: 60px;
+                margin-left: -30px;
+                border: 4px solid #e5e5e5;
+                border-top: 4px solid var(--utColor);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+        @@keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Optional fade effect */
+        .grafica-item canvas {
+            opacity: 0.3;
+            transition: opacity .3s;
+        }
+
+        .grafica-item.loaded canvas {
+            opacity: 1;
+        }
+
+        #resumenGraficas {
+            display: flex !important;
+            margin-bottom: 20px;
+            gap: 0;
+            justify-content: center;
+        }
+
+        #resumenGraficasContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            padding: 16px 0;
+        }
+
+        .btn-incluir-bajas {
+            margin-bottom: 12px;
+        }
+
+            .btn-incluir-bajas label {
+                margin-bottom: 0;
+                cursor: pointer;
+            }
+
+        @@media (min-width: 768px) {
+            .modal-dialog.modal-centered {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) !important;
+                margin: 0;
+                width: 600px;
+            }
+        }
+
+        .grid-margin {
+            margin-bottom: 15px;
+        }
+
+        .btn-export-card {
+            width: 100%;
+            padding: 20px 15px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            white-space: normal;
+            transition: all 0.2s ease-in-out;
+            display: block;
+        }
+
+        .btn-export-card:hover,
+        .btn-export-card:focus {
+            background-color: #e9f8f4 !important;
+            background-image: none !important;
+            border-color: #1ab192 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            color: #1ab192 !important;
+        }
+
+        .btn-export-card:disabled,
+        .btn-export-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: auto;
+        }
+
+        .btn-export-card:disabled:hover,
+        .btn-export-card.disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+            background-color: #ffffff !important;
+            border-color: #ddd !important;
+            color: #333 !important;
+        }
+
+        .btn-export-card h4 {
+            margin-top: 12px;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .btn-export-card:hover h4,
+        .btn-export-card:focus h4 {
+            color: #1ab192;
+        }
+
+        .btn-export-card .help-block {
+            margin-bottom: 0;
+            font-size: 12px;
+        }
+
+        .btn-export-card:hover .help-block {
+            color: #1ab192 !important;
+        }
+
+        /* Colores de iconos de FontAwesome */
+        .text-success { color: #27ae60; }
+        .text-info { color: #2980b9; }
+        .text-warning { color: #f39c12; }
+        .text-danger { color: #c0392b; }
+        .text-muted { color: #777; }
+
+        .input-max-semanas {
+            width: 80px;
+            display: inline-block;
+        }
+
+        .status-semanas {
+            font-size: 0.85rem;
+        }
+
+        .alert-mb-0 {
+            margin-bottom: 0 !important;
+
+        }
+
+        .form-inline {
+            display: inline;
+        }
+
+        .btn-ver-detalles {
+            background-color: #138496 !important;
+        }
+
+        .alert-top-margin {
+            margin-top: 10px;
+        }
+
+        .not-highlight{
+            user-select: none;
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+    </style>
+}
+
+<!-- Clase para tomar los estilo definidos en sga-theme.css -->
+<div class="sga-scope">
+    <h2>Seguimiento de tutores</h2>
+
+    <div class="row">
+        <div class="col-md-4 not-highlight">
+            <div class="form-group">
+                <label for="buscarTutores" class="control-label">Buscar:</label>
+                <input id="buscarTutores" type="text" class="form-control" placeholder="Escribe para filtrar los resultados..." title="Filtra los resultados de la tabla por cualquier texto" />
+            </div>
+        </div>
+    </div>
+
+    @if (userNivel >= 4)
+    {
+        <div class="row row-spacing not-highlight">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="filtroCarrera" class="control-label">Filtrar por carrera:</label>
+                    @Html.DropDownList("idCarrera", carrerasSL, "-- Todas las carreras --",
+                        new { @class = "form-control", @id = "filtroCarrera", @title = "Filtra la tabla por carrera seleccionada" })
+                </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="form-group">
+                    <button id="btnLimpiarFiltro" type="button" class="btn btn-utt-outline d-none" title="Limpia el filtro de carrera, la búsqueda y el check de incluir bajas">Limpiar filtros</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="btn-incluir-bajas not-highlight" title="Afecta en las columnas: Alumnos Totales y Entrevistas, y en algunos contadores al exportar.">
+        <label>
+            Incluir bajas en las estadísticas y documentos<br />
+            <input type="checkbox" id="chkIncluirBajas" />
+        </label>
+    </div>
+
+    <h3 class="not-highlight">Periodo Actual: @ViewBag.PeriodoActual — @ViewBag.AñoActual</h3>
+
+    @if (userNivel >= 4)
+    {
+        <div class="row row-spacing not-highlight">
+            <div class="col-md-6">
+                <div class="sga-filter-bar">
+                    <strong>Semanas máximas del periodo:</strong>
+                    <input type="number" id="inputMaxSemanas" class="form-control input-max-semanas" value="@ViewBag.MaxSemanas" min="1" max="20" title="Define el número máximo de semanas del periodo (1-20)" />
+                    <button id="btnGuardarMaxSemanas" type="button" class="btn btn-utt-outline">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar
+                    </button>
+                    <span id="maxSemanasStatus" class="text-muted status-semanas"></span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Estadisticas mediante graficas -->
+    <div id="resumenGraficas" class="row">
+        <div class="col-12">
+            <div id="resumenGraficasContainer">
+                <div class="grafica-item loading" data-key="entrevistas">
+                    <canvas width="80" height="80"></canvas>
+                    <div class="grafica-label">Entrevistas<br />Revisadas</div>
+                    <div class="grafica-val">...</div>
+                </div>
+                <div class="grafica-item loading" data-key="pats">
+                    <canvas width="80" height="80"></canvas>
+                    <div class="grafica-label">PATs<br />Aceptados</div>
+                    <div class="grafica-val">...</div>
+                </div>
+                <div class="grafica-item loading" data-key="semanasInd">
+                    <canvas width="80" height="80"></canvas>
+                    <div class="grafica-label">Tutorias<br />Individuales</div>
+                    <div class="grafica-val">...</div>
+                </div>
+                <div class="grafica-item loading" data-key="semanasGrup">
+                    <canvas width="80" height="80"></canvas>
+                    <div class="grafica-label">Tutorias<br />Grupales</div>
+                    <div class="grafica-val">...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="alert alert-info">
+            @ViewBag.Mensaje
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.Error
+        </div>
+    }
+
+    <!-- Botones de exportacion general o por carrera -->
+    <div class="export-buttons not-highlight">
+        @if (Model != null && Model.Any())
+        {
+            using (Html.BeginForm("ExportarEntrevistasGlobal", "SeguimientoTutores", FormMethod.Post, new { target = "export-frame" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="idCarrera" value="" class="filtro-carrera-hidden" />
+                <input type="hidden" name="incluirBajas" value="false" class="incluir-bajas-hidden" />
+                <button type="submit" class="btn btn-utt-outline btn-export" title="Exporta a Excel el reporte de entrevistas de todos los tutores">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span class="btn-export-text">@(userNivel > 3 ? "Exportar Entrevistas (Global)" : $"Exportar Entrevistas ({ViewBag.NombreCarrera})")</span>
+                </button>
+            }
+
+            using (Html.BeginForm("ExportarArrastresGlobal", "SeguimientoTutores", FormMethod.Post, new { target = "export-frame" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="idCarrera" value="" class="filtro-carrera-hidden" />
+                <input type="hidden" name="incluirBajas" value="false" class="incluir-bajas-hidden" />
+                <button type="submit" class="btn btn-utt-outline btn-export" title="Exporta a Excel el reporte de arrastres de todos los tutores">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span class="btn-export-text">@(userNivel > 3 ? "Exportar Arrastres (Global)" : $"Exportar Arrastres ({ViewBag.NombreCarrera})")</span>
+                </button>
+            }
+        }
+        else
+        {
+            <div class="alert alert-warning mb-0 alert-mb-0">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                No hay información disponible para exportar.
+            </div>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <table id="tutoresTable" class="table table-striped">
+            <thead>
+                <tr class="not-highlight">
+                    <th>Nombre del tutor</th>
+                    <th>Grupo y Grado</th>
+                    <!--
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    -->
+                    <th>Correo Electrónico</th>
+                    @if (userNivel > 3)
+                    {
+                        <th>Carrera</th>
+                    }
+                    <th class="column-header-big">Entrevistas Revisadas</th>
+                    <th class="column-header-big">Entrevistas Faltantes</th>
+                    <!--
+                        <th class="column-header-big">PATs revisados</th>
+                    -->
+                    <th class="column-header-big">PATs aceptados</th>
+                    <th class="column-header-big">Semanas Creadas</th>
+                    <th class="column-header-big">Semanas Completadas (Individual)</th>
+                    <th class="column-header-big">Semanas Completadas (Grupal)</th>
+                    <th id="thAlumnosTotales" class="column-header-big">Alumnos Totales Activos</th>
+                    <th>Bajas</th>
+                    <th>Arrastres</th>
+                    <th>Extraordinarios</th>
+                    <th class="no-order">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        if (userNivel == 3 &&
+                        (string.IsNullOrEmpty(item.MicrosoftIdentifier) ||
+                             item.MicrosoftIdentifier.Trim() == ""))
+                        {
+                            continue;
+                        }
+
+                        @* data-carrera-id usado por el filtro client-side DataTable *@
+                        <tr data-tutor-id="@item.IdUsuario" data-tutor-grupo="@item.TutorGrupo" data-carrera-id="@item.IdCarrera">
+                            <td data-label="Nombre completo">@item.NombreCompleto</td>
+                            <!--
+                            <td data-label="Usuario">@item.UserName</td>
+                            -->
+                            <td class="number-data stat-cell" data-stat="grupos">...</td>
+                            <td data-label="Correo Electrónico">@item.CorreoElectronico</td>
+                            @if (userNivel > 3)
+                            {
+                                <td data-label="Carrera">@(carrerasDict != null && carrerasDict.ContainsKey(item.IdCarrera) ? carrerasDict[item.IdCarrera] : "Sin carrera")</td>
+                            }
+                            <td class="number-data stat-cell" data-stat="entrevistas"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="entrevistasFaltantes"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="pats"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="semanasCreadas"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="semanasInd"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="semanasGrup"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="alumnosTotales"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="bajas"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="arrastres"><span class="text-muted">...</span></td>
+                            <td class="number-data stat-cell" data-stat="extraordinarios"><span class="text-muted">...</span></td>
+                            <td data-label="Acciones" class="no-order">
+                                <form method="post" action="@Url.Action("DetallesTutor", "SeguimientoTutores")" class="form-inline">
+                                    <input type="hidden" name="id" value="@item.IdUsuario" />
+                                    <input type="hidden" name="grupo" value="@item.TutorGrupo" />
+                                    <button type="submit" class="btn btn-info btn-sm btn-ver-detalles" title="Ver detalles">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </form>
+                                @if (!esDirector)
+                                {
+                                <a href="@Url.Action("PatDetalles", "AsignarAsesores", new { id = item.PatId })" class="btn btn-warning btn-sm" title="Gestionar PAT">
+                                    <i class="fa-solid fa-gear"></i>
+                                </a>
+                                }
+                                <button type="button" class="btn btn-info btn-sm btn-export-modal"
+                                        data-id="@item.IdUsuario" data-grupo="@item.TutorGrupo"
+                                        title="Exportar">
+                                    <i class="fa-solid fa-file-excel"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        @if (!(Model != null && Model.Any()))
+        {
+            <div class="alert alert-info text-center alert-top-margin">
+                @if (userNivel == 0)
+                {
+                    <em>No se pueden mostrar tutores debido a problemas de autenticación.</em>
+                }
+                else
+                {
+                    <em>No hay tutores registrados para mostrar.</em>
+                }
+            </div>
+        }
+
+    </div>
+</div>
+
+<!-- Esto se agrega para evitar interrupcion en la carga inicial de estadisticas en caso de exportar un documento -->
+<iframe name="export-frame" style="display:none"></iframe>
+
+<!-- Modal de exportacion -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="exportModalLabel">Exportar datos del tutor</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+
+                    <!-- Reporte General: Comprehensive data/Dashboard icon -->
+                    <div class="col-xs-12 col-sm-6 grid-margin">
+                        <form method="post" action="@Url.Action("ExportarReporteGeneral", "SeguimientoTutores")" target="export-frame" class="export-modal-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" class="export-id" />
+                            <input type="hidden" name="grupo" class="export-grupo" />
+                            <input type="hidden" name="incluirBajas" class="export-incluir-bajas" />
+                            <button type="submit" class="btn btn-default btn-export-card">
+                                <i class="fa-solid fa-chart-pie fa-2x text-success"></i>
+                                <h4>Reporte General</h4>
+                                <span class="text-muted help-block">Incluye todos los datos completos</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Solo Tutorías: Calendar/Schedule or Meeting icon -->
+                    <div class="col-xs-12 col-sm-6 grid-margin">
+                        <form method="post" action="@Url.Action("ExportarTutorias", "SeguimientoTutores")" target="export-frame" class="export-modal-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" class="export-id" />
+                            <input type="hidden" name="grupo" class="export-grupo" />
+                            <input type="hidden" name="incluirBajas" class="export-incluir-bajas" />
+                            <button type="submit" class="btn btn-default btn-export-card">
+                                <i class="fa-solid fa-calendar-days fa-2x text-info"></i>
+                                <h4>Solo Tutorías</h4>
+                                <span class="text-muted help-block">Exportar entrevistas, actividades y PAT</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Solo Arrastres: Link / Chain icon (carrying over subjects) or Sync/Route -->
+                    <div class="col-xs-12 col-sm-6 grid-margin" data-export-type="arrastres">
+                        <form method="post" action="@Url.Action("ExportarArrastres", "SeguimientoTutores")" target="export-frame" class="export-modal-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" class="export-id" />
+                            <input type="hidden" name="grupo" class="export-grupo" />
+                            <input type="hidden" name="incluirBajas" class="export-incluir-bajas" />
+                            <button type="submit" class="btn btn-default btn-export-card">
+                                <i class="fa-solid fa-link fa-2x text-warning"></i>
+                                <h4>Solo Arrastres</h4>
+                                <span class="text-muted help-block export-desc" data-original-desc="Alumnos con materias de arrastre">Alumnos con materias de arrastre</span>
+                                <span class="text-muted help-block export-badge"></span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Solo Extraordinario: Warning/Exclamation or Triangle warning for critical exams -->
+                    <div class="col-xs-12 col-sm-6 grid-margin" data-export-type="extraordinarios">
+                        <form method="post" action="@Url.Action("ExportarExtraordinario", "SeguimientoTutores")" target="export-frame" class="export-modal-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" class="export-id" />
+                            <input type="hidden" name="grupo" class="export-grupo" />
+                            <input type="hidden" name="incluirBajas" class="export-incluir-bajas" />
+                            <button type="submit" class="btn btn-default btn-export-card">
+                                <i class="fa-solid fa-triangle-exclamation fa-2x text-danger"></i>
+                                <h4>Solo Extraordinario</h4>
+                                <span class="text-muted help-block export-desc" data-original-desc="Alumnos con materias en extraordinario">Alumnos con materias en extraordinario</span>
+                                <span class="text-muted help-block export-badge"></span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Solo Bajas: User Slash or Folder Minus icon for dropped/inactive students -->
+                    <div class="col-xs-12 col-sm-6 grid-margin" data-export-type="bajas">
+                        <form method="post" action="@Url.Action("ExportarBajas", "SeguimientoTutores")" target="export-frame" class="export-modal-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" class="export-id" />
+                            <input type="hidden" name="grupo" class="export-grupo" />
+                            <button type="submit" class="btn btn-default btn-export-card">
+                                <i class="fa-solid fa-user-slash fa-2x text-muted"></i>
+                                <h4>Solo Bajas</h4>
+                                <span class="text-muted help-block export-desc" data-original-desc="Listado de alumnos dados de baja">Listado de alumnos dados de baja</span>
+                                <span class="text-muted help-block export-badge"></span>
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
+
+    <script type="text/javascript">
+        console.log("Developed by ARC");
+
+        // Rellena numeros con ceros a la izquierda para orden natural (TI1A -> TI00001A).
+        function naturalize(str) {
+            return str.replace(/(\d+)/g, function (m) { return m.padStart(5, '0'); });
+        }
+
+        // Dibuja un anillo de progreso en un canvas (circular progress ring).
+        // pct: 0.0 a 1.0, color: color del arco de progreso.
+        function drawRing(canvas, pct, color) {
+            var ctx = canvas.getContext('2d');
+            var cx = canvas.width / 2, cy = canvas.height / 2, r = 32, lw = 8;
+            var start = -Math.PI / 2; // Empezar desde arriba (las 12 en punto)
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Circulo base gris (fondo)
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#e9ecef';
+            ctx.lineWidth = lw;
+            ctx.stroke();
+
+            // Arco de progreso coloreado
+            if (pct > 0) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, start, start + 2 * Math.PI * pct);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lw;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+
+            // Texto del porcentaje en el centro
+            ctx.fillStyle = color;
+            ctx.font = 'bold 13px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(Math.floor(pct * 100) + '%', cx, cy); // .floor para obtener un dato mas exacto sin redondeo mayor; evita casos como 526/528 = 100%.
+        }
+
+        $(document).ready(function () {
+            var pageAlive = true;
+            $(window).on('beforeunload', function () { pageAlive = false; });
+
+            var isMaster = @(ViewBag.UserNivel as int? ?? 0) > 3;
+            var baseCol = 3 + (isMaster ? 1 : 0);
+
+            var allIds = [];
+            var statsMap = {};
+            var statsMapSinBajas = {};
+            var statsMapConBajas = {};
+            var statsLoaded = false;
+            var incluirBajas = false;
+            var tablaTutores;
+
+            function initDataTable() {
+                tablaTutores = $('#tutoresTable').DataTable({
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+                    dom: 'rtip',
+                    language: { url: "//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json" },
+                    columnDefs: [
+                        { orderable: false, targets: '.no-order' },
+                        {
+                            // Orden natural para la columna de grupo (TI1A < TI11A)
+                            targets: [1],
+                            render: function (data, type) {
+                                if (type === 'sort') {
+                                    return naturalize(String(data));
+                                }
+                                return data;
+                            }
+                        },
+                        {
+                            // Columnas con formato "num/den" (ej. "5/10") se ordenan como fraccion.
+                            // La columna de entrevistas (baseCol) prioriza el porcentaje sobre el numerador.
+                            targets: [
+                                baseCol, baseCol + 1, baseCol + 2, baseCol + 3, baseCol + 4,
+                                baseCol + 5, baseCol + 6, baseCol + 7, baseCol + 8
+                            ],
+                            type: 'num',
+                            render: function (data, type, row, meta) {
+                                if (type === 'sort') {
+                                    var parts = String(data).split('/');
+                                    var num = parseFloat(parts[0]) || 0;
+                                    var den = parseFloat(parts[1]) || 0;
+                                    if (!den) return num;
+                                    if (meta.col === baseCol) {
+                                        return (num / den) * 10000000000 + num;
+                                    }
+                                    return num * 10000 + den;
+                                }
+                                return data;
+                            }
+                        }
+                    ],
+                    order: [[0, "asc"]]
+                });
+
+                $('#buscarTutores').off('keyup').on('keyup', function () {
+                    tablaTutores.search(this.value).draw();
+                    actualizarBotonLimpiar();
+                });
+            }
+
+            var filterCarreraId = '';
+
+            function actualizarBotonLimpiar() {
+                var hayAlgo = filterCarreraId || $('#buscarTutores').val() || $('#chkIncluirBajas').is(':checked');
+                $('#btnLimpiarFiltro').toggleClass('d-none', !hayAlgo);
+            }
+
+            // Filtro DataTable client-side por data-carrera-id
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                if (!filterCarreraId) return true;
+                if (!tablaTutores) return true;
+                var row = tablaTutores.row(dataIndex).node();
+                if (!row) return true;
+                var carreraId = $(row).data('carrera-id');
+                return String(carreraId) === String(filterCarreraId);
+            });
+
+            // Recalcula las graficas sumando SOLO las filas filtradas por carrera (ignora busqueda por texto).
+            function actualizarGraficas() {
+                if (!statsLoaded) return;
+                var totals = { entrevistas: [0, 0], pats: [0, 0], semanasInd: [0, 0], semanasGrup: [0, 0] };
+                tablaTutores.rows().every(function () {
+                    var node = this.node();
+                    if (!node) return;
+                    if (filterCarreraId) {
+                        var carreraId = $(node).data('carrera-id');
+                        if (String(carreraId) !== String(filterCarreraId)) return;
+                    }
+                    var s = statsMap[$(node).data('tutor-grupo')];
+                    if (!s) return;
+                    var totalAlumnos = s.TotalAlumnosActivos;
+                    totals.entrevistas[0] += s.EntrevistasRevisadas; totals.entrevistas[1] += totalAlumnos;
+                    totals.pats[0] += s.PATsAprobados; totals.pats[1] += s.PATsTotales;
+                    // Original: semanas sobre creadas
+                    // totals.semanasInd[1] += s.SemanasCreadas;
+                    // totals.semanasGrup[1] += s.SemanasCreadas;
+                    totals.semanasInd[0] += s.SemanasIndividuales; totals.semanasInd[1] += s.TotalSemanas;
+                    totals.semanasGrup[0] += s.SemanasGrupales; totals.semanasGrup[1] += s.TotalSemanas;
+                });
+                $('#resumenGraficas [data-key]').each(function () {
+                    $(this).removeClass('loading').addClass('loaded');
+                    var key = $(this).data('key');
+                    var done = totals[key][0];
+                    var total = totals[key][1];
+                    var pct = total > 0 ? Math.min(done / total, 1) : 0;
+                    // Colores semaforo: >=85% verde, >=30% naranja, <30% rojo
+                    var color = pct >= 0.85 ? '#28a745' : pct >= 0.3 ? '#fd7e14' : '#dc3545';
+                    drawRing($(this).find('canvas')[0], pct, color);
+                    $(this).find('.grafica-val').text(done + ' / ' + total);
+                });
+            }
+
+            // Actualiza los hidden inputs y el texto de los botones de exportacion segun el filtro de carrera.
+            function updateExportLabels(idCarrera) {
+                var carreraName = '';
+                if (idCarrera && idCarrera !== '') {
+                    carreraName = $('#filtroCarrera option:selected').text();
+                    if (carreraName === '-- Todas las carreras --') carreraName = '';
+                }
+                $('.filtro-carrera-hidden').val(idCarrera || '');
+                $('.btn-export-text').each(function () {
+                    var base = $(this).data('base-text') || $(this).text().replace(/\(.*\)/, '(Global)').trim();
+                    if (!$(this).data('base-text')) {
+                        $(this).data('base-text', base);
+                    }
+                    if (carreraName && isMaster) {
+                        $(this).text(base.replace('(Global)', '(' + carreraName + ')'));
+                    } else {
+                        $(this).text(base);
+                    }
+                });
+            }
+
+            // --- Carga inicial ---
+            allIds = [];
+            $('#tutoresTable tbody tr[data-tutor-id]').each(function () {
+                allIds.push($(this).data('tutor-id'));
+            });
+
+            initDataTable();
+
+            if (allIds.length > 0) {
+                var pendientesCarga = 2;
+                var sinBajasOk = false, sinBajasData = null, conBajasData = null;
+
+                function onCargaParalelaCompleta() {
+                    if (--pendientesCarga > 0) return;
+                    if (!pageAlive) return;
+
+                    if (!sinBajasOk) {
+                        var items = document.querySelectorAll(
+                            '[data-key="entrevistas"], [data-key="pats"], [data-key="semanasInd"], [data-key="semanasGrup"]');
+                        items.forEach(function (item) {
+                            $(item).removeClass('loading').addClass('loaded');
+                            drawRing($(item).find('canvas')[0], 0, '#6c757d');
+                            $(item).find('.grafica-val').text('Error');
+                        });
+                        $('#tutoresTable tbody tr[data-tutor-id] .stat-cell')
+                            .html('<span class="text-danger">Error</span>');
+                        $('#resumenGraficas').fadeIn(300);
+                        return;
+                    }
+
+                    for (var i = 0; i < sinBajasData.length; i++) {
+                        statsMap[sinBajasData[i].TutorGrupo] = sinBajasData[i];
+                        statsMapSinBajas[sinBajasData[i].TutorGrupo] = sinBajasData[i];
+                    }
+                    if (conBajasData) {
+                        for (var i = 0; i < conBajasData.length; i++) {
+                            statsMapConBajas[conBajasData[i].TutorGrupo] = conBajasData[i];
+                        }
+                    }
+
+                    statsLoaded = true;
+
+                    if (incluirBajas && Object.keys(statsMapConBajas).length > 0) {
+                        statsMap = statsMapConBajas;
+                    }
+
+                    tablaTutores.rows().every(function () {
+                        var $row = $(this.node());
+                        var d = statsMap[$row.data('tutor-grupo')];
+                        if (d) {
+                            var total = d.TotalAlumnosActivos;
+                            var pendientes = total - d.EntrevistasRevisadas;
+                            $row.find('[data-stat="entrevistas"]').text(d.EntrevistasRevisadas + '/' + total);
+                            $row.find('[data-stat="entrevistasFaltantes"]').text(pendientes);
+                            $row.find('[data-stat="pats"]').text(d.PATsAprobados + '/' + d.PATsTotales);
+                            $row.find('[data-stat="semanasCreadas"]').text(d.SemanasCreadas + '/' + d.TotalSemanas);
+                            $row.find('[data-stat="semanasInd"]').text(d.SemanasIndividuales + '/' + d.SemanasCreadas);
+                            $row.find('[data-stat="semanasGrup"]').text(d.SemanasGrupales + '/' + d.SemanasCreadas);
+                            $row.find('[data-stat="alumnosTotales"]').text(total);
+                            $row.find('[data-stat="bajas"]').text(d.Bajas);
+                            $row.find('[data-stat="arrastres"]').text(d.Arrastres);
+                            $row.find('[data-stat="extraordinarios"]').text(d.Extraordinarios);
+                            $row.find('[data-stat="grupos"]').text(d.TutorGrupo);
+                        }
+                    });
+                    $('#thAlumnosTotales').text(incluirBajas ? 'Alumnos Totales' : 'Alumnos Totales Activos');
+                    tablaTutores.cells().invalidate('dom').draw(false);
+                    actualizarGraficas();
+                    $('#resumenGraficas').fadeIn(300);
+                }
+
+                $.get('@Url.Action("ObtenerEstadisticasTodos", "SeguimientoTutores")', { ids: allIds.join(',') })
+                    .done(function (data) { sinBajasOk = true; sinBajasData = data; })
+                    .fail(function () { sinBajasOk = false; })
+                    .always(onCargaParalelaCompleta);
+
+                $.get('@Url.Action("ObtenerEstadisticasTodos", "SeguimientoTutores")', { ids: allIds.join(','), incluirBajas: true })
+                    .done(function (data) { conBajasData = data; })
+                    .always(onCargaParalelaCompleta);
+            } else {
+                $('#resumenGraficas').fadeIn(300);
+            }
+
+            // --- Filtro carrera client-side ---
+            $('#filtroCarrera').on('change', function () {
+                filterCarreraId = $(this).val();
+                tablaTutores.draw();
+                actualizarGraficas();
+                updateExportLabels(filterCarreraId);
+                actualizarBotonLimpiar();
+            });
+
+            // Limpia filtro, caja de búsqueda y bajas, restaura todas las filas
+            $('#btnLimpiarFiltro').on('click', function () {
+                $('#filtroCarrera').val('');
+                $('#buscarTutores').val('');
+                filterCarreraId = '';
+                if ($('#chkIncluirBajas').is(':checked')) {
+                    $('#chkIncluirBajas').prop('checked', false).trigger('change');
+                }
+                tablaTutores.search('').draw();
+                actualizarGraficas();
+                updateExportLabels('');
+                actualizarBotonLimpiar();
+            });
+
+            // Guarda el maximo de semanas para el periodo (solo Master)
+            $('#btnGuardarMaxSemanas').on('click', function () {
+                var btn = $(this);
+                var status = $('#maxSemanasStatus');
+                var val = parseInt($('#inputMaxSemanas').val(), 10);
+                if (!val || val < 1 || val > 20) {
+                    status.text('Valor inválido (1-20)').removeClass().addClass('text-danger');
+                    return;
+                }
+                btn.prop('disabled', true);
+                status.text('Guardando...').removeClass().addClass('text-muted');
+                $.ajax({
+                    url: '@Url.Action("ActualizarMaxSemanas", "SeguimientoTutores")',
+                    type: 'POST',
+                    data: { maxSemanas: val, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val() },
+                    success: function (r) {
+                        if (r.success) {
+                            status.text('Guardado (' + r.maxSemanas + ' semanas)').removeClass().addClass('text-success');
+                            if (typeof TotalSemanasCountData !== 'undefined') {
+                                TotalSemanasCountData = r.maxSemanas;
+                            }
+                            location.reload();
+                        } else {
+                            status.text(r.message).removeClass().addClass('text-danger');
+                        }
+                    },
+                    error: function () {
+                        status.text('Error de conexión').removeClass().addClass('text-danger');
+                    },
+                    complete: function () {
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+
+            function refreshTableStats() {
+                tablaTutores.rows().every(function () {
+                    var $row = $(this.node());
+                    var d = statsMap[$row.data('tutor-grupo')];
+                    if (d) {
+                        var total = d.TotalAlumnosActivos;
+                        var pendientes = total - d.EntrevistasRevisadas;
+                        $row.find('[data-stat="alumnosTotales"]').text(total);
+                        $row.find('[data-stat="entrevistas"]').text(d.EntrevistasRevisadas + '/' + total);
+                        $row.find('[data-stat="entrevistasFaltantes"]').text(pendientes);
+                    }
+                });
+                tablaTutores.cells().invalidate('dom').draw(false);
+                actualizarGraficas();
+                $('#thAlumnosTotales').text(incluirBajas ? 'Alumnos Totales' : 'Alumnos Totales Activos');
+                actualizarBotonLimpiar();
+            }
+
+            // Modal de exportacion: carga datos del tutor al abrir
+            $(document).on('click', '.btn-export-modal', function () {
+                var id = $(this).data('id');
+                var grupo = $(this).data('grupo');
+                var incluirBajasVal = $('#chkIncluirBajas').is(':checked') ? 'true' : 'false';
+                $('.export-id').val(id);
+                $('.export-grupo').val(grupo);
+                $('.export-incluir-bajas').val(incluirBajasVal);
+
+                // Restaurar descripciones originales y resetear estado
+                $('[data-export-type]').each(function () {
+                    var $card = $(this);
+                    var $desc = $card.find('.export-desc');
+                    $card.find('.btn-export-card').prop('disabled', false);
+                    $desc.text($desc.data('original-desc'));
+                    $card.find('.export-badge').text('Cargando...');
+                });
+
+                // Obtener conteos via API
+                $.get('@Url.Action("ObtenerConteosExportacion", "SeguimientoTutores")', {
+                    id: id,
+                    grupo: grupo,
+                    incluirBajas: incluirBajasVal === 'true'
+                })
+                    .done(function (data) {
+                        var tipos = [
+                            { key: 'arrastres', singular: 'arrastre', plural: 'arrastres' },
+                            { key: 'extraordinarios', singular: 'extraordinario', plural: 'extraordinarios' },
+                            { key: 'bajas', singular: 'baja', plural: 'bajas' }
+                        ];
+                        $.each(tipos, function (_, t) {
+                            var $card = $('[data-export-type="' + t.key + '"]');
+                            var count = data[t.key] || 0;
+                            var $btn = $card.find('.btn-export-card');
+                            var $badge = $card.find('.export-badge');
+                            if (count > 0) {
+                                var word = count === 1 ? t.singular : t.plural;
+                                $badge.text(count + ' ' + word);
+                                $btn.prop('disabled', false);
+                            } else {
+                                $badge.text('No hay ' + t.plural + ' para exportar');
+                                $btn.prop('disabled', true);
+                            }
+                        });
+                    })
+                    .fail(function () {
+                        $('[data-export-type] .export-badge').text('Error al cargar');
+                    });
+
+                $('#exportModal').modal('show');
+            });
+
+            // Alterna stats mostrando/ocultando bajas en tabla y gráficas
+            $('#chkIncluirBajas').on('change', function () {
+                incluirBajas = $(this).is(':checked');
+                $('.incluir-bajas-hidden').val(incluirBajas ? 'true' : 'false');
+
+                if (incluirBajas && Object.keys(statsMapConBajas).length === 0) {
+                    return;
+                }
+
+                statsMap = incluirBajas ? statsMapConBajas : statsMapSinBajas;
+                refreshTableStats();
+            });
+        });
+    </script>
+}
+

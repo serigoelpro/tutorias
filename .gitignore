@@ -1,0 +1,45 @@
+# Build output
+bin/
+obj/
+
+# NuGet packages (se restauran con NuGet restore)
+packages/
+*.nupkg
+
+# Visual Studio cache / user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Test results
+TestResults/
+*.trx
+
+# Publish output
+publish/
+PublishScripts/
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Windows shortcuts
+*.lnk
+
+# OS X
+.DS_Store
+
+# Claude Code
+.claude/
+
+# Archivos SQL temporales
+_q.sql

@@ -1,0 +1,1465 @@
+﻿@model IEnumerable<PlataformaWeb.Models.Materia>
+
+@{
+    ViewBag.Title = "Gestión de Materias";
+
+    // ✅ VALIDACIÓN DE ROL
+    var usuario = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var esMaster = usuario != null && usuario.IdNivel == 4;
+    var esCoordinador = usuario != null && usuario.IdNivel == 3;
+    var esDirector = usuario != null && usuario.EsDirector;
+
+    if (usuario == null || (!esMaster && !esCoordinador))
+    {
+        Response.Redirect(Url.Action("Index", "Home"));
+        return;
+    }
+}
+
+<div class="sga-scope">
+
+    <h2>Gestión de Materias</h2>
+
+    <!-- SECCIÓN DE BOTONES PRINCIPALES -->
+    <div class="row">
+        <div class="col-md-12">
+            @if (!esDirector)
+            {
+            <p>
+                <button type="button" class="btn btn-utt-outline" data-toggle="modal" data-target="#modalAgregar">
+                    <span class="glyphicon glyphicon-plus"></span> AGREGAR NUEVA ASIGNATURA
+                </button>
+
+                <!-- BOTONES PARA EXCEL -->
+                <a href="@Url.Action("ImportarExcel", "Materias")" class="btn btn-utt-outline">
+                    <span class="glyphicon glyphicon-import"></span> Importar desde Excel
+                </a>
+            </p>
+            }
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE FILTROS -->
+    <div class="panel panel-info">
+        <div class="panel-heading" role="tab" id="headingFiltros">
+            <h4 class="panel-title">
+                <a role="button" data-toggle="collapse" href="#collapseFiltros" aria-expanded="true" aria-controls="collapseFiltros" class="filtros-toggle">
+                    <span class="glyphicon glyphicon-filter"></span> Filtros de Búsqueda
+                    <span class="pull-right">
+                        <span class="glyphicon glyphicon-chevron-up chevron-icon"></span>
+                    </span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseFiltros" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingFiltros">
+            <div class="panel-body">
+                <div class="row">
+                    <!-- BUSCADOR DE TEXTO -->
+                    <div class="col-md-12" style="margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label for="buscadorTexto">
+                                <span class="glyphicon glyphicon-search"></span> Buscar por nombre de asignatura:
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-search"></span>
+                                </span>
+                                <input type="text"
+                                       id="buscadorTexto"
+                                       class="form-control"
+                                       placeholder="Escribe para buscar..."
+                                       autocomplete="off">
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FILTROS NORMALES -->
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label for="filtroCarrera">
+                                Programa Educativo:
+                            </label>
+                            <select id="filtroCarrera" name="carreraId" class="form-control select-wide">
+                                <option value="">-- Todos los Programas --</option>
+                                @if (ViewBag.Carreras != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem carrera in ViewBag.Carreras)
+                                    {
+                                        <option value="@carrera.Value">@carrera.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label for="filtroEspecialidad">
+                                Área:
+                            </label>
+                            <select id="filtroEspecialidad" name="especialidadId" class="form-control select-wide" disabled>
+                                <option value="">-- Todas las Áreas --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2 col-sm-6">
+                        <div class="form-group">
+                            <label for="filtroGrado">
+                                Cuatrimestre:
+                            </label>
+                            <select id="filtroGrado" name="gradoId" class="form-control select-wide">
+                                <option value="">-- Todos --</option>
+                                @if (ViewBag.Grados != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem grado in ViewBag.Grados)
+                                    {
+                                        <option value="@grado.Value">@grado.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- FILTRO POR PLAN DE ESTUDIO -->
+                    <div class="col-md-2 col-sm-6">
+                        <div class="form-group">
+                            <label for="filtroPlanEstudio">
+                                Plan de Estudio:
+                            </label>
+                            <select id="filtroPlanEstudio" name="planEstudioId" class="form-control select-wide">
+                                <option value="">-- Todos los Planes --</option>
+                                @if (ViewBag.PlanesEstudio != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem plan in ViewBag.PlanesEstudio)
+                                    {
+                                        <option value="@plan.Value">@plan.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2 col-sm-6">
+                        <div class="form-group">
+                            <label style="visibility: hidden;">Acciones</label>
+                            <div>
+                                <button type="button" class="btn btn-info btn-icon" onclick="aplicarFiltros()" title="Aplicar filtros">
+                                    <span class="glyphicon glyphicon-search"></span>
+                                </button>
+                                <button type="button" class="btn btn-utt-outline btn-icon" onclick="limpiarFiltros()" title="Mostrar todas las materias">
+                                    <span class="glyphicon glyphicon-refresh"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicador de filtros activos -->
+                <div id="indicadorFiltros" class="sga-filter-bar" style="margin-bottom: 20px; margin-top: 15px; display:none;">
+                    <span class="glyphicon glyphicon-filter"></span>
+                    <strong>Filtros aplicados:</strong> <span id="textoFiltros"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- SECCIÓN DE TABLA -->
+    <div class="table-responsive">
+        <div class="col-md-12">
+            <!-- Indicador de carga -->
+            <div id="loadingIndicator" style="display: none; text-align: center; margin: 20px 0;">
+                <div class="alert alert-info">
+                    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>
+                    Cargando asignaturas...
+                </div>
+            </div>
+
+            <!-- Mensaje de error si existe -->
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger">
+                    <span class="glyphicon glyphicon-exclamation-sign"></span>
+                    <strong>Error:</strong> @ViewBag.Error
+                </div>
+            }
+
+            <!-- Contenedor de la tabla (será reemplazado vía AJAX) -->
+            <div id="contenedorTabla">
+                @Html.Partial("_TablaMaterias", Model)
+            </div>
+        </div>
+    </div>
+
+    @if (!esDirector)
+    {
+    <!-- Modal Agregar Materia -->
+    <div class="modal fade" id="modalAgregar" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #1ab192; color: white;">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span style="color: white;">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-plus"></span> AGREGAR NUEVA ASIGNATURA
+                </div>
+                <div class="modal-body">
+                    <form id="formAgregar">
+                        <div class="form-group">
+                            <label> Nombre de la Asignatura *</label>
+                            <input id="txtNombre" type="text" class="form-control" placeholder="Ingrese el nombre de la Asignatura" required />
+                        </div>
+                        <div class="form-group">
+                            <label><span class="glyphicon glyphicon-education"></span> Programa Educativo *</label>
+                            <select id="ddlCarrera" class="form-control" required>
+                                <option value="">-- Seleccionar Programa Educativo --</option>
+                                @if (ViewBag.Carreras != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem carrera in ViewBag.Carreras)
+                                    {
+                                        <option value="@carrera.Value">@carrera.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Área *</label>
+                            <select id="ddlEspecialidad" class="form-control" required>
+                                <option value="">-- Primero seleccione un Programa Educativo --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cuatrimestre *</label>
+                            <select id="ddlGrado" class="form-control" required>
+                                <option value="">-- Seleccionar Cuatrimestre --</option>
+                                @if (ViewBag.Grados != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem grado in ViewBag.Grados)
+                                    {
+                                        <option value="@grado.Value">@grado.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Número de Unidades *</label>
+                            <select id="ddlNumeroUnidades" class="form-control" required>
+                                <option value="">-- Seleccionar Número de Unidades --</option>
+                                <option value="1">1 Unidad</option>
+                                <option value="2">2 Unidades</option>
+                                <option value="3">3 Unidades</option>
+                                <option value="4">4 Unidades</option>
+                                <option value="5">5 Unidades</option>
+                                <option value="6">6 Unidades</option>
+                            </select>
+                            <small class="text-muted">Define cuántas unidades tendrá esta materia para calificación</small>
+                        </div><!-- Plan de Estudio -->
+                        <div class="form-group">
+                            <label>Plan de Estudio *</label>
+                            <select id="ddlPlanEstudio" class="form-control" required>
+                                <option value="">-- Seleccionar Plan de Estudio --</option>
+                                @if (ViewBag.PlanesEstudio != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem plan in ViewBag.PlanesEstudio)
+                                    {
+                                        <option value="@plan.Value">@plan.Text</option>
+                                    }
+                                }
+                            </select>
+                            <small class="text-muted">El plan determina la calificación mínima y tipo de evaluación</small>
+                        </div>
+                        <!-- Información del plan seleccionado -->
+                        <div id="infoPlanAgregar" style="display: none;" class="sga-plan-info-box">
+                            <h5>Información del Plan:</h5>
+                            <div id="detallesPlanAgregar"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" onclick="guardarMateria()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    @if (!esDirector)
+    {
+    <!-- Modal Editar Materia -->
+    <div class="modal fade" id="modalEditar" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #f39c12; color: white;">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span style="color: white;">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-edit"></span> Editar Asignatura
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditar">
+                        <input id="editIdMateria" type="hidden" />
+                        <div class="form-group">
+                            <label>Nombre de la Asignatura *</label>
+                            <input id="editNombre" type="text" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Programa Educativo *</label>
+                            <select id="editCarrera" class="form-control" required>
+                                <option value="">-- Seleccionar Programa Educativo --</option>
+                                @if (ViewBag.Carreras != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem carrera in ViewBag.Carreras)
+                                    {
+                                        <option value="@carrera.Value">@carrera.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Área *</label>
+                            <select id="editEspecialidad" class="form-control" required>
+                                <option value="">-- Seleccionar Área --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cuatrimestre *</label>
+                            <select id="editGrado" class="form-control" required>
+                                <option value="">-- Seleccionar Cuatrimestre --</option>
+                                @if (ViewBag.Grados != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem grado in ViewBag.Grados)
+                                    {
+                                        <option value="@grado.Value">@grado.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Número de Unidades *</label>
+                            <select id="editNumeroUnidades" class="form-control" required>
+                                <option value="">-- Seleccionar Número de Unidades --</option>
+                                <option value="1">1 Unidad</option>
+                                <option value="2">2 Unidades</option>
+                                <option value="3">3 Unidades</option>
+                                <option value="4">4 Unidades</option>
+                                <option value="5">5 Unidades</option>
+                                <option value="6">6 Unidades</option>
+                            </select>
+                            <small class="text-muted">Define cuántas unidades tendrá esta materia para calificación</small>
+                        </div>
+
+                        <!-- Plan de Estudio -->
+                        <div class="form-group">
+                            <label> Plan de Estudio *</label>
+                            <select id="editPlanEstudio" class="form-control" required>
+                                <option value="">-- Seleccionar Plan de Estudio --</option>
+                                @if (ViewBag.PlanesEstudio != null)
+                                {
+                                    foreach (System.Web.Mvc.SelectListItem plan in ViewBag.PlanesEstudio)
+                                    {
+                                        <option value="@plan.Value">@plan.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <!-- Información del plan seleccionado -->
+                        <div id="infoPlanEditar" style="display: none;" class="alert alert-warning">
+                            <h5>Información del Plan:</h5>
+                            <div id="detallesPlanEditar"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Estado</label>
+                            <div class="checkbox">
+                                <label>
+                                    <input id="editActivo" type="checkbox" /> <strong>Asignatura Activa</strong>
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" onclick="actualizarMateria()">Actualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    @if (!esDirector)
+    {
+    <!-- Modal Eliminar Materia -->
+    <div class="modal fade" id="modalEliminar" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #d9534f; color: white;">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span style="color: white;">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-warning-sign"></span> Confirmar Eliminación
+                    </h4>
+                </div>
+                <div class="modal-body text-center">
+                    <input id="deleteIdMateria" type="hidden" />
+                    <div style="margin-bottom: 20px;">
+                        <span class="glyphicon glyphicon-trash" style="font-size: 48px; color: #d9534f;"></span>
+                    </div>
+                    <h4>¿Está seguro que desea eliminar esta asignatura?</h4>
+                    <div class="alert alert-warning" style="margin-top: 15px;">
+                        <strong id="deleteNombreMateria"></strong>
+                    </div>
+                    <p class="text-muted"><small>Esta acción no se puede deshacer.</small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmarEliminar()">Sí, Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!--- modal de confirmacion de datos al agregar/editar -->
+    <div class="modal fade" id="modalNotificacion" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header" id="notificacionHeader">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true" style="color: white;">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="notificacionTitulo">
+                    </h4>
+                </div>
+                <div class="modal-body" id="notificacionBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap.min.js"></script>
+
+<script>
+var tablaMateriasInstance = null;
+
+function inicializarDataTable() {
+    if ($.fn.DataTable.isDataTable('#tablaMaterias')) {
+        $('#tablaMaterias').DataTable().destroy();
+    }
+    tablaMateriasInstance = $('#tablaMaterias').DataTable({
+        paging: true,
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Todos']],
+        dom: 'lrtip',
+        searching: true,
+        autoWidth: false,
+        responsive: false,
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json'
+        },
+        columnDefs: [
+            { orderable: false, targets: [6, 7] }
+        ]
+    });
+
+    tablaMateriasInstance.on('draw', function () {
+        $('[title]').tooltip({
+            placement: 'auto',
+            trigger: 'hover',
+            delay: { show: 500, hide: 100 },
+            container: 'body'
+        });
+    });
+}
+
+$(document).ready(function() {
+    // MANEJO DEL COLLAPSE DE FILTROS
+    $('#collapseFiltros').on('shown.bs.collapse', function () {
+        $('.filtros-toggle').removeClass('collapsed');
+    });
+
+    $('#collapseFiltros').on('hidden.bs.collapse', function () {
+        $('.filtros-toggle').addClass('collapsed');
+    });
+
+    $('.filtros-toggle').on('click', function(e) {
+        var $this = $(this);
+        if ($this.data('clicking')) {
+            e.preventDefault();
+            return false;
+        }
+        $this.data('clicking', true);
+        setTimeout(function() {
+            $this.data('clicking', false);
+        }, 300);
+    });
+
+    // FILTROS - Dropdown cascada para filtros
+    $('#filtroCarrera').change(function() {
+        var carreraId = $(this).val();
+        $('#filtroEspecialidad').prop('disabled', true);
+
+        if (carreraId) {
+            $.ajax({
+                url: '@Url.Action("GetEspecialidades", "Materias")',
+                type: 'GET',
+                data: { carreraId: carreraId },
+                success: function(data) {
+                    $('#filtroEspecialidad').empty();
+                    $('#filtroEspecialidad').append('<option value="">-- Todas las Áreas --</option>');
+                    if (data && data.length > 0) {
+                        $.each(data, function(i, especialidad) {
+                            $('#filtroEspecialidad').append('<option value="' + especialidad.Id + '">' + especialidad.Nombre + '</option>');
+                        });
+                        $('#filtroEspecialidad').prop('disabled', false);
+                    }
+                }
+            });
+        } else {
+            $('#filtroEspecialidad').empty();
+            $('#filtroEspecialidad').append('<option value="">-- Todas las Áreas --</option>');
+        }
+    });
+
+    // MODALES - Dropdown cascada para AGREGAR
+    $('#ddlCarrera').change(function() {
+        var carreraId = $(this).val();
+        $('#ddlEspecialidad').prop('disabled', true);
+
+        if (carreraId) {
+            $.ajax({
+                url: '@Url.Action("GetEspecialidades", "Materias")',
+                type: 'GET',
+                data: { carreraId: carreraId },
+                success: function(data) {
+                    $('#ddlEspecialidad').empty();
+                    $('#ddlEspecialidad').append('<option value="">-- Seleccionar Especialidad --</option>');
+                    if (data && data.length > 0) {
+                        $.each(data, function(i, especialidad) {
+                            $('#ddlEspecialidad').append('<option value="' + especialidad.Id + '">' + especialidad.Nombre + '</option>');
+                        });
+                        $('#ddlEspecialidad').prop('disabled', false);
+                    }
+                }
+            });
+        } else {
+            $('#ddlEspecialidad').empty();
+            $('#ddlEspecialidad').append('<option value="">-- Primero seleccione una carrera --</option>');
+        }
+    });
+
+    // Dropdown cascada para EDITAR
+    $('#editCarrera').change(function() {
+        var carreraId = $(this).val();
+        $('#editEspecialidad').prop('disabled', true);
+
+        if (carreraId) {
+            $.ajax({
+                url: '@Url.Action("GetEspecialidades", "Materias")',
+                type: 'GET',
+                data: { carreraId: carreraId },
+                success: function(data) {
+                    $('#editEspecialidad').empty();
+                    $('#editEspecialidad').append('<option value="">-- Seleccionar Especialidad --</option>');
+                    if (data && data.length > 0) {
+                        $.each(data, function(i, especialidad) {
+                            $('#editEspecialidad').append('<option value="' + especialidad.Id + '">' + especialidad.Nombre + '</option>');
+                        });
+                        $('#editEspecialidad').prop('disabled', false);
+                    }
+                }
+            });
+        }
+    });
+
+    // INFORMACIÓN DE PLANES DE ESTUDIO
+
+    // Mostrar información del plan al agregar
+    $('#ddlPlanEstudio').change(function() {
+        var planId = $(this).val();
+        if (planId) {
+            $.ajax({
+                url: '@Url.Action("GetPlanEstudioInfo", "Materias")',
+                type: 'GET',
+                data: { planEstudioId: planId },
+                success: function(result) {
+                    if (result.success) {
+                        var plan = result.plan;
+                        var html = '<strong>' + plan.nombre + ' (Año ' + plan.año + ')</strong><br/>';
+                        html += '<span class="glyphicon glyphicon-ok-sign"></span> Calificación mínima: <strong>' + plan.calificacionMinima + '</strong><br/>';
+                        html += '<span class="glyphicon glyphicon-cog"></span> Tipo: <strong>' + plan.tipoCalificacion + '</strong><br/>';
+                        if (plan.descripcion) {
+                            html += '<small class="text-muted">' + plan.descripcion + '</small>';
+                        }
+
+                        $('#detallesPlanAgregar').html(html);
+                        $('#infoPlanAgregar').show();
+                    } else {
+                        $('#infoPlanAgregar').hide();
+                    }
+                },
+                error: function() {
+                    $('#infoPlanAgregar').hide();
+                }
+            });
+        } else {
+            $('#infoPlanAgregar').hide();
+        }
+    });
+
+    // Mostrar información del plan al editar
+    $('#editPlanEstudio').change(function() {
+        var planId = $(this).val();
+        if (planId) {
+            $.ajax({
+                url: '@Url.Action("GetPlanEstudioInfo", "Materias")',
+                type: 'GET',
+                data: { planEstudioId: planId },
+                success: function(result) {
+                    if (result.success) {
+                        var plan = result.plan;
+                        var html = '<strong>' + plan.nombre + ' (Año ' + plan.año + ')</strong><br/>';
+                        html += '<span class="glyphicon glyphicon-ok-sign"></span> Calificación mínima: <strong>' + plan.calificacionMinima + '</strong><br/>';
+                        html += '<span class="glyphicon glyphicon-cog"></span> Tipo: <strong>' + plan.tipoCalificacion + '</strong><br/>';
+                        if (plan.descripcion) {
+                            html += '<small class="text-muted">' + plan.descripcion + '</small>';
+                        }
+
+                        $('#detallesPlanEditar').html(html);
+                        $('#infoPlanEditar').show();
+                    } else {
+                        $('#infoPlanEditar').hide();
+                    }
+                },
+                error: function() {
+                    $('#infoPlanEditar').hide();
+                }
+            });
+        } else {
+            $('#infoPlanEditar').hide();
+        }
+    });
+
+    inicializarDataTable();
+});
+
+// FUNCIONES DE FILTROS
+function aplicarFiltros() {
+    var carreraId = $('#filtroCarrera').val();
+    var especialidadId = $('#filtroEspecialidad').val();
+    var gradoId = $('#filtroGrado').val();
+    var planEstudioId = $('#filtroPlanEstudio').val();
+
+    console.log('Aplicando filtros:', { carreraId, especialidadId, gradoId, planEstudioId });
+
+    $('#loadingIndicator').show();
+    $('#contenedorTabla').hide();
+
+    var datos = {};
+    if (carreraId) datos.carreraId = carreraId;
+    if (especialidadId) datos.especialidadId = especialidadId;
+    if (gradoId) datos.gradoId = gradoId;
+    if (planEstudioId) datos.planEstudioId = planEstudioId;
+
+    $.ajax({
+        url: '@Url.Action("FiltrarMaterias", "Materias")',
+        type: 'POST',
+        data: datos,
+        success: function(result) {
+            $('#contenedorTabla').html(result);
+            $('#loadingIndicator').hide();
+            $('#contenedorTabla').show();
+            inicializarDataTable();
+
+            mostrarIndicadorFiltros(carreraId, especialidadId, gradoId, planEstudioId);
+        },
+        error: function(xhr, status, error) {
+            $('#loadingIndicator').hide();
+            $('#contenedorTabla').show();
+            console.error('Error al aplicar filtros:', error);
+            alert('Error al aplicar filtros. Intente nuevamente.');
+        }
+    });
+}
+
+function limpiarFiltros() {
+    $('#filtroCarrera').val('');
+    $('#filtroEspecialidad').empty().append('<option value="">-- Todas las Áreas --</option>').prop('disabled', true);
+    $('#filtroGrado').val('');
+    $('#filtroPlanEstudio').val('');
+
+    $('#indicadorFiltros').hide();
+    aplicarFiltros();
+}
+
+function mostrarIndicadorFiltros(carreraId, especialidadId, gradoId, planEstudioId) {
+    var filtrosTexto = [];
+
+    if (carreraId) {
+        var carreraNombre = $('#filtroCarrera option:selected').text();
+        filtrosTexto.push("Programa: " + carreraNombre);
+    }
+
+    if (especialidadId) {
+        var especialidadNombre = $('#filtroEspecialidad option:selected').text();
+        filtrosTexto.push("Área: " + especialidadNombre);
+    }
+
+    if (gradoId) {
+        var gradoNombre = $('#filtroGrado option:selected').text();
+        filtrosTexto.push("Cuatrimestre: " + gradoNombre);
+    }
+
+    if (planEstudioId) {
+        var planNombre = $('#filtroPlanEstudio option:selected').text();
+        filtrosTexto.push("Plan: " + planNombre);
+    }
+
+    if (filtrosTexto.length > 0) {
+        $('#textoFiltros').text(filtrosTexto.join(', '));
+        $('#indicadorFiltros').show();
+    } else {
+        $('#indicadorFiltros').hide();
+    }
+}
+
+// Función para abrir modal de editar
+function abrirModalEditar(idMateria, nombre, idCarrera, idEspecialidad, idGrado, idPlanEstudio, numeroUnidades, activo) {
+    console.log('Abriendo modal editar:', { idMateria, nombre, idCarrera, idEspecialidad, idGrado, idPlanEstudio, numeroUnidades, activo });
+
+    $('#editIdMateria').val(idMateria);
+    $('#editNombre').val(nombre);
+    $('#editCarrera').val(idCarrera);
+    $('#editGrado').val(idGrado);
+    $('#editPlanEstudio').val(idPlanEstudio);
+    $('#editNumeroUnidades').val(numeroUnidades);
+    $('#editActivo').prop('checked', activo);
+
+    // Cargar especialidades
+    if (idCarrera) {
+        $.ajax({
+            url: '@Url.Action("GetEspecialidades", "Materias")',
+            type: 'GET',
+            data: { carreraId: idCarrera },
+            success: function(data) {
+                $('#editEspecialidad').empty();
+                $('#editEspecialidad').append('<option value="">-- Seleccionar Especialidad --</option>');
+                if (data && data.length > 0) {
+                    $.each(data, function(i, especialidad) {
+                        var selected = especialidad.Id == idEspecialidad ? 'selected' : '';
+                        $('#editEspecialidad').append('<option value="' + especialidad.Id + '" ' + selected + '>' + especialidad.Nombre + '</option>');
+                    });
+                    $('#editEspecialidad').prop('disabled', false);
+                }
+            }
+        });
+    }
+
+    // Cargar información del plan de estudio
+    if (idPlanEstudio) {
+        $('#editPlanEstudio').trigger('change');
+    }
+
+    $('#modalEditar').modal('show');
+}
+
+    function guardarMateria() {
+    var nombre = $('#txtNombre').val().trim();
+    var idCarrera = $('#ddlCarrera').val();
+    var idEspecialidad = $('#ddlEspecialidad').val();
+    var idGrado = $('#ddlGrado').val();
+    var idPlanEstudio = $('#ddlPlanEstudio').val();
+    var numeroUnidades = $('#ddlNumeroUnidades').val();
+
+    console.log('Guardando materia:', {
+        "nombre": nombre,
+        "idCarrera": idCarrera,
+        "idEspecialidad": idEspecialidad,
+        "idGrado": idGrado,
+        "idPlanEstudio": idPlanEstudio,
+        "numeroUnidades": numeroUnidades
+    });
+
+    if (!nombre || !idCarrera || !idEspecialidad || !idGrado || !idPlanEstudio || !numeroUnidades) {
+        mostrarNotificacion('Campos Incompletos', '<p>Por favor complete todos los campos, incluyendo el Plan de Estudio y Número de Unidades.</p>', 'warning');
+        return;
+    }
+
+    $.ajax({
+        url: '@Url.Action("CreateAjax", "Materias")',
+        type: 'POST',
+        data: {
+            Nombre: nombre,
+            IdCarrera: idCarrera,
+            IdEspecialidad: idEspecialidad,
+            IdGrado: idGrado,
+            IdPlanEstudio: idPlanEstudio,
+            NumeroUnidades: numeroUnidades
+        },
+        success: function(result) {
+            console.log('Resultado guardar materia:', result);
+            if (result.success) {
+                $('#modalAgregar').modal('hide');
+
+                var mensajeHtml = '<p>' + result.message + '</p>';
+                if (result.planInfo) {
+                    mensajeHtml += '<hr>';
+                    mensajeHtml += '<p><strong>Plan:</strong> ' + result.planInfo.nombre + ' (Año ' + result.planInfo.año + ')</p>';
+                    mensajeHtml += '<p><strong>Calificación mínima:</strong> ' + result.planInfo.calificacionMinima + '</p>';
+                    mensajeHtml += '<p><strong>Permite decimales:</strong> ' + (result.planInfo.permiteDecimales ? 'Sí' : 'No') + '</p>';
+                }
+                if (result.numeroUnidades) {
+                    mensajeHtml += '<p><strong>Unidades:</strong> ' + result.numeroUnidades + '</p>';
+                }
+
+                mostrarNotificacion('¡Guardado!', mensajeHtml, 'success');
+
+                aplicarFiltros();
+            } else {
+                mostrarNotificacion('Error al Guardar', '<p>' + result.message + '</p>', 'danger');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al guardar materia:', error);
+            mostrarNotificacion('Error de Conexión', '<p>No se pudo conectar con el servidor. Intente de nuevo más tarde.</p>', 'danger');
+        }
+    });
+}
+
+function actualizarMateria() {
+    var idMateria = $('#editIdMateria').val();
+    var nombre = $('#editNombre').val().trim();
+    var idCarrera = $('#editCarrera').val();
+    var idEspecialidad = $('#editEspecialidad').val();
+    var idGrado = $('#editGrado').val();
+    var idPlanEstudio = $('#editPlanEstudio').val();
+    var numeroUnidades = $('#editNumeroUnidades').val();
+    var activo = $('#editActivo').is(':checked');
+
+    console.log('Actualizando materia:', {
+        "idMateria": idMateria,
+        "nombre": nombre,
+        "idCarrera": idCarrera,
+        "idEspecialidad": idEspecialidad,
+        "idGrado": idGrado,
+        "idPlanEstudio": idPlanEstudio,
+        "numeroUnidades": numeroUnidades,
+        "activo": activo
+    });
+
+    if (!nombre || !idCarrera || !idEspecialidad || !idGrado || !idPlanEstudio || !numeroUnidades) {
+        mostrarNotificacion('Campos Incompletos', '<p>Por favor complete todos los campos, incluyendo el Plan de Estudio y Número de Unidades.</p>', 'warning');
+        return;
+    }
+
+    $.ajax({
+        url: '@Url.Action("EditAjax", "Materias")',
+        type: 'POST',
+        data: {
+            IdMateria: idMateria,
+            Nombre: nombre,
+            IdCarrera: idCarrera,
+            IdEspecialidad: idEspecialidad,
+            IdGrado: idGrado,
+            IdPlanEstudio: idPlanEstudio,
+            NumeroUnidades: numeroUnidades,
+            Activo: activo
+        },
+        success: function(result) {
+            console.log('Resultado actualizar materia:', result);
+            if (result.success) {
+                $('#modalEditar').modal('hide');
+
+                var mensajeHtml = '<p>' + result.message + '</p>';
+                if (result.planInfo) {
+                    mensajeHtml += '<hr>';
+                    mensajeHtml += '<p><strong>Plan:</strong> ' + result.planInfo.nombre + ' (Año ' + result.planInfo.año + ')</p>';
+                    mensajeHtml += '<p><strong>Calificación mínima:</strong> ' + result.planInfo.calificacionMinima + '</p>';
+                    mensajeHtml += '<p><strong>Permite decimales:</strong> ' + (result.planInfo.permiteDecimales ? 'Sí' : 'No') + '</p>';
+                }
+                if (result.numeroUnidades) {
+                    mensajeHtml += '<p><strong>Unidades:</strong> ' + result.numeroUnidades + '</p>';
+                }
+
+                mostrarNotificacion('¡Actualizado!', mensajeHtml, 'success');
+
+                aplicarFiltros();
+            } else {
+                mostrarNotificacion('Error al Actualizar', '<p>' + result.message + '</p>', 'danger');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al actualizar materia:', error);
+            mostrarNotificacion('Error de Conexión', '<p>No se pudo conectar con el servidor. Intente de nuevo más tarde.</p>', 'danger');
+        }
+    });
+}
+
+function confirmarEliminar() {
+    var idMateria = $('#deleteIdMateria').val();
+
+    console.log('Eliminando materia:', idMateria);
+
+    $.ajax({
+        url: '@Url.Action("DeleteAjax", "Materias")',
+        type: 'POST',
+        data: { id: idMateria },
+        success: function(result) {
+            console.log('Resultado eliminar materia:', result);
+            if (result.success) {
+                $('#modalEliminar').modal('hide');
+                aplicarFiltros();
+            } else {
+                alert('Error al eliminar: ' + result.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al eliminar materia:', error);
+            alert('Error de conexión al eliminar');
+        }
+    });
+}
+
+function abrirModalEliminar(idMateria, nombreMateria) {
+    console.log('Abriendo modal eliminar:', { idMateria, nombreMateria });
+    $('#deleteIdMateria').val(idMateria);
+    $('#deleteNombreMateria').text(nombreMateria);
+    $('#modalEliminar').modal('show');
+}
+
+function toggleActivo(idMateria, checkbox) {
+    console.log('Toggle activo para materia:', idMateria);
+
+    $.ajax({
+        url: '@Url.Action("ToggleActivo", "Materias")',
+        type: 'POST',
+        data: { id: idMateria },
+        success: function(result) {
+            console.log('Resultado toggle activo:', result);
+            if (result.success) {
+                var label = $(checkbox).next('.label');
+                if (result.activo) {
+                    label.removeClass('label-danger').addClass('label-success').text('Activa');
+                } else {
+                    label.removeClass('label-success').addClass('label-danger').text('Inactiva');
+                }
+            } else {
+                checkbox.checked = !checkbox.checked;
+                alert('Error al actualizar');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error en toggle activo:', error);
+            checkbox.checked = !checkbox.checked;
+            alert('Error de conexión');
+        }
+    });
+}
+
+// Limpiar modals al cerrar
+$('#modalAgregar').on('hidden.bs.modal', function () {
+    $('#formAgregar')[0].reset();
+    $('#ddlEspecialidad').empty().append('<option value="">-- Primero seleccione una carrera --</option>').prop('disabled', true);
+    $('#infoPlanAgregar').hide();
+    console.log('Modal agregar cerrado y limpiado');
+});
+
+$('#modalEditar').on('hidden.bs.modal', function () {
+    $('#formEditar')[0].reset();
+    $('#editEspecialidad').empty().append('<option value="">-- Seleccionar Especialidad --</option>').prop('disabled', true);
+    $('#infoPlanEditar').hide();
+    console.log('Modal editar cerrado y limpiado');
+});
+
+$('#modalEliminar').on('hidden.bs.modal', function () {
+    $('#deleteIdMateria').val('');
+    $('#deleteNombreMateria').text('');
+    console.log('Modal eliminar cerrado y limpiado');
+});
+
+    function mostrarNotificacion(titulo, bodyHtml, tipo) {
+        var $header = $('#notificacionHeader');
+        var $titulo = $('#notificacionTitulo');
+        var $body = $('#notificacionBody');
+
+        $header.removeClass('modal-header-success modal-header-warning modal-header-danger modal-header-info');
+
+        if (tipo === 'success') {
+            $header.addClass('modal-header-success');
+            $titulo.html('<span class="glyphicon glyphicon-ok-sign"></span> ' + titulo);
+        } else if (tipo === 'warning') {
+            $header.addClass('modal-header-warning');
+            $titulo.html('<span class="glyphicon glyphicon-warning-sign"></span> ' + titulo);
+        } else if (tipo === 'danger') {
+            $header.addClass('modal-header-danger');
+            $titulo.html('<span class="glyphicon glyphicon-exclamation-sign"></span> ' + titulo);
+        } else {
+            // Un color por defecto si se nos olvida
+            $header.addClass('modal-header-info');
+            $titulo.html('<span class="glyphicon glyphicon-info-sign"></span> ' + titulo);
+        }
+
+        // mensaje
+        $body.html(bodyHtml);
+
+        // modal
+        $('#modalNotificacion').modal('show');
+    }
+
+
+    // =========================================================================
+    // BUSCADOR DE TEXTO EN TIEMPO REAL
+    // =========================================================================
+
+    var busquedaTimeout;
+
+    $('#buscadorTexto').on('input', function () {
+        clearTimeout(busquedaTimeout);
+        var textoBusqueda = $(this).val().trim().toLowerCase();
+
+        busquedaTimeout = setTimeout(function () {
+            realizarBusqueda(textoBusqueda);
+        }, 300);
+    });
+
+    function realizarBusqueda(textoBusqueda) {
+        if (tablaMateriasInstance) {
+            tablaMateriasInstance.search(textoBusqueda).draw();
+        }
+    }
+
+    function limpiarBuscador() {
+        $('#buscadorTexto').val('');
+        realizarBusqueda('');
+        $('#buscadorTexto').focus();
+    }
+
+</script>
+
+@section Styles {
+
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+
+    <style>
+        .glyphicon-refresh-animate {
+            animation: spin .7s infinite linear;
+            -webkit-animation: spin2 .7s infinite linear;
+        }
+
+        @@-webkit-keyframes spin2 {
+            from {
+                -webkit-transform: rotate(0deg);
+            }
+
+            to {
+                -webkit-transform: rotate(360deg);
+            }
+        }
+
+        @@keyframes spin {
+            from {
+                transform: scale(1) rotate(0deg);
+            }
+
+            to {
+                transform: scale(1) rotate(360deg);
+            }
+        }
+
+        .panel-info {
+            margin-bottom: 20px;
+        }
+
+        .filtros-toggle {
+            display: block;
+            text-decoration: none !important;
+            padding: 0;
+            outline: none;
+        }
+
+            .filtros-toggle:hover,
+            .filtros-toggle:focus {
+                text-decoration: none !important;
+                outline: none;
+            }
+
+        .chevron-icon {
+            transition: transform 0.2s ease;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .collapsed .chevron-icon {
+            transform: rotate(180deg);
+        }
+
+        .panel-heading {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+
+            .panel-heading:hover {
+                background-color: #bee5eb;
+            }
+
+        .form-inline .form-group {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+            .form-inline .form-group label {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+
+        .form-inline .form-control {
+            width: 100%;
+            min-width: 180px;
+        }
+
+        .select-wide {
+            width: 100% !important;
+            min-width: 200px;
+            max-width: 100%;
+        }
+
+        #filtroCarrera {
+            min-width: 220px;
+        }
+
+        #filtroEspecialidad {
+            min-width: 250px;
+        }
+
+        #filtroGrado {
+            min-width: 140px;
+        }
+
+        #filtroPlanEstudio {
+            min-width: 160px;
+        }
+
+        .btn-filter {
+            margin-right: 8px;
+            margin-bottom: 5px;
+            min-width: 120px;
+        }
+
+        .btn-icon {
+            margin-right: 8px;
+            margin-bottom: 5px;
+            width: 40px;
+            height: 34px;
+            padding: 6px;
+            font-size: 14px;
+        }
+
+            .btn-icon .glyphicon {
+                top: 0;
+            }
+
+        .alert-sm {
+            padding: 8px 15px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        #infoPlanAgregar, #infoPlanEditar {
+            margin-top: 10px;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+            #infoPlanAgregar h5, #infoPlanEditar h5 {
+                margin-top: 0;
+                margin-bottom: 8px;
+                font-size: 13px;
+            }
+
+        #detallesPlanAgregar strong, #detallesPlanEditar strong {
+            color: #31708f;
+        }
+
+        /* ========================================== */
+        /* ESTILOS PARA EL BUSCADOR DE TEXTO */
+        /* ========================================== */
+
+        .panel-success > .panel-heading {
+            background-color: #e9f8f4;
+            border-color: #cfe8e2;
+            color: #09a787;
+        }
+
+            .panel-success > .panel-heading h4 {
+                color: #09a787;
+                font-weight: 600;
+                margin: 0;
+            }
+
+        .panel-success {
+            border-color: #cfe8e2;
+        }
+
+        #buscadorTexto {
+            font-size: 14px;
+            height: 42px;
+            border: 2px solid #d1d8e0;
+            border-radius: 4px 0 0 4px;
+            transition: all 0.3s ease;
+        }
+
+            #buscadorTexto:focus {
+                border-color: #1ab192;
+                box-shadow: 0 0 8px rgba(26, 177, 146, 0.3);
+                outline: none;
+            }
+
+        .input-group-addon {
+            background-color: #e9f8f4;
+            border: 2px solid #d1d8e0;
+            border-right: none;
+            color: #09a787;
+        }
+
+        .input-group-btn .btn {
+            height: 42px;
+            border: 2px solid #d1d8e0;
+            border-left: none;
+        }
+
+        @@media (max-width: 768px) {
+            #buscadorTexto {
+                font-size: 13px;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .form-inline .col-md-2,
+            .form-inline .col-md-3,
+            .form-inline .col-md-4 {
+                margin-bottom: 15px;
+            }
+
+            .select-wide {
+                min-width: 100%;
+            }
+
+            .btn-filter {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .btn-icon {
+                width: 50px;
+                height: 40px;
+                margin-right: 15px;
+            }
+
+            .filtros-toggle {
+                font-size: 14px;
+            }
+
+            .panel-heading {
+                padding: 12px 15px;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+            }
+
+            #infoPlanAgregar, #infoPlanEditar {
+                font-size: 11px;
+                padding: 8px;
+            }
+        }
+
+        .form-control option {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sga-scope .panel-info {
+            border-color: #cfe8e2;
+        }
+
+            .sga-scope .panel-info > .panel-heading {
+                background-color: #e9f8f4;
+                border-color: #cfe8e2;
+                color: #09a787;
+                font-weight: 600;
+            }
+
+                .sga-scope .panel-info > .panel-heading h4 {
+                    color: #09a787;
+                    font-weight: 600;
+                }
+
+            .sga-scope .panel-info > .panel-body {
+                color: #004D40;
+            }
+
+                .sga-scope .panel-info > .panel-body strong {
+                    color: #00695C;
+                }
+
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 1.20rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+
+        #modalAgregar .form-control,
+        #modalEditar .form-control {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
+        .sga-plan-info-box {
+            margin-top: 10px;
+            border: 1px solid #cfe8e2;
+            color: #004D40;
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+            .sga-plan-info-box h5 {
+                margin-top: 0;
+                margin-bottom: 8px;
+                font-size: 14px;
+                font-weight: 700;
+                color: #09a787;
+            }
+
+        #detallesPlanAgregar strong,
+        #detallesPlanEditar strong {
+            color: #00695C;
+            font-weight: 700;
+        }
+
+        .modal-header-success {
+            background-color: #1ab192;
+            color: white;
+        }
+
+        .modal-header-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .modal-header-danger {
+            background-color: #d9534f;
+            color: white;
+        }
+
+        #notificacionBody {
+            font-size: 1.1em;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+            #notificacionBody hr {
+                margin-top: 15px;
+                margin-bottom: 15px;
+                border-top: 1px solid #eee;
+            }
+
+            #notificacionBody strong {
+                color: #333;
+            }
+
+
+        /* Separador visual para el buscador */
+        #buscadorTexto {
+            border: 2px solid #1ab192;
+        }
+
+            #buscadorTexto:focus {
+                border-color: #09a787;
+                box-shadow: 0 0 8px rgba(26, 177, 146, 0.4);
+            }
+
+        /* Ajuste del addon */
+        .input-group-addon {
+            background-color: #e9f8f4;
+            border: 2px solid #1ab192;
+            border-right: none;
+            color: #09a787;
+        }
+
+        /* Línea separadora después del buscador */
+        .col-md-12[style*="margin-bottom: 15px"] {
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9f8f4;
+            margin-bottom: 20px !important;
+        }
+
+        /* DataTables — ajustes de estilo para el tema SGA */
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #d1d8e0;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: #1ab192 !important;
+            border-color: #1ab192 !important;
+            color: white !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #e9f8f4 !important;
+            border-color: #cfe8e2 !important;
+            color: #1ab192 !important;
+        }
+
+        .dataTables_wrapper .dataTables_info {
+            font-size: 12px;
+            color: #666;
+            padding-top: 10px;
+        }
+
+        .dataTables_wrapper .dataTables_length {
+            margin-bottom: 10px;
+        }
+    </style>
+}

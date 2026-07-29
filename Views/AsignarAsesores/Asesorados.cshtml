@@ -1,0 +1,88 @@
+﻿@using Plataforma_Web.Models
+@model IEnumerable<Plataforma_Web.Models.TutoriaGrupal>
+@{
+    Usuario usuarios = ViewBag.Usuario as Usuario;
+
+    ViewBag.Title = "Asesorados";
+
+}
+
+<h2>Grupos de @usuarios.NombreCompleto</h2>
+
+<p>
+    <a class="btn btn-primary" href="@Url.Action("Asignar", new { id = usuarios.IdUsuario })"
+       role="button">
+        <span class="glyphicon glyphicon-pencil"></span>
+        Asignar Grupo
+
+    </a>
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Carrera)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Grado)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Grupo)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Turno)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Periodo)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Año)
+        </th>
+        <th>
+            Acciones
+        </th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Carrera.Nombre)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Grado.Nombre)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Grupo.Nombre)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Turno.Nombre)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Periodo.Nombre)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Año)
+        </td>
+        <td>
+
+            <a class="btn btn-primary" href="@Url.Action("Editar", new { id = item.IdTutoriaGrupal })"
+               role="button">
+                <span class="glyphicon glyphicon-pencil"></span>
+                Editar
+
+            </a>
+            <a class="btn btn-primary" href="@Url.Action("Eliminar", new { id = item.IdTutoriaGrupal })"
+               role="button">
+                <span class="glyphicon glyphicon-pencil"></span>
+                Eliminar
+
+            </a>
+
+        </td>
+    </tr>
+    }
+
+</table>
+<div>
+    @Html.ActionLink("Regresar", "Index")
+</div>

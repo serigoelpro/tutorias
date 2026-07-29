@@ -1,0 +1,429 @@
+﻿@using PlataformaWeb.BecasTransporte.Models;
+´@{
+    ViewBag.Title = "Mapa";
+    Estadistica EstadisticasMatutino = ViewBag.EstadisticasMatutino as Estadistica;
+    Estadistica EstadisticasVespertino = ViewBag.EstadisticasVespertino as Estadistica;
+    Estadistica EstadisticasDespresurizado = ViewBag.EstadisticasDespresurizado as Estadistica;
+
+    List<SelectListItem> RutasCantidadesMat =   ViewBag.RutasCantidadesMat as List<SelectListItem>;
+    List<SelectListItem> RutasCantidadesVesp = ViewBag.RutasCantidadesVesp as List<SelectListItem>;
+    List<SelectListItem> RutasCantidadesDesp = ViewBag.RutasCantidadesDesp as List<SelectListItem>;
+
+}
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    
+    @*<script>
+        function initMap() { }
+            var markers = []; // Array that stores markers
+            var uttn = { lat: 26.050719, lng: -98.260655 }; //latitud y longitud de uttn
+            var direcciones = JSON.parse('@Html.Raw(ViewBag.Direcciones)');
+            var map;
+            var timer;
+            var count = 0;
+            $(() => {
+                initMap = function() {
+                var mapOptions = {
+                    zoom: 11,
+                    center: uttn,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    zoomControl: true,
+                    zoomControlOptions: {
+                        position: google.maps.ControlPosition.LEFT_BOTTOM
+                    },
+                    streetViewControl: true,
+                    streetViewControlOptions: {
+                        position: google.maps.ControlPosition.LEFT_BOTTOM
+                    },
+                    mapTypeControlOptions: {
+                        position: google.maps.ControlPosition.RIGHT_CENTER
+                    },
+                };
+                map = new google.maps.Map(document.getElementById("map"), mapOptions);
+                var geocoder = new google.maps.Geocoder();
+
+                for (var i = 0; i < direcciones.length; i++) {
+                    geocodeAddress(geocoder, map, direcciones[i].Direccion, direcciones[i].Nombre);
+                }
+                //for (i = 0; i < direcciones.length; i++) {
+                //    mostrarDirecciones(direcciones[i].Nombre, direcciones[i].Direccion);
+                //}
+                // To add the marker to the map, call setMap();
+                //markers.setMap(map);
+
+                //timer = setInterval(function () { LeerEstados() }, 5000);
+
+
+                }
+            })
+            function geocodeAddress(geocoder, resultsMap, direccionAlumno, nombreAlumno) {
+                var address = direccionAlumno
+                geocoder.geocode({ 'address': address }, function (results, status) {
+                    if (status === 'OK') {
+                        resultsMap.setCenter(results[0].geometry.location);
+                        var img = {
+                            url: '../Imagenes/markermap.png',
+                            size: new google.maps.Size(64, 64),
+                            origin: new google.maps.Point(0, 0),
+                            anchor: new google.maps.Point(32, 32)
+                        };
+                        var contentString = '<div id="content">' +
+                        '</div>' +
+                        '<h2 id="firstHeading" class="firstHeading" style="text-align:center;">' + nombreAlumno + '</h2><br />' +
+                        '<h2 id="firstHeading" class="firstHeading" style="text-align:center;">' + direccionAlumno + '</h2><br />' +
+                        '<div id="bodyContent">' +
+                        '</div>' +
+                        '</div>';
+                        var infowindowDireccion = new google.maps.InfoWindow({
+                            content: contentString,
+                            maxWidth: 350
+                        });
+                        var marker = new google.maps.Marker({
+                            map: resultsMap,
+                            position: results[0].geometry.location,
+                            title: alumno,
+                            icon: img
+                        });
+                        marker.addListener('click', function (e) {
+                            infowindowDireccion.open(map, marker);
+                        });
+                        markers[i] = marker;
+                    } else {
+                        alert('Geocode was not successful for the following reason: ' + status);
+                    }
+                });
+            }
+            function mostrarDirecciones(alumno, direccion) {
+                var img = {
+                    url: '../Imagenes/markermap.png',
+                    size: new google.maps.Size(64, 64),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(32, 32)
+                };
+
+                var contentString = '<div id="content">' +
+                        '</div>' +
+                        '<h2 id="firstHeading" class="firstHeading" style="text-align:center;">' + alumno + '</h2><br />' +
+                        '<h2 id="firstHeading" class="firstHeading" style="text-align:center;">' + direccion + '</h2><br />' +
+                        '<div id="bodyContent">' +
+                        '</div>' +
+                        '</div>';
+                var infowindowDireccion = new google.maps.InfoWindow({
+                    content: contentString,
+                    maxWidth: 350
+                });
+                var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(lat, lon),
+                    map: map,
+                    title: alumno,
+                    icon: img
+                });
+
+                marker.addListener('click', function (e) {
+                    infowindowDireccion.open(map, marker);
+                });
+                markers[i] = marker;
+                //marker.setMap(map);
+                // agregar infowindow a marker con el estado
+
+                // evento click para mostrar infowindow
+
+
+            }
+            function setMapOnAll(map) {
+                for (var i = 0; i < direcciones.length; i++) {
+                    markers[i].setMap(map);
+                }
+            }
+
+
+            function clearMarkers() {
+                setMapOnAll(null);
+            }
+
+        </script>*@
+
+
+    <title>Mapa</title>
+
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAPJNRGq4MDbDV9PiIFTEH8KXd-GsXZYRc&callback=initMap"
+            type="text/javascript"></script>
+    @*<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJOZd-P3bAJXBAYtfryQT_GTv61uRehMs&callback=initMap"></script>*@
+</head>
+
+@if (ViewBag.Mensaje != null)
+{
+    <div class="col-md-12 text-center">
+        <br />
+        <br />
+        <div class="alert alert-info">@ViewBag.Mensaje</div>
+        <a class="btn btn-default" href="@Url.Action("Estadisticas", "Estudiantes")"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4 col-sm-6 text-center">
+            <div class="page-header">
+                <h2>Detalles <a class="btn btn-default" href="@Url.Action("Estadisticas", "Estudiantes")"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a></h2>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Turno Matutino
+                </div>
+                <div class="panel-body">
+                    <h4>Alumnos que Usan Transporte: <strong>@EstadisticasMatutino.CantidadAlumnosUsanTransporte</strong></h4>
+                    <div class="row">
+                        <div class="col-md-12">
+                            Reynosa: <strong>@EstadisticasMatutino.CantidadAlumnosReynosa</strong>
+                            &nbsp; &nbsp;
+                            Río Bravo: <strong>@EstadisticasMatutino.CantidadAlumnosRB</strong>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="">
+                        <div class="row">
+                            <strong class="text-left col-md-offset-1">Rutas</strong>
+                            <strong class="text-right col-md-offset-4">Cantidad de alumnos</strong>
+                        </div>
+                        <br />
+                        <ul class="list-group text-left">
+                            @foreach (SelectListItem ruta in RutasCantidadesMat)
+                            {
+                                <li class="list-group-item"> @ruta.Text<span class="badge">@ruta.Value.ToString()</span></li>
+                            }
+                        </ul>
+
+
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#Matutino">
+                            Lista de Alumnos que Usan Transporte
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="Matutino" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                        <h4 class="modal-title" id="myModalLabel">Lista de Alumnos que Usan Transporte</h4>
+                                        <small>Turno Matutino</small>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="col-md-6">
+                                            Alumnos de Reynosa
+                                            <br />
+                                            <br />
+                                            <br />
+
+                                            <ul class="list-group">
+                                                @foreach (string alumno in EstadisticasMatutino.ListaAlumnosReynosa)
+                                                {
+                                                    <li class="list-group-item"><small>@alumno.ToString()</small></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            Alumnos de Río Bravo
+                                            <br />
+                                            <br />
+                                            <br />
+
+                                            <ul class="list-group">
+                                                @foreach (string alumno in EstadisticasMatutino.ListaAlumnosRB)
+                                                {
+                                                    <li class="list-group-item"><small>@alumno.ToString()</small></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                                        @*<button type="button" class="btn btn-primary">Save changes</button>*@
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class=" panel-heading">
+                    Turno Vespertino
+                </div>
+                <div class=" panel-body">
+                    <h4>Alumnos que Usan Transporte: <strong>@EstadisticasVespertino.CantidadAlumnosUsanTransporte</strong></h4>
+                    <div class="row">
+                        <div class="col-md-12">
+                            Reynosa: <strong>@EstadisticasVespertino.CantidadAlumnosReynosa</strong>
+                            &nbsp; &nbsp;
+                            Río Bravo: <strong>@EstadisticasVespertino.CantidadAlumnosRB</strong>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="">
+                        <div class="row">
+                            <strong class="text-left col-md-offset-1">Rutas</strong>
+                            <strong class="text-right col-md-offset-4">Cantidad de alumnos</strong>
+                        </div>                        <br />
+                        <ul class="list-group text-left">
+                            @foreach (SelectListItem ruta in RutasCantidadesVesp)
+                            {
+                                <li class="list-group-item"> @ruta.Text<span class="badge">@ruta.Value.ToString()</span></li>
+                            }
+                        </ul>
+                    </div>
+
+
+                    <!-- Button trigger modal -->
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#Vespertino">
+                        Lista de Alumnos que Usan Transporte
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="Vespertino" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    <h4 class="modal-title" id="myModalLabel">Lista de Alumnos que Usan Transporte</h4>
+                                    <small>Turno Vespertino</small>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="col-md-6">
+                                        Alumnos de Reynosa
+                                        <br />
+                                        <br />
+                                        <br />
+
+                                        <ul class="list-group">
+                                            @foreach (string alumno in EstadisticasVespertino.ListaAlumnosReynosa)
+                                            {
+                                                <li class="list-group-item"><small>@alumno.ToString()</small></li>
+                                            }
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        Alumnos de Río Bravo
+                                        <br />
+                                        <br />
+                                        <br />
+
+                                        <ul class="list-group">
+                                            @foreach (string alumno in EstadisticasVespertino.ListaAlumnosRB)
+                                            {
+                                                <li class="list-group-item"><small>@alumno.ToString()</small></li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                                    @*<button type="button" class="btn btn-primary">Save changes</button>*@
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+
+                </div>
+            </div>
+
+            @if (EstadisticasDespresurizado.CantidadAlumnosUsanTransporte > 0)
+            {
+                <h4>Alumnos que Usan Transporte: <strong>@EstadisticasDespresurizado.CantidadAlumnosUsanTransporte</strong></h4>
+                <div class="row">
+                    <div class="col-md-12">
+                        Reynosa: <strong>@EstadisticasDespresurizado.CantidadAlumnosReynosa</strong>
+                        &nbsp; &nbsp;
+                        Río Bravo: <strong>@EstadisticasDespresurizado.CantidadAlumnosRB</strong>
+                    </div>
+                </div>
+                <br />
+                <div class="">
+                    <div class="row">
+                        <strong class="text-left col-md-offset-1">Rutas</strong>
+                        <strong class="text-right col-md-offset-4">Cantidad de alumnos</strong>
+                    </div>                    <br />
+                    <br />
+                    <ul class="list-group text-left">
+                        @foreach (SelectListItem ruta in RutasCantidadesDesp)
+                        {
+                            <li class="list-group-item"> @ruta.Text<span class="badge">@ruta.Value.ToString()</span></li>
+                        }
+                    </ul>
+                </div>
+
+
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#Despresurizado">
+                    Lista de Alumnos que Usan Transporte
+                </button>
+
+                <!-- Modal -->
+                <div class="modal fade" id="Despresurizado" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" id="myModalLabel">Lista de alumnos que usan transporte.</h4>
+                                <small>Turno Despresurizado.</small>
+                            </div>
+                            <div class="modal-body">
+                                <div class="col-md-6">
+                                    Alumnos de Reynosa:
+                                    <br />
+                                    <br />
+                                    <br />
+
+                                    <ul class="list-group">
+                                        @foreach (string alumno in EstadisticasDespresurizado.ListaAlumnosReynosa)
+                                        {
+                                            <li class="list-group-item"><small>@alumno.ToString()</small></li>
+                                        }
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    Alumnos de Río Bravo:
+                                    <br />
+                                    <br />
+                                    <br />
+
+                                    <ul class="list-group">
+                                        @foreach (string alumno in EstadisticasDespresurizado.ListaAlumnosRB)
+                                        {
+                                            <li class="list-group-item"><small>@alumno.ToString()</small></li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                                @*<button type="button" class="btn btn-primary">Save changes</button>*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+        </div>
+        <div class="col-md-8 col-sm-6">
+            <div class="page-header">
+                <h2>Mapa de Alumnos<small> Ubicación Para Ruta de Transporte</small></h2>
+            </div>
+            <div style="background-color:grey;">
+                <div id="map" style="width: 100%; height: 400px;"></div>
+            </div>
+        </div>
+
+    </div>
+
+}
+
+

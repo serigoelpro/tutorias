@@ -1,0 +1,31 @@
+﻿@{
+    ViewBag.Title = "Agregar Materia";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container">
+    <h3><i class="fa fa-plus-square"></i> Agregar Materia</h3>
+    @if (TempData["Ok"] != null)
+    {
+        <div class="alert alert-success">@TempData["Ok"]</div>
+    }
+    @using (Html.BeginForm())
+    {
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label>Nombre de Materia</label>
+                <input name="nombre" class="form-control" required />
+            </div>
+            <div class="form-group col-md-3">
+                <label>Cuatrimestre / Grado</label>
+                @Html.DropDownList("idGrado", null, "Selecciona", new { @class = "form-control" })
+            </div>
+            <div class="form-group col-md-3">
+                <label>Carrera</label>
+                @Html.DropDownList("idCarrera", null, "Selecciona", new { @class = "form-control" })
+            </div>
+        </div>
+        <button class="btn btn-success">
+            <i class="fa fa-save"></i> Guardar Materia
+        </button>
+    }
+</div>

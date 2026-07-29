@@ -1,0 +1,110 @@
+﻿@model PlataformaWeb.Models.Baja
+@using ReportViewerForMvc;
+
+@{
+    ViewBag.Title = "Details";
+    bool esSoloLectura = (bool)(ViewBag.EsSoloLectura ?? false);
+}
+
+<h2>@(esSoloLectura ? "HISTORIAL DE BAJA" : "IMPRIMIR SOLICITUD DE BAJA")</h2>
+
+<style>
+    iframe {
+        width: 100%;
+        height: 600px; /* Ajusta el tamaño según sea necesario */
+        border: none;
+    }
+</style>
+
+<div class="page-header">
+    <h4>
+        @if (esSoloLectura)
+        {
+            <text>BAJA HISTÓRICA DE @Model.Nombre — OTRA CARRERA</text>
+        }
+        else
+        {
+            <text>IMPRIMIR SOLICITUD DE BAJA DE @Model.Nombre | F-PSE-DICA-10/R06</text>
+        }
+    </h4>
+</div>
+
+@if (!esSoloLectura)
+{
+    <!-- Botones con/sin sello -->
+    <div class="mb-3">
+        <a class="btn @(Convert.ToBoolean(ViewBag.ShowSello ?? false) ? "btn-success" : "btn-outline-success")"
+           href="@Url.Action("Details", new { id = Model.IdBaja, sello = true })">
+            <span class="glyphicon glyphicon-ok"></span> IMPRIMIR CON SELLO Y FIRMA
+        </a>
+
+        <a class="btn @(!Convert.ToBoolean(ViewBag.ShowSello ?? false) ? "btn-primary" : "btn-outline-primary")"
+           href="@Url.Action("Details", new { id = Model.IdBaja, sello = false })">
+            <span class="glyphicon glyphicon-remove"></span> IMPRIMIR SIN SELLO Y FIRMA
+        </a>
+    </div>
+}
+else
+{
+    <div class="alert alert-secondary mt-2" role="alert">
+        <strong>Solo lectura:</strong> Esta baja pertenece a la carrera anterior del alumno. No es posible imprimirla desde esta carrera.
+    </div>
+    <dl class="row mt-3">
+        <dt class="col-sm-4">Folio</dt>
+        <dd class="col-sm-8">@Model.Folio</dd>
+        <dt class="col-sm-4">Fecha de baja</dt>
+        <dd class="col-sm-8">@Model.Fecha.ToString("dd/MM/yyyy")</dd>
+        <dt class="col-sm-4">Alumno</dt>
+        <dd class="col-sm-8">@Model.Nombre</dd>
+        <dt class="col-sm-4">Matrícula</dt>
+        <dd class="col-sm-8">@Model.Matricula</dd>
+        <dt class="col-sm-4">Grupo</dt>
+        <dd class="col-sm-8">@Model.Grupo — @Model.Turno</dd>
+        <dt class="col-sm-4">Carrera (histórica)</dt>
+        <dd class="col-sm-8">@Model.Carrera</dd>
+        <dt class="col-sm-4">Cuatrimestre</dt>
+        <dd class="col-sm-8">@Model.Cuatrimestre</dd>
+        <dt class="col-sm-4">Causa</dt>
+        <dd class="col-sm-8">@Model.Causa</dd>
+        <dt class="col-sm-4">Tutor de grupo</dt>
+        <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.NombreTutor) ? "No registrado" : Model.NombreTutor)</dd>
+    </dl>
+}
+
+<hr />
+
+@* Muestra el mensaje de error/aviso si el controlador lo envió *@
+@if (ViewBag.Mensaje != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.Mensaje
+    </div>
+}
+
+
+
+@if (ViewBag.ReportViewer != null)
+{
+    <div class="alert alert-info" role="alert">
+        POR FAVOR ESPERE A QUE CARGUE COMPLETAMENTE EL REPORTE.
+        PARA IMPRIMIR DÉ CLIC EN EL ÍCONO DE LA IMPRESORA DEL PANEL DEL REPORTE.
+        LA VISTA PREVIA PUEDE SER DIFERENTE AL RESULTADO FINAL.
+    </div>
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-10">
+            @Html.ReportViewer(ViewBag.ReportViewer as Microsoft.Reporting.WebForms.ReportViewer)
+        </div>
+        <div class="col-md-1"></div>
+    </div>
+}
+
+<a class="btn btn-primary" href="@Url.Action("Index", new { id = Model.IdPersona })" role="button">
+    <span class="glyphicon glyphicon-arrow-left"></span>
+    Regresar
+</a>
+
+@*<p>
+        @Html.ActionLink("Editar", "Edit", new { id = Model.IdBaja }) |
+        @Html.ActionLink("Regresar", "Index", new { id = Model.IdPersona })
+    </p>*@

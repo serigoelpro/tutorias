@@ -1,0 +1,195 @@
+@model Plataforma_Web.Models.Usuario
+
+@{
+    ViewBag.Title = "Editar Tutor";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userNivel = ViewBag.UserNivel as int? ?? 0;
+    var carrerasSL = ViewBag.Carreras as SelectList;
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+
+    <style>
+        .sga-scope .password-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+            .sga-scope .password-wrapper .form-control {
+                flex-grow: 1;
+            }
+
+        .sga-scope .password-col-wrapper {
+        }
+
+        .sga-scope .password-toggle-btn {
+            flex-shrink: 0;
+            margin-left: 8px;
+            height: auto;
+            background: transparent;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+            .sga-scope .password-toggle-btn:hover {
+                color: #000;
+            }
+    </style>
+}
+
+<div class="sga-scope">
+    <h2>Editar Tutor</h2>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Mensaje"]
+        </div>
+    }
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="alert alert-warning">
+            @ViewBag.Mensaje
+        </div>
+    }
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-horizontal">
+            <h4>Información del Tutor</h4>
+            <hr />
+
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            @Html.HiddenFor(model => model.IdUsuario)
+            @Html.HiddenFor(model => model.MicrosoftIdentifier)
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.NombreCompleto, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.NombreCompleto, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                    @Html.ValidationMessageFor(model => model.NombreCompleto, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.UserName, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                    @Html.ValidationMessageFor(model => model.UserName, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.CorreoElectronico, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.CorreoElectronico, new { htmlAttributes = new { @class = "form-control", @type = "email", required = "required" } })
+                    @Html.ValidationMessageFor(model => model.CorreoElectronico, "", new { @class = "text-danger" })
+                    <small class="form-text text-muted">Este campo es obligatorio</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Password, "Contraseña", htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10 password-col-wrapper">
+                    <div class="password-wrapper">
+
+                        @Html.EditorFor(model => model.Password, new { htmlAttributes = new { @class = "form-control", @type = "password", @id = "passwordField", required = "required" } })
+
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword()" id="toggleBtn" title="Mostrar/Ocultar contraseña">
+                            <span class="glyphicon glyphicon-eye-open" id="toggleIcon"></span>
+                        </button>
+
+                    </div> @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+
+                    <small class="form-text text-muted">
+                        <strong>Nota:</strong> La contraseña se muestra desencriptada para su edición.
+                        Al guardar se encriptará automáticamente.
+                    </small>
+
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.IdCarrera, "Carrera", htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+
+                    @if (userNivel >= 4)
+                    {
+                        @Html.DropDownListFor(m => m.IdCarrera, carrerasSL,
+                            "Seleccione una carrera", new { @class = "form-control" })
+                    }
+                    else
+                    {
+                        // Nivel 3: solo lectura
+                        var carreraItem = carrerasSL?.FirstOrDefault(x => x.Value == Model.IdCarrera.ToString());
+                        <p class="form-control-static">@((carreraItem != null) ? carreraItem.Text : "Sin carrera")</p>
+                        @Html.HiddenFor(m => m.IdCarrera)
+                    }
+
+                    @Html.ValidationMessageFor(model => model.IdCarrera, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.MicrosoftIdentifier))
+            {
+                <div class="form-group">
+                    <label class="control-label col-md-2">Microsoft Identifier</label>
+                    <div class="col-md-10">
+                        <p class="form-control-static" style="font-family: monospace; background-color: #f5f5f5; padding: 8px; border-radius: 3px;">
+                            @{
+                                var mid = Model.MicrosoftIdentifier;
+                                string mostrado = mid.Length > 10
+                                    ? mid.Substring(0, 4) + "..." + mid.Substring(mid.Length - 4)
+                                    : "••••••••";
+                            }
+                            @mostrado
+                        </p>
+                        <small class="form-text text-muted">Este campo no se puede editar</small>
+                    </div>
+                </div>
+            }
+
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" value="Guardar Cambios" class="btn btn-info" />
+                    @Html.ActionLink("Cancelar", "Index", null, new { @class = "btn btn-danger" })
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+
+    <script>
+        function togglePassword() {
+            var passwordField = document.getElementById('passwordField');
+            var toggleIcon = document.getElementById('toggleIcon');
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.className = 'glyphicon glyphicon-eye-close';
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.className = 'glyphicon glyphicon-eye-open';
+            }
+        }
+
+        // Mostrar la contraseña desencriptada al cargar la página
+        $(document).ready(function() {
+            @if (!string.IsNullOrEmpty(Model.Password))
+            {
+                <text>
+                console.log('Contraseña cargada y desencriptada para edición');
+                </text>
+            }
+        });
+    </script>
+}

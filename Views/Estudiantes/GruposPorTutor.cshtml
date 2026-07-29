@@ -1,0 +1,57 @@
+﻿@using Plataforma_Web.Models;
+
+@model IEnumerable<Plataforma_Web.Models.TutoriaGrupal>
+
+@{
+    ViewBag.Title = "Lista de grupos.";
+    Usuario user = (Usuario)Session["Usuario"];
+
+    var periodo = DateTime.Now;
+    var periodoS = "";
+    if (periodo.Month <5)
+    {
+        periodoS = "Enero - Abril";
+    }
+    else if (periodo.Month >4 && periodo.Month<8)
+    {
+        periodoS = "Mayo - Agosto";
+    }
+    else
+    {
+        periodoS = "Septiembre - Diciembre";
+    }
+
+}
+
+<h3>Grupos Disponibles Periodo: <strong>@periodoS, @periodo.Year.ToString()</strong></h3>
+<hr />
+<br />
+
+@if (ViewBag.Mensaje != null)
+{
+    <h2 class="text-danger text-center">@ViewBag.Mensaje</h2>
+}
+
+@if (ViewBag.Grupos != null)
+{
+    <div class="row">
+        @foreach (var grupo in ViewBag.Grupos)
+        {
+            <div class="col-md-3">
+                <div class="well">
+                    <center>
+                        <div class="row">
+                            <strong class="">
+                                <small>@grupo.Text</small>
+                            </strong>
+                        </div>
+                        <div class="row">
+                            @Html.ActionLink("Ver Grupo", "Grupo", "Estudiantes", new { id = grupo.Value }, new { @class = "btn btn-success btn-sm" })
+                        </div>
+                    </center>
+                </div>
+            </div>
+        }
+    </div>
+}
+

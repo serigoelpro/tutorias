@@ -1,0 +1,53 @@
+﻿@model PlataformaWeb.Models.Baja
+@{
+    ViewBag.Title = "Revocar Baja";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+
+<div class="sga-scope">
+
+
+    <h3>Revocar Solicitud de Baja</h3>
+
+    <div class="alert alert-danger">
+        <i class="fa fa-exclamation-triangle"></i>
+        <strong>Advertencia:</strong> Estás a punto de revocar esta baja.
+        <br />
+        Esto marcará el registro como inactivo y <strong>liberará el Folio @Model.Folio</strong> para que pueda ser usado por otra solicitud.
+        El registro NO se eliminará, permanecerá en el historial como "Revocado".
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">Datos de la baja a revocar</div>
+        <div class="panel-body">
+            <dl class="dl-horizontal">
+                <dt>Folio Actual:</dt>
+                <dd>@Model.Folio</dd>
+
+                <dt>Alumno:</dt>
+                <dd>@Model.Nombre</dd>
+
+                <dt>Motivo:</dt>
+                <dd>@Model.Causa</dd>
+
+                <dt>Fecha:</dt>
+                <dd>@Model.Fecha.ToShortDateString()</dd>
+            </dl>
+        </div>
+    </div>
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+        <div class="form-actions">
+            <input type="submit" value="Confirmar Revocación" class="btn btn-danger" /> |
+            @Html.ActionLink("Cancelar", "Index", new { id = Model.IdPersona }, new { @class = "btn btn-default" })
+        </div>
+    }
+</div>

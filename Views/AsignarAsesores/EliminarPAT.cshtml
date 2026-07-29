@@ -1,0 +1,55 @@
+﻿@model Plataforma_Web.Models.PAT
+
+@{
+    ViewBag.Title = "Eliminar PAT";
+}
+
+<h2>Eliminar PAT</h2>
+
+<h3>¿Está seguro que desea eliminar esto?</h3>
+
+<h4>
+    <font color="red">
+        LA TUTORÍA GRUPAL ASOCIADA A ESTE PAT TAMBIÉN SERÁ ELIMINADA
+    </font>
+</h4>
+<div>
+    <h4>PAT</h4>
+    <hr />
+    <dl class="dl-horizontal">   
+        <dt>
+            @Html.DisplayNameFor(model => model.Fecha)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Fecha)
+        </dd>    
+        <dt>
+            @Html.DisplayNameFor(model => model.Periodo.Nombre)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Periodo.Nombre)
+        </dd>     
+        <dt>
+            @Html.DisplayNameFor(model => model.IdTutoriaGrupal)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.TutoriaGrupal)
+        </dd>      
+        <dt>
+            @Html.DisplayNameFor(model => model.Tutor)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Tutor)
+        </dd>        
+    </dl>
+
+    @using (Html.BeginForm()) {
+        @Html.AntiForgeryToken()
+
+        <div class="form-actions no-color">
+            <input type="submit" value="Delete" class="btn btn-default" /> |
+            @Html.ActionLink("Regresar", "PAT")
+        </div>
+    }
+</div>

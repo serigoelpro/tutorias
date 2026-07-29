@@ -1,0 +1,58 @@
+﻿@model PlataformaWeb.Models.Seguimiento
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>Seguimiento</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.IdIndividual)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.IdIndividual)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Fecha)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Fecha)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Vulnerabilidad)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Vulnerabilidad)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Problematica)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Problematica)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Accion)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Accion)
+        </dd>
+
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.IdSeguimiento }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>

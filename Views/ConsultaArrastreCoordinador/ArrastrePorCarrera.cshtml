@@ -1,0 +1,1705 @@
+﻿@model List<PlataformaWeb.Models.Materias.ArrastreCarreraDto>
+@using PlataformaWeb.Models.Materias
+
+@{
+    ViewBag.Title = "Consulta de Arrastre por Carrera";
+
+    var usuario = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var esMaster = usuario != null && usuario.IdNivel == 4;
+    var esCoordinador = usuario != null && usuario.IdNivel == 3;
+    var modeloSeguro = Model ?? new List<ArrastreCarreraDto>();
+    var resumen = ViewBag.ResumenArrastre as ResumenArrastreCarreraDto;
+    var hayDatos = modeloSeguro.Count > 0;
+    var jsIdCarrera = ViewBag.IdCarrera ?? 1;
+    var jsSoloCriticos = ViewBag.SoloCriticos ?? false;
+    var jsIdEspecialidad = ViewBag.IdEspecialidad as int?;
+    var jsIdGrado = ViewBag.IdGrado as int?;
+    var jsSoloExtraordinarios = ViewBag.SoloExtraordinarios ?? false;
+    var jsIncluirBajas = ViewBag.IncluirBajas ?? false;
+
+    // Clasificación por estado de tiempo (igual que grupo)
+    var alumnosFueraDeTiempo = new List<ArrastreCarreraDto>();
+    var alumnosCriticos = new List<ArrastreCarreraDto>();
+    var alumnosMedios = new List<ArrastreCarreraDto>();
+    var alumnosEnTiempo = new List<ArrastreCarreraDto>();
+    var alumnosUnicos = new List<int>();
+    var fueraDeTiempo = 0;
+    var totalIntentos = 0;
+    var totalDiasArrastre = 0;
+    var materiasConDias = 0;
+    foreach (var item in modeloSeguro)
+    {
+        // Clasificar por estado de tiempo
+        var estadoTiempo = item.EstadoTiempo.ToLower();
+        if (estadoTiempo == "fuera de tiempo")
+        {
+            alumnosFueraDeTiempo.Add(item);
+        }
+        else if (estadoTiempo == "crítico")
+        {
+            alumnosCriticos.Add(item);
+        }
+        else if (estadoTiempo == "medio")
+        {
+            alumnosMedios.Add(item);
+        }
+        else if (estadoTiempo == "en tiempo")
+        {
+            alumnosEnTiempo.Add(item);
+        }
+
+        var yaExisteAlumno = false;
+        foreach (var id in alumnosUnicos)
+        {
+            if (id == item.IdPersona)
+            {
+                yaExisteAlumno = true;
+                break;
+            }
+        }
+        if (!yaExisteAlumno)
+        {
+            alumnosUnicos.Add(item.IdPersona);
+        }
+
+        if (item.DiasRestantes <= 0)
+        {
+            fueraDeTiempo++;
+        }
+        totalIntentos += item.IntentosExtraordinarios;
+        if (item.DiasEnArrastre > 0)
+        {
+            totalDiasArrastre += item.DiasEnArrastre;
+            materiasConDias++;
+        }
+    }
+
+    var totalAlumnosUnicos = alumnosUnicos.Count;
+    var promedioIntentos = modeloSeguro.Count > 0 ?
+(double)totalIntentos / modeloSeguro.Count : 0;
+    var promedioDias = materiasConDias > 0 ? (double)totalDiasArrastre / materiasConDias : 0;
+}
+
+<div class="sga-scope">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-header-custom">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="header-content">
+
+                                <h1 class="page-title">
+                                    Consulta de Arrastre por Carrera
+
+                                </h1>
+                                <div class="page-subtitle">
+                                    <div class="career-info">
+
+                                        <span class="info-badge info-badge-primary">
+                                            <i class="fa fa-university"></i>
+
+                                            @(ViewBag.NombreCarrera ?? "Carrera")
+                                        </span>
+
+                                        @*  BADGE PARA INDICAR ROL DEL USUARIO *@
+
+                                        @if (esMaster)
+                                        {
+                                            <span class="info-badge info-badge-success">
+
+                                                <i class="fa fa-star"></i>
+                                                Acceso Master
+
+                                            </span>
+                                        }
+
+                                        else if (esCoordinador)
+                                        {
+                                            <span class="info-badge info-badge-info">
+
+                                                <i class="fa fa-user"></i>
+                                                Coordinador
+
+                                            </span>
+                                        }
+                                        @if (jsSoloCriticos)
+
+                                        {
+                                            <span class="info-badge info-badge-danger">
+
+                                                <i class="fa fa-exclamation-triangle"></i>
+                                                Solo Críticos
+                                            </span>
+
+                                        }
+                                        @if (jsIncluirBajas)
+                                        {
+                                            <span class="info-badge info-badge-warning">
+                                                <i class="fa fa-user-times"></i>
+                                                Incluyendo Bajas
+                                            </span>
+                                        }
+                                        @if (jsSoloExtraordinarios)
+                                        {
+                                            <span class="info-badge info-badge-primary">
+                                                <i class="fa fa-book"></i>
+                                                Solo Extraordinarios
+                                            </span>
+                                        }
+                                        @if (jsIdEspecialidad != null && jsIdEspecialidad.HasValue && jsIdEspecialidad.Value > 0)
+
+                                        {
+                                            <span class="info-badge info-badge-info">
+                                                <i class="fa fa-filter"></i>
+
+                                                Especialidad Filtrada
+                                            </span>
+
+                                        }
+                                        @if (jsIdGrado != null && jsIdGrado.HasValue && jsIdGrado.Value > 0)
+
+                                        {
+                                            <span class="info-badge info-badge-warning">
+                                                <i class="fa fa-layer-group"></i>
+
+                                                Grado @jsIdGrado
+                                            </span>
+
+                                        }
+                                    </div>
+                                    <small class="timestamp">
+
+                                        <i class="fa fa-clock-o"></i> Consultado: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                                        <span class="user-info">
+                                            |
+                                            Usuario: @((Session["Usuario"] as Plataforma_Web.Models.Usuario)?.NombreCompleto ?? "Usuario")
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="col-md-6">
+                            <div class="career-selector-section">
+                                <div class="career-selector-header">
+
+                                    <label class="selector-label">
+                                        Cambiar Carrera:
+                                    </label>
+
+                                </div>
+                                <div class="career-selector-control">
+                                    @{
+                                        var selectCarreraAttribs = new Dictionary<string, object> {
+                                        { "class", "form-control career-dropdown" }
+                                    };
+                                        if (esCoordinador)
+                                        {
+                                            selectCarreraAttribs.Add("disabled", "disabled");
+                                            selectCarreraAttribs.Add("title", "Los coordinadores solo pueden ver su carrera asignada");
+                                        }
+                                        else
+                                        {
+                                            // Solo Master puede cambiar de carrera
+                                            selectCarreraAttribs.Add("onchange", "cambiarCarrera(this.value)");
+                                        }
+                                    }
+                                    @Html.DropDownList("selectCarrera",
+                                        (List<SelectListItem>)ViewBag.CarrerasDropdown,
+                                        "Selecciona una carrera...",
+                                        selectCarreraAttribs
+                                    )
+
+                                </div>
+
+                                <div class="filtros-adicionales">
+                                    <div class="row">
+
+                                        <div class="col-md-6">
+                                            <label class="filtro-label-small">
+                                                Especialidad:
+
+                                            </label>
+                                            @Html.DropDownList("selectEspecialidad",
+                                                (List<SelectListItem>)ViewBag.EspecialidadesDropdown,
+                                                new
+                                                {
+                                                    @class = "form-control form-control-sm"
+                                                }
+                                            )
+
+                                        </div>
+                                        <div class="col-md-6">
+
+                                            <label class="filtro-label-small">
+                                                Grado:
+                                            </label>
+                                            @Html.DropDownList("selectGrado",
+                                                (List<SelectListItem>)ViewBag.GradosDropdown,
+                                                new
+                                                {
+                                                    @class = "form-control form-control-sm"
+                                                }
+                                            )
+                                        </div>
+
+                                    </div>
+                                    <div class="row" style="margin-top: 10px;">
+                                        <div class="col-md-6">
+                                            <div class="checkbox" style="margin-top: 0; margin-bottom: 0;">
+                                                <label class="filtro-label-small" style="cursor: pointer;">
+                                                    <input type="checkbox" id="checkIncluirBajas" @(jsIncluirBajas ? "checked" : "") style="margin-top: 1px;">
+                                                    <i class="fa fa-user-times" style="margin-left: 2px;"></i> Incluir alumnos de Baja
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="checkbox" style="margin-top: 0; margin-bottom: 0;">
+                                                <label class="filtro-label-small" style="cursor: pointer;">
+                                                    <input type="checkbox" id="checkSoloExtraordinarios" @(jsSoloExtraordinarios ? "checked" : "") style="margin-top: 1px;">
+                                                    <i class="fa fa-book" style="margin-left: 2px;"></i> Solo Extraordinarios
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 text-right" style="margin-top: 10px;">
+                                            <button type="button" class="btn btn-utt-outline btn-sm" id="btnAplicarFiltros" onclick="aplicarFiltros()">
+                                                <i class="fa fa-filter"></i> Aplicar Filtros
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="action-buttons">
+
+                                @if (hayDatos)
+                                {
+                                    <div class="btn-group">
+
+                                        <a href="@Url.Action("ExportarArrastreCarreraExcel", "ConsultaArrastreCoordinador", new {
+                                           idCarrera = jsIdCarrera,
+                                           soloCriticos = jsSoloCriticos,
+                                           idEspecialidad = jsIdEspecialidad,
+                                           idGrado = jsIdGrado,
+                                           soloExtraordinarios = jsSoloExtraordinarios,
+                                           incluirBajas = jsIncluirBajas
+                                       })"
+                                           class="btn btn-excel"
+                                           id="btnExportarExcel"
+                                           title="Exportar reporte completo a Excel por carrera">
+
+                                            <span class="hidden-xs">Exportar</span>
+                                            <span class="visible-xs">Excel</span>
+
+                                        </a>
+
+                                        <button type="button" class="btn btn-excel dropdown-toggle"
+                                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <span class="caret"></span>
+                                        </button>
+
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li class="dropdown-header">
+
+                                                <i class="fa fa-download"></i> Opciones de Exportación
+                                            </li>
+                                            <li>
+
+                                                <a href="@Url.Action("ExportarArrastreCarreraExcel", "ConsultaArrastreCoordinador", new {
+                                                   idCarrera = jsIdCarrera,
+                                                   soloCriticos = false,
+                                                   idEspecialidad = jsIdEspecialidad,
+                                                   idGrado = jsIdGrado,
+                                                   soloExtraordinarios = jsSoloExtraordinarios,
+                                                   incluirBajas = jsIncluirBajas
+                                               })">
+                                                    <i class="fa fa-file-excel-o text-success"></i>
+
+                                                    Reporte Completo por Carrera
+                                                </a>
+                                            </li>
+
+                                            <li class="divider"></li>
+                                            <li>
+
+                                                <a href="javascript:void(0)" onclick="imprimirTablaCarrera()">
+                                                    <i class="fa fa-print"></i>
+
+                                                    Imprimir Vista Carrera
+                                                </a>
+
+                                            </li>
+                                        </ul>
+                                    </div>
+                                }
+
+                                else
+                                {
+                                    <button class="btn btn-default btn-action" disabled title="No hay datos para exportar">
+
+                                        <span class="hidden-xs">Sin datos</span>
+
+                                    </button>
+                                }
+
+                                @if (hayDatos)
+                                {
+
+                                    <span class="btn btn-excel records-counter" title="Total de registros encontrados" id="contador-registros-carrera">
+                                        <i class="fa fa-list"></i>
+
+                                        <strong id="numero-registros-carrera">@modeloSeguro.Count</strong> registros
+                                    </span>
+                                }
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ViewBag.Error as string))
+        {
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="alert alert-danger
+                    alert-modern">
+                        <div class="alert-icon">
+                            <i class="fa fa-exclamation-circle"></i>
+                        </div>
+                        <div class="alert-content">
+
+                            <h4>Error al consultar datos</h4>
+                            <p>@ViewBag.Error</p>
+                        </div>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (string.IsNullOrEmpty(ViewBag.Error as string) && !hayDatos)
+        {
+            <div class="row">
+
+                <div class="col-md-12">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fa fa-check-circle"></i>
+                        </div>
+
+                        <h3 class="empty-state-title">¡Excelente gestión académica!</h3>
+                        <p class="empty-state-description">
+                            No hay alumnos con materias en arrastre en esta carrera.<br>
+                            <strong>
+                                @(ViewBag.NombreCarrera ??
+"La carrera")
+                            </strong> mantiene a todos sus estudiantes al corriente.
+                        </p>
+                        <div class="empty-state-actions">
+                            <a href="@Url.Action("Index", "Home")" class="btn btn-info">
+                                <i class="fa fa-arrow-left"></i> Volver al Inicio
+
+                            </a>
+                            <a href="javascript:void(0)" onclick="cambiarCarrera('')" class="btn btn-utt-outline">
+                                <i class="fa fa-exchange"></i> Cambiar Carrera
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (string.IsNullOrEmpty(ViewBag.Error as string) && hayDatos)
+        {
+
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="table-section">
+
+                        <div class="table-header">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h3 class="table-title">
+
+                                        <i class="fa fa-table"></i>
+                                        Listado de Materias en Arrastre por Carrera
+
+                                        <span class="table-badge" id="badge-tabla-carrera">@modeloSeguro.Count materias</span>
+                                    </h3>
+                                    <div class="table-subtitle">
+
+                                        <small class="text-muted" id="resumen-tabla-carrera">
+                                            <strong>Fuera Tiempo:</strong> <span id="count-fuera-tiempo-carrera">@alumnosFueraDeTiempo.Count</span> |
+                                            <strong>Críticos:</strong> <span id="count-criticos-carrera">@alumnosCriticos.Count</span> |
+                                            <strong>Medios:</strong> <span id="count-medios-carrera">@alumnosMedios.Count</span> |
+                                            <strong>En Tiempo:</strong> <span id="count-en-tiempo-carrera">@alumnosEnTiempo.Count</span> |
+                                            <strong>Alumnos únicos:</strong> <span id="count-unicos-carrera">@totalAlumnosUnicos</span>
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 text-right">
+
+                                    <div class="busqueda-activa" id="indicadorBusquedaCarrera" style="display: none; margin-top: 5px;">
+
+                                        <span class="label label-primary">
+                                            <i class="fa fa-search"></i> <span id="textoBusquedaActiva"></span>
+                                        </span>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="table-responsive">
+                            @Html.Partial("~/Views/ConsultaArrastreCoordinador/_TablaArrastreCarrera.cshtml", modeloSeguro)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-footer">
+                    <div class="footer-content">
+                        <div class="footer-info">
+                            <strong>Sistema de Control Académico</strong> - Consulta de Arrastre por Carrera<br>
+
+                            Generado el @DateTime.Now.ToString("dd/MM/yyyy") a las @DateTime.Now.ToString("HH:mm:ss")
+                            @if (hayDatos)
+                            {
+                                <br><small class="text-muted">
+                                    Mostrando <span id="footer-registros-carrera">@modeloSeguro.Count</span> registros de <span id="footer-alumnos-carrera">@totalAlumnosUnicos</span> alumnos únicos en <strong>
+                                        @(ViewBag.NombreCarrera ??
+"la carrera")
+                                    </strong>
+                                </small>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCargaCarrera" tabindex="-1" role="dialog" aria-labelledby="modalCargaCarreraLabel">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content modal-modern">
+                <div class="modal-body text-center">
+                    <div class="loading-animation">
+                        <div class="loading-spinner">
+
+                            <i class="fa fa-spinner fa-spin fa-2x"></i>
+                        </div>
+                        <h4 class="loading-title">Cargando carrera...</h4>
+                        <p class="loading-description">Por favor espere mientras se cargan los datos de la carrera.</p>
+
+                        <div class="progress progress-modern">
+                            <div class="progress-bar progress-bar-primary progress-bar-striped active"
+                                 role="progressbar" style="width: 100%"
+                                 aria-valuenow="100"
+                                 aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #c0392b;
+            --info-color: #2980b9;
+            --amarillo-color: #f1c40f;
+            --light-color: #f8f9fa;
+            --border-color: #e2e8f0;
+            --excel: #1e8449;
+            --text-color: #334155;
+            --muted-color: #64748b;
+            --shadow-light: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            background-color: #f1f5f9;
+        }
+
+        .btn-excel {
+            background-color: var(--excel);
+            color: #ffffff;
+            border: 1px solid #145a32;
+        }
+
+        .page-header-custom {
+            background: #ffffff;
+            color: var(--text-color);
+            padding: 25px 30px;
+            margin-top: 25px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-medium);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .career-selector-section {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+            .career-selector-section.focused {
+                border-color: #cbd5e1;
+                transform: translateY(-1px);
+                box-shadow: var(--shadow-medium);
+            }
+
+        .selector-label {
+            color: var(--secondary-color);
+            font-weight: 600;
+            font-size: 0.9em;
+            margin: 0 0 8px 0;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+            .selector-label i {
+                margin-right: 8px;
+                color: var(--muted-color);
+            }
+
+        .career-dropdown {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 15px;
+            font-size: 0.95em;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            height: auto;
+        }
+
+            .career-dropdown:focus {
+                border-color: var(--info-color);
+                box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.15);
+                outline: none;
+                background: #ffffff;
+            }
+
+            .career-dropdown:hover:not(:disabled) {
+                border-color: #cbd5e1;
+            }
+
+            .career-dropdown:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+                background: #e2e8f0;
+            }
+
+        .filtros-adicionales {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .filtro-label-small {
+            color: var(--secondary-color);
+            font-weight: 600;
+            font-size: 0.85em;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .form-control-sm {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 0.9em;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+            height: auto;
+        }
+
+            .form-control-sm:focus {
+                border-color: var(--info-color);
+                box-shadow: 0 0 0 2px rgba(41, 128, 185, 0.15);
+            }
+
+        .header-content {
+            padding: 10px 0;
+        }
+
+        .page-title {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            letter-spacing: -0.5px;
+        }
+
+            .page-title i {
+                margin-right: 12px;
+                color: var(--info-color);
+            }
+
+        .page-subtitle {
+            line-height: 1.5;
+        }
+
+        .career-info {
+            margin-bottom: 8px;
+        }
+
+        .info-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 6px;
+            border: 1px solid transparent;
+        }
+
+        .info-badge-primary {
+            background: #e0f2fe !important;
+            border-color: #bae6fd !important;
+            color: #0369a1 !important;
+        }
+
+        .info-badge-info {
+            background: #f1f5f9 !important;
+            border-color: #e2e8f0 !important;
+            color: #475569 !important;
+        }
+
+        .info-badge-danger {
+            background: #fee2e2 !important;
+            border-color: #fecaca !important;
+            color: #b91c1c !important;
+        }
+
+        .info-badge-warning {
+            background: #fef9c3 !important;
+            border-color: #fef08a !important;
+            color: #b45309 !important;
+        }
+
+        .info-badge-success {
+            background: #dcfce7 !important;
+            border-color: #bbf7d0 !important;
+            color: #15803d !important;
+        }
+
+        .timestamp {
+            color: var(--muted-color);
+            font-size: 0.9em;
+            display: block;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+            .timestamp i {
+                margin-right: 5px;
+            }
+
+        .user-info {
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .btn-action {
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+            .btn-action:hover:not(:disabled) {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            }
+
+        .btn-excel:hover {
+            background: #229954;
+            border-color: #229954;
+            color: white;
+        }
+
+        .btn-excel .caret {
+            border-top-color: #ffffff;
+        }
+
+        .btn-excel:hover .caret {
+            border-top-color: #ffffff;
+        }
+
+        .records-counter {
+            background: #4db682;
+            border-color: #4db682;
+            color: white;
+            cursor: default;
+            font-weight: 500;
+        }
+
+            .records-counter:hover {
+                transform: none;
+                background: #198754;
+                border-color: #198754;
+            }
+
+        .alert-modern {
+            border: 1px solid var(--danger-color);
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            box-shadow: var(--shadow-light);
+            border-left: 5px solid var(--danger-color);
+        }
+
+            .alert-modern.alert-danger {
+                border-left-color: var(--danger-color);
+                background: rgba(231, 76, 60, 0.05);
+            }
+
+        .alert-icon {
+            font-size: 20px;
+            margin-right: 15px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+            .alert-content h4 {
+                margin: 0 0 5px 0;
+                font-weight: 600;
+                font-size: 1.1em;
+                color: inherit;
+            }
+
+            .alert-content p {
+                margin: 0;
+                line-height: 1.4;
+            }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 30px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-light);
+        }
+
+        .empty-state-icon {
+            font-size: 60px;
+            color: var(--success-color);
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .empty-state-title {
+            color: var(--text-color);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .empty-state-description {
+            color: var(--muted-color);
+            line-height: 1.5;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+        }
+
+        .empty-state-actions .btn {
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+
+        .info-badge-success {
+            background: rgba(39, 174, 96, 0.3) !important;
+            border-color: rgba(39, 174, 96, 0.5) !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+
+        .stats-section {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .stats-title {
+            color: var(--text-color);
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            font-size: 1.4em;
+        }
+
+            .stats-title i {
+                margin-right: 10px;
+                color: var(--primary-color);
+            }
+
+        .stats-subtitle {
+            font-size: 0.8em;
+            color: var(--muted-color);
+            font-weight: 400;
+            margin-left: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: #fafafa;
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-left: 4px solid var(--border-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+            .stat-card:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-medium);
+            }
+
+            .stat-card.stat-danger {
+                border-left-color: var(--danger-color);
+            }
+
+            .stat-card.stat-warning {
+                border-left-color: var(--warning-color);
+            }
+
+            .stat-card.stat-info {
+                border-left-color: var(--info-color);
+            }
+
+            .stat-card.stat-default {
+                border-left-color: var(--primary-color);
+            }
+
+            .stat-card.stat-success {
+                border-left-color: var(--success-color);
+            }
+
+            .stat-card.stat-primary {
+                border-left-color: var(--primary-color);
+            }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            opacity: 0.8;
+        }
+
+        .stat-card.stat-danger .stat-icon {
+            color: var(--danger-color);
+        }
+
+        .stat-card.stat-warning .stat-icon {
+            color: var(--warning-color);
+        }
+
+        .stat-card.stat-info .stat-icon {
+            color: var(--info-color);
+        }
+
+        .stat-card.stat-default .stat-icon,
+        .stat-card.stat-primary .stat-icon {
+            color: var(--primary-color);
+        }
+
+        .stat-card.stat-success .stat-icon {
+            color: var(--success-color);
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--text-color);
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: var(--muted-color);
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .table-section {
+            background: white;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            color: var(--text-color);
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            font-size: 1.4em;
+        }
+
+            .table-title i {
+                margin-right: 10px;
+                color: var(--primary-color);
+            }
+
+        .table-badge {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #16a085 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .table-subtitle {
+            margin-top: 5px;
+        }
+
+        .filtro-activo {
+            margin-top: 10px;
+        }
+
+            .filtro-activo .label {
+                font-size: 0.9em;
+                padding: 6px 10px;
+                border-radius: 4px;
+            }
+
+        .busqueda-activa .label {
+            font-size: 0.85em;
+            padding: 5px 8px;
+            border-radius: 4px;
+        }
+
+        .table-container {
+            padding: 0;
+        }
+
+        .page-footer {
+            margin-top: 40px;
+            padding: 20px 0;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .footer-content {
+            text-align: center;
+            color: var(--muted-color);
+            line-height: 1.5;
+        }
+
+        .footer-info {
+            font-size: 0.9em;
+        }
+
+        .modal-modern .modal-content {
+            border: none;
+            border-radius: 6px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .loading-animation {
+            padding: 30px 20px;
+        }
+
+        .loading-spinner {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .loading-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .loading-description {
+            color: var(--muted-color);
+            margin-bottom: 20px;
+            font-size: 1em;
+            line-height: 1.4;
+        }
+
+        .progress-modern {
+            height: 6px;
+            border-radius: 3px;
+            background: #ecf0f1;
+            overflow: hidden;
+        }
+
+            .progress-modern .progress-bar {
+                border-radius: 3px;
+            }
+
+        @@media (max-width: 768px) {
+            .page-header-custom {
+                padding: 15px 20px;
+                margin-top: 15px;
+            }
+
+            .page-title {
+                font-size: 1.5em;
+            }
+
+            .career-selector-section {
+                margin-bottom: 15px;
+            }
+
+            .action-buttons {
+                justify-content: center;
+                margin-top: 15px;
+                gap: 10px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .table-header {
+                padding: 12px 15px;
+            }
+
+                .table-header .row > div {
+                    margin-bottom: 10px;
+                }
+
+            .table-title {
+                font-size: 1.2em;
+            }
+
+            .filtro-activo {
+                text-align: center;
+                margin-top: 0;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .page-header-custom {
+                padding: 12px 15px;
+            }
+
+            .empty-state {
+                padding: 30px 20px;
+            }
+
+            .stats-section {
+                padding: 15px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.8em;
+            }
+        }
+
+        .text-danger {
+            color: var(--danger-color) !important;
+        }
+
+        // ==== ESTILOS MODERNOS PARA DATA TABLES ==== //
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 15px;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 15px;
+        }
+
+        table.dataTable {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin-top: 10px !important;
+            margin-bottom: 20px !important;
+            background: #ffffff;
+            box-shadow: var(--shadow-light);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+            table.dataTable thead th,
+            table.dataTable thead td {
+                background-color: var(--primary-color) !important;
+                color: white !important;
+                border-bottom: none !important;
+                padding: 12px 15px !important;
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.85em;
+                letter-spacing: 0.5px;
+            }
+
+            table.dataTable.no-footer {
+                border-bottom: 1px solid var(--border-color) !important;
+            }
+
+        .pagination > .active > a,
+        .pagination > .active > span,
+        .pagination > .active > a:hover,
+        .pagination > .active > span:hover,
+        .pagination > .active > a:focus,
+        .pagination > .active > span:focus {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+        }
+
+        .text-warning {
+            color: var(--warning-color) !important;
+        }
+
+        .text-success {
+            color: var(--success-color) !important;
+        }
+
+        .text-info {
+            color: var(--info-color) !important;
+        }
+
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+
+        .action-buttons .btn-group .btn-action:not(.dropdown-toggle) {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+    </style>
+}
+
+<script>
+    var parametrosCarrera = {
+        idCarrera: '@jsIdCarrera' !== '' ? parseInt('@jsIdCarrera') : 0,
+        soloCriticos: @Html.Raw(jsSoloCriticos.ToString().ToLower()),
+        idEspecialidad: @Html.Raw(jsIdEspecialidad?.ToString() ?? "null"),
+        idGrado: @Html.Raw(jsIdGrado?.ToString() ?? "null"),
+        totalRegistros: parseInt('@modeloSeguro.Count') || 0,
+        hayDatos: @Html.Raw(hayDatos.ToString().ToLower()),
+        urlBase: '@Url.Action("ArrastrePorCarrera", "ConsultaArrastreCoordinador")'
+    };
+    var tableCarrera = null;
+
+    $(document).ready(function () {
+        console.log('Inicializando vista de Arrastre por Carrera con DataTables');
+        console.log('Parámetros:', parametrosCarrera);
+
+        $('[title]').tooltip({
+            placement: 'top',
+            container: 'body',
+            delay: { show: 500, hide: 100 },
+            animation: true
+        });
+        $('.dropdown-toggle').dropdown();
+
+        $('.career-dropdown').on('focus', function() {
+            $(this).closest('.career-selector-section').addClass('focused');
+        }).on('blur', function() {
+            $(this).closest('.career-selector-section').removeClass('focused');
+        });
+
+        tableCarrera = $('#tablaArrastreCarreraId').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-MX.json"
+            },
+            "pageLength": 25,
+            "order": [[8, "asc"]], // Dias Restantes
+            "responsive": false,
+            "autoWidth": false,
+            "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            "drawCallback": function(settings) {
+                actualizarEstadisticasDT(this.api());
+            }
+        });
+
+        // Lógica para permitir "deseleccionar" un botón de estado
+        $('.controles-filtro-carrera .btn').on('click', function(e) {
+            var $label = $(this);
+            var $radio = $label.find('input[type="radio"]');
+            var filtro = $radio.val();
+
+            // Si el botón ya estaba activo, lo apagamos (toggle off)
+            if ($label.hasClass('active')) {
+                e.preventDefault(); // Evitamos que Bootstrap lo vuelva a prender
+
+                setTimeout(function() {
+                     $label.removeClass('active');
+                     $radio.prop('checked', false);
+
+                     tableCarrera.column(7).search('').draw();
+                }, 10);
+                return;
+            }
+
+            // Si el botón NO estaba activo, permitimos que Bootstrap lo prenda,
+            // y aplicamos el filtro en la tabla
+            tableCarrera.column(7).search('');
+
+            if(filtro === 'fuera-tiempo') {
+                 tableCarrera.column(7).search('F. TIEMPO').draw();
+            } else if(filtro === 'critico') {
+                 tableCarrera.column(7).search('CRÍTICO').draw();
+            } else if(filtro === 'medio') {
+                 tableCarrera.column(7).search('MEDIO').draw();
+            } else if(filtro === 'en-tiempo') {
+                 tableCarrera.column(7).search('EN TIEMPO').draw();
+            }
+        });
+
+        window.mostrarTodosCarrera = function() {
+            $('input[name="filtro-estado-carrera"]').prop('checked', false);
+            $('.btn-group label.btn').removeClass('active');
+            tableCarrera.search('').columns().search('').draw();
+        };
+
+        window.limpiarTodosFiltrosCarrera = mostrarTodosCarrera;
+
+        window.resetearOrdenamientoCarrera = function() {
+            tableCarrera.order([8, 'asc']).draw();
+        };
+
+        if (parametrosCarrera.totalRegistros > 0) {
+            animarEstadisticasCarrera();
+        }
+
+        console.log('Vista de carrera lista con DataTables');
+    });
+
+    function actualizarEstadisticasDT(api) {
+        var filasVisibles = api.rows({ search: 'applied' }).nodes();
+        var totalVisible = filasVisibles.length;
+
+        if (totalVisible === 0) {
+            $('#stat-alumnos-carrera, #stat-materias-carrera, #stat-intentos-carrera, #stat-fuera-tiempo-carrera, #stat-criticos-carrera').text('0');
+            $('#count-fuera-tiempo-carrera, #count-criticos-carrera, #count-medios-carrera, #count-en-tiempo-carrera, #count-unicos-carrera').text('0');
+            $('#numero-registros-carrera, #footer-registros-carrera, #footer-alumnos-carrera').text('0');
+            $('#badge-tabla-carrera').text('0 materias');
+            return;
+        }
+
+        var alumnosUnicos = new Set();
+        var fueraTiempo = 0, criticos = 0, medios = 0, enTiempo = 0;
+        var totalIntentos = 0;
+
+        $(filasVisibles).each(function() {
+            var $fila = $(this);
+            alumnosUnicos.add($fila.data('matricula'));
+
+            var estadoTiempo = ($fila.data('estado-tiempo') || '').toString().toLowerCase();
+            if (estadoTiempo === 'fuera de tiempo') fueraTiempo++;
+            else if (estadoTiempo === 'crítico') criticos++;
+            else if (estadoTiempo === 'medio') medios++;
+            else enTiempo++;
+
+            totalIntentos += parseInt($fila.data('intentos')) || 0;
+        });
+
+        var promedioIntentos = totalVisible > 0 ? (totalIntentos / totalVisible).toFixed(1) : '0.0';
+
+        $('#stat-alumnos-carrera').text(alumnosUnicos.size);
+        $('#stat-materias-carrera').text(totalVisible);
+        $('#stat-intentos-carrera').text(promedioIntentos);
+        $('#stat-fuera-tiempo-carrera').text(fueraTiempo);
+        $('#stat-criticos-carrera').text(criticos);
+
+        $('#count-fuera-tiempo-carrera').text(fueraTiempo);
+        $('#count-criticos-carrera').text(criticos);
+        $('#count-medios-carrera').text(medios);
+        $('#count-en-tiempo-carrera').text(enTiempo);
+        $('#count-unicos-carrera').text(alumnosUnicos.size);
+
+        $('#badge-tabla-carrera').text(totalVisible + ' materias');
+        $('#numero-registros-carrera').text(totalVisible);
+
+        $('#footer-registros-carrera').text(totalVisible);
+        $('#footer-alumnos-carrera').text(alumnosUnicos.size);
+    }
+
+    function cambiarCarrera(idCarrera) {
+        console.log('=== CAMBIANDO CARRERA ===');
+        console.log('ID recibido:', idCarrera);
+
+        // Si es nulo o indefinido lo ignoramos
+        if (idCarrera === undefined || idCarrera === null) {
+            console.log('ID inválido, manteniendo carrera actual');
+            return;
+        }
+
+        // Permitimos el vacío '' explícitamente porque es "Selecciona una carrera..." (Global)
+        var carreraAEnviar = idCarrera === '' ? '0' : idCarrera;
+
+        if (parseInt(carreraAEnviar) === parametrosCarrera.idCarrera) {
+            console.log('Ya está viendo esta carrera');
+            mostrarNotificacionCarrera('Ya estás viendo esta carrera', 'info');
+            return;
+        }
+
+        console.log('Cambiando a carrera:', carreraAEnviar);
+
+        $('.career-dropdown').prop('disabled', true);
+        $('#modalCargaCarrera').modal({
+            backdrop: 'static',
+            keyboard: false
+        });
+        var nuevaUrl = parametrosCarrera.urlBase + '?idCarrera=' + encodeURIComponent(carreraAEnviar);
+
+        setTimeout(function () {
+            window.location.href = nuevaUrl;
+        }, 800);
+    }
+
+    function aplicarFiltros() {
+        console.log('Aplicando filtros adicionales...');
+
+        // ✅ CORREGIDO: Coordinadores siempre usan su carrera del servidor
+        var esCoordinador = @Html.Raw(esCoordinador.ToString().ToLower());
+        var idCarrera;
+
+        if (esCoordinador) {
+            // Coordinador: SIEMPRE usar la carrera asignada por el servidor
+            idCarrera = parametrosCarrera.idCarrera;
+        } else {
+            // Master: tomar del dropdown (respeta el 0 para vista global)
+            var idCarreraDropdown = $('.career-dropdown').val();
+            idCarrera = idCarreraDropdown;
+
+            if (idCarrera === undefined || idCarrera === null) {
+                 idCarrera = parametrosCarrera.idCarrera;
+            }
+            if (idCarrera === '') {
+                 idCarrera = '0'; // Vacío significa seleccionar todos (solo Master)
+            }
+        }
+
+        var idEspecialidad = $('#selectEspecialidad').val();
+        var idGrado = $('#selectGrado').val();
+        var incluirBajas = $('#checkIncluirBajas').is(':checked');
+        var soloExtraordinarios = $('#checkSoloExtraordinarios').is(':checked');
+
+        var url = parametrosCarrera.urlBase + '?idCarrera=' + idCarrera;
+        if (idEspecialidad && idEspecialidad !== '') {
+            url += '&idEspecialidad=' + idEspecialidad;
+        }
+
+        if (idGrado && idGrado !== '') {
+            url += '&idGrado=' + idGrado;
+        }
+
+        if (parametrosCarrera.soloCriticos) {
+            url += '&soloCriticos=true';
+        }
+
+        if (incluirBajas) {
+            url += '&incluirBajas=true';
+        }
+
+        if (soloExtraordinarios) {
+            url += '&soloExtraordinarios=true';
+        }
+
+        window.location.href = url;
+    }
+
+    function imprimirTablaCarrera() {
+        console.log('Imprimiendo tabla de carrera');
+        var titulo = '@ViewBag.NombreCarrera - Arrastre por Carrera';
+        var contenidoTabla = document.querySelector('.tabla-carrera-principal table');
+        if (!contenidoTabla) {
+            mostrarNotificacionCarrera('No hay tabla disponible para imprimir', 'warning');
+            return;
+        }
+
+        var ventanaImpresion = window.open('', '_blank', 'width=1400,height=900,scrollbars=yes');
+        if (!ventanaImpresion) {
+            mostrarNotificacionCarrera('Error: Las ventanas emergentes están bloqueadas', 'danger');
+            return;
+        }
+
+        var fechaActual = new Date();
+        var fechaFormateada = fechaActual.toLocaleDateString('es-ES');
+        var horaFormateada = fechaActual.toLocaleTimeString('es-ES');
+        var filasVisibles = $('.fila-carrera-filtrable:visible').length;
+        var busquedaActiva = $('#busquedaGeneralCarrera').val().trim();
+        var filtroActivo = window.filtroCarreraActivo;
+
+        var infoFiltros = '';
+        if (busquedaActiva) {
+            infoFiltros += '<br><strong>Búsqueda aplicada:</strong> "' + busquedaActiva + '"';
+        }
+        if (filtroActivo) {
+            infoFiltros += '<br><strong>Filtro activo:</strong> ' + filtroActivo;
+        }
+
+        ventanaImpresion.document.write(
+            '<!DOCTYPE html>' +
+            '<html lang="es">' +
+            '<head>' +
+                '<title>Consulta de Arrastre - ' + titulo + '</title>' +
+                '<meta charset="utf-8">' +
+                '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">' +
+                '<style>' +
+
+                    'body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; margin: 15px; line-height: 1.3; }' +
+                    '.page-header { color: #2c3e50; border-bottom: 4px solid #1abc9c; padding-bottom: 20px; margin-bottom: 35px; }' +
+                    '.page-header h2 { margin-top: 0; color: #2c3e50; font-size: 24px; }' +
+                    '.page-header ' +
+                    'h4 { color: #1abc9c; font-size: 16px; }' +
+                    '.table { font-size: 10px; border-collapse: collapse; width: 100%; }' +
+                    '.table thead th { background-color: #1abc9c !important; color: white !important; -webkit-print-color-adjust: exact;' +
+                    'text-align: center; padding: 8px 4px; font-size: 9px; }' +
+                    '.fila-fuera-de-tiempo { background-color: rgba(231, 76, 60, 0.15) !important;' +
+                    '-webkit-print-color-adjust: exact; }' +
+                    '.fila-crítico { background-color: rgba(243, 156, 18, 0.15) !important;' +
+                    '-webkit-print-color-adjust: exact; }' +
+                    '.fila-medio { background-color: rgba(241, 196, 15, 0.15) !important;' +
+                    '-webkit-print-color-adjust: exact; }' +
+                    '.fila-en-tiempo { background-color: rgba(39, 174, 96, 0.15) !important;' +
+                    '-webkit-print-color-adjust: exact; }' +
+                    '.controles-tabla, .btn-group-vertical { display: none;' +
+                    '}' +
+                    '.table td { padding: 4px 3px;' +
+                    'border: 1px solid #ddd; font-size: 9px; }' +
+                    '.text-center { text-align: center;' +
+                    '}' +
+                    '.texto-destacado-carrera { background-color: yellow !important;' +
+                    '-webkit-print-color-adjust: exact; }' +
+                    '@@media print { body { margin: 8px;' +
+                    '} .table { font-size: 8px; } .no-print { display: none;' +
+                    '} }' +
+                    '.footer { margin-top: 25px;' +
+                    'text-align: center; color: #7f8c8d; font-size: 9px; border-top: 1px solid #ddd; padding-top: 10px;' +
+                    '}' +
+                '</style>' +
+            '</head>' +
+            '<body>' +
+                '<div class="page-header">' +
+                    '<h2>Consulta de Arrastre por Carrera</h2>' +
+                    '<h4>' + titulo + '</h4>' +
+
+                    '<div style="margin-top: 15px;">' +
+                        '<strong>Generado:</strong> ' + fechaFormateada + ' a las ' + horaFormateada + '<br>' +
+                        '<strong>Registros mostrados:</strong> ' + filasVisibles + ' de ' + parametrosCarrera.totalRegistros + ' total<br>' +
+                        '<strong>Alumnos únicos visibles:</strong> ' +
+                        ($('#stat-alumnos-carrera').text() || 'N/A') +
+                        infoFiltros +
+                    '</div>' +
+                '</div>' +
+                '<div style="overflow-x: auto;">' +
+                    contenidoTabla.outerHTML +
+                '</div>' +
+
+                '<div class="footer">' +
+                    '<strong>Sistema de Control Académico</strong> - Consulta por Carrera<br>' +
+                    'Este reporte contiene información confidencial del sistema académico' +
+                '</div>' +
+            '</body>' +
+            '</html>'
+        );
+        ventanaImpresion.document.close();
+
+        setTimeout(function() {
+            ventanaImpresion.focus();
+            ventanaImpresion.print();
+        }, 1500);
+        mostrarNotificacionCarrera('Ventana de impresión abierta exitosamente', 'info');
+    }
+
+    function mostrarNotificacionCarrera(mensaje, tipo, duracion) {
+        var config = {
+            'success': { icono: 'fa-check-circle', color: '#27ae60' },
+            'info': { icono: 'fa-info-circle', color: '#3498db' },
+            'warning': { icono: 'fa-exclamation-triangle', color: '#f39c12' },
+            'danger': { icono: 'fa-exclamation-circle', color: '#e74c3c' }
+        };
+        var tipoConfig = config[tipo] || config['info'];
+        duracion = duracion || 5000;
+        var notificacion = $(
+            '<div class="notification-carrera animate__animated animate__slideInRight"' +
+                 'style="position: fixed; top: 20px; right: 20px; z-index: 10000;' +
+                        'background: white; min-width: 350px; max-width: 450px;' +
+                        'box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 6px;' +
+
+                        'border-left: 4px solid ' + tipoConfig.color + '; padding: 15px 20px;' +
+                        'display: flex; align-items: flex-start; font-family: "Segoe UI", sans-serif;">' +
+                '<i class="fa ' + tipoConfig.icono + '"' +
+                   'style="font-size: 20px; color: ' + tipoConfig.color + '; margin-right: 12px; margin-top: 2px;"></i>' +
+
+                '<div style="flex: 1;">' +
+                    '<div style="font-weight: 600; color: #2c3e50; margin-bottom: 4px; font-size: 0.95em;">' +
+                        'Carrera - ' + tipo.charAt(0).toUpperCase() + tipo.slice(1) +
+                    '</div>' +
+                    '<div style="color: #7f8c8d;' +
+                    'font-size: 0.9em; line-height: 1.4;">' +
+                        mensaje +
+                    '</div>' +
+                '</div>' +
+                '<button type="button" class="close-carrera-notification"' +
+                        'style="background: none;' +
+                        'border: none; color: #bdc3c7;' +
+                               'font-size: 18px;' +
+                               'cursor: pointer; margin-left: 10px; padding: 0;">' +
+                    '&times;' +
+                '</button>' +
+            '</div>'
+        );
+
+        notificacion.find('.close-carrera-notification').click(function() {
+            cerrarNotificacionCarrera(notificacion);
+        });
+
+        $('body').append(notificacion);
+
+        setTimeout(function() {
+            if (notificacion.is(':visible')) {
+                cerrarNotificacionCarrera(notificacion);
+            }
+        }, duracion);
+    }
+
+    function cerrarNotificacionCarrera($notificacion) {
+        $notificacion.removeClass('animate__slideInRight')
+
+                    .addClass('animate__slideOutRight');
+
+        setTimeout(function() {
+            $notificacion.remove();
+        }, 300);
+    }
+
+    function animarEstadisticasCarrera() {
+        $('.stat-number').each(function() {
+            var $numero = $(this);
+            var valorFinal = parseInt($numero.text()) || parseFloat($numero.text()) || 0;
+            var contador = 0;
+            var incremento = valorFinal / 40;
+
+            var animacion = setInterval(function() {
+
+                contador += incremento;
+                if (contador >= valorFinal) {
+                    contador = valorFinal;
+                    clearInterval(animacion);
+                }
+
+                if (Number.isInteger(valorFinal)) {
+                    $numero.text(Math.floor(contador));
+                } else {
+                    $numero.text(contador.toFixed(1));
+                }
+            }, 40);
+        });
+    }
+
+    function limpiarTodosFiltrosCarrera() {
+        console.log('Limpiando todos los filtros desde vista principal');
+
+        $('#busquedaGeneralCarrera').val('');
+
+        $('.fila-carrera-filtrable').removeClass('filtered-out').show();
+
+        $('.texto-destacado-carrera').contents().unwrap();
+
+        $('[data-filtro-carrera]').removeClass('active');
+
+        $('#selectEspecialidad').val('');
+        $('#selectGrado').val('');
+
+        $('#indicadorBusquedaCarrera').hide();
+        $('#resultadosBusquedaCarrera').hide();
+
+        if (typeof window.busquedaCarreraActiva !== 'undefined') {
+            window.busquedaCarreraActiva = '';
+        }
+        if (typeof window.filtroCarreraActivo !== 'undefined') {
+            window.filtroCarreraActivo = null;
+        }
+
+        setTimeout(function () {
+            actualizarEstadisticasDinamicas();
+            actualizarIndicadorFiltroCarrera('todos', $('.fila-carrera-filtrable:visible').length);
+        }, 100);
+        mostrarNotificacionCarrera('Todos los filtros y búsquedas han sido eliminados', 'success');
+    }
+
+    $('#modalCargaCarrera').on('hidden.bs.modal', function() {
+        $('.career-dropdown').prop('disabled', false);
+        $('.loading-title').text('Cargando carrera...');
+        $('.loading-description').text('Por favor espere mientras se cargan los datos de la carrera.');
+    });
+    console.log('Vista de Consulta de Arrastre por Carrera con búsqueda completa lista');
+</script>

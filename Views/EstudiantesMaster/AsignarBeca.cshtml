@@ -1,0 +1,171 @@
+﻿@model PlataformaWeb.BecasTransporte.Models.Estudiante
+@using Plataforma_Web.Models;
+@using PlataformaWeb.BecasTransporte.Models;
+
+@{
+    ViewBag.Title = "AsignarBeca";
+    TutoriaGrupal Grupo = (TutoriaGrupal)ViewBag.Grupo;
+    Usuario user = (Usuario)Session["Usuario"];
+
+
+}
+
+<h2>Asignar beca</h2>
+
+@*@if (ViewBag.Mensaje != null)
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>¡Atención!</strong> @ViewBag.Mensaje
+        </div>}*@
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4><strong>Estudiante:</strong> @ViewBag.Alumno</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.Id)
+        @Html.HiddenFor(model => model.Nombre)
+        @Html.HiddenFor(model => model.ApellidoM)
+        @Html.HiddenFor(model => model.ApellidoP)
+        @Html.HiddenFor(model => model.Matricula)
+        @Html.HiddenFor(model => model.Sexo)
+        @Html.HiddenFor(model => model.IdTransporte)
+        @Html.HiddenFor(model => model.IdCarrera)
+        @Html.HiddenFor(model => model.IdGrado)
+        @Html.HiddenFor(model => model.IdGrupo)
+        @Html.HiddenFor(model => model.IdTurno)
+        @Html.HiddenFor(model => model.Direccion)
+
+
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                @if (user.IdNivel >= 2)
+                {
+
+                    <div class="form-group">
+                        @Html.LabelFor(model => model.IdBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                        <div class="col-md-10">
+                            @Html.DropDownListFor(model => model.IdBeca, new SelectList(ViewBag.Becas, "Id", "NombreBeca"), "Elije una opción", new { @class = "form-control" })
+                            @Html.ValidationMessageFor(model => model.IdBeca, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        @Html.LabelFor(model => model.MontoBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                        <div class="col-md-10">
+                            @Html.EditorFor(model => model.MontoBeca, new { htmlAttributes = new { @class = "form-control" } })
+                            @Html.ValidationMessageFor(model => model.MontoBeca, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        @Html.LabelFor(model => model.MesesBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                        <div class="col-md-10">
+                            @Html.DropDownListFor(model => model.MesesBeca, (IEnumerable<SelectListItem>)ViewBag.MesesBecas, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(model => model.MesesBeca, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        @Html.LabelFor(model => model.DetallesBecaEstudiante, htmlAttributes: new { @class = "control-label col-md-2" })
+                        <div class="col-md-10">
+                            @Html.EditorFor(model => model.DetallesBecaEstudiante, new { htmlAttributes = new { @class = "form-control" } })
+                            @Html.ValidationMessageFor(model => model.DetallesBecaEstudiante, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <input type="submit" value="Agregar" class="btn btn-success" />
+                    @Html.ActionLink("Cancelar", "Grupo", "Estudiantes", new { id = Grupo.IdTutoriaGrupal }, new { @class = "btn btn-danger" });
+
+                }
+                else
+                {
+                    if (Model == null || Model.IdBeca == 0)
+                    {
+                        <div class="form-group">
+                            @Html.LabelFor(model => model.IdBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                            <div class="col-md-10">
+                                @Html.DropDownListFor(model => model.IdBeca, new SelectList(ViewBag.Becas, "Id", "NombreBeca"), "Elije una opción", new { @class = "form-control" })
+                                @Html.ValidationMessageFor(model => model.IdBeca, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(model => model.MontoBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                            <div class="col-md-10">
+                                @Html.EditorFor(model => model.MontoBeca, new { htmlAttributes = new { @class = "form-control" } })
+                                @Html.ValidationMessageFor(model => model.MontoBeca, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(model => model.MesesBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                            <div class="col-md-10">
+                                @Html.DropDownListFor(model => model.MesesBeca, (IEnumerable<SelectListItem>)ViewBag.MesesBecas, new { @class = "form-control" })
+                                @Html.ValidationMessageFor(model => model.MesesBeca, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            @Html.LabelFor(model => model.DetallesBecaEstudiante, htmlAttributes: new { @class = "control-label col-md-2" })
+                            <div class="col-md-10">
+                                @Html.EditorFor(model => model.DetallesBecaEstudiante, new { htmlAttributes = new { @class = "form-control" } })
+                                @Html.ValidationMessageFor(model => model.DetallesBecaEstudiante, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <input type="submit" value="Agregar" class="btn btn-success" />
+                        @Html.ActionLink("Cancelar", "Grupo", "Estudiantes", new { id = Grupo.IdTutoriaGrupal }, new { @class = "btn btn-danger" });
+
+                    }
+                    else
+                    {
+                        <div class="form-group ">
+                            @Html.LabelFor(model => model.IdBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                            <div class="col-md-10">
+                                @Html.DropDownListFor(model => model.IdBeca, new SelectList(ViewBag.Becas, "Id", "NombreBeca"), "Elije una opción", new { @class = "form-control", @disabled = true })
+                                @Html.ValidationMessageFor(model => model.IdBeca, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <div class="form-group ">
+                            @Html.LabelFor(model => model.MontoBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                            <div class="col-md-10">
+                                @Html.EditorFor(model => model.MontoBeca, new { htmlAttributes = new { @class = "form-control disabled", @disabled = true } })
+                                @Html.ValidationMessageFor(model => model.MontoBeca, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <div class="form-group ">
+                            @Html.LabelFor(model => model.MesesBeca, htmlAttributes: new { @class = "control-label col-md-2" })
+                            <div class="col-md-10">
+                                @Html.DropDownListFor(model => model.MesesBeca, (IEnumerable<SelectListItem>)ViewBag.MesesBecas, new { @class = "form-control", @disabled = true })
+                                @Html.ValidationMessageFor(model => model.MesesBeca, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+
+                        <div class="form-group ">
+                            @Html.LabelFor(model => model.DetallesBecaEstudiante, htmlAttributes: new { @class = "control-label col-md-2" })
+                            <div class="col-md-10">
+                                @Html.EditorFor(model => model.DetallesBecaEstudiante, new { htmlAttributes = new { @class = "form-control", @disabled = true } })
+                                @Html.ValidationMessageFor(model => model.DetallesBecaEstudiante, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+
+                        <a href="@Url.Action("Grupo","Estudiantes", new { id = Grupo.IdTutoriaGrupal })" class="btn btn-primary"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a>
+                        @*@Html.ActionLink("Volver", "Grupo", "Estudiantes", new { id = Grupo.IdTutoriaGrupal }, new { @class = "btn btn-primary" });*@
+                    }
+
+                }
+            </div>
+        </div>
+    </div>
+}

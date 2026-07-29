@@ -1,0 +1,153 @@
+﻿@model PlataformaWeb.BecasTransporte.Models.Especialidad
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Eliminar Programa Educativo";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h3 class="card-title">
+                            <i class="fas fa-trash-alt"></i>
+                            Eliminar Programa Educativo
+                        </h3>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle fa-2x float-left mr-3"></i>
+                            <h5>Advertencia!</h5>
+                            <p class="mb-0">
+                                Está a punto de eliminar permanentemente este programa educativo.
+                                Esta acción no se puede deshacer.
+                            </p>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">Informaci�n del Programa</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <dl class="row">
+                                            <dt class="col-sm-4">ID:</dt>
+                                            <dd class="col-sm-8">@Model.Id</dd>
+
+                                            <dt class="col-sm-4">Nombre:</dt>
+                                            <dd class="col-sm-8">
+                                                <strong>@Model.Nombre</strong>
+                                            </dd>
+
+                                            <dt class="col-sm-4">Carrera:</dt>
+                                            <dd class="col-sm-8">@ViewBag.CarreraNombre</dd>
+                                            <dt class="col-sm-4">Sistema Nuevo:</dt>
+                                            <dd class="col-sm-8">@((Model.SistemaNuevo ?? false) ? 1 : 0)</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">Verificaciones de Seguridad</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="checklist">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="check1">
+                                                <label class="form-check-label" for="check1">
+                                                    He verificado que no hay estudiantes activos en este programa
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="check2">
+                                                <label class="form-check-label" for="check2">
+                                                    Entiendo que esta acción es irreversible
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="check3">
+                                                <label class="form-check-label" for="check3">
+                                                    Confirmo que deseo eliminar este programa educativo
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                @using (Html.BeginForm("DeleteEspecialidad", "SGA", FormMethod.Post, new { @class = "d-inline" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    @Html.Hidden("id", Model.Id)
+                                    <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                                        <i class="fas fa-trash-alt"></i>
+                                        Eliminar Programa Educativo
+                                    </button>
+                                }
+                                @Html.ActionLink("Cancelar", "Especialidades", null, new { @class = "btn btn-secondary ml-3" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Habilitar bot�n de eliminar solo cuando todos los checks est�n marcados
+            $('.form-check-input').on('change', function () {
+                var allChecked = $('.form-check-input:checked').length === $('.form-check-input').length;
+                $('#deleteBtn').prop('disabled', !allChecked);
+
+                if (allChecked) {
+                    $('#deleteBtn').removeClass('btn-secondary').addClass('btn-danger');
+                } else {
+                    $('#deleteBtn').removeClass('btn-danger').addClass('btn-secondary');
+                }
+            });
+
+            // Efecto visual para los checkboxes
+            $('.form-check-input').on('change', function () {
+                var label = $(this).next('label');
+                if ($(this).is(':checked')) {
+                    label.addClass('text-success font-weight-bold');
+                } else {
+                    label.removeClass('text-success font-weight-bold');
+                }
+            });
+        });
+    </script>
+}
+
+<style>
+    .checklist .form-check {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-left: 3px solid #dc3545;
+        background-color: #f8f9fa;
+    }
+
+        .checklist .form-check:hover {
+            background-color: #e9ecef;
+        }
+
+    .checklist .form-check-input:checked + .form-check-label {
+        text-decoration: line-through;
+    }
+</style>

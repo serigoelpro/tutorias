@@ -1,0 +1,59 @@
+@{
+    ViewBag.Title = "Reporte Entrevista";
+}
+
+<style>
+    iframe {
+        width: 100%;
+        border: 1px solid #969696;
+    }
+
+    /* --- CORRECCIÓN DE ESTILOS --- */
+
+    /* 1. Aplicar mayúsculas SOLO a los elementos específicos del contenido del reporte */
+    .contenido-reporte h2,
+    .contenido-reporte h4,
+    .contenido-reporte .page-header,
+    .contenido-reporte .alert,
+    .contenido-reporte .btn {
+        text-transform: uppercase !important;
+    }
+
+    /* 2. Asegurar explícitamente que la barra de navegación y el menú lateral sean normales */
+    .navbar, .navbar *,
+    .main-header, .main-header *,
+    .sidebar, .sidebar *,
+    .sidebar-menu, .sidebar-menu * {
+        text-transform: none !important;
+    }
+</style>
+
+<div class="contenido-reporte">
+
+    <h2>Reporte</h2>
+
+    <div class="page-header">
+        <h4>Reporte de Plan de Acción Tutorial | F-PSE-DICA-14/R01</h4>
+    </div>
+
+    <hr />
+    @using ReportViewerForMvc;
+    @if (ViewBag.ReportViewer != null)
+    {
+        <div class="alert alert-info" role="alert">
+            Por favor espere a que cargue completamente el reporte. Para imprimir haga clic en el icono de la impresora en el panel del reporte.
+        </div>
+
+        <div style="width: 100%; overflow-x: auto; border: 1px solid #969696;">
+            @Html.ReportViewer(ViewBag.ReportViewer as Microsoft.Reporting.WebForms.ReportViewer, new { style = "width:100%;" })
+        </div>
+    }
+
+    <p style="margin-top: 15px;">
+        <a class="btn btn-primary" href="@Url.Action("PAT")" role="button">
+            <span class="glyphicon glyphicon-arrow-left"></span>
+            Regresar
+        </a>
+    </p>
+
+</div>

@@ -1,0 +1,1311 @@
+﻿@model IEnumerable<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>
+@using Plataforma_Web.Models
+@using PlataformaWeb.Helpers
+@{
+    ViewBag.Title = "Grupo";
+    Usuario usuario = Session["Usuario"] as Usuario;
+    int i = 0;
+
+    // ✅ OBTENER DATOS DEL GRUPO DEL USUARIO ACTUAL
+    string grupoActual = "N/A";
+    int idGrupoActual = 1;
+    int idCarreraActual = 1;
+    int idGradoActual = 1;
+
+    var alumnos = ViewBag.Alumnos as List<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>;
+    if (alumnos == null)
+    {
+        alumnos = new List<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>();
+    }
+
+    // Si hay alumnos, obtener datos del primer alumno para determinar el grupo
+    if (alumnos.Any())
+    {
+        var primerAlumno = alumnos.First();
+        idGrupoActual = primerAlumno.IdGrupo;
+        idCarreraActual = primerAlumno.IdCarrera;
+        idGradoActual = primerAlumno.IdGrado;
+
+        // Intentar obtener nombres reales o usar IDs
+        if (primerAlumno.Grupo != null)
+        {
+            grupoActual = primerAlumno.Grupo.Nombre;
+        }
+        else
+        {
+            grupoActual = idGrupoActual.ToString();
+        }
+    }
+}
+
+<h2>Grupo</h2>
+
+<!-- ✅ SOLO BOTÓN DE 3 PUNTOS CON MENÚ -->
+<div class="menu-container-standalone">
+    <button type="button" class="btn-menu-trigger-green" onclick="toggleMenuAcciones(event)" title="Gestión de Calificaciones">
+        <span class="menu-icon">⋮</span>
+    </button>
+
+    <!-- Menú de acciones (oculto por defecto) -->
+    <div id="menu-acciones" class="menu-acciones-standalone" style="display: none;">
+        <!-- Botones de acción en línea -->
+        <div class="menu-buttons">
+            <button type="button" class="btn btn-success btn-compact" onclick="exportarMaterias()" title="Descargar plantilla Excel">
+                <span class="glyphicon glyphicon-download-alt"></span> Exportar Excel
+            </button>
+            <button type="button" class="btn btn-primary btn-compact" id="btn-importar-modal" title="Subir Excel con calificaciones">
+                <span class="glyphicon glyphicon-cloud-upload"></span> Importar Excel
+            </button>
+            <!-- ✅ NUEVO BOTÓN DE ARRASTRE -->
+            <button type="button" class="btn btn-danger btn-compact" onclick="verArrastrePorGrupo()" title="Ver materias de arrastre del grupo">
+                <span class="glyphicon glyphicon-exclamation-triangle"></span> Consultar Arrastre
+            </button>
+            <button type="button" class="btn btn-info btn-compact btn-help" onclick="mostrarAyudaRapida()" title="Ver flujo de trabajo">
+                <span class="glyphicon glyphicon-question-sign"></span> Ayuda
+            </button>
+        </div>
+
+        <hr class="menu-divider">
+
+        <!-- Info del grupo y flujo -->
+        <div class="menu-info-section">
+            <h5><strong>Gestión de Calificaciones - Grupo @grupoActual</strong></h5>
+            <p class="menu-flujo">
+                <strong>Flujo:</strong> 1) Exportar plantilla → 2) Llenar calificaciones → 3) Importar archivo → 4) Verificar resultados
+            </p>
+        </div>
+
+        <hr class="menu-divider">
+
+        <!-- ✅ NUEVA SECCIÓN: INFO SOBRE ARRASTRE -->
+        <div class="menu-info-section">
+            <h5><strong>📊 Consulta de Arrastre por Grupo</strong></h5>
+            <p class="menu-flujo">
+                <strong>Función:</strong> Ver alumnos con materias reprobadas → Clasificación por criticidad → Seguimiento individual → Programar extraordinarios
+            </p>
+            <p class="menu-flujo" style="font-size: 11px; color: #888;">
+                <strong>Criticidad:</strong> 🔴 1er-2do cuatri (crítico) | 🟡 3er cuatri (medio) | 🔵 4to+ cuatri (reciente)
+            </p>
+        </div>
+    </div>
+</div>
+<div style="clear: both;"></div>
+
+<!-- ✅ MODAL PARA IMPORTACIÓN DE EXCEL -->
+<div class="modal fade" id="modalImportarExcel" tabindex="-1" role="dialog" aria-labelledby="modalImportarLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="modalImportarLabel">
+                    <span class="glyphicon glyphicon-cloud-upload text-primary"></span>
+                    Importar Calificaciones desde Excel
+                </h4>
+                <p class="text-muted">Grupo: <strong>@grupoActual</strong></p>
+            </div>
+
+            <div class="modal-body">
+                <!-- Instrucciones rápidas -->
+                <div class="alert alert-info alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h5><span class="glyphicon glyphicon-info-sign"></span> <strong>Instrucciones:</strong></h5>
+                    <ol>
+                        <li><strong>Exporta la plantilla</strong> con el botón "Descargar Plantilla"</li>
+                        <li><strong>Completa las calificaciones</strong> en el Excel (valores 0-10)</li>
+                        <li><strong>Sube el archivo</strong> usando el formulario inferior</li>
+                        <li><strong>El sistema procesará</strong> automáticamente las calificaciones</li>
+                    </ol>
+                </div>
+
+                <!-- Formulario de importación -->
+                <form id="formImportarModal" enctype="multipart/form-data">
+                    <input type="hidden" name="idGrupo" value="@idGrupoActual" />
+                    <input type="hidden" name="idCarrera" value="@idCarreraActual" />
+                    <input type="hidden" name="idGrado" value="@idGradoActual" />
+
+                    <!-- Información del grupo -->
+                    <div class="form-group">
+                        <label class="control-label"><strong>Grupo Destino:</strong></label>
+                        <div class="well well-sm">
+                            <span class="label label-info">@grupoActual</span>
+                            <small class="text-muted">(Grupo: @idGrupoActual, Carrera: @idCarreraActual, Grado: @idGradoActual)</small>
+                        </div>
+                    </div>
+
+                    <!-- Selector de archivo -->
+                    <div class="form-group">
+                        <label for="archivoExcelModal" class="control-label">
+                            <span class="glyphicon glyphicon-file"></span> <strong>Archivo Excel:</strong>
+                        </label>
+                        <div class="input-group">
+                            <input type="file"
+                                   id="archivoExcelModal"
+                                   name="archivoExcel"
+                                   class="form-control"
+                                   accept=".xlsx,.xls"
+                                   onchange="validarArchivoModal(this)" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-folder-open"></span>
+                            </span>
+                        </div>
+                        <small class="help-block">Selecciona el archivo Excel (.xlsx o .xls) con las calificaciones completadas.</small>
+
+                        <!-- Información del archivo seleccionado -->
+                        <div id="info-archivo-modal" class="alert alert-success" style="display: none; margin-top: 10px;">
+                            <h6><span class="glyphicon glyphicon-file"></span> <strong>Archivo seleccionado:</strong></h6>
+                            <p id="nombre-archivo-modal" style="margin: 0;"></p>
+                            <p id="tamaño-archivo-modal" style="margin: 0;"></p>
+                        </div>
+                    </div>
+
+                    <!-- Progress bar para el proceso -->
+                    <div id="progress-container" style="display: none;">
+                        <div class="form-group">
+                            <label class="control-label">Progreso del procesamiento:</label>
+                            <div class="progress">
+                                <div id="progress-bar" class="progress-bar progress-bar-striped active"
+                                     role="progressbar" style="width: 0%">
+                                    <span id="progress-text">Preparando...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <div class="btn-group">
+                    <!-- Botón para descargar plantilla -->
+                    <a href="@Url.Action("MateriasGrupo", "Exportar", new { idGrupo = idGrupoActual, idCarrera = idCarreraActual, idGrado = idGradoActual })"
+                       class="btn btn-info" target="_blank">
+                        <span class="glyphicon glyphicon-download-alt"></span> Descargar Plantilla
+                    </a>
+
+                    <!-- Botón de procesamiento -->
+                    <button type="button" class="btn btn-success" id="btn-procesar-modal" onclick="procesarExcelModal()" disabled>
+                        <span class="glyphicon glyphicon-cog"></span> Procesar e Importar
+                    </button>
+
+                    <!-- Botón cerrar -->
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ MODAL PARA MOSTRAR RESULTADOS -->
+<div class="modal fade" id="modalResultados" tabindex="-1" role="dialog" aria-labelledby="modalResultadosLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="modalResultadosLabel">
+                    <span id="icono-resultado" class="glyphicon"></span>
+                    Resultados de la Importación
+                </h4>
+            </div>
+
+            <div class="modal-body" id="contenido-resultados">
+                <!-- Los resultados se cargarán aquí dinámicamente -->
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="volverAImportar()">
+                    <span class="glyphicon glyphicon-upload"></span> Importar Otro Archivo
+                </button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    <span class="glyphicon glyphicon-remove"></span> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ TABLA ORIGINAL SIN MODIFICACIONES -->
+<table class="table">
+    <tr>
+        <th>#</th>
+        <th>@Html.DisplayNameFor(model => model.Matricula)</th>
+        <th>@Html.DisplayNameFor(model => model.Nombre)</th>
+        <th>@Html.DisplayNameFor(model => model.Estado)</th>
+        <th>Detalles</th>
+        <th>Imprimir</th>
+        <th>Seguimiento individual</th>
+        <th><b>Control de Materias</b></th>
+        <th>Tramitar baja de alumno</th>
+        <th>Remover del grupo</th>
+        <th>Eliminacion definitiva</th>
+    </tr>
+
+    @foreach (var item in (ViewBag.Alumnos as List<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>))
+    {
+        i++;
+        <tr>
+            <th>@i.ToString()</th>
+            <td>@Html.DisplayFor(modelItem => item.Matricula)</td>
+            <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+
+            @if (item.Estado == true)
+            {
+                <td>
+                    <span class="glyphicon glyphicon-eye-open" style="color:green"></span>
+                    Revisado
+                    <br />
+                    @if (usuario != null)
+                    {
+                        string token = AccesoSeguroHelper.GenerarToken(item.IdPersona, usuario.IdUsuario);
+                        <form action="@Url.Action("Desbloquear", "Asesor")" method="post" style="display:inline-block; margin-top:5px;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.IdPersona" />
+                            <input type="hidden" name="token" value="@token" />
+                            <button type="submit" class="btn btn-warning btn-xs" onclick="return confirm('¿Seguro que desea desbloquear esta entrevista? El alumno podrá editarla nuevamente.');" title="Desbloquear edición">
+                                <span class="glyphicon glyphicon-lock"></span> Desbloquear
+                            </button>
+                        </form>
+                    }
+                </td>
+            }
+            else
+            {
+                <td>
+                    <span class="glyphicon glyphicon-edit" style="color:red"></span>
+                    Sin Revisar
+                </td>
+            }
+
+            @if (item.Estado == true)
+            {
+                <td>
+                    <a class="btn btn-primary" href="@Url.Action("Detalles", new { id = item.IdPersona })">
+                        <span class="glyphicon glyphicon-eye-open"></span> Ver
+                    </a>
+                </td>
+            }
+            else
+            {
+                <td></td>
+            }
+
+            @if (item.Estado == true)
+            {
+                <td>
+                    <a class="btn btn-primary" href="@Url.Action("ReporteEntrevista", new { id = item.IdPersona })">
+                        <span class="glyphicon glyphicon-paperclip"></span> Imprimir
+                    </a>
+                </td>
+            }
+            else
+            {
+                <td></td>
+            }
+
+            <td>
+                <a class="btn btn-primary" href="@Url.Action("Index", "Individuals", new { id = item.IdPersona })">
+                    <span class="glyphicon glyphicon-file"></span> Seguimiento individual
+                </a>
+            </td>
+
+            <td>
+                <a class="btn btn-primary" href="@Url.Action("Index", "MateriasAlumno", new { id = item.IdPersona })">
+                    <span class="glyphicon glyphicon-book"></span> Materias
+                </a>
+            </td>
+
+            <td>
+                <a class="btn btn-primary" href="@Url.Action("Index", "Bajas", new { id = item.IdPersona })">
+                    <span class="glyphicon glyphicon-file"></span> Tramitar baja
+                </a>
+            </td>
+
+            @if (item.Grado != null)
+            {
+                <td>
+                    <a class="btn btn-danger" href="@Url.Action("Opcion1", "Reportar", new { id = item.IdPersona })">
+                        <span class="glyphicon glyphicon-exclamation-sign"></span> Remover del grupo
+                    </a>
+                </td>
+            }
+            else
+            {
+                <td>Removido</td>
+            }
+
+            <td>
+                <a class="btn btn-danger" href="@Url.Action("Eliminar", new { id = item.IdPersona })">
+                    <span class="glyphicon glyphicon-exclamation-sign"></span> Eliminación
+                </a>
+            </td>
+        </tr>
+    }
+</table>
+
+<!-- ✅ JAVASCRIPT OPTIMIZADO CON FUNCIONALIDAD DE MODAL + NUEVA FUNCIÓN DE ARRASTRE -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<script>
+// Variables del grupo actual
+var idGrupo = @idGrupoActual;
+var idCarrera = @idCarreraActual;
+var idGrado = @idGradoActual;
+var nombreGrupo = '@grupoActual';
+
+// Debug: Verificar que las variables se cargaron correctamente
+console.log('=== DEBUG: Variables del grupo ===');
+console.log('idGrupo:', idGrupo);
+console.log('idCarrera:', idCarrera);
+console.log('idGrado:', idGrado);
+console.log('nombreGrupo:', nombreGrupo);
+
+// ====================================================================
+// ✅ NUEVA FUNCIÓN PARA TOGGLE DEL MENÚ DE ACCIONES
+// ====================================================================
+function toggleMenuAcciones(event) {
+    event.stopPropagation(); // Evitar propagación
+
+    var menu = document.getElementById('menu-acciones');
+    var trigger = event.currentTarget;
+    var icon = trigger.querySelector('.menu-icon');
+
+    if (menu.style.display === 'none' || menu.style.display === '') {
+        // Abrir menú
+        menu.style.display = 'block';
+        icon.textContent = '×';
+        trigger.classList.add('active');
+
+        // Agregar listener para cerrar al hacer clic fuera
+        setTimeout(function() {
+            document.addEventListener('click', cerrarMenuAcciones);
+        }, 10);
+    } else {
+        // Cerrar menú
+        cerrarMenuAcciones();
+    }
+}
+
+function cerrarMenuAcciones() {
+    var menu = document.getElementById('menu-acciones');
+    var trigger = document.querySelector('.btn-menu-trigger-green');
+    var icon = trigger.querySelector('.menu-icon');
+
+    menu.style.display = 'none';
+    icon.textContent = '⋮';
+    trigger.classList.remove('active');
+
+    // Remover listener
+    document.removeEventListener('click', cerrarMenuAcciones);
+}
+
+// ====================================================================
+// ✅ FUNCIÓN PARA EXPORTAR MATERIAS
+// ====================================================================
+function exportarMaterias() {
+    console.log('=== Exportando materias ===');
+    cerrarMenuAcciones(); // Cerrar menú al hacer clic
+    var url = '/Exportar/MateriasGrupo?idGrupo=' + idGrupo + '&idCarrera=' + idCarrera + '&idGrado=' + idGrado;
+    console.log('URL de exportación:', url);
+    window.location.href = url;
+    showNotificationCompact('✅ Descarga iniciada', 'success', 2000);
+}
+
+// ====================================================================
+// ✅ NUEVA FUNCIÓN PARA VER ARRASTRE POR GRUPO
+// ====================================================================
+function verArrastrePorGrupo() {
+    console.log('=== Abriendo consulta de arrastre por grupo ===');
+    cerrarMenuAcciones(); // Cerrar menú al hacer clic
+
+    var url = '@Url.Action("ArrastrePorGrupo", "MateriasAlumno")' +
+              '?idGrupo=' + idGrupo +
+              '&idCarrera=' + idCarrera +
+              '&idGrado=' + idGrado;
+
+    console.log('URL de arrastre por grupo:', url);
+
+    // Mostrar notificación
+    showNotificationCompact('📋 Cargando consulta de arrastre...', 'info', 2000);
+
+    // Redirigir a la nueva vista
+    window.location.href = url;
+}
+
+// ====================================================================
+// ✅ FUNCIÓN PARA ABRIR MODAL DE IMPORTACIÓN
+// ====================================================================
+function abrirModalImportar() {
+    console.log('=== Abriendo modal de importación ===');
+    cerrarMenuAcciones(); // Cerrar menú al hacer clic
+
+    // Verificar que el modal existe
+    if ($('#modalImportarExcel').length === 0) {
+        console.error('ERROR: Modal #modalImportarExcel no encontrado');
+        alert('Error: No se encontró el modal de importación. Redirigiendo a la página tradicional...');
+        // Fallback a página tradicional
+        var urlTradicional = '@Url.Action("Index", "Importar")' +
+                           '?idGrupo=' + idGrupo +
+                           '&idCarrera=' + idCarrera +
+                           '&idGrado=' + idGrado;
+        window.location.href = urlTradicional;
+        return;
+    }
+
+    console.log('Modal encontrado, limpiando formulario...');
+
+    // Limpiar formulario
+    $('#formImportarModal')[0].reset();
+    $('#info-archivo-modal').hide();
+    $('#progress-container').hide();
+    $('#btn-procesar-modal').prop('disabled', true);
+
+    console.log('Mostrando modal...');
+
+    // Mostrar modal
+    $('#modalImportarExcel').modal('show');
+
+    showNotificationCompact('📤 Modal de importación abierto', 'info', 1500);
+}
+
+// ====================================================================
+// ✅ FUNCIÓN PARA VALIDAR ARCHIVO EN MODAL
+// ====================================================================
+function validarArchivoModal(input) {
+    console.log('=== Validando archivo en modal ===');
+    var archivo = input.files[0];
+    var infoDiv = $('#info-archivo-modal');
+    var btnProcesar = $('#btn-procesar-modal');
+
+    if (archivo) {
+        console.log('Archivo seleccionado:', archivo.name);
+
+        // Validación de extensión
+        var extension = archivo.name.toLowerCase().split('.').pop();
+        console.log('Extensión del archivo:', extension);
+
+        if (extension !== 'xlsx' && extension !== 'xls') {
+            console.error('Extensión inválida:', extension);
+            alert('❌ Error: El archivo debe ser un Excel (.xlsx o .xls)');
+            input.value = '';
+            infoDiv.hide();
+            btnProcesar.prop('disabled', true);
+            return;
+        }
+
+        // Validar tamaño (máximo 10MB)
+        var tamañoMB = (archivo.size / 1024 / 1024).toFixed(2);
+        console.log('Tamaño del archivo:', tamañoMB, 'MB');
+
+        if (archivo.size > 10 * 1024 * 1024) {
+            console.error('Archivo demasiado grande:', tamañoMB, 'MB');
+            alert('❌ Error: El archivo es demasiado grande. Máximo 10MB permitido.');
+            input.value = '';
+            infoDiv.hide();
+            btnProcesar.prop('disabled', true);
+            return;
+        }
+
+        // Mostrar información del archivo válido
+        $('#nombre-archivo-modal').html('<strong>Nombre:</strong> ' + archivo.name);
+        $('#tamaño-archivo-modal').html('<strong>Tamaño:</strong> ' + tamañoMB + ' MB');
+        infoDiv.show();
+        btnProcesar.prop('disabled', false);
+
+        console.log('✓ Archivo Excel válido seleccionado:', archivo.name);
+    } else {
+        console.log('No hay archivo seleccionado');
+        infoDiv.hide();
+        btnProcesar.prop('disabled', true);
+    }
+}
+
+// ====================================================================
+// ✅ FUNCIÓN PARA PROCESAR EXCEL DESDE MODAL
+// ====================================================================
+function procesarExcelModal() {
+    console.log('=== Procesando Excel desde modal ===');
+    var archivo = $('#archivoExcelModal')[0].files[0];
+
+    if (!archivo) {
+        console.error('No hay archivo seleccionado');
+        alert('❌ Por favor selecciona un archivo Excel para importar.');
+        return;
+    }
+
+    console.log('Archivo a procesar:', archivo.name);
+
+    // Confirmación
+    if (!confirm('¿Estás seguro de que deseas importar las calificaciones desde este archivo?\n\n' +
+                 'Archivo: ' + archivo.name + '\n' +
+                 'Grupo: ' + nombreGrupo + '\n\n' +
+                 '⚠️ Las calificaciones se registrarán en el sistema.')) {
+        console.log('Usuario canceló la importación');
+        return;
+    }
+
+    console.log('Usuario confirmó, iniciando procesamiento...');
+
+    // Mostrar barra de progreso
+    $('#progress-container').show();
+    $('#btn-procesar-modal').prop('disabled', true);
+
+    // Simular progreso
+    actualizarProgreso(0, 'Iniciando procesamiento...');
+
+    // Crear FormData para envío
+    var formData = new FormData();
+    formData.append('archivoExcel', archivo);
+    formData.append('idGrupo', idGrupo);
+    formData.append('idCarrera', idCarrera);
+    formData.append('idGrado', idGrado);
+
+    console.log('FormData creado, enviando AJAX...');
+
+    // Realizar petición AJAX
+    $.ajax({
+        url: '@Url.Action("ProcesarExcel", "Importar")',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        timeout: 120000, // 2 minutos timeout
+        xhr: function() {
+            var xhr = new window.XMLHttpRequest();
+            // Simular progreso durante la carga
+            xhr.upload.addEventListener("progress", function(evt) {
+                if (evt.lengthComputable) {
+                    var percentComplete = (evt.loaded / evt.total) * 50; // Solo 50% para la carga
+                    actualizarProgreso(percentComplete, 'Subiendo archivo...');
+                }
+            }, false);
+            return xhr;
+        },
+        beforeSend: function() {
+            console.log('Enviando petición AJAX...');
+            actualizarProgreso(10, 'Validando archivo...');
+        },
+        success: function(response) {
+            console.log('AJAX exitoso, respuesta recibida');
+            actualizarProgreso(80, 'Procesando calificaciones...');
+
+            setTimeout(function() {
+                actualizarProgreso(100, '¡Completado!');
+
+                setTimeout(function() {
+                    console.log('Cerrando modal de importación...');
+                    // Cerrar modal de importación
+                    $('#modalImportarExcel').modal('hide');
+
+                    // Mostrar resultados en modal de resultados
+                    mostrarResultadosEnModal(response);
+                }, 500);
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            console.error('Error en AJAX:', status, error);
+            console.error('Respuesta del servidor:', xhr.responseText);
+            actualizarProgreso(0, 'Error en el procesamiento');
+
+            var mensajeError = 'Error al procesar el archivo';
+            if (xhr.responseText) {
+                try {
+                    var errorResponse = JSON.parse(xhr.responseText);
+                    mensajeError = errorResponse.mensaje || mensajeError;
+                } catch (e) {
+                    console.error('No se pudo parsear respuesta de error');
+                }
+            }
+
+            alert('❌ ' + mensajeError);
+            $('#btn-procesar-modal').prop('disabled', false);
+            $('#progress-container').hide();
+        }
+    });
+}
+
+// ====================================================================
+// ✅ FUNCIÓN PARA ACTUALIZAR BARRA DE PROGRESO
+// ====================================================================
+function actualizarProgreso(porcentaje, mensaje) {
+    $('#progress-bar').css('width', porcentaje + '%');
+    $('#progress-text').text(mensaje + ' (' + Math.round(porcentaje) + '%)');
+
+    // Cambiar color según progreso
+    if (porcentaje === 100) {
+        $('#progress-bar').removeClass('progress-bar-striped active')
+                          .addClass('progress-bar-success');
+    }
+}
+
+// ====================================================================
+// ✅ FUNCIÓN PARA MOSTRAR RESULTADOS EN MODAL
+// ====================================================================
+function mostrarResultadosEnModal(htmlResultado) {
+    console.log('=== Mostrando resultados en modal ===');
+    console.log('Tipo de respuesta:', typeof htmlResultado);
+
+    var contenido = '';
+    var esExitoso = false;
+
+    try {
+        // Si la respuesta es un objeto JSON (respuesta AJAX)
+        if (typeof htmlResultado === 'object' && htmlResultado.html) {
+            console.log('Respuesta es objeto JSON con HTML');
+            contenido = htmlResultado.html;
+            esExitoso = htmlResultado.exito || false;
+        }
+        // Si la respuesta es HTML directo
+        else if (typeof htmlResultado === 'string') {
+            console.log('Respuesta es HTML string');
+            // Extraer contenido del body de la respuesta
+            var $response = $(htmlResultado);
+            contenido = $response.find('.container-fluid').html();
+
+            // Si no se encuentra el contenedor, usar toda la respuesta
+            if (!contenido || contenido.trim() === '') {
+                contenido = htmlResultado;
+            }
+
+            // Determinar si fue exitoso basado en el contenido HTML
+            esExitoso = contenido.indexOf('panel-success') !== -1 ||
+                       contenido.indexOf('Importación Completada') !== -1 ||
+                       contenido.indexOf('glyphicon-ok-circle') !== -1;
+        }
+        // Si no podemos determinar el tipo
+        else {
+            console.log('Tipo de respuesta desconocido, usando como string');
+            contenido = String(htmlResultado);
+            esExitoso = false;
+        }
+
+        console.log('Contenido extraído (primeros 200 chars):', contenido.substring(0, 200));
+        console.log('Importación exitosa:', esExitoso);
+
+        // Verificar que tenemos contenido válido
+        if (!contenido || contenido.trim() === '') {
+            throw new Error('No se pudo extraer contenido válido de la respuesta');
+        }
+
+    } catch (error) {
+        console.error('Error procesando respuesta:', error);
+        // Crear contenido de error
+        contenido = `
+            <div class="alert alert-danger">
+                <h4><span class="glyphicon glyphicon-exclamation-triangle"></span> Error al procesar resultados</h4>
+                <p>Hubo un problema al mostrar los resultados de la importación.</p>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <p>Por favor, verifica manualmente el estado de las calificaciones o intenta nuevamente.</p>
+            </div>
+        `;
+        esExitoso = false;
+    }
+
+    // Configurar icono del modal
+    if (esExitoso) {
+        $('#icono-resultado').removeClass().addClass('glyphicon glyphicon-ok-circle text-success');
+    } else {
+        $('#icono-resultado').removeClass().addClass('glyphicon glyphicon-exclamation-triangle text-danger');
+    }
+
+    // Cargar contenido en el modal
+    $('#contenido-resultados').html(contenido);
+
+    // Mostrar modal de resultados
+    $('#modalResultados').modal('show');
+
+    // ✅ SOLUCIÓN CORREGIDA: Configurar paneles colapsables después de mostrar el modal
+    $('#modalResultados').on('shown.bs.modal', function() {
+        initializeCollapseInModal();
+    });
+
+    // Mostrar notificación
+    if (esExitoso) {
+        showNotificationCompact('✅ Importación completada exitosamente', 'success', 3000);
+    } else {
+        showNotificationCompact('⚠️ Importación completada con errores', 'warning', 3000);
+    }
+}
+
+// ====================================================================
+// ✅ FUNCIÓN CORREGIDA PARA PANELES COLAPSABLES - SOLUCIÓN DIRECTA
+// ====================================================================
+function initializeCollapseInModal() {
+    console.log('=== Inicializando paneles colapsables en modal (SOLUCIÓN DIRECTA) ===');
+
+    // ✅ LIMPIAR EVENT LISTENERS PREVIOS
+    $('#contenido-resultados').off('click.panel-collapse-custom');
+
+    // ✅ IMPLEMENTACIÓN MANUAL SIMPLE Y DIRECTA
+    $('#contenido-resultados').on('click.panel-collapse-custom', '[data-toggle="collapse"]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $trigger = $(this);
+        var target = $trigger.attr('href');
+        var $target = $(target);
+        var $icon = $trigger.find('.glyphicon-chevron-down, .glyphicon-chevron-up');
+
+        console.log('Click en panel:', target);
+
+        if ($target.length === 0) {
+            console.error('Target no encontrado:', target);
+            return;
+        }
+
+        // ✅ TOGGLE SIMPLE CON SLIDEUP/SLIDEDOWN
+        if ($target.is(':visible')) {
+            // Cerrar
+            $target.slideUp(300, function() {
+                console.log('Panel cerrado:', target);
+            });
+            $icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+        } else {
+            // Abrir
+            $target.slideDown(300, function() {
+                console.log('Panel abierto:', target);
+            });
+            $icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+        }
+    });
+
+    // ✅ CONFIGURAR ESTADO INICIAL
+    setTimeout(function() {
+        $('#contenido-resultados .panel-collapse').each(function() {
+            var $panel = $(this);
+            var panelId = $panel.attr('id');
+            var $trigger = $('a[href="#' + panelId + '"]');
+            var $icon = $trigger.find('.glyphicon-chevron-down, .glyphicon-chevron-up');
+
+            // Verificar si debe estar abierto (clase 'in' o display: block)
+            var debeEstarAbierto = $panel.hasClass('in') ||
+                                  $panel.css('display') === 'block' ||
+                                  $panel.attr('style') && $panel.attr('style').includes('display: block');
+
+            if (debeEstarAbierto) {
+                $panel.show();
+                $icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+                console.log('Panel inicializado como abierto:', panelId);
+            } else {
+                $panel.hide();
+                $icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+                console.log('Panel inicializado como cerrado:', panelId);
+            }
+        });
+    }, 300);
+
+    console.log('✅ Paneles colapsables inicializados con implementación manual');
+}
+
+// ====================================================================
+// ✅ FUNCIÓN PARA VOLVER A IMPORTAR DESDE MODAL DE RESULTADOS
+// ====================================================================
+function volverAImportar() {
+    $('#modalResultados').modal('hide');
+    setTimeout(function() {
+        abrirModalImportar();
+    }, 300);
+}
+
+// ====================================================================
+// ✅ FUNCIÓN ACTUALIZADA PARA MOSTRAR AYUDA RÁPIDA (INCLUYE ARRASTRE)
+// ====================================================================
+function mostrarAyudaRapida() {
+    cerrarMenuAcciones(); // Cerrar menú al hacer clic
+    var ayuda = 'GESTIÓN DE CALIFICACIONES:\n\n' +
+               '📤 EXPORTAR: Descarga plantilla Excel con alumnos\n' +
+               '✏️ LLENAR: Completa calificaciones (0.0-10.0)\n' +
+               '📥 IMPORTAR: Sube archivo para registro automático\n' +
+               '✅ VERIFICAR: Revisa resumen de resultados\n' +
+               '🚨 ARRASTRE: Consulta materias reprobadas por criticidad\n\n' +
+               'CONSULTA DE ARRASTRE:\n' +
+               '• Ver alumnos con materias de arrastre\n' +
+               '• Clasificación por criticidad (1er cuatri = crítico)\n' +
+               '• Ordenamiento automático por prioridad\n' +
+               '• Exportación a Excel con colores\n\n' +
+               'Atajos: Ctrl+E (Exportar) | Ctrl+I (Importar) | Ctrl+R (Arrastre)';
+    alert(ayuda);
+}
+
+// ====================================================================
+// ✅ NOTIFICACIONES COMPACTAS
+// ====================================================================
+function showNotificationCompact(message, type, duration) {
+    $('.notification-compact').remove();
+
+    var alertClass = type === 'success' ? 'alert-success' :
+                    type === 'error' ? 'alert-danger' :
+                    type === 'warning' ? 'alert-warning' : 'alert-info';
+
+    var notification = $(`
+        <div class="alert ${alertClass} notification-compact">
+            ${message}
+        </div>
+    `);
+
+    $('body').append(notification);
+
+    if (duration > 0) {
+        setTimeout(() => notification.fadeOut(300, () => notification.remove()), duration);
+    }
+}
+
+// ====================================================================
+// ✅ TOGGLE DEL PANEL Y EVENTOS DE INICIALIZACIÓN
+// ====================================================================
+$(document).ready(function() {
+    console.log('=== Documento listo ===');
+
+    // Verificar que jQuery y Bootstrap están disponibles
+    if (typeof $ === 'undefined') {
+        console.error('ERROR: jQuery no está cargado');
+        alert('Error: jQuery no está disponible. La funcionalidad del modal no funcionará.');
+        return;
+    }
+
+    if (typeof $.fn.modal === 'undefined') {
+        console.error('ERROR: Bootstrap modal no está disponible');
+        alert('Error: Bootstrap no está disponible. La funcionalidad del modal no funcionará.');
+        return;
+    }
+
+    console.log('jQuery y Bootstrap disponibles');
+
+    // Verificar que el modal existe en el DOM
+    if ($('#modalImportarExcel').length === 0) {
+        console.error('ERROR: Modal #modalImportarExcel no encontrado en el DOM');
+    } else {
+        console.log('Modal #modalImportarExcel encontrado en el DOM');
+    }
+
+    // Event listener para el botón de importar
+    $('#btn-importar-modal').on('click', function(e) {
+        console.log('=== Click en botón importar ===');
+        e.preventDefault();
+        abrirModalImportar();
+    });
+
+    // ✅ ATAJOS DE TECLADO ACTUALIZADOS (INCLUYE CTRL+R PARA ARRASTRE)
+    $(document).keydown(function(e) {
+        if (e.ctrlKey && e.keyCode === 69) { // Ctrl+E
+            e.preventDefault();
+            exportarMaterias();
+        }
+        if (e.ctrlKey && e.keyCode === 73) { // Ctrl+I
+            e.preventDefault();
+            abrirModalImportar();
+        }
+        // ✅ NUEVO ATAJO: Ctrl+R para Arrastre
+        if (e.ctrlKey && e.keyCode === 82) { // Ctrl+R
+            e.preventDefault();
+            verArrastrePorGrupo();
+        }
+    });
+
+    // Limpiar modales al cerrarlos
+    $('#modalImportarExcel').on('hidden.bs.modal', function () {
+        console.log('Modal de importación cerrado, limpiando...');
+        $('#formImportarModal')[0].reset();
+        $('#info-archivo-modal').hide();
+        $('#progress-container').hide();
+        $('#btn-procesar-modal').prop('disabled', true);
+    });
+
+    // Test del modal al cargar (opcional - comentar en producción)
+    console.log('=== Test de funcionalidades ===');
+    console.log('Modal importación existe:', $('#modalImportarExcel').length > 0);
+    console.log('Modal resultados existe:', $('#modalResultados').length > 0);
+    console.log('Botón importar existe:', $('#btn-importar-modal').length > 0);
+
+    console.log('=== Inicialización completa ===');
+});
+
+console.log('=== Funcionalidad de arrastre por grupo agregada ===');
+</script>
+
+<!-- ✅ ESTILOS OPTIMIZADOS Y COMPACTOS + ESTILOS PARA MODALES + ESTILOS PARA ARRASTRE -->
+<style>
+    /* ✅ NUEVO: Contenedor del menú standalone */
+    .menu-container-standalone {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 20px;
+        float: right;
+        clear: both;
+    }
+
+    /* ✅ NUEVO: Botón verde de 3 puntos */
+    .btn-menu-trigger-green {
+        background-color: #5cb85c;
+        border: 1px solid #4cae4c;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 24px;
+        font-weight: bold;
+        line-height: 1;
+        padding: 0;
+        margin: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+        .btn-menu-trigger-green:hover {
+            background-color: #4cae4c;
+            border-color: #3d8e3d;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+
+        .btn-menu-trigger-green:active,
+        .btn-menu-trigger-green.active {
+            background-color: #3d8e3d;
+            border-color: #3d8e3d;
+            transform: translateY(0);
+        }
+
+    .menu-icon {
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+    }
+
+    /* ✅ NUEVO: Menú de acciones standalone */
+    .menu-acciones-standalone {
+        position: absolute;
+        right: 50px;
+        top: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        padding: 15px;
+        width: auto;
+        min-width: 400px;
+        z-index: 1050;
+        animation: slideInMenu 0.2s ease-out;
+    }
+
+    .menu-buttons {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 0;
+    }
+
+        .menu-buttons .btn-compact {
+            flex: 1;
+            min-width: 120px;
+            margin: 0;
+        }
+
+    .menu-info-section {
+        padding: 0;
+        background-color: transparent;
+        border-radius: 0;
+        margin-top: 0;
+    }
+
+        .menu-info-section h5 {
+            margin: 0 0 8px 0;
+            color: #1ab192;
+            font-size: 14px;
+        }
+
+    .menu-flujo {
+        margin: 0;
+        font-size: 12px;
+        color: #666;
+        line-height: 1.5;
+    }
+
+    .menu-divider {
+        margin: 12px 0;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    @@keyframes slideInMenu {
+        from {
+            opacity: 0;
+            transform: translateX(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Ajuste para móviles */
+    @@media (max-width: 768px) {
+        .menu-acciones-standalone {
+            right: 0;
+            top: 50px;
+            min-width: 300px;
+        }
+
+        .menu-buttons {
+            flex-direction: column;
+        }
+
+            .menu-buttons .btn-compact {
+                width: 100%;
+            }
+    }
+
+    /* Botones compactos */
+    .btn-compact {
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-compact:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+    .btn-success.btn-compact {
+        background-color: #5cb85c;
+        border-color: #4cae4c;
+    }
+
+    .btn-primary.btn-compact {
+        background-color: #3498db;
+        border-color: #2980b9;
+    }
+
+    .btn-info.btn-compact {
+        background-color: #17a2b8;
+        border-color: #138496;
+    }
+
+    /* ✅ ESTILO ESPECÍFICO PARA EL BOTÓN DE ARRASTRE */
+    .btn-danger.btn-compact {
+        background-color: #d9534f;
+        border-color: #d43f3a;
+    }
+
+        .btn-danger.btn-compact:hover {
+            background-color: #c9302c;
+            border-color: #ac2925;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(217, 83, 79, 0.3);
+        }
+
+    /* ✅ EFECTO ESPECIAL PARA EL MENÚ DE ARRASTRE */
+    .menu-info-section h5 {
+        color: #1ab192;
+    }
+
+    /* ✅ ANIMACIÓN PARA EL BOTÓN DE ARRASTRE */
+    @@keyframes pulse-danger {
+        0% {
+            box-shadow: 0 0 0 0 rgba(217, 83, 79, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(217, 83, 79, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(217, 83, 79, 0);
+        }
+    }
+
+    .btn-danger.btn-compact.pulse {
+        animation: pulse-danger 2s infinite;
+    }
+
+    /* ✅ ESTILO PARA INDICAR CRITICIDAD EN EL MENÚ */
+    .menu-critical-notice {
+        background: linear-gradient(45deg, #d9534f, #c9302c);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        margin-top: 10px;
+        font-size: 12px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+        .menu-critical-notice .glyphicon {
+            animation: pulse 1.5s infinite;
+        }
+
+    /* Notificaciones compactas */
+    .notification-compact {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 9999;
+        padding: 8px 15px;
+        margin: 0;
+        border-radius: 4px;
+        font-size: 13px;
+        min-width: 250px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        animation: slideInCompact 0.3s ease-out;
+    }
+
+    @@keyframes slideInCompact {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* ✅ ESTILOS PARA MODALES */
+    .modal-header {
+        background-color: #1ab192;
+        color: white;
+        border-bottom: 2px solid #16a085;
+    }
+
+        .modal-header .close {
+            color: white;
+            opacity: 0.8;
+        }
+
+            .modal-header .close:hover {
+                opacity: 1;
+            }
+
+    .modal-title {
+        font-weight: bold;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Progress bar styles */
+    .progress {
+        height: 25px;
+        margin-bottom: 10px;
+    }
+
+    .progress-bar {
+        line-height: 25px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .progress-bar-success {
+        background-color: #5cb85c;
+    }
+
+    /* Modal dialog size */
+    .modal-lg {
+        width: 900px;
+    }
+
+    /* Alert dentro del modal */
+    .modal-body .alert {
+        margin-bottom: 20px;
+    }
+
+        .modal-body .alert h5 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .modal-body .alert ol {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+
+    /* Well dentro del modal */
+    .modal-body .well {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px 15px;
+        margin: 0;
+    }
+
+    /* Input group en modal */
+    .modal-body .input-group-addon {
+        background-color: #e9ecef;
+        border-color: #ced4da;
+    }
+
+    /* Label en modal */
+    .modal-body .label {
+        font-size: 13px;
+        padding: 4px 8px;
+    }
+
+    /* Help block en modal */
+    .modal-body .help-block {
+        color: #6c757d;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    /* Responsive para móviles */
+    @@media (max-width: 768px) {
+        .btn-compact {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .modal-lg {
+            width: 95%;
+            margin: 10px auto;
+        }
+
+        .modal-body {
+            padding: 15px;
+        }
+    }
+
+    /* Mejoras visuales sutiles */
+    .btn-help {
+        border-style: dashed;
+    }
+
+    /* Ocultar texto en pantallas muy pequeñas */
+    @@media (max-width: 480px) {
+        .btn-compact .glyphicon {
+            margin-right: 3px;
+        }
+
+        .menu-acciones-standalone {
+            min-width: 280px;
+        }
+
+        .btn-compact {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+    }
+
+    /* Z-index para asegurar que los modales aparezcan encima */
+    .modal-backdrop {
+        z-index: 1040;
+    }
+
+    .modal {
+        z-index: 1050;
+    }
+</style>

@@ -1,0 +1,148 @@
+@model IEnumerable<Plataforma_Web.Controllers.CanalizacionesController.EstudianteCanalizacionViewModel>
+
+@{
+    ViewBag.Title = "Canalizaciones";
+}
+
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/Canalizacion.css" />
+</head>
+
+<div class="canalizacion-container">
+    <h2 class="header-title">FORMULARIO DE CANALIZACIÓN A LOS SERVICIOS PEDAGÓGICOS</h2>
+
+    <div class="header-row">
+        <div class="group-header">Grupo Titulado: "@ViewBag.NombreGrupo"</div>
+        <button onclick="toggleView()" class="btn-toggle" id="vistaBtn">Cambiar Vista</button>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Buscar alumno..." id="searchInput" />
+        </div>
+    </div>
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="student-card" style="background-color: #D1E7FF; color: #0066CC;">
+            <i class="fas fa-info-circle"></i> @ViewBag.Mensaje
+        </div>
+    }
+    else if (!Model.Any())
+    {
+        <div class="student-card" style="background-color: #FFE8B8; color: #CC6600;">
+            <i class="fas fa-exclamation-triangle"></i> No hay estudiantes en este grupo.
+        </div>
+    }
+    else
+    {
+        <div id="cardView" class="card-grid">
+            @foreach (var item in Model)
+            {
+                <div class="student-card">
+                    <div class="student-avatar">
+                        @{
+                            var fotoUrl = item.TieneFoto
+                                ? Url.Action("ObtenerFoto", "Canalizaciones", new { id = item.IdPersona })
+                                : Url.Content("~/css/estudiantes/default.png");
+                        }
+                        <img src="@fotoUrl" alt="@item.Nombre" />
+                    </div>
+
+                    <div class="student-name">@item.Nombre</div>
+
+                    <div class="student-matricula">Matrícula: @item.Matricula</div>
+
+                    <div class="status-container">
+                        @if (item.CanalizacionCompleta)
+                        {
+                            <span class="status-tag status-complete">
+                                <i class="fas fa-check"></i> Completo
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="status-tag status-incomplete">
+                                <i class="fas fa-times"></i> Incompleto
+                            </span>
+                        }
+                    </div>
+
+                    @if (item.Vulnerable)
+                    {
+                        <div class="status-container">
+                            <span class="status-tag status-vulnerable">
+                                <i class="fas fa-exclamation-triangle"></i> Requiere canalización
+                            </span>
+                        </div>
+                    }
+
+                    <div class="btn-group">
+                        <a href="@Url.Action("Detalles", new { id = item.IdPersona })" class="btn-action btn-details">
+                            <i class="fas fa-eye"></i> Ver detalles
+                        </a>
+                        <a href="@Url.Action("EscribirNota", new { id = item.IdPersona })" class="btn-action btn-note">
+                            <i class="fas fa-pen"></i> Escribir nota
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <table id="tableView" class="table-view hidden">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nombre</th>
+                    <th>Matrícula</th>
+                    <th>Estado</th>
+                    <th>Vulnerable</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <img src="@(item.TieneFoto ? Url.Action("ObtenerFoto", "Canalizaciones", new { id = item.IdPersona }) : Url.Content("~/css/estudiantes/default.png"))" alt="@item.Nombre" />
+                        </td>
+                        <td>@item.Nombre</td>
+                        <td>@item.Matricula</td>
+                        <td>
+                            @if (item.CanalizacionCompleta)
+                            {
+                                <span class="status-tag status-complete">
+                                    <i class="fas fa-check"></i> Completo
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-tag status-incomplete">
+                                    <i class="fas fa-times"></i> Incompleto
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Vulnerable)
+                            {
+                                <span class="status-tag status-vulnerable">
+                                    <i class="fas fa-exclamation-triangle"></i> Requiere canalización
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            <a href="@Url.Action("Detalles", new { id = item.IdPersona })" class="btn-action btn-details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="@Url.Action("EscribirNota", new { id = item.IdPersona })" class="btn-action btn-note">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<script src="~/Scripts/Canalizacion.js"></script>

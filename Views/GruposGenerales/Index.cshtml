@@ -1,0 +1,321 @@
+﻿@model IEnumerable<Plataforma_Web.Models.GrupoConTutorViewModel>
+
+@{
+    ViewBag.Title = "Grupos Asignados";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userNivel = ViewBag.UserNivel as int? ?? 0;
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap.min.css">
+    <style>
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+    </style>
+}
+
+<div class="sga-scope">
+    <h2>Grupos Asignados</h2>
+    <p class="text-muted">Vista general de todos los grupos con tutores asignados</p>
+
+    @* Filtros - Carrera solo para nivel 4, Año y Período para nivel 3 y 4 *@
+    @if (userNivel >= 3)
+    {
+        <div class="row" style="margin-bottom:20px;">
+            <!-- Buscar -->
+            <div class="@(userNivel == 4 ? "col-md-3" : "col-md-3")">
+                <div class="form-group">
+                    <label for="buscarGrupos" class="control-label">Buscar:</label>
+                    <input id="buscarGrupos" type="text" class="form-control" placeholder="Escribe para filtrar la tabla..." />
+                </div>
+            </div>
+
+            @* Carrera (solo nivel 4) *@
+            @if (userNivel == 4)
+            {
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="filtroCarrera" class="control-label">Carrera:</label>
+                        @using (Html.BeginForm("Index", "GruposGenerales", FormMethod.Get, new { id = "formFiltrosCarrera" }))
+                        {
+                            @Html.Hidden("año", (object)ViewBag.AñoSeleccionado)
+                            @Html.Hidden("periodo", (object)ViewBag.PeriodoSeleccionado)
+                            @Html.DropDownList("idCarrera", ViewBag.CarrerasSelectList as SelectList, "-- Todas las carreras --",
+                                                                   new { @class = "form-control", @id = "filtroCarrera", @onchange = "this.form.submit();" })
+                        }
+                    </div>
+                </div>
+            }
+
+            @* Si el usuario es Coordinador (3) o un nivel superior (Master), muestra el filtro *@
+            @if (userNivel >= 3)
+            {
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="filtroEstado" class="control-label">Estado del Tutor:</label>
+                        <select id="filtroEstado" class="form-control">
+                            <option value="">-- Todos --</option>
+                            <option value="Activo">Activos</option>
+                            <option value="Inactivo">Inactivos</option>
+                        </select>
+                    </div>
+                </div>
+            }
+
+
+
+            <!-- Período -->
+            <div class="@(userNivel == 4 ? "col-md-2" : "col-md-2")">
+                <div class="form-group">
+                    <label for="filtroPeriodo" class="control-label">Período:</label>
+                    @using (Html.BeginForm("Index", "GruposGenerales", FormMethod.Get, new { id = "formFiltrosPeriodo" }))
+                    {
+                        @Html.Hidden("idCarrera", (object)ViewBag.CarreraSeleccionada)
+                        @Html.Hidden("año", (object)ViewBag.AñoSeleccionado)
+                        @Html.DropDownList("periodo", ViewBag.PeriodosSelectList as SelectList, "-- Todos los períodos --",
+                                                               new { @class = "form-control", @id = "filtroPeriodo", @onchange = "this.form.submit();" })
+                    }
+                </div>
+            </div>
+
+            <!-- Año -->
+            <div class="@(userNivel == 4 ? "col-md-2" : "col-md-2")">
+                <div class="form-group">
+                    <label for="filtroAño" class="control-label">Año:</label>
+                    @using (Html.BeginForm("Index", "GruposGenerales", FormMethod.Get, new { id = "formFiltrosAño" }))
+                    {
+                        @Html.Hidden("idCarrera", (object)ViewBag.CarreraSeleccionada)
+                        @Html.Hidden("periodo", (object)ViewBag.PeriodoSeleccionado)
+                        @Html.DropDownList("año", ViewBag.AñosSelectList as SelectList, "-- Todos los años --",
+                                                               new { @class = "form-control", @id = "filtroAño", @onchange = "this.form.submit();" })
+                    }
+                </div>
+            </div>
+
+            <!-- Limpiar -->
+            <div class="@(userNivel == 4 ? "col-md-2" : "col-md-2")">
+                <div class="form-group">
+                    <label class="control-label">&nbsp;</label>
+                    <div>
+                        @Html.ActionLink("×", "Index", "GruposGenerales", null,
+                                                               new { @class = "btn btn-default sga-xbtn", @title = "Limpiar filtros", role = "button" })
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.Error
+        </div>
+    }
+
+    @* Información de filtros activos (Contenedor Principal) *@
+    @if (userNivel >= 3)
+    {
+        <div class="sga-filter-bar" id="barraFiltrosActivos" style="display:none; margin-bottom: 20px;">
+            <strong>Filtros activos:</strong>
+
+            @* Espacio para los filtros del Servidor *@
+            <span id="filtrosServidor">
+                @{
+                    var filtrosActivos = new List<string>();
+
+                    // --- Filtro de Carrera ---
+                    if (userNivel == 4 && ViewBag.CarreraSeleccionada != null)
+                    {
+                        var carrerasList = ViewBag.CarrerasSelectList as SelectList;
+                        var carreraItem = carrerasList?.FirstOrDefault(i => i.Value == ViewBag.CarreraSeleccionada.ToString());
+                        if (carreraItem != null) { filtrosActivos.Add($"Carrera: {carreraItem.Text}"); }
+                    }
+
+                    // --- Filtro de Año ---
+                    if (ViewBag.AñoSeleccionado != null)
+                    {
+                        var añosList = ViewBag.AñosSelectList as SelectList;
+                        var añoItem = añosList?.FirstOrDefault(i => i.Value == ViewBag.AñoSeleccionado.ToString());
+                        if (añoItem != null) { filtrosActivos.Add($"Año: {añoItem.Text}"); }
+                        else { filtrosActivos.Add($"Año: {ViewBag.AñoSeleccionado}"); }
+                    }
+
+                    // --- Filtro de Período ---
+                    if (ViewBag.PeriodoSeleccionado != null)
+                    {
+                        var periodosList = ViewBag.PeriodosSelectList as SelectList;
+                        var periodoItem = periodosList?.FirstOrDefault(i => i.Value == ViewBag.PeriodoSeleccionado.ToString());
+                        if (periodoItem != null) { filtrosActivos.Add($"Período: {periodoItem.Text}"); }
+                    }
+                } @* <-- El bloque C# termina aquí *@
+                @string.Join(" | ", filtrosActivos) @* <-- Imprimimos el resultado *@
+            </span>
+
+            @* Espacio para los filtros del Cliente (JS) *@
+            <span id="filtrosCliente"></span>
+
+            @* Botón de limpiar (siempre limpia los del servidor) *@
+            <a href="@Url.Action("Index", "GruposGenerales")" class="btn-utt-outline" style="margin-left: 10px; text-decoration: none;">
+                <span class="glyphicon glyphicon-remove"></span> Quitar filtros
+            </a>
+        </div>
+    }
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table id="gruposTable" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Grado</th>
+                        <th>Grupo</th>
+                        <th>Carrera</th>
+                        <th>Turno</th>
+                        <th>Período</th>
+                        <th>Año</th>
+                        <th>Tutor Asignado</th>
+                        <th>Estado Tutor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        // Castear ViewBags a diccionarios fuertemente tipados para evitar dinámicos en cada celda
+                        var grados = ViewBag.Grados as IDictionary<int, string>;
+                        var grupos = ViewBag.Grupos as IDictionary<int, string>;
+                        var carreras = ViewBag.Carreras as IDictionary<int, string>;
+                        var turnos = ViewBag.Turnos as IDictionary<int, string>;
+                        var periodos = ViewBag.Periodos as IDictionary<int, string>;
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td data-label="Grado">@(grados != null && grados.ContainsKey(item.IdGrado) ? grados[item.IdGrado] : item.IdGrado.ToString())</td>
+                            <td data-label="Grupo">@(grupos != null && grupos.ContainsKey(item.IdGrupo) ? grupos[item.IdGrupo] : item.IdGrupo.ToString())</td>
+                            <td data-label="Carrera">@(carreras != null && carreras.ContainsKey(item.IdCarrera) ? carreras[item.IdCarrera] : item.IdCarrera.ToString())</td>
+                            <td data-label="Turno">@(turnos != null && turnos.ContainsKey(item.IdTurno) ? turnos[item.IdTurno] : item.IdTurno.ToString())</td>
+                            <td data-label="Período">@(periodos != null && periodos.ContainsKey(item.IdPeriodo) ? periodos[item.IdPeriodo] : item.IdPeriodo.ToString())</td>
+                            <td data-label="Año">@item.Año</td>
+                            <td data-label="Tutor Asignado">
+                                <strong>@item.NombreTutor</strong><br />
+                                <small class="text-muted">@item.UserNameTutor</small>
+                            </td>
+                            <td data-label="Estado Tutor">
+                                @* TEXTO VISIBLE PARA EL USUARIO *@
+                                @if (item.EstadoTutor)
+                                {
+                                    <span class="label label-success">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="label label-danger">Inactivo</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <strong>No hay grupos asignados</strong><br />
+            No se encontraron grupos con tutores asignados.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var tablaGrupos = $('#gruposTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+                },
+                "pageLength": 25,
+                "order": [[5, "desc"]],
+                "responsive": true,
+                "dom": 'rt<"row"<"col-sm-12"i>><"row"<"col-sm-12"p>>',
+                "columnDefs": [
+                    { "type": "num", "targets": 5 }
+                ],
+
+                "initComplete": function () {
+                    $('#filtroEstado').val('Activo');
+                    aplicarFiltros();
+                }
+            });
+
+
+            function actualizarBarraFiltros() {
+                var filtrosServidor = $('#filtrosServidor').text().trim();
+                var estadoTexto = $('#filtroEstado option:selected').text();
+                var filtroClienteTexto = '';
+
+                if (estadoTexto && estadoTexto !== "-- Todos --") {
+                    filtroClienteTexto = 'Estado: ' + estadoTexto;
+                }
+                $('#filtrosCliente').text(filtroClienteTexto);
+                if (filtrosServidor && filtroClienteTexto) {
+                    $('#filtrosCliente').prepend(' | ');
+                }
+                if (filtrosServidor || filtroClienteTexto) {
+                    $('#barraFiltrosActivos').show();
+                } else {
+                    $('#barraFiltrosActivos').hide();
+                }
+            }
+
+            function aplicarFiltros() {
+                var estadoSeleccionado = $('#filtroEstado').val();
+                var busquedaEstado = estadoSeleccionado ? '^' + estadoSeleccionado + '$' : '';
+                var busquedaGeneral = $('#buscarGrupos').val();
+
+                tablaGrupos
+                    .search(busquedaGeneral)
+                    .column(7).search(busquedaEstado, true, false)
+                    .order([[5, 'desc']])
+                    .draw();
+
+                actualizarBarraFiltros();
+            }
+
+            $('#buscarGrupos').on('keyup', function () {
+                aplicarFiltros();
+            });
+
+            $('#filtroEstado').on('change', function () {
+                aplicarFiltros();
+            });
+
+        });
+    </script>
+}

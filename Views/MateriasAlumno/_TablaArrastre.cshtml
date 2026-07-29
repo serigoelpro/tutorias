@@ -1,0 +1,962 @@
+﻿@model IEnumerable<PlataformaWeb.Models.Materias.ArrastreGrupoDto>
+@using PlataformaWeb.Models.Materias
+
+@{
+    var modeloSeguro = Model ?? new List<ArrastreGrupoDto>();
+    var listaAlumnos = new List<ArrastreGrupoDto>();
+    foreach (var item in modeloSeguro) { listaAlumnos.Add(item); }
+    var hayDatos = listaAlumnos.Count > 0;
+    var totalRegistros = listaAlumnos.Count;
+    var totalAlumnosUnicos = 0;
+    var totalIntentos = 0;
+    var totalFueraDeTiempo = 0;
+    var totalArrastre = 0;
+    var totalExtraordinario = 0;
+    var promedioIntentos = 0.0;
+    var materiasActivas = 0;
+    var materiasDesactivadas = 0;
+
+    // ✅ 1. CÁLCULO DE MATERIAS POR ALUMNO
+    // Creamos un diccionario para contar las materias en ARRASTRE de cada alumno
+    var conteoMateriasPorAlumno = new Dictionary<int, int>();
+    foreach (var item in listaAlumnos)
+    {
+        // Solo contamos si NO es extraordinario (es arrastre)
+        if (!item.EsExtraordinario)
+        {
+            if (conteoMateriasPorAlumno.ContainsKey(item.IdPersona))
+            {
+                conteoMateriasPorAlumno[item.IdPersona]++;
+            }
+            else
+            {
+                conteoMateriasPorAlumno.Add(item.IdPersona, 1);
+            }
+        }
+    }
+
+    var alumnosVistos = new List<int>();
+    foreach (var alumno in listaAlumnos)
+    {
+        var yaContado = false;
+        foreach (var id in alumnosVistos)
+        {
+            if (id == alumno.IdPersona)
+            {
+                yaContado = true;
+                break;
+            }
+        }
+        if (!yaContado)
+        {
+            alumnosVistos.Add(alumno.IdPersona);
+            totalAlumnosUnicos++;
+        }
+        totalIntentos += alumno.IntentosExtraordinarios;
+        // ✅ Diferenciar entre arrastre y extraordinario
+        if (alumno.EsExtraordinario)
+        {
+            totalExtraordinario++;
+        }
+        else
+        {
+            totalArrastre++;
+            if (alumno.DiasRestantes <= 0) { totalFueraDeTiempo++; }
+        }
+
+        if (alumno.MateriaEstaActiva)
+        {
+            materiasActivas++;
+        }
+        else { materiasDesactivadas++; }
+    }
+    if (totalRegistros > 0)
+    {
+        promedioIntentos = (double)totalIntentos / totalRegistros;
+    }
+}
+
+@if (hayDatos)
+{
+    <div id="indicadorFiltros" class="sga-filter-bar" style="margin-bottom: 20px; margin-top: 15px;">
+        <div class="row">
+            <div class="col-md-12">
+                <i class="glyphicon glyphicon-info-sign"></i>
+                <strong>Arrastre:</strong> @totalArrastre materias
+            </div>
+            <div class="col-md-12">
+                <i class="glyphicon glyphicon-time"></i>
+                <strong>Extraordinario:</strong> @totalExtraordinario materias
+            </div>
+        </div>
+    </div>
+
+    <div class="controles-tabla">
+        <div class="row">
+            <div class="col-md-4">
+
+                <div class="busqueda-general">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>
+                        <input type="text" class="form-control" id="busquedaGeneral" placeholder="Buscar en matrícula, nombre o materia..." autocomplete="off">
+
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" id="limpiarBusqueda" title="Limpiar búsqueda">
+                                <i class="glyphicon glyphicon-remove"></i>
+
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+
+                <div class="controles-filtro">
+                    <div class="btn-toolbar pull-right">
+                        <div class="btn-group btn-group-sm" data-toggle="buttons">
+                            <label class="btn btn-info" data-filtro="extraordinario">
+
+                                <input type="radio" name="filtro-tipo" value="extraordinario">
+                                <i class="glyphicon glyphicon-time"></i> Extraordinario
+                            </label>
+
+                            <label class="btn btn-primary" data-filtro="arrastre">
+                                <input type="radio" name="filtro-tipo" value="arrastre">
+                                <i class="glyphicon glyphicon-hourglass"></i> Arrastre
+
+                            </label>
+                            <label class="btn btn-danger" data-filtro="fuera-tiempo">
+                                <input type="radio" name="filtro-tiempo" value="fuera-tiempo">
+
+                                <i class="glyphicon glyphicon-ban-circle"></i> Fuera de Tiempo
+                            </label>
+                            <label class="btn btn-warning" data-filtro="critico">
+
+                                <input type="radio" name="filtro-tiempo" value="critico">
+                                <i class="glyphicon glyphicon-exclamation-sign"></i> Crítico
+                            </label>
+
+                            <label class="btn btn-warning-light" data-filtro="medio">
+                                <input type="radio" name="filtro-tiempo" value="medio">
+                                <i class="glyphicon glyphicon-time"></i> Medio
+
+                            </label>
+                            <label class="btn btn-success" data-filtro="en-tiempo">
+                                <input type="radio" name="filtro-tiempo" value="en-tiempo">
+
+                                <i class="glyphicon glyphicon-ok-circle"></i> En Tiempo
+                            </label>
+                        </div>
+                        <div class="btn-group btn-group-sm dropdown-fixed">
+
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                <i class="glyphicon glyphicon-cog"></i> Opciones <span class="caret"></span>
+                            </button>
+
+                            <ul class="dropdown-menu dropdown-menu-right dropdown-opciones">
+                                <li><a href="javascript:void(0)" onclick="mostrarTodos()"><i class="glyphicon glyphicon-list text-info"></i> Mostrar Todos</a></li>
+                                <li><a href="javascript:void(0)" onclick="limpiarTodosFiltros()"><i class="glyphicon glyphicon-refresh text-success"></i> Limpiar Filtros</a></li>
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    if (materiasDesactivadas > 0)
+    {
+        <div class="alert alert-warning alert-dismissible" style="margin-bottom: 15px;">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <i class="glyphicon glyphicon-info-sign"></i>
+            <strong>Información:</strong> Se encontraron <strong>@materiasDesactivadas</strong> materias desactivadas.
+        </div>
+    }
+
+    <div class="table-responsive tabla-principal">
+        <table class="table table-striped table-hover table-condensed">
+            <thead>
+                <tr class="active">
+                    <th width="8%" class="sortable-header" data-column="0">Matrícula</th>
+                    <th width="20%" class="sortable-header" data-column="1">Nombre del Alumno</th>
+
+                    <th width="18%" class="sortable-header" data-column="2">Materia</th>
+                    <th width="7%" class="sortable-header text-center" data-column="3">Cuatrim.</th>
+                    <th width="7%" class="sortable-header text-center" data-column="4">Tipo</th>
+                    <th width="7%" class="sortable-header text-center" data-column="5">Intentos</th>
+
+                    <th width="12%" class="sortable-header text-center" data-column="6">Estado / Periodo</th>
+                    <th width="10%" class="sortable-header text-center" data-column="7">Tiempo</th>
+                    <th width="5%" class="text-center">Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody id="tabla-body-filtrable">
+                @foreach (var alumno in listaAlumnos)
+                {
+                    var esExtraordinario = alumno.EsExtraordinario;
+                    var estadoTiempoClass = alumno.EstadoTiempo.ToLower().Replace(" ", "-");
+                    var filaColorClass = esExtraordinario ? "fila-extraordinario" : "fila-" + estadoTiempoClass;
+
+                    // ✅ 2. ASIGNACIÓN DE CLASE DE BORDE
+                    var bordeClass = "";
+                    if (!esExtraordinario) // Solo aplicar a materias de arrastre
+                    {
+                        var conteo = 0;
+                        if (conteoMateriasPorAlumno.TryGetValue(alumno.IdPersona, out conteo))
+                        {
+                            if (conteo >= 3)
+                            {
+                                bordeClass = "borde-rojo"; // 3+ materias
+                            }
+                            else if (conteo == 2)
+                            {
+                                bordeClass = "borde-naranja"; // 2 materias
+                            }
+                            else if (conteo == 1)
+                            {
+                                bordeClass = "borde-amarillo"; // 1 materia
+                            }
+                        }
+                    }
+
+                    // ✅ 3. APLICACIÓN DE LA NUEVA CLASE EN LA FILA
+                    <tr class="@filaColorClass fila-filtrable fila-grupo-filtrable @bordeClass"
+                        data-tipo-problema="@(esExtraordinario ? "extraordinario" : "arrastre")"
+                        data-es-extraordinario="@esExtraordinario.ToString().ToLower()"
+                        data-criticidad="@alumno.NivelCriticidad"
+                        data-dias-restantes="@alumno.DiasRestantes"
+                        data-matricula="@alumno.Matricula.ToLower()"
+                        data-nombre="@alumno.NombreAlumno.ToLower()"
+                        data-materia="@alumno.MateriaArrastre.ToLower()"
+                        data-cuatrimestre="@alumno.CuatrimestreMateria"
+                        data-intentos="@alumno.IntentosExtraordinarios"
+                        data-estado-tiempo="@alumno.EstadoTiempo"
+                        data-contenido-busqueda="@(alumno.Matricula.ToLower() + " " + alumno.NombreAlumno.ToLower() + " " + alumno.MateriaArrastre.ToLower())"
+                        data-materia-activa="@(alumno.MateriaEstaActiva.ToString().ToLower())"
+                        data-estado-materia="@(alumno.MateriaEstaActiva ?
+"activa" : "desactivada")">
+
+                        <td><strong class="matricula-highlight">@alumno.Matricula</strong></td>
+                        <td>
+                            <div class="alumno-info">
+
+                                <strong class="nombre-highlight">@alumno.NombreAlumno</strong>
+                                <br><small class="text-muted">@alumno.GradoGrupo</small>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="materia-info">
+                                <span class="materia-nombre materia-highlight">@alumno.MateriaArrastre</span>
+
+                                @if (!alumno.MateriaEstaActiva)
+                                {
+                                    <br><small class="label label-warning"><i class="glyphicon glyphicon-eye-close"></i> Materia Desactivada</small>
+
+                                }
+                                @Html.Raw(!string.IsNullOrEmpty(alumno.Observaciones) ?
+"<br><small class='text-info'><i class='glyphicon glyphicon-comment'></i> " + alumno.Observaciones + "</small>" : "")
+                            </div>
+                        </td>
+                        <td class="text-center"><span class="badge badge-cuatrimestre">@alumno.CuatrimestreMateria°</span></td>
+
+
+                        @* ✅ COLUMNA DE TIPO - NUEVA *@
+                        <td class="text-center">
+                            @if (esExtraordinario)
+
+                            {
+                                <span class="label label-info" title="Recuperable este cuatrimestre">
+                                    <i class="glyphicon glyphicon-time"></i> Extra
+
+                                </span>
+                            }
+                            else
+                            {
+
+                                <span class="label label-primary" title="Límite de 8 meses">
+                                    <i class="glyphicon glyphicon-hourglass"></i> Arrastre
+
+                                </span>
+                            }
+                        </td>
+
+                        <td class="text-center">
+
+                            @Html.Raw(alumno.IntentosExtraordinarios > 0 ?
+                    "<span class='badge badge-" + (alumno.IntentosExtraordinarios >= 3 ? "danger" : "warning") + "'>" + alumno.IntentosExtraordinarios + "</span>" : "<span class='text-muted'>-</span>")
+                        </td>
+
+                        @* ✅ COLUMNA DIFERENCIADA SEGÚN TIPO *@
+                        <td class="text-center">
+
+                            @if (esExtraordinario)
+                            {
+                                @* EXTRAORDINARIO: Mostrar periodo *@
+
+                                <span class="label label-info">@alumno.EstadoTiempo</span>
+                                <br><small class="text-muted">@alumno.PeriodoExtraordinario</small>
+                                if (alumno.FechaExamenExtraordinario.HasValue)
+
+                                {
+                                    <br><small class="text-muted">Desde: @alumno.FechaExamenExtraordinario.Value.ToString("dd/MM/yyyy")</small>
+                                }
+
+                            }
+                            else
+                            {
+
+                                @* ARRASTRE: Mostrar estado de tiempo *@
+                                <span class="label label-estado-@estadoTiempoClass">@alumno.EstadoTiempo</span>
+                                if (alumno.FechaInicioArrastre.HasValue)
+
+                                {
+                                    <br><small class="text-muted">Inicio: @alumno.FechaInicioArrastre.Value.ToString("dd/MM/yyyy")</small>
+                                }
+
+                            }
+                        </td>
+
+                        @* ✅ COLUMNA DE TIEMPO DIFERENCIADA *@
+                        <td class="text-center">
+
+                            @if (esExtraordinario)
+                            {
+                                @* EXTRAORDINARIO: No muestra días *@
+
+                                <div class="text-info">
+                                    <i class="glyphicon glyphicon-calendar"></i>
+                                    <br><small>Este cuatrimestre</small>
+
+                                </div>
+                            }
+                            else
+
+                            {
+                                @* ARRASTRE: Muestra días restantes *@
+                                if (alumno.DiasRestantes > 0)
+
+                                {
+                                    <span class="badge badge-tiempo-@(alumno.DiasRestantes <= 60 ?
+"danger" : alumno.DiasRestantes <= 180 ? "warning" : "info")">
+                                        @alumno.DiasRestantes días
+                                    </span>
+
+                                    if (alumno.FechaLimiteArrastre.HasValue)
+                                    {
+                                        <br><small class="text-muted">
+                                            Límite:
+                                            @alumno.FechaLimiteArrastre.Value.ToString("dd/MM/yyyy")
+                                        </small>
+                                    }
+                                }
+
+                                else
+                                {
+                                    <span class="label label-danger">Vencido</span>
+
+                                    if (Math.Abs(alumno.DiasRestantes) > 0)
+                                    {
+                                        <br><small class="text-danger">@Math.Abs(alumno.DiasRestantes) días vencido</small>
+
+                                    }
+                                }
+                            }
+
+                        </td>
+
+                        <td class="text-center">
+                            <div class="btn-group-vertical btn-group-xs">
+                                <a href="@Url.Action("Index", "MateriasAlumno", new {
+id = alumno.IdPersona })" class="btn btn-primary btn-xs" title="Ver materias del alumno"><i class="glyphicon glyphicon-list-alt"></i></a>
+                                <a href="@Url.Action("Index", "Individuals", new { id = alumno.IdPersona })" class="btn btn-info btn-xs" title="Seguimiento individual"><i class="glyphicon glyphicon-user"></i></a>
+                            </div>
+
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tbody id="mensaje-sin-resultados" style="display: none;">
+                <tr>
+
+                    <td colspan="9" class="sin-resultados">
+                        <div class="mensaje-sin-resultados-container">
+                            <div class="sin-resultados-icon"><i class="glyphicon glyphicon-search"></i></div>
+                            <div class="sin-resultados-content">
+
+                                <h4 class="sin-resultados-title">Sin resultados encontrados</h4>
+                                <p class="sin-resultados-description">No se encontraron registros que coincidan con los criterios de búsqueda o filtros aplicados.</p>
+
+                                <div class="sin-resultados-actions">
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="limpiarTodosFiltros()"><i class="glyphicon glyphicon-refresh"></i> Limpiar Filtros</button>
+                                    <button type="button" class="btn btn-default btn-sm" onclick="mostrarTodos()">
+                                        <i class="glyphicon glyphicon-list"></i>
+                                        Mostrar Todos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    @* ✅ ESTILOS ACTUALIZADOS *@
+    <style>
+        .fila-extraordinario {
+            background-color: #e3f2fd !important;
+        }
+
+            .fila-extraordinario:hover {
+                background-color: #bbdefb !important;
+            }
+
+        [data-filtro="extraordinario"].active,
+        [data-filtro="arrastre"].active {
+            background-color: #337ab7;
+            color: white;
+        }
+    </style>
+
+    @* ✅ JAVASCRIPT ACTUALIZADO CON FILTRO DE TIPO *@
+    <script>
+        window.busquedaActiva = '';
+        window.filtroActivo = null;
+        window.filtroTipoActivo = null;
+        window.ordenActual = null;
+
+        $(document).ready(function () {
+            // Búsqueda
+            $('#busquedaGeneral').on('input', function () {
+                var texto = $(this).val().toLowerCase().trim();
+                window.busquedaActiva = texto;
+                aplicarFiltros();
+
+            });
+
+            $('#limpiarBusqueda').click(function () {
+                $('#busquedaGeneral').val('');
+                window.busquedaActiva = '';
+                aplicarFiltros();
+            });
+
+            // Filtro por TIPO (Arrastre / Extraordinario)
+
+            $('[data-filtro="arrastre"], [data-filtro="extraordinario"]').click(function () {
+                var $this = $(this);
+                var filtro = $this.data('filtro');
+
+                if ($this.hasClass('active')) {
+                    $this.removeClass('active');
+
+                    window.filtroTipoActivo = null;
+                } else {
+                    $('[data-filtro="arrastre"], [data-filtro="extraordinario"]').removeClass('active');
+                    $this.addClass('active');
+                    window.filtroTipoActivo = filtro;
+                }
+
+                aplicarFiltros();
+            });
+
+            // Filtro por tiempo (solo para arrastre)
+            $('[data-filtro="fuera-tiempo"], [data-filtro="critico"], [data-filtro="medio"], [data-filtro="en-tiempo"]').click(function () {
+                var $this = $(this);
+                var filtro = $this.data('filtro');
+
+                if ($this.hasClass('active')) {
+
+                    $this.removeClass('active');
+                    window.filtroActivo = null;
+                } else {
+                    $('[data-filtro]').not('[data-filtro="arrastre"], [data-filtro="extraordinario"]').removeClass('active');
+                    $this.addClass('active');
+
+                    window.filtroActivo = filtro;
+                }
+
+                aplicarFiltros();
+            });
+            // Ordenamiento
+            $('.sortable-header').dblclick(function () {
+                var columna = $(this).data('column');
+                if (window.ordenActual && window.ordenActual.columna === columna) {
+                    window.ordenActual.direccion = window.ordenActual.direccion === 'asc' ? 'desc' : 'asc';
+
+                } else {
+                    window.ordenActual = { columna: columna, direccion: 'asc' };
+                }
+
+                $('.sortable-header').removeClass('sorted-asc sorted-desc');
+                $(this).addClass('sorted-' + window.ordenActual.direccion);
+                aplicarFiltros();
+
+            });
+        });
+        function aplicarFiltros() {
+            $('.fila-filtrable').each(function () {
+                var $fila = $(this);
+                var visible = true;
+
+                // Filtro por TIPO
+                if (window.filtroTipoActivo) {
+
+                    var tipoProblema = $fila.data('tipo-problema');
+                    visible = visible && (tipoProblema === window.filtroTipoActivo);
+                }
+
+                // Filtro por TIEMPO (solo aplica a arrastre)
+                if (visible && window.filtroActivo) {
+
+                    var esExtraordinario = $fila.data('es-extraordinario') === true || $fila.data('es-extraordinario') === 'true';
+
+                    if (!esExtraordinario) {
+                        var estadoTiempo = ($fila.data('estado-tiempo') || '').toString().toLowerCase();
+
+                        switch (window.filtroActivo) {
+                            case 'fuera-tiempo':
+                                visible = estadoTiempo === 'fuera de tiempo';
+                                break;
+                            case 'critico':
+                                visible = estadoTiempo === 'crítico';
+                                break;
+                            case 'medio':
+                                visible = estadoTiempo === 'medio';
+                                break;
+                            case 'en-tiempo':
+                                visible = estadoTiempo === 'en tiempo';
+                                break;
+                        }
+                    } else {
+                        // Si filtro de tiempo está activo pero es extraordinario, no mostrar
+                        visible = false;
+                    }
+                }
+
+                // Búsqueda de texto
+                if (visible && window.busquedaActiva !== '') {
+                    var contenido = $fila.data('contenido-busqueda') ||
+                        '';
+                    if (contenido.indexOf(window.busquedaActiva) === -1) {
+                        visible = false;
+                    }
+                }
+
+                if (visible) {
+                    $fila.removeClass('filtered-out').show();
+                } else {
+                    $fila.addClass('filtered-out').hide();
+                }
+            });
+
+            controlarMensajeSinResultados();
+            if (window.ordenActual) {
+                aplicarOrdenamiento();
+            }
+        }
+
+        function aplicarOrdenamiento() {
+            if (!window.ordenActual) return;
+            var filasVisibles = $('.fila-filtrable:visible').toArray();
+            filasVisibles.sort(function (a, b) {
+                var valorA = obtenerValorCelda(a, window.ordenActual.columna);
+                var valorB = obtenerValorCelda(b, window.ordenActual.columna);
+
+                if (!isNaN(valorA) && !isNaN(valorB)) {
+                    valorA = parseFloat(valorA) || 0;
+
+                    valorB = parseFloat(valorB) || 0;
+                    return window.ordenActual.direccion === 'asc' ? valorA - valorB : valorB - valorA;
+                }
+
+                valorA = valorA.toString().toLowerCase();
+                valorB = valorB.toString().toLowerCase();
+
+
+                if (window.ordenActual.direccion === 'asc') {
+                    return valorA < valorB ? -1 : valorA > valorB ? 1 : 0;
+                } else {
+                    return valorA > valorB ? -1 : valorA < valorB ?
+                        1 : 0;
+                }
+            });
+            var tbody = $('#tabla-body-filtrable');
+            $.each(filasVisibles, function (index, fila) {
+                tbody.append(fila);
+            });
+        }
+
+        function obtenerValorCelda(fila, columna) {
+            var $fila = $(fila);
+            switch (parseInt(columna)) {
+                case 0: return $fila.data('matricula') ||
+                    '';
+                case 1: return $fila.data('nombre') || '';
+                case 2: return $fila.data('materia') || '';
+                case 3: return $fila.data('cuatrimestre') || 0;
+                case 4: return $fila.data('tipo-problema') || '';
+                case 5: return $fila.data('intentos') || 0;
+                case 6: return $fila.data('estado-tiempo') || '';
+                case 7: return $fila.data('dias-restantes') || 0;
+                default: return '';
+            }
+        }
+
+        function controlarMensajeSinResultados() {
+            var filasVisibles = $('.fila-filtrable:visible').length;
+            var $mensajeSinResultados = $('#mensaje-sin-resultados');
+
+            if (filasVisibles === 0) {
+                $mensajeSinResultados.show();
+            } else {
+                $mensajeSinResultados.hide();
+            }
+        }
+
+        function mostrarTodos() {
+            $('.fila-filtrable').removeClass('filtered-out').show();
+            $('#busquedaGeneral').val('');
+            window.busquedaActiva = '';
+            window.filtroActivo = null;
+            window.filtroTipoActivo = null;
+            $('[data-filtro]').removeClass('active');
+            controlarMensajeSinResultados();
+        }
+
+        function limpiarTodosFiltros() {
+            mostrarTodos();
+        }
+    </script>
+}
+else
+{
+    <div class="alert alert-info">
+        <i class="glyphicon glyphicon-info-sign"></i>
+        <strong>Sin datos:</strong> No hay materias en arrastre o extraordinario para este grupo.
+    </div>
+}
+
+
+<style>
+    :root {
+        --primary-color: #1abc9c;
+        --success-color: #27ae60;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --info-color: #3498db;
+    }
+
+    /* ✅ 4. ESTILOS DE FILA ACTUALIZADOS (SIN BORDES BASADOS EN TIEMPO) */
+    .fila-fuera-de-tiempo {
+        background-color: rgba(231, 76, 60, 0.08) !important;
+        /* border-left: 4px solid #e74c3c !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-fuera-de-tiempo:hover {
+            background-color: rgba(231, 76, 60, 0.15) !important;
+        }
+
+    .fila-crítico {
+        background-color: rgba(243, 156, 18, 0.08) !important;
+        /* border-left: 4px solid #f39c12 !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-crítico:hover {
+            background-color: rgba(243, 156, 18, 0.15) !important;
+        }
+
+    .fila-medio {
+        background-color: rgba(241, 196, 15, 0.05) !important;
+        /* border-left: 4px solid #f1c40f !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-medio:hover {
+            background-color: rgba(241, 196, 15, 0.12) !important;
+        }
+
+    .fila-en-tiempo {
+        background-color: rgba(39, 174, 96, 0.05) !important;
+        /* border-left: 4px solid #27ae60 !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-en-tiempo:hover {
+            background-color: rgba(39, 174, 96, 0.12) !important;
+        }
+
+    /* ✅ 5. NUEVOS ESTILOS DE BORDE POR CONTEO DE MATERIAS */
+    .borde-rojo {
+        border-left: 5px solid var(--danger-color) !important; /* 3+ materias */
+    }
+
+    .borde-naranja {
+        border-left: 5px solid var(--warning-color) !important; /* 2 materias */
+    }
+
+    .borde-amarillo {
+        border-left: 5px solid #f1c40f !important; /* 1 materia (amarillo de .fila-medio) */
+    }
+
+
+    /* MATERIAS DESACTIVADAS (BORDE REMOVIDO PARA NO CONFLICTO) */
+    .fila-grupo-filtrable[data-materia-activa="false"] {
+        background-color: rgba(255, 193, 7, 0.05) !important;
+        /* border-left: 3px solid #ffc107 !important; */ /* <- REMOVIDO */
+    }
+
+    /* BADGE DE CUATRIMESTRE */
+    .badge-cuatrimestre {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 4px;
+        display: inline-block;
+        box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+        letter-spacing: 0.5px;
+    }
+
+    /* LABELS DE ESTADO */
+    .label-estado-fuera-de-tiempo {
+        background-color: #e74c3c !important;
+        color: white !important;
+    }
+
+    .label-estado-crítico {
+        background-color: #f39c12 !important;
+        color: white !important;
+    }
+
+    .label-estado-medio {
+        background-color: #f1c40f !important;
+        color: #333 !important;
+    }
+
+    .label-estado-en-tiempo {
+        background-color: #27ae60 !important;
+        color: white !important;
+    }
+
+    /* BOTONES DE FILTRO */
+    .btn-warning-light {
+        background-color: #f1c40f;
+        border-color: #f39c12;
+        color: #333;
+    }
+
+        .btn-warning-light:hover, .btn-warning-light.active {
+            background-color: #e2b607;
+            border-color: #d4a005;
+            color: #333;
+        }
+
+    .controles-filtro .btn.active, .controles-filtro .btn:active {
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.125);
+        border-color: #adadad;
+    }
+
+    .controles-filtro .btn-danger.active {
+        background-color: var(--danger-color);
+        border-color: var(--danger-color);
+        color: white;
+    }
+
+    .controles-filtro .btn-warning.active {
+        background-color: var(--warning-color);
+        border-color: var(--warning-color);
+        color: white;
+    }
+
+    .controles-filtro .btn-success.active {
+        background-color: var(--success-color);
+        border-color: var(--success-color);
+        color: white;
+    }
+
+    /* HEADERS ORDENABLES */
+    .sortable-header {
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+        position: relative;
+        font-weight: 600;
+        color: #495057;
+    }
+
+        .sortable-header:hover {
+            background-color: #e8f4fd !important;
+            color: #007bff;
+        }
+
+            .sortable-header:hover:after {
+                content: " ⇅";
+                color: #007bff;
+                font-size: 12px;
+                opacity: 0.7;
+            }
+
+        .sortable-header.sorted-asc {
+            background-color: #d1ecf1 !important;
+            color: #0c5460;
+        }
+
+        .sortable-header.sorted-desc {
+            background-color: #f8d7da !important;
+            color: #721c24;
+        }
+
+        .sortable-header.sorted-asc:after {
+            content: " ↑";
+            color: #0c5460;
+            font-weight: bold;
+        }
+
+        .sortable-header.sorted-desc:after {
+            content: " ↓";
+            color: #721c24;
+            font-weight: bold;
+        }
+
+    /* ESTILOS GENERALES */
+    .controles-tabla {
+        background: white;
+        border: 1px solid #e3e3e3;
+        border-radius: 4px 4px 0 0;
+        padding: 15px;
+        margin-bottom: 0;
+    }
+
+    .tabla-principal {
+        border: 1px solid #e3e3e3;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        margin-bottom: 0;
+    }
+
+        .tabla-principal thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            vertical-align: middle;
+            padding: 12px 8px;
+        }
+
+        .tabla-principal tbody tr {
+            transition: all 0.2s ease;
+        }
+
+    .badge-tiempo-danger {
+        background-color: var(--danger-color);
+    }
+
+    .badge-tiempo-warning {
+        background-color: var(--warning-color);
+    }
+
+    .badge-tiempo-info {
+        background-color: var(--info-color);
+    }
+
+    .label-warning {
+        background-color: #f0ad4e;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-weight: 500;
+    }
+
+    .busqueda-general .input-group {
+        display: flex !important;
+        width: 100%;
+    }
+
+    .busqueda-general .input-group-addon {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-right: none;
+        color: #7f8c8d;
+        display: flex !important;
+        align-items: center;
+        padding: 0 12px;
+        border-radius: 0 !important;
+        flex-shrink: 0;
+    }
+
+    .row
+
+    .busqueda-general .form-control {
+        border-radius: 0 !important;
+        box-shadow: none;
+        border: 1px solid #ddd;
+        height: 34px;
+        border-left: none !important;
+        border-right: none !important;
+        flex: 1;
+        margin: 0 !important;
+    }
+
+    .busqueda-general .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(26, 188, 156, 0.2);
+    }
+
+    .sin-resultados {
+        padding: 0 !important;
+        border: none !important;
+        background: #f8f9fa !important;
+    }
+
+    .mensaje-sin-resultados-container {
+        text-align: center;
+        padding: 40px 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        margin: 10px;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .metric {
+        text-align: center;
+        padding: 10px;
+    }
+
+    .metric-number {
+        display: block;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary-color);
+        line-height: 1;
+    }
+
+    .metric-label {
+        display: block;
+        font-size: 12px;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        margin-top: 4px;
+        font-weight: 500;
+    }
+
+    .texto-destacado {
+        background: rgba(255, 235, 59, 0.6);
+        padding: 1px 2px;
+        border-radius: 2px;
+        font-weight: 600;
+    }
+
+    .fila-filtrable.filtered-out {
+        display: none !important;
+    }
+</style>

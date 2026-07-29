@@ -1,0 +1,107 @@
+﻿﻿@using Plataforma_Web.Models.PrimeraEntrevista
+
+@model IEnumerable<PlataformaWeb.Models.Seguimiento>
+
+@{
+    DatosPersonales Alumno = ViewBag.Alumno as DatosPersonales;
+
+    ViewBag.Title = "Index";
+
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+
+<div class="sga-scope">
+    <h2>Seguimientos de @ViewBag.Alumno.Nombre</h2>
+
+    <div class="sga-scope">
+        <div class="no-print d-flex gap-2">
+            @Html.ActionLink(
+                     "Crear seguimiento",
+                     "Create",
+                     new { id = ViewBag.idind },
+                     new { @class = "btn btn-utt-outline" } // Aplica el nuevo estilo
+                 )
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.Fecha)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.Vulnerabilidad)
+                                </th>
+                                <th>
+                                    Acción / Problematica
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.Accion)
+                                </th>
+                                <th>
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Fecha)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Vulnerabilidad)
+                                </td>
+                                <td style="overflow:hidden">
+                                    @Html.DisplayFor(modelItem => item.Problematica)
+                                </td>
+                                <td style="overflow:hidden">
+                                    @Html.DisplayFor(modelItem => item.Accion)
+                                </td>
+                                <td>
+                                    <a class="btn btn-warning" href="@Url.Action("Edit", new { id = item.IdSeguimiento })"
+                                       role="button">
+                                        <span class="glyphicon glyphicon-pencil"></span>
+                                        Editar
+
+                                    </a>
+
+                                    @*<a class="btn btn-primary" style="background-color: #ff0000; border-color: #ff0000;" href="@Url.Action("Delete", new { id = item.IdSeguimiento })"
+                                           role="button">
+                                            <span class="glyphicon glyphicon-exclamation-sign"></span>
+                                            Eliminar
+
+                                        </a>*@
+
+                                </td>
+                            </tr>
+                        }
+
+                    </table>
+                </div>
+            </table>
+
+
+            <div class="gtco-section">
+                <div class="gtco-container">
+
+                    <div class="row">
+                        <a href="@Url.Action("Index","Individuals", new { id = Alumno.IdPersona })">
+                            <span class="btn btn-info fh5co-card-item" style="border: 2px solid #fff0 !important;background: #fff0;">
+                                <input type="submit" class="btn btn-info" value="Regresar">
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

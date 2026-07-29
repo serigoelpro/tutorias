@@ -1,0 +1,671 @@
+﻿@model Plataforma_Web.Controllers.CanalizacionesController.CanalizacionViewModel
+
+@{
+    ViewBag.Title = "Formulario de Canalización";
+}
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/Canalizaciones.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/CanalizacionesFix.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0px;
+        }
+
+            .form-header .form-title {
+                margin: 0;
+            }
+
+        .btn-history-top {
+            text-decoration: none;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color: 0.3s;
+        }
+
+            .btn-history-top:hover {
+                background-color: #0056b3;
+                color: white;
+            }
+
+
+        .swal2-popup .pdf-preview-container {
+            border: 1px solid #ccc;
+            font-family: Arial, sans-serif;
+            color: black;
+            font-size: 9pt;
+            text-align: left;
+        }
+
+            .swal2-popup .pdf-preview-container div {
+                box-sizing: border-box;
+            }
+
+        #psicologo-selector-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .psico-tarjeta {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+            .psico-tarjeta:hover {
+                border-color: #007bff;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+
+            .psico-tarjeta.recomendado {
+                border-color: #28a745;
+                background-color: #f8fff8;
+            }
+
+
+            .psico-tarjeta.seleccionada {
+                border-color: #007bff;
+                background-color: #f0f7ff;
+                box-shadow: 0 0 10px rgba(0,123,255,0.3);
+                border-width: 3px;
+            }
+
+            .psico-tarjeta h4 {
+                margin: 0 0 10px 0;
+                font-size: 1.1rem;
+                color: #333;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .psico-tarjeta .tag-rec {
+                font-size: 0.8rem;
+                font-weight: bold;
+                color: #28a745;
+                background-color: #e9f9ec;
+                padding: 3px 8px;
+                border-radius: 4px;
+            }
+
+            .psico-tarjeta h5 {
+                margin: 10px 0 5px 0;
+                font-size: 0.9rem;
+                color: #555;
+                font-weight: bold;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 3px;
+            }
+
+            .psico-tarjeta ul {
+                margin: 0;
+                padding-left: 20px;
+                font-size: 0.85rem;
+                color: #444;
+            }
+
+                .psico-tarjeta ul li {
+                    margin-bottom: 5px;
+                }
+    </style>
+</head>
+
+<div class="canalizacion-form-container">
+
+    <div class="form-header">
+        <h1 class="form-title">FORMULARIO DE CANALIZACIÓN</h1>
+
+        <a href="@Url.Action("Vulnerabilidades", "Canalizaciones", new { id = Model.IdPersona })"
+           class="btn-history-top"
+           title="Ver el historial de canalizaciones de este alumno">
+            <i class="fas fa-list-alt"></i> Ver Historial
+        </a>
+    </div>
+    <div class="form-section student-details">
+        <h2 class="section-title">DETALLES DEL ALUMNO</h2>
+        <div class="detail-grid">
+            <div class="detail-item"><span class="detail-label">Carrera:</span> <span class="detail-value">@Html.Raw(HttpUtility.HtmlDecode(Model.Carrera ?? "No disponible"))</span></div>
+            <div class="detail-item"><span class="detail-label">Especialidad:</span> <span class="detail-value">@Html.Raw(HttpUtility.HtmlDecode(Model.Especialidad ?? "No disponible"))</span></div>
+            <div class="detail-item"><span class="detail-label">Nombre del alumno:</span> <span class="detail-value">@Html.Raw(HttpUtility.HtmlDecode(Model.Nombre ?? "No disponible"))</span></div>
+            <div class="detail-item"><span class="detail-label">Matrícula:</span> <span class="detail-value">@(Model.Matricula ?? "No disponible")</span></div>
+            <div class="detail-item"><span class="detail-label">Grado y grupo:</span> <span class="detail-value">@(Model.Grupo ?? "No disponible")</span></div>
+            <div class="detail-item"><span class="detail-label">Correo Institucional:</span> <span class="detail-value">@Html.Raw(HttpUtility.HtmlDecode(Model.Email ?? "No disponible"))</span></div>
+            <div class="detail-item"><span class="detail-label">Número de celular:</span> <span class="detail-value">@Html.Raw(HttpUtility.HtmlDecode(Model.Celular ?? "No disponible"))</span></div>
+        </div>
+    </div>
+
+    <div class="form-section tutor-details">
+        <h2 class="section-title">DATOS DEL TUTOR</h2>
+        <div class="detail-grid">
+            <div class="detail-item"><span class="detail-label">Nombre del tutor:</span> <span class="detail-value">@Html.Raw(HttpUtility.HtmlDecode(Model.TutorFullName ?? "No disponible"))</span></div>
+            <div class="detail-item"><span class="detail-label">Correo institucional (tutor):</span> <span class="detail-value">@Html.Raw(HttpUtility.HtmlDecode(Model.TutorUsername ?? "No disponible"))</span></div>
+        </div>
+    </div>
+
+    <form id="canalizacionForm" action="@Url.Action("EscribirCanalizacion", "Canalizaciones")" method="post">
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(model => model.IdPersona)
+        @Html.HiddenFor(model => model.Nombre)
+        @Html.HiddenFor(model => model.Matricula)
+        @Html.HiddenFor(model => model.Grupo)
+        @Html.HiddenFor(model => model.Carrera)
+        @Html.HiddenFor(model => model.Especialidad)
+        @Html.HiddenFor(model => model.Turno)
+        @Html.HiddenFor(model => model.Email)
+        @Html.HiddenFor(model => model.Celular)
+        @Html.HiddenFor(model => model.TutorFullName)
+        @Html.HiddenFor(model => model.TutorUsername)
+
+        @Html.HiddenFor(model => model.IdTutorAsignado)
+        @Html.HiddenFor(model => model.CorreoTutorAsignado)
+
+        @Html.HiddenFor(model => model.IdTurnoAlumno, new { id = "IdTurnoAlumno" })
+
+        <div class="form-section canalization-info">
+            <h2 class="section-title">INFORMACIÓN DE LA CANALIZACIÓN</h2>
+
+            <div class="form-group">
+                <label class="form-label">Seleccionar vulnerabilidad pasada (opcional):</label>
+                <select name="SelectedPastVulnerabilityId" id="pastVulnerabilities" class="form-select">
+                    <option value="">Ninguna</option>
+                    @foreach (var item in Model.PastVulnerabilities ?? new List<SelectListItem>())
+                    {
+                        <option value="@item.Value">@Html.Raw(HttpUtility.HtmlDecode(item.Text))</option>
+                    }
+                </select>
+                @Html.ValidationMessageFor(model => model.SelectedPastVulnerabilityId, "", new { @class = "text-danger" })
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Identifique la vulnerabilidad por la que se analiza:</label>
+                @Html.DropDownListFor(model => model.IdTipoCanalizacion, Model.TiposCanalizacion ?? new List<SelectListItem>(), "Seleccione un tipo...", new { @class = "form-select", id = "IdTipoCanalizacion" })
+                @Html.ValidationMessageFor(model => model.IdTipoCanalizacion, "", new { @class = "text-danger" })
+            </div>
+            <div class="form-group" id="psicologo-section-container" style="display: none;">
+                <label class="form-label">Asignar psicólogo (opcional):</label>
+
+                @Html.HiddenFor(model => model.IdPsicologo, new { id = "IdPsicologo" })
+                <input type="hidden" id="SelectedPsicologoNombre" />
+                <div id="psicologo-selector-container">
+                </div>
+                @Html.ValidationMessageFor(model => model.IdPsicologo, "", new { @class = "text-danger" })
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Explique las características que consideró:</label>
+                <div style="font-size: 1rem; color: #777; margin-bottom: 8px; font-style: italic;">
+                    * Debe ser explícito y detallado, evite respuestas cortas.
+                </div>
+                @Html.TextAreaFor(model => model.MotivoCanalizacion, new { @class = "form-textarea", id = "Notas", rows = "4", placeholder = "Describa el motivo de la canalización..." })
+                @Html.ValidationMessageFor(model => model.MotivoCanalizacion, "", new { @class = "text-danger" })
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Fecha de registro:</label>
+                <input type="text" id="fechaRegistro" name="fechaRegistro" value="@DateTime.Now.ToString("dd/MM/yyyy HH:mm")" class="form-input" readonly />
+            </div>
+
+            <div class="form-actions">
+
+                <a href="@Url.Action("Grupo", "Entrevistas")" class="btn-back">
+                    <i class="fas fa-users"></i> Regresar a Grupos
+                </a>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane"></i> Enviar Canalización
+                </button>
+                <button type="button" id="btnPrintPDF" class="btn-print">
+                    <i class="fas fa-print"></i> Imprimir PDF
+                </button>
+            </div>
+
+            <div id="notification" class="notification" style="display: none;"></div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            function decodeHtml(html) {
+                const txt = document.createElement("textarea");
+                txt.innerHTML = html;
+                return txt.value;
+            }
+
+            $('#pastVulnerabilities').change(function () {
+                var selectedId = $(this).val();
+                if (selectedId) {
+                    $.ajax({
+                        url: '@Url.Action("GetCanalizacionDetails", "Canalizaciones")',
+                        type: 'GET',
+                        data: { id: selectedId },
+                        success: function (data) {
+                            if (data.error) {
+                                Swal.fire('Error', data.error, 'error');
+                            } else {
+                                $('#IdTipoCanalizacion').val(data.IdTipoCanalizacion || '');
+                                $('#Notas').val(data.Notas || '');
+
+                                $('#IdTipoCanalizacion').trigger('change');
+
+                                setTimeout(function () {
+                                    var psicologoId = data.IdPsicologo || '';
+                                    $('#IdPsicologo').val(psicologoId);
+
+                                    if (psicologoId) {
+                                        var $card = $('.psico-tarjeta[data-id="' + psicologoId + '"]');
+                                        if ($card.length) {
+                                            $card.addClass('seleccionada');
+                                            $('#SelectedPsicologoNombre').val($card.data('nombre'));
+                                        }
+                                    }
+                                }, 500); // 500ms es un buen tiempo para esperar el AJAX de 'change'
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'No se pudieron cargar los detalles.', 'error');
+                        }
+                    });
+                } else {
+                    $('#IdTipoCanalizacion').val('');
+                    $('#IdPsicologo').val('');
+                    $('#SelectedPsicologoNombre').val('');
+                    $('#Notas').val('');
+                    $('#IdTipoCanalizacion').trigger('change');
+                }
+            });
+
+
+        $('#IdTipoCanalizacion').change(function () {
+            var tipoId = $(this).val();
+
+            var $sectionContainer = $('#psicologo-section-container');
+            var $cardContainer = $('#psicologo-selector-container');
+
+            if (tipoId && tipoId !== "") {
+
+                $sectionContainer.show();
+
+                $cardContainer.empty();
+                $('#IdPsicologo').val('');
+                $('#SelectedPsicologoNombre').val('');
+
+                $cardContainer.html('<p>Cargando psicólogos...</p>');
+
+                $.ajax({
+                    url: '@Url.Action("GetPsicologosPorTipo", "Canalizaciones")',
+                    type: 'GET',
+                    data: {
+                        tipoId: tipoId
+                    },
+                    success: function (data) {
+                        $cardContainer.empty(); // Limpiar el "Cargando..."
+
+                        if (data && data.length > 0) {
+                            $.each(data, function (i, psico) {
+
+                                var recomendadoTag = psico.EsRecomendado
+                                    ? '<span class="tag-rec">✅ Recomendado</span>'
+                                    : '';
+
+                                var recomendadoClass = psico.EsRecomendado ? 'recomendado' : '';
+
+                                var cardHtml = '<div class="psico-tarjeta ' + recomendadoClass + '" ' +
+                                               'data-id="' + psico.IdPsicologo + '" ' +
+                                               'data-nombre="' + psico.NombreCompleto + '">';
+
+                                cardHtml += '<h4>' + psico.NombreCompleto + recomendadoTag + '</h4>';
+
+                                cardHtml += '<p style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">' +
+                                    '<i class="fas fa-clock"></i> <strong>Horario:</strong> ' + psico.Horario +
+                                    '</p>';
+
+                                if (psico.Areas && psico.Areas.length > 0) {
+                                    $.each(psico.Areas, function (j, area) {
+                                        cardHtml += '<h5>' + area.NombreArea + '</h5>';
+                                        cardHtml += '<ul>';
+                                        $.each(area.Detalles, function (k, detalle) {
+                                            cardHtml += '<li>' + detalle + '</li>';
+                                        });
+                                        cardHtml += '</ul>';
+                                    });
+                                } else {
+                                    cardHtml += '<p><i>No hay detalles de atención especificados.</i></p>';
+                                }
+
+                                cardHtml += '</div>';
+
+                                $cardContainer.append(cardHtml);
+                            });
+                        } else {
+                            $cardContainer.html('<p>No se encontraron psicólogos para este tipo de canalización.</p>');
+                        }
+                    },
+                    error: function () {
+                        $cardContainer.empty();
+                        $cardContainer.html('<p style="color: red;">Error al cargar psicólogos.</p>');
+                        Swal.fire('Error', 'No se pudieron cargar los psicólogos.', 'error');
+                    }
+                });
+
+            } else {
+
+                $sectionContainer.hide();
+                $cardContainer.empty();
+                $('#IdPsicologo').val('');
+                $('#SelectedPsicologoNombre').val('');
+            }
+        });
+
+            $('#psicologo-selector-container').on('click', '.psico-tarjeta', function () {
+                var $card = $(this);
+                var psicologoId = $card.data('id');
+                var psicologoNombre = $card.data('nombre');
+
+                $('.psico-tarjeta').removeClass('seleccionada');
+
+                $card.addClass('seleccionada');
+
+                $('#IdPsicologo').val(psicologoId);
+                $('#SelectedPsicologoNombre').val(psicologoNombre);
+            });
+
+
+            $('#canalizacionForm').on('submit', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                var notas = $('#Notas').val().trim();
+                var tipoCanalizacion = $('#IdTipoCanalizacion').val();
+
+                if (!notas || !tipoCanalizacion) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Advertencia',
+                        text: 'Por favor, complete todos los campos requeridos.',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    title: '¿Confirmar registro?',
+                    html: "¿Está seguro de que desea enviar esta canalización?<br><br><b>Nota:</b> Recuerde que solo se permite realizar un registro por alumno al día.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sí, confirmar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        $.ajax({
+                            url: form.attr('action'),
+                            type: form.attr('method'),
+                            data: form.serialize(),
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Éxito',
+                                        text: response.message,
+                                        confirmButtonColor: '#3085d6'
+                                    }).then(() => {
+                                        form[0].reset();
+                                        $('#IdTipoCanalizacion').val('');
+                                        $('#IdPsicologo').val('');
+                                        $('#Notas').val('');
+                                        $('#pastVulnerabilities').val('');
+                                        $('#fechaRegistro').val('@DateTime.Now.ToString("dd/MM/yyyy HH:mm")');
+                                        $('#IdTipoCanalizacion').trigger('change');
+                                    });
+                                } else {
+                                    var esAviso = response.message && response.message.includes("Aviso");
+
+                                    Swal.fire({
+                                        icon: esAviso ? 'warning' : 'error',
+                                        title: esAviso ? 'Atención' : 'Error',
+                                        text: response.message || 'Error desconocido',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                }
+                            },
+                            error: function (xhr) {
+                                var errorMessage = xhr.responseJSON?.message || 'Error al enviar la canalización.';
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: errorMessage,
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        });
+
+                    }
+                });
+            });
+
+            $('#btnPrintPDF').click(function () {
+                generatePreview();
+            });
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>
+                    Swal.fire('Éxito', '@TempData["SuccessMessage"]', 'success');
+                </text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>
+                    Swal.fire('Error', '@TempData["ErrorMessage"]', 'error');
+                </text>
+            }
+
+            function generatePreview() {
+                try {
+                    const modelData = {
+                        carrera: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Carrera ?? "No disponible"))').toUpperCase(),
+                        nombre: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Nombre ?? "No disponible"))').toUpperCase(),
+                        matricula: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Matricula ?? "No disponible"))').toUpperCase(),
+                        grupo: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Grupo ?? "No disponible"))').toUpperCase(),
+                        turno: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Turno ?? "No disponible"))').toUpperCase(),
+                        email: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Email ?? "No disponible"))'),
+                        celular: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Celular ?? "No disponible"))').toUpperCase(),
+                        tutorFullName: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.TutorFullName ?? "No disponible"))').toUpperCase(),
+                        tutorUsername: decodeHtml('@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.TutorUsername ?? "No disponible"))'),
+                        tipoCanalizacion: ($('#IdTipoCanalizacion option:selected').text() || 'No seleccionado').replace('Seleccione un tipo...', 'No seleccionado').trim(),
+
+                        psicologoNombre: ($('#SelectedPsicologoNombre').val() || 'No asignado').replace('No asignado...', 'No asignado').trim().toUpperCase(),
+                        motivoCanalizacion: ($('#Notas').val() || 'Sin motivo especificado.').toUpperCase(),
+                        fechaRegistro: ($('#fechaRegistro').val() || 'Fecha no disponible')
+                    };
+
+                    const check = (type) => modelData.tipoCanalizacion.toLowerCase().includes(type.toLowerCase()) ? '☒' : '☐';
+                    const borderStyle = '0.5pt solid black';
+                    const labelBg = '#F0F0F0';
+
+                    const previewHTML = `
+                        <div class="pdf-preview-container" style="padding: 12.7mm 19mm; background: white;">
+                            <div style="width: 177.9mm;">
+                                <div style="display: flex; height: 16mm; margin-bottom: 5mm;">
+                                    <div style="width: 50mm; border: ${borderStyle}; display: flex; align-items: center; justify-content: center;"> <img src="/Imagenes/ImagenesPagina/UT-Bis.png" style="width: 35mm; height: 14mm;" alt="Logo"/> </div>
+                                    <div style="flex-grow: 1; border: ${borderStyle}; border-left: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 13pt; text-align: center;"> <span>FORMATO DE CANALIZACIÓN A LOS SERVICIOS</span> <span>PSICOPEDAGÓGICOS</span> </div>
+                                </div>
+                                <div style="display: flex; height: 8mm;"> <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Programa Educativo:</div> <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.carrera}</div> </div> <div style="height: 5mm;"></div>
+                                <div style="display: flex; height: 8mm;"> <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Nombre del alumno:</div> <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.nombre}</div> </div> <div style="height: 5mm;"></div>
+                                <div style="display: flex; height: 8mm;"> <div style="width: 25mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold;">Matrícula:</div> <div style="width: 35mm; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm;">${modelData.matricula}</div> <div style="width: 30mm; background: ${labelBg}; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; font-weight: bold;">Grado y grupo:</div> <div style="width: 35mm; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm;">${modelData.grupo}</div> <div style="width: 18mm; background: ${labelBg}; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; font-weight: bold;">Turno:</div> <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm;">${modelData.turno}</div> </div> <div style="height: 5mm;"></div>
+                                <div style="display: flex; height: 8mm;"> <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold;">Correo institucional:</div> <div style="width: 53mm; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm;">${modelData.email}</div> <div style="width: 40mm; background: ${labelBg}; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; font-weight: bold;">Número de celular:</div> <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm;">${modelData.celular}</div> </div> <div style="height: 5mm;"></div>
+                                <div style="display: flex; height: 8mm;"> <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold;">Nombre del tutor:</div> <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm;">${modelData.tutorFullName}</div> </div> <div style="height: 5mm;"></div>
+                                <div style="display: flex; height: 8mm;"> <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold;">Correo institucional:</div> <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm;">${modelData.tutorUsername}</div> </div> <div style="height: 5mm;"></div>
+                                <div style="display: flex; height: 22mm;"> <div style="width: 38mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center; justify-content: center; text-align: center;">Canalización por identificación de vulnerabilidad:</div> <div style="flex-grow: 1; display: flex; font-size: 9pt;"> <div style="flex: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; display: flex; align-items: center; justify-content: center;">${check('Personal')} Personal</div> <div style="flex: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; display: flex; align-items: center; justify-content: center;">${check('Académica')} Académica</div> <div style="flex: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; display: flex; align-items: center; justify-content: center;">${check('Socioeconómica')} Socioeconómica</div> <div style="flex: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; line-height: 1.2;"><div>${check('Iniciativa')} Ninguna,</div><div>iniciativa propia.</div></div> </div> </div> <div style="height: 5mm;"></div>
+                                <div> <div style="background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center; min-height: 12mm;">Explique las características que consideró en base a la entrevista inicial realizada al alumno canalizado para asignar el tipo de vulnerabilidad:</div> <div style="border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; min-height: 25mm; white-space: pre-wrap; word-wrap: break-word;">${modelData.motivoCanalizacion}</div> </div> <div style="height: 5mm;"></div>
+
+                                <div style="display: flex; height: 8mm;">
+                                    <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Psicólogo asignado:</div>
+                                    <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.psicologoNombre}</div>
+                                </div>
+                                <div style="height: 5mm;"></div>
+                                <div style="display: flex; height: 8mm;"> <div style="width: 60mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Fecha y hora de registro:</div> <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.fechaRegistro}</div> </div> <div style="height: 15mm;"></div>
+
+                                <div style="display: flex; justify-content: space-between; text-align: center;">
+                                    <div style="width: 57.5mm;">
+                                        <div style="background: ${labelBg}; border: ${borderStyle}; height: 12mm; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <div style="font-weight: bold; font-size: 10pt;">TUTOR:</div>
+                                            <div style="font-style: italic; font-size: 7.5pt; margin-top: 2mm;">Nombre y firma autógrafa</div>
+                                        </div>
+                                        <div style="height: 10mm; border-bottom: 0.2mm solid black; margin-top: 10mm;"></div>
+                                    </div>
+                                    <div style="width: 57.5mm;">
+                                        <div style="background: ${labelBg}; border: ${borderStyle}; height: 12mm; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <div style="font-weight: bold; font-size: 10pt;">ALUMNO:</div>
+                                            <div style="font-style: italic; font-size: 7.5pt; margin-top: 2mm;">Nombre y firma autógrafa</div>
+                                        </div>
+                                        <div style="height: 10mm; border-bottom: 0.2mm solid black; margin-top: 10mm;"></div>
+                                    </div>
+                                    <div style="width: 57.5mm;">
+                                        <div style="background: ${labelBg}; border: ${borderStyle}; height: 12mm; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                            <div style="font-weight: bold; font-size: 10pt;">PSICÓLOGO:</div>
+                                            <div style="font-style: italic; font-size: 7.5pt; margin-top: 2mm;">Nombre y firma autógrafa</div>
+                                        </div>
+                                        <div style="height: 10mm; border-bottom: 0.2mm solid black; margin-top: 10mm;"></div>
+                                    </div>
+                                </div>
+                                <div style="height: 5mm;"></div>
+
+                                <div style="text-align: right; font-size: 11pt;">F-PSE-DICA-12/R02</div>
+                            </div>
+                        </div>
+                    `;
+
+                    Swal.fire({
+                        title: 'Vista previa del documento',
+                        html: previewHTML,
+                        width: '850px',
+                        showCancelButton: true,
+                        confirmButtonText: 'Generar PDF',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#007bff',
+                        cancelButtonColor: '#6c757d'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            generatePDF(modelData);
+                        }
+                    });
+
+                } catch (error) {
+                    console.error('Error al generar la vista previa:', error);
+                    Swal.fire('Error', 'Ocurrió un error al generar la vista previa.', 'error');
+                }
+            }
+
+            function generatePDF(data) {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'letter'
+                    });
+
+                    const leftMargin = 19;
+                    const topMargin = 12.7;
+                    const usableWidth = 215.9 - (leftMargin * 2);
+                    let y = topMargin;
+
+                    const headerHeight = 16; const logoBoxWidth = 50; const titleFontSize = 13;
+                    doc.rect(leftMargin, y, logoBoxWidth, headerHeight); const imageWidth = 35; const imageHeight = 14; const imageX = leftMargin + (logoBoxWidth - imageWidth) / 2; const imageY = y + (headerHeight - imageHeight) / 2; doc.addImage('/Imagenes/ImagenesPagina/UT-Bis.png', 'PNG', imageX, imageY, imageWidth, imageHeight); doc.setFontSize(titleFontSize); doc.setFont('helvetica', 'bold'); const titleX = leftMargin + logoBoxWidth; const titleWidth = usableWidth - logoBoxWidth; doc.rect(titleX, y, titleWidth, headerHeight); const titleLine1 = 'FORMATO DE CANALIZACIÓN A LOS SERVICIOS'; const titleLine2 = 'PSICOPEDAGÓGICOS'; doc.text(titleLine1, titleX + (titleWidth / 2), y + 7, { align: 'center' }); doc.text(titleLine2, titleX + (titleWidth / 2), y + 12, { align: 'center' }); y += headerHeight + 5;
+
+                    const drawRow = (label, value, labelWidth, valueWidth, rowHeight = 8) => { doc.setFillColor(240, 240, 240); doc.rect(leftMargin, y, labelWidth, rowHeight, 'F'); doc.rect(leftMargin, y, labelWidth, rowHeight); doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.text(label, leftMargin + 2, y + 5.5); doc.rect(leftMargin + labelWidth, y, valueWidth, rowHeight); doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(value, leftMargin + labelWidth + 2, y + 5.5, { maxWidth: valueWidth - 4 }); y += rowHeight; };
+
+                    drawRow('Programa Educativo:', data.carrera, 45, usableWidth - 45); y += 5;
+                    drawRow('Nombre del alumno:', data.nombre, 45, usableWidth - 45); y += 5;
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin, y, 25, 8, 'F'); doc.rect(leftMargin, y, 25, 8); doc.setFont('helvetica', 'bold'); doc.text('Matrícula:', leftMargin + 2, y + 5.5); doc.rect(leftMargin + 25, y, 35, 8); doc.setFont('helvetica', 'normal'); doc.text(data.matricula, leftMargin + 27, y + 5.5); doc.setFillColor(240, 240, 240); doc.rect(leftMargin + 60, y, 30, 8, 'F'); doc.rect(leftMargin + 60, y, 30, 8); doc.setFont('helvetica', 'bold'); doc.text('Grado y grupo:', leftMargin + 62, y + 5.5); doc.rect(leftMargin + 90, y, 35, 8); doc.setFont('helvetica', 'normal'); doc.text(data.grupo, leftMargin + 92, y + 5.5); doc.setFillColor(240, 240, 240); doc.rect(leftMargin + 125, y, 18, 8, 'F'); doc.rect(leftMargin + 125, y, 18, 8); doc.setFont('helvetica', 'bold'); doc.text('Turno:', leftMargin + 127, y + 5.5); doc.rect(leftMargin + 143, y, usableWidth - 143, 8); doc.setFont('helvetica', 'normal'); doc.text(data.turno, leftMargin + 145, y + 5.5); y += 8; y += 5;
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin, y, 45, 8, 'F'); doc.rect(leftMargin, y, 45, 8); doc.setFont('helvetica', 'bold'); doc.text('Correo institucional:', leftMargin + 2, y + 5.5); doc.rect(leftMargin + 45, y, 53, 8); doc.setFont('helvetica', 'normal'); doc.text(data.email, leftMargin + 47, y + 5.5, { maxWidth: 51 }); doc.setFillColor(240, 240, 240); doc.rect(leftMargin + 98, y, 40, 8, 'F'); doc.rect(leftMargin + 98, y, 40, 8); doc.setFont('helvetica', 'bold'); doc.text('Número de celular:', leftMargin + 100, y + 5.5); doc.rect(leftMargin + 138, y, usableWidth - 138, 8); doc.setFont('helvetica', 'normal'); doc.text(data.celular, leftMargin + 140, y + 5.5); y += 8 + 5;
+                    drawRow('Nombre del tutor:', data.tutorFullName, 45, usableWidth - 45); y += 5;
+                    drawRow('Correo institucional:', data.tutorUsername, 45, usableWidth - 45); y += 5;
+
+                    const vulnHeight = 22; const labelColWidth = 38; const options = [{ key: 'Personal', text: 'Personal' }, { key: 'Académica', text: 'Académica' }, { key: 'Socioeconómica', text: 'Socioeconómica' }, { key: 'Iniciativa', text: 'Ninguna, iniciativa propia.' }]; const optionColWidth = (usableWidth - labelColWidth) / options.length; doc.setFillColor(240, 240, 240); doc.rect(leftMargin, y, labelColWidth, vulnHeight, 'F'); doc.rect(leftMargin, y, labelColWidth, vulnHeight); doc.setFont('helvetica', 'bold'); const labelText = 'Canalización por identificación de vulnerabilidad:'; const labelLines = doc.splitTextToSize(labelText, labelColWidth - 4); const labelBlockHeight = labelLines.length * 4; const labelY = y + (vulnHeight / 2) - (labelBlockHeight / 2) + 3; doc.text(labelLines, leftMargin + 2, labelY); let currentX = leftMargin + labelColWidth; doc.setFont('helvetica', 'normal'); doc.setFontSize(9); options.forEach(option => { const isSelected = data.tipoCanalizacion.toLowerCase().includes(option.key.toLowerCase()); doc.rect(currentX, y, optionColWidth, vulnHeight); const checkboxSize = 3; const checkboxX = currentX + 3; const checkboxY = y + (vulnHeight / 2) - (checkboxSize / 2); doc.rect(checkboxX, checkboxY, checkboxSize, checkboxSize); if (isSelected) { doc.line(checkboxX, checkboxY, checkboxX + checkboxSize, checkboxY + checkboxSize); doc.line(checkboxX, checkboxY + checkboxSize, checkboxX + checkboxSize, checkboxY); } const textX = checkboxX + checkboxSize + 1.5; const textMaxWidth = optionColWidth - (textX - currentX) - 2; const textLines = doc.splitTextToSize(option.text, textMaxWidth); const textBlockHeight = textLines.length * 3.5; const textY = y + (vulnHeight / 2) - (textBlockHeight / 2) + 2.5; doc.text(textLines, textX, textY); currentX += optionColWidth;
+                    }); y += vulnHeight + 5;
+
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin, y, usableWidth, 12, 'F'); doc.rect(leftMargin, y, usableWidth, 12); doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.text('Explique las características que consideró en base a la entrevista inicial realizada al alumno canalizado para asignar el tipo de vulnerabilidad:', leftMargin + 2, y + 5, { maxWidth: usableWidth - 4 }); y += 12; const motiveLines = doc.splitTextToSize(data.motivoCanalizacion, usableWidth - 4); const motiveHeight = 25; doc.rect(leftMargin, y, usableWidth, motiveHeight); doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(motiveLines, leftMargin + 2, y + 5); y += motiveHeight + 5;
+
+                    drawRow('Psicólogo asignado:', data.psicologoNombre, 45, usableWidth - 45);
+                    y += 5;
+
+                    drawRow('Fecha y hora de registro:', data.fechaRegistro, 60, usableWidth - 60);
+                    y += 15;
+
+                    // --- SECCIÓN DE FIRMAS ---
+                    const sigY = y;
+                    const sigWidth = 57.5;
+                    const sigHeight = 12;
+                    const sigGap = (usableWidth - (sigWidth * 3)) / 2;
+
+                    const drawSignatureBox = (x, y_pos, label) => {
+                        doc.setFillColor(240, 240, 240);
+                        doc.rect(x, y_pos, sigWidth, sigHeight, 'F');
+                        doc.rect(x, y_pos, sigWidth, sigHeight);
+                        const centerY = y_pos + sigHeight / 2;
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.text(label, x + sigWidth / 2, centerY - 1.5, { align: 'center' });
+                        doc.setFont('helvetica', 'italic');
+                        doc.setFontSize(7.5);
+                        doc.text('Nombre y firma autógrafa', x + sigWidth / 2, centerY + 3.5, { align: 'center' });
+                    };
+
+                    const firstBoxX = leftMargin;
+                    const secondBoxX = leftMargin + sigWidth + sigGap;
+                    const thirdBoxX = leftMargin + sigWidth * 2 + sigGap * 2;
+
+                    drawSignatureBox(firstBoxX, sigY, 'TUTOR:');
+                    drawSignatureBox(secondBoxX, sigY, 'ALUMNO:');
+                    drawSignatureBox(thirdBoxX, sigY, 'PSICÓLOGO:');
+
+                    const lineY = sigY + sigHeight + 20;
+                    doc.setLineWidth(0.2);
+                    doc.line(firstBoxX, lineY, firstBoxX + sigWidth, lineY);
+                    doc.line(secondBoxX, lineY, secondBoxX + sigWidth, lineY);
+                    doc.line(thirdBoxX, lineY, thirdBoxX + sigWidth, lineY);
+                    y = lineY + 5;
+
+                    const pageHeight = doc.internal.pageSize.getHeight(); const bottomMargin = 12.7; doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.text('F-PSE-DICA-12/R02', leftMargin + usableWidth, pageHeight - bottomMargin, { align: 'right' });
+
+                    const safeNombre = data.nombre.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    doc.save(`Canalizacion_${safeNombre}.pdf`);
+
+                } catch (error) {
+                    console.error('Error al generar el PDF:', error);
+                    Swal.fire('Error', 'Ocurrió un error al generar el PDF.', 'error');
+                }
+            }
+
+            $('#IdTipoCanalizacion').trigger('change');
+
+        });
+    </script>
+}

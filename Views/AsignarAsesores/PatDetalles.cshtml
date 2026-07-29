@@ -1,0 +1,2497 @@
+﻿@model Plataforma_Web.Models.PAT
+@Styles.Render("~/ViewsStyles/PAT/ListPAT.css")
+@using Plataforma_Web.Models
+
+@{
+    PAT pat = ViewBag.PAT as PAT;
+    ViewBag.Title = "Details";
+}
+
+@Html.AntiForgeryToken()
+
+
+@section Styles{
+
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+
+
+    <style>
+        /* Cambia el color del texto de la semana en el modal */
+        #proxima-semana-display {
+            color: #1ab192 !important; /* <-- Verde. El !important asegura que sobreescriba el estilo en línea */
+        }
+
+        /* Opcional: Si quieres cambiar también el color del badge de semana en la tabla */
+        /* .semana-badge {
+            color: #28a745;
+        } */
+
+
+        .btn-action[disabled] {
+            opacity: 0.65; /* Semi-transparente */
+            cursor: not-allowed !important;
+        }
+
+
+        /* --- INICIO: SOLICITUD 1 (MAYÚSCULAS) --- */
+        .pat-table th,
+        .btn-action,
+        .modal-title,
+        .group-label,
+        .activity-filter-btn,
+        .diagnostico-header div,
+        .vulnerabilidades-header div,
+        .detail-label,
+        .filter-label {
+            text-transform: uppercase;
+        }
+            /* --- FIN: SOLICITUD 1 (MAYÚSCULAS) --- */
+
+            /* Específicamente para el botón de aprobado */
+            .btn-action[style*="background: #28a745"][disabled] {
+                background: #28a745 !important;
+                color: white !important;
+                opacity: 0.65;
+                box-shadow: none;
+            }
+
+            /* Para botón enviado a revisión */
+            .btn-action[style*="background: #ffc107"][disabled] {
+                background: #ffc107 !important;
+                color: #212529 !important;
+                opacity: 0.65;
+                box-shadow: none;
+            }
+
+            /* Para botón rechazado */
+            .btn-action[style*="background: #dc3545"][disabled] {
+                background: #dc3545 !important;
+                color: white !important;
+                opacity: 0.65;
+                box-shadow: none;
+            }
+
+        /* CORRECCIÓN PUNTO 1: Aplicar mayúsculas SOLO al contenido del PAT, protegiendo el menú */
+        .pat-container,
+        .pat-container h3,
+        .pat-container h4,
+        .pat-container div,
+        .pat-container span,
+        .pat-container input,
+        .pat-container textarea,
+        .pat-container button,
+        .modal-container * {
+            text-transform: uppercase !important;
+        }
+
+        /* Forzar que la barra de navegación y el sidebar se vean normales */
+        /* Ajusta las clases .navbar, .main-header según tu layout maestro */
+        .navbar, .navbar *,
+        .main-header, .main-header *,
+        .sidebar, .sidebar *,
+        .sidebar-menu, .sidebar-menu * {
+            text-transform: none !important;
+        }
+
+        /* El resto de tus estilos... */
+        #proxima-semana-display {
+            color: #1ab192 !important;
+        }
+
+        #modal-notas-revision #comentario-nuevo.form-control {
+            min-height: unset !important;
+            max-height: unset !important;
+            font-size: 14px !important;
+            padding: 6px 12px !important;
+            line-height: 1.42857143 !important;
+            height: auto !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            display: block !important;
+        }
+
+        #modal-notas-revision #comentario-nuevo.form-control {
+            min-height: unset !important;
+            max-height: unset !important;
+            font-size: 14px !important;
+            padding: 6px 12px !important;
+            line-height: 1.42857143 !important;
+            height: auto !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            display: block !important;
+        }
+
+        .pat-left-column {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .pat-layout-wrapper {
+            overflow: visible !important;
+        }
+
+        #modal-editar-vulnerabilidades .form-group textarea.form-control {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        #modal-agregar-semana .form-group textarea.form-control {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+
+        #barraFiltrosActivos {
+            display: block !important;
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+        }
+
+            #barraFiltrosActivos p,
+            #barraFiltrosActivos strong {
+                font-size: 14px !important;
+            }
+
+            #barraFiltrosActivos p {
+                margin: 0 0 10px 0;
+            }
+    </style>
+
+}
+
+<div class="sga-scope">
+    <div class="pat-container" style="margin-top:20px">
+        <div class="row" style="margin-bottom: 15px;">
+            <div class="col-md-12">
+                <a class="btn btn-primary" href="@Url.Action("PAT")" role="button">
+                    <span class="glyphicon glyphicon-arrow-left"></span>
+                    Regresar
+                </a>
+            </div>
+        </div>
+        <!-- Nueva estructura de dos columnas -->
+        <div class="pat-layout-wrapper">
+            <!-- Columna izquierda: Diagnóstico y Vulnerabilidades -->
+            <div class="pat-left-column">
+                <!-- Sección: Diagnóstico del Grupo -->
+                <div class="pat-card diagnostico-card" style="margin-bottom: 16px; background: #f8f9fa; box-shadow: 0 2px 4px rgba(26,177,146,0.08);">
+                    <div class="diagnostico-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="font-size: 18px; color: #2c3e50; font-weight: 700;">
+                            <i class="glyphicon glyphicon-stats" style="margin-right: 8px; color: #1ab192;"></i>
+                            Diagnóstico del Grupo
+                        </div>
+                        <span class="students-count" style="font-size: 1.2rem; font-weight: 700; color: #2c3e50;">
+                            (@Html.DisplayFor(model => model.CantidadAlumno) alumnos)
+                        </span>
+                    </div>
+
+                    <div class="diagnostico-details" style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                        <div class="detail-item">
+                            <span class="detail-label" style="font-size: 13px; color: #6c757d; font-weight: 600; text-transform: uppercase; display: block;">
+                                Grupo
+                            </span>
+                            <span class="detail-value" style="font-size: 15px; font-weight: 600; color: #2c3e50;">
+                                @Html.DisplayFor(model => model.Grupo)
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label" style="font-size: 13px; color: #6c757d; font-weight: 600; text-transform: uppercase; display: block;">
+                                Período
+                            </span>
+                            <span class="detail-value" style="font-size: 15px; font-weight: 600; color: #2c3e50;">
+                                @Html.DisplayFor(model => model.Periodo.Nombre) @Model.Fecha.Year
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label" style="font-size: 13px; color: #6c757d; font-weight: 600; text-transform: uppercase; display: block;">
+                                Tutor
+                            </span>
+                            <span class="detail-value" style="font-size: 15px; font-weight: 600; color: #2c3e50;">
+                                @Html.DisplayFor(model => model.Tutor)
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label" style="font-size: 13px; color: #6c757d; font-weight: 600; text-transform: uppercase; display: block;">
+                                Carrera
+                            </span>
+                            <span class="detail-value" style="font-size: 15px; font-weight: 600; color: #2c3e50;">
+                                @Html.DisplayFor(model => model.Carrera.Nombre)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Vulnerabilidades -->
+                <div class="pat-card vulnerabilidades-card" style="margin-bottom: 16px; background: #f8f9fa; box-shadow: 0 2px 4px rgba(26,177,146,0.08);">
+                    <div class="vulnerabilidades-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="font-size: 18px; color: #2c3e50; font-weight: 700;">
+                            <i class="glyphicon glyphicon-warning-sign" style="margin-right: 8px; color: #ff9f43;"></i>
+                            Vulnerabilidades
+                        </div>
+                        <span style="font-size: 13px; font-weight: 600; color: #20c997; background: #e7faf5; padding: 4px 10px; border-radius: 16px; display: inline-block; letter-spacing: 0.5px; box-shadow: 0 2px 10px rgba(26,177,146,0.06);">
+                            Total: @(Model.VunerableEconomico + Model.VunerablePersonal + Model.VunerableAcademico + (ViewBag.NoVulnerablesCount ?? 0) + (ViewBag.CantidadBajas ?? 0))
+                        </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
+                        <!-- Económicos -->
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="economico" style="background: linear-gradient(135deg, #ff9f43 0%, #ff8c00 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; padding: 6px 4px; border-radius: 8px; min-height: 40px;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;">
+                                    <i class="glyphicon glyphicon-usd" style="font-size: 10px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; line-height: 1;">@Html.DisplayFor(model => model.VunerableEconomico)</div>
+                                    <div style="font-size: 8px; font-weight: 600; text-transform: uppercase; opacity: 0.9;">Económicos</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Personal -->
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="personal" style="background: linear-gradient(135deg, #ee5a52 0%, #dc3545 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; padding: 6px 4px; border-radius: 8px; min-height: 40px;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;">
+                                    <i class="glyphicon glyphicon-user" style="font-size: 10px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; line-height: 1;">@Html.DisplayFor(model => model.VunerablePersonal)</div>
+                                    <div style="font-size: 8px; font-weight: 600; text-transform: uppercase; opacity: 0.9;">Personal</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Académico -->
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="academico" style="background: linear-gradient(135deg, #3742fa 0%, #2d3cdf 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; padding: 6px 4px; border-radius: 8px; min-height: 40px;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;">
+                                    <i class="glyphicon glyphicon-folder-close" style="font-size: 10px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; line-height: 1;">@Html.DisplayFor(model => model.VunerableAcademico)</div>
+                                    <div style="font-size: 8px; font-weight: 600; text-transform: uppercase; opacity: 0.9;">Académico</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button type="button" class="vulnerability-btn btn-action btn-info vuln-compact" data-target="no-vulnerable">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;">
+                                    <i class="glyphicon glyphicon-thumbs-up" style="font-size: 12px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 14px; font-weight: 700; line-height: 1;">@ViewBag.NoVulnerablesCount</div>
+                                    <div style="font-size: 9px; font-weight: 600; text-transform: uppercase; opacity: 0.9;">No vulnerables</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="bajas" style="background: #6c757d; color: white; cursor: pointer;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 18px; height: 18px; display:flex; justify-content:center; align-items:center;">
+                                    <i class="glyphicon glyphicon-remove-circle" style="font-size: 10px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; line-height: 1;">@ViewBag.CantidadBajas</div>
+                                    <div style="font-size: 8px; font-weight: 600; opacity: 0.9;">BAJAS</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                    @if (Model.estado == true && (Model.EstadoRevision == 0 || Model.EstadoRevision == 3))
+                    {
+                        <button type="button" id="btn-editar-vulnerabilidades" class="btn-action btn-view" style="width: 100%; justify-content: center; padding: 8px; font-size: 12px;">
+                            <span class="action-icon glyphicon glyphicon-pencil"></span>
+                            Agregar comentario
+                        </button>
+                    }
+                </div>
+            </div>
+
+
+            <!-- Columna derecha: Plan de Acción y demás contenido -->
+            <div class="pat-right-column">
+                <!-- Sección: Plan de Acción -->
+                @if (ViewBag.Actividades != null)
+                {
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="pat-card">
+                                <!-- Header de acciones y filtros -->
+                                <div class="card-header-info">
+                                    <div class="group-section" style="display: flex; align-items: center; gap: 12px;">
+                                        <div class="group-label">Plan de Acción</div>
+                                        @{
+                                            var tiempo = DateTime.Now;
+                                            int periodoActual = (tiempo.Month >= 1 && tiempo.Month <= 4) ? 1 : (tiempo.Month >= 5 && tiempo.Month <= 8) ? 2 : 3;
+                                            string estadoPAT = "";
+                                            string claseEstado = "";
+                                            if (Model.IdPeriodo != periodoActual || Model.Fecha.Year != tiempo.Year)
+                                            {
+                                                estadoPAT = "Inactivo";
+                                                claseEstado = "status-inactive";
+                                            }
+                                            else if (Model.estado == true)
+                                            {
+                                                if (Model.EstadoRevision == 2) // Si está aprobado por el coordinador
+                                                {
+                                                    estadoPAT = "Aprobado";
+                                                    claseEstado = "status-active"; // Clase para color verde
+                                                }
+                                                else if (Model.EstadoRevision == 1)
+                                                {
+                                                    estadoPAT = "En Revisión";
+                                                    claseEstado = "status-review"; // <-- NUEVO: Azul
+                                                }
+                                                else
+                                                {
+                                                    estadoPAT = "Planeación en progreso";
+                                                    claseEstado = "status-pending"; // Amarillo
+                                                }
+                                            }
+                                            else // Estado es false (Cerrado)
+                                            {
+                                                estadoPAT = "PAT Cerrado"; // <-- Cambiado texto
+                                                claseEstado = "status-active"; // <-- VUELVE A VERDE
+                                            }
+                                        }
+                                        <span class="status-badge @claseEstado" style="font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                                            @if (estadoPAT == "Aprobado")
+                                            {<i class="glyphicon glyphicon-ok-circle" style="color: #28a745;"></i>}
+                                            @if (estadoPAT == "En progreso")
+                                            {<i class="glyphicon glyphicon-time" style="color: #ffc107;"></i>}
+                                            @if (estadoPAT == "Inactivo")
+                                            {<i class="glyphicon glyphicon-ban-circle" style="color: #dc3545;"></i>}
+                                            <span>@estadoPAT</span>
+                                        </span>
+                                    </div>
+                                    <div class="plan-actions" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                                        <!-- Botón para cambiar estado y EstadoRevision -->
+                                        <button type="button" id="btn-cambiar-estado" class="btn-action btn-warning" onclick="$('#modal-cambiar-estado').fadeIn(300);">
+                                            <span class="glyphicon glyphicon-retweet"></span>
+                                            &nbsp;Cambiar estado
+                                        </button>
+
+                                        <!-- Modal para cambiar estado y EstadoRevision -->
+                                        <div class="modal-overlay" id="modal-cambiar-estado" style="display:none; z-index:9999;">
+                                            <div class="modal-container" style="max-width:400px;">
+                                                <div class="modal-header">
+                                                    <h3 class="modal-title">
+                                                        <span class="glyphicon glyphicon-retweet" style="margin-right:8px;"></span>
+                                                        Cambiar estado PAT
+                                                    </h3>
+                                                    <button type="button" class="modal-close" onclick="$('#modal-cambiar-estado').fadeOut(300);">
+                                                        <span class="close-icon">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form id="form-cambiar-estado">
+                                                        <div class="form-group">
+                                                            <label for="nuevo-revision">Estado de revisión:</label>
+                                                            <select id="nuevo-revision" class="form-control">
+                                                                <option value="0" @(Model.EstadoRevision == 0 ? "selected" : "")>Sin enviar a revisión</option>
+                                                                <option value="1" @(Model.EstadoRevision == 1 ? "selected" : "")>Enviado a revisión</option>
+                                                                <option value="2" @(Model.EstadoRevision == 2 ? "selected" : "")>Aprobado</option>
+                                                                <option value="3" @(Model.EstadoRevision == 3 ? "selected" : "")>Rechazado</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="nuevo-estado">Estado general (Solo cambiar estado a "Cerrado" al final del cuatrimestre)</label>
+                                                            <select id="nuevo-estado" class="form-control">
+                                                                <option value="true" @(Model.estado ? "selected" : "")>En progreso</option>
+                                                                <option value="false" @(!Model.estado ? "selected" : "")>Cerrado</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <div style="text-align:right; margin-top: 18px;">
+                                                            <button type="button" class="btn btn-secondary" onclick="$('#modal-cambiar-estado').fadeOut(300);" style="margin-right:10px;">Cancelar</button>
+                                                            <button type="submit" class="btn btn-success">Guardar</button>
+                                                        </div><br>
+
+                                                        <div class="sga-filter-bar" id="barraFiltrosActivos" style="margin-bottom: 20px;">
+                                                            <strong>Descripción de estados:</strong><br>
+
+                                                            <strong>Estado de revisión:</strong>
+                                                            <p>1. Sin enviar a revisión: el PAT sigue siendo armado por el tutor.</p>
+                                                            <p>
+                                                                2. Enviado a revisión: el PAT bloquea su capacidad de edición y aparece en la sección "Revisión de PATs" del coordinador.
+                                                            </p>
+                                                            <p>
+                                                                3. Aprobado: el PAT es aprobado y ahora el tutor puede marcar la realizacion de las tutorias, asi como poner sus notas y subir sus evidencias.
+                                                            </p>
+                                                            <p>4. Rechazado: el tutor puede editarlo de nuevo y reenviarlo a revisión.</p>
+
+                                                            <br>
+                                                            <strong>Estado general aprobado:</strong>
+                                                            <p>1. Cerrado: significa que el PAT ha sido aprobado y finalizado completamente por lo que se bloquearan las opciones de edición en el PAT.</p>
+
+
+                                                            <br>
+                                                            <strong>Nota: Un PAT inactivo no se puede activar porque depende del periodo en curso.</strong>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Botón para cambiar estado y EstadoRevision -->
+                                        @if (Model.estado == true)
+                                        {
+                                            if (Model.EstadoRevision == 0 || Model.EstadoRevision == 3)
+                                            {
+                                                <button type="button" id="btn-editar-todas" class="btn-action btn-view">
+                                                    <span class="action-icon glyphicon glyphicon-pencil"></span>
+                                                    Editar PAT
+                                                </button>
+                                                <button type="button" id="btn-eliminar-semana" class="btn-action btn-danger" style="margin-left: 8px;">
+                                                    <span class="action-icon glyphicon glyphicon-trash"></span>
+                                                    Eliminar semana
+                                                </button>
+                                            }
+                                            <button type="button" id="btn-agregar-semana" class="btn-action btn-view" style="display: none;" onclick="openModalAgregarSemana()">
+                                                <span class="action-icon glyphicon glyphicon-plus"></span>
+                                                Agregar Semana
+                                            </button>
+                                            <button type="button" id="btn-guardar-todas" class="btn-action btn-report" style="display: none;">
+                                                <span class="action-icon glyphicon glyphicon-floppy-disk"></span>
+                                                Guardar
+                                            </button>
+                                            <button type="button" id="btn-cancelar-todas" class="btn-action" style="display: none; background: #6c757d; color: white;">
+                                                <span class="action-icon glyphicon glyphicon-remove"></span>
+                                                Cancelar
+                                            </button>
+                                            if (Model.EstadoRevision == 1)
+                                            {
+                                                <button type="button" class="btn-action" style="background: #ffc107; color: #212529; cursor: not-allowed;" disabled>
+                                                    <span class="action-icon glyphicon glyphicon-time"></span>
+                                                    Enviado a revisión
+                                                </button>
+                                            }
+                                            else if (Model.EstadoRevision == 2)
+                                            {
+                                                <button type="button" class="btn-action" style="background: #28a745; color: white; cursor: not-allowed;" disabled>
+                                                    <span class="action-icon glyphicon glyphicon-ok"></span>
+                                                    Aprobado
+                                                </button>
+
+                                                <button type="button" id="btn-comentar-todas" class="btn-action btn-view">
+                                                    <span class="action-icon glyphicon glyphicon-comment"></span>
+                                                    Adjuntar evidencia
+                                                </button>
+                                                <button type="button" id="btn-guardar-comentarios-todas" class="btn-action btn-report" style="display: none;">
+                                                    <span class="action-icon glyphicon glyphicon-floppy-disk"></span>
+                                                    Guardar
+                                                </button>
+                                                <button type="button" id="btn-cancelar-final" class="btn-action" style="display: none; background: #6c757d; color: white;">
+                                                    <span class="action-icon glyphicon glyphicon-remove"></span>
+                                                    Cancelar
+                                                </button>
+                                            }
+                                            else if (Model.EstadoRevision == 3)
+                                            {
+                                                <button type="button" class="btn-action" style="background: #dc3545; color: white; cursor: not-allowed;" disabled>
+                                                    <span class="action-icon glyphicon glyphicon-remove"></span>
+                                                    Rechazado
+                                                </button>
+                                            }
+                                            <button type="button" id="btn-ver-comentarios-revision" class="btn-action btn-view" onclick="verNotasRevision()">
+                                                <span class="action-icon glyphicon glyphicon-list-alt"></span>
+                                                Agregar comentario
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" id="btn-comentar-todas" class="btn-action btn-view">
+                                                <span class="action-icon glyphicon glyphicon-comment"></span>
+                                                Añadir notas
+                                            </button>
+                                            <button type="button" id="btn-guardar-comentarios-todas" class="btn-action btn-report" style="display: none;">
+                                                <span class="action-icon glyphicon glyphicon-floppy-disk"></span>
+                                                Guardar
+                                            </button>
+                                            <button type="button" id="btn-cancelar-final" class="btn-action" style="display: none; background: #6c757d; color: white;">
+                                                <span class="action-icon glyphicon glyphicon-remove"></span>
+                                                Cancelar
+                                            </button>
+                                            <button type="button" id="btn-ver-comentarios-revision" class="btn-action btn-view" onclick="verNotasRevision()">
+                                                <span class="action-icon glyphicon glyphicon-list-alt"></span>
+                                                Comentarios por revisar
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Filtros de actividades -->
+                                <div class="activity-filters-row" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px;">
+                                    <div style="display: flex; gap: 5px;">
+                                        <button type="button" id="filter-all" class="activity-filter-btn active" data-filter="all">
+                                            TODAS
+                                        </button>
+                                        <button type="button" id="filter-individual" class="activity-filter-btn" data-filter="individual">
+                                            INDIVIDUAL
+                                        </button>
+                                        <button type="button" id="filter-grupal" class="activity-filter-btn" data-filter="grupal">
+                                            GRUPAL
+                                        </button>
+                                    </div>
+
+                                    @if (Model.estado == false || Model.EstadoRevision == 2)
+                                    {
+                                        <div id="evidence-stats" style="font-size: 12px; display: flex; gap: 8px; align-items: center;">
+                                            <strong style="color: #666; text-transform: uppercase;">Evidencias:</strong>
+                                            <span class="label label-success" style="padding: 6px 10px; display: flex; align-items: center;">
+                                                <i class="glyphicon glyphicon-ok" style="margin-right: 4px;"></i>
+                                                Aprobadas: <span id="count-aprobadas" style="font-weight: bold; margin-left: 3px;">0</span>/<span id="count-total">0</span>
+                                            </span>
+                                            <span class="label label-danger" style="padding: 6px 10px; display: flex; align-items: center;">
+                                                <i class="glyphicon glyphicon-remove" style="margin-right: 4px;"></i>
+                                                Rechazadas: <span id="count-rechazadas" style="font-weight: bold; margin-left: 3px;">0</span>
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="pat-table-container">
+                                    <div class="table-responsive">
+                                        <table class="pat-table tabla-unificada">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: .2%; padding-right: 4px; text-align: center;">Semana</th>
+                                                    <th style="width: .8%; padding-left: 4px; text-align: center;">Tipo</th>
+                                                    <th style="width: 20%; text-align: center;">Actividades</th>
+
+                                                    @if (Model.estado != true || Model.EstadoRevision == 2)
+                                                    {
+                                                        <th style="width: .8%; text-align: center;">Realizado</th>
+                                                        <th style="width: 10%; text-align: center;">Notas</th>
+                                                    }
+                                                    @if (Model.estado == false || Model.EstadoRevision == 2)
+                                                    {
+                                                        <th style="width: 12%; text-align: center;">Evidencias</th>
+                                                    }
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in (ViewBag.Actividades as IEnumerable<Plataforma_Web.Models.ClasesPAT.ActividadesSemanal>))
+                                                {
+                                                    string tipoClase = item.Tipo.Nombre == "Tutoria Individual" ? "individual" : "grupal";
+                                                    <tr class="activity-row @tipoClase" data-actividad-id="@item.IdActividad" data-tipo="@tipoClase" data-semana="@item.Semana.Nombre" data-realizado="@(item.RealizoActividad.ToString().ToLower())">
+                                                        <td class="group-cell" style="text-align: center;">
+                                                            <span class="semana-badge">@item.Semana.Nombre</span>
+                                                        </td>
+                                                        <td class="group-cell" style="text-align: center;">
+                                                            @if (item.Tipo.Nombre == "Tutoria Individual")
+                                                            {<span class="status-badge-small status-individual">TI</span> }
+                                                            else
+                                                            { <span class="status-badge-small status-grupal">TG</span>}
+                                                        </td>
+                                                        <td class="actividad-cell">
+                                                            <div class="actividad-display">@item.Actividad</div>
+                                                            <input type="text" class="form-control actividad-input" value="@item.Actividad" maxlength="500" style="display: none;" />
+                                                        </td>
+
+                                                        @if (Model.estado != true || Model.EstadoRevision == 2)
+                                                        {
+                                                            <td class="realizado-cell" style="text-align: center;">
+                                                                <span class="realizado-texto">
+                                                                    @if (item.RealizoActividad == true)
+                                                                    {<span class="status-badge-small status-realizado">Sí</span> }
+                                                                    else if (item.RealizoActividad == false)
+                                                                    { <span class="status-badge-small status-no-realizado">No</span> }
+                                                                    else
+                                                                    { <span class="status-badge-small status-sin-datos">Sin datos</span>}
+                                                                </span>
+                                                            </td>
+                                                            <td class="comentarios-cell">
+                                                                <div class="comentarios-display">@(item.Comentarios ?? "")</div>
+                                                                <textarea class="form-control comentarios-input" rows="2" style="display: none; border-radius: 8px; border: 2px solid #e9ecef; padding: 8px 12px; resize: vertical; min-height: 38px; max-height: 60px;">@(item.Comentarios ?? "")</textarea>
+                                                                <button type="button" class="btn btn-success btn-xs btn-guardar-nota-individual" style="display:none; margin-top: 5px; width: 100%;">
+                                                                    <span class="glyphicon glyphicon-floppy-disk"></span> Guardar Nota
+                                                                </button>
+                                                            </td>
+                                                        }
+                                                        @if (Model.estado == false || Model.EstadoRevision == 2)
+                                                        {
+                                                            <td class="evidencia-cell" style="text-align: center;">
+                                                                @if (tipoClase == "grupal") // <-- SOLO GRUPAL
+                                                                {
+                                                                    <div id="evidencia-list-@item.IdActividad">
+                                                                    </div>
+                                                                    <input type="file" accept="application/pdf" style="display:none;" class="evidencia-input" id="file-evidencia-@item.IdActividad" />
+
+                                                                    <button type="button" class="btn btn-success btn-xs" id="btn-subir-evidencia-@item.IdActividad" style="display:none;">Subir PDF</button>
+                                                                    <span class="evidencia-upload-status" id="status-evidencia-@item.IdActividad" style="margin-left:6px; color:#888;"></span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span style="color: #999;"></span>
+                                                                }
+                                                            </td>
+                                                        }
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+
+        <!-- Modal para editar vulnerabilidades -->
+        <div class="modal-overlay" id="modal-editar-vulnerabilidades" style="display: none;">
+            <div class="modal-container" style="max-width: 620px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="glyphicon glyphicon-pencil" style="margin-right: 8px;"></i>
+                        Editar vulnerabilidades
+                    </h3>
+                    <button type="button" class="modal-close" onclick="cerrarModalVulnerabilidades()">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @using (Html.BeginForm("Edit", "PATs", FormMethod.Post, new { id = "form-vulnerabilidades" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(model => model.IdEntrevistaInicial)
+                        @Html.HiddenFor(model => model.estado)
+                        @Html.HiddenFor(model => model.IdPeriodo)
+                        @Html.HiddenFor(model => model.IdTutoriaGrupal)
+                        @Html.HiddenFor(model => model.IdCarrera)
+                        @Html.HiddenFor(model => model.IdTutor)
+                        @Html.HiddenFor(model => model.Fecha)
+                        @Html.HiddenFor(model => model.CantidadAlumno)
+                        @Html.HiddenFor(model => model.VunerableAcademico)
+                        @Html.HiddenFor(model => model.VunerableEconomico)
+                        @Html.HiddenFor(model => model.VunerablePersonal)
+                        <input type="hidden" name="returnTo" value="AsignarAsesoresPatDetalles" />
+
+                        <div class="form-group col-md-12">
+                            @Html.LabelFor(model => model.DescripcionEconomico, htmlAttributes: new { @class = "control-label" })
+                            <div>
+                                @Html.TextAreaFor(model => model.DescripcionEconomico, new { @class = "form-control", rows = 4 })
+                                @Html.ValidationMessageFor(model => model.DescripcionEconomico, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12">
+                            @Html.LabelFor(model => model.DescripcionPersonal, htmlAttributes: new { @class = "control-label" })
+                            <div>
+                                @Html.TextAreaFor(model => model.DescripcionPersonal, new { @class = "form-control", rows = 4 })
+                                @Html.ValidationMessageFor(model => model.DescripcionPersonal, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12">
+                            @Html.LabelFor(model => model.DescripcionAcademico, htmlAttributes: new { @class = "control-label" })
+                            <div>
+                                @Html.TextAreaFor(model => model.DescripcionAcademico, new { @class = "form-control", rows = 4 })
+                                @Html.ValidationMessageFor(model => model.DescripcionAcademico, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                        <div style="text-align: right; margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" onclick="cerrarModalVulnerabilidades()" style="margin-right: 10px;">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Modal para Agregar Semana -->
+        <div class="modal-overlay" id="modal-agregar-semana" style="display: none;">
+            <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="glyphicon glyphicon-plus"></i> Agregar Semana
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-agregar-semana')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Selección de Semana -->
+                    <div class="form-group">
+                        <span class="control-label" style="font-weight: 600;">Se agregará la siguiente semana:</span>
+                        <h4 id="proxima-semana-display" style="font-weight: 700; color: #337ab7;">Calculando...</h4>
+
+                        <input type="hidden" id="proxima-semana-hidden" value="" />
+
+                        <div class="text-danger" id="semana-error"></div>
+                    </div>
+
+                    <!-- Actividad Grupal -->
+                    <div class="form-group">
+                        <label for="actividad-grupal">Actividad Grupal:</label>
+                        <textarea id="actividad-grupal" class="form-control" rows="3" placeholder="Ingrese la actividad grupal"></textarea>
+                        <div class="text-danger" id="actividad-grupal-error"></div>
+                    </div>
+
+                    <!-- Actividad Individual -->
+                    <div class="form-group">
+                        <label for="actividad-individual">Actividad Individual:</label>
+                        <textarea id="actividad-individual" class="form-control" rows="3" placeholder="Ingrese la actividad individual"></textarea>
+                        <div class="text-danger" id="actividad-individual-error"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" id="btn-agregar-semana" onclick="agregarSemana()">Agregar Semana</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-agregar-semana')">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Modal para Eliminar Semana -->
+        <div class="modal-overlay" id="modal-eliminar-semana" style="display: none;">
+            <div class="modal-container" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="glyphicon glyphicon-trash"></i> Eliminar Semana
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-eliminar-semana')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="semana-eliminar-select">Seleccione la semana a eliminar:</label>
+                        <select id="semana-eliminar-select" class="form-control">
+                            <option value="">Seleccione una semana</option>
+                            <!-- Opciones llenadas por JS -->
+                        </select>
+                        <div class="text-danger" id="semana-eliminar-error"></div>
+                    </div>
+                    <div class="alert alert-warning" style="margin-top: 12px;">
+                        Al eliminar una semana, se eliminarán ambas actividades asociadas. Podrá volver a agregar la semana después.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="eliminarSemana()">Eliminar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-eliminar-semana')">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Modal para ver notas de revisión -->
+        <!-- Modal para ver notas de revisión (single instance, fixed markup) -->
+        <div class="modal fade" id="modal-notas-revision" tabindex="-1" role="dialog" aria-labelledby="modalNotasRevisionTitle" aria-modal="true" aria-hidden="false" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modalNotasRevisionTitle">
+                            <i class="glyphicon glyphicon-list-alt" style="margin-right: 8px; color: #337ab7;"></i>
+                            Comentarios de revisión
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div style="margin-bottom: 20px; padding: 12px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #337ab7;">
+                            <strong>PAT del grupo:</strong> <span id="grupo-notas-revision">@Model.TutoriaGrupal</span>
+                        </div>
+                        <div id="loading-notas-revision" style="text-align: center; padding: 40px; display: none;">
+                            <i class="glyphicon glyphicon-refresh glyphicon-spin" style="font-size: 24px; color: #337ab7;"></i>
+                            <p style="margin-top: 12px; color: #6c757d;">Cargando comentarios de revisión...</p>
+                        </div>
+                        <div id="notas-revision-lista">
+                            <!-- Aquí se cargarán los comentarios dinámicamente -->
+                        </div>
+                        <div id="agregar-comentario-revision">
+                            <form id="form-agregar-comentario-revision" autocomplete="off">
+                                <div class="form-group">
+                                    <label for="comentario-nuevo">Agregar comentario:</label>
+
+                                    <textarea class="form-control" id="comentario-nuevo" rows="4" maxlength="500" placeholder="Escribe tu comentario..."></textarea>
+                                </div>
+
+                                <div style="text-align: center; margin-top: 15px;">
+                                    <button type="submit" class="btn btn-success" id="btn-agregar-comentario-revision">
+                                        <span class="glyphicon glyphicon-plus"></span> Agregar comentario
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="sin-notas-revision" style="text-align: center; padding: 40px; color: #6c757d; display: none;">
+                        <i class="glyphicon glyphicon-info-sign" style="font-size: 32px; margin-bottom: 12px;"></i>
+                        <p><strong>No hay comentarios de revisión</strong></p>
+                        <p>Aún no se han agregado comentarios de revisión a este PAT.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModalNotasRevision()">
+                        <i class="glyphicon glyphicon-remove" style="margin-right: 6px;"></i>
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver evidencia PDF -->
+    <div class="modal-overlay" id="modal-ver-evidencia-pdf" style="display: none; z-index: 9999;">
+        <div class="modal-container" style="width: 90%; max-width: 1200px; height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span class="glyphicon glyphicon-file" style="margin-right: 8px;"></span>
+                    Evidencia
+                </h3>
+                <button type="button" class="modal-close" onclick="closeModalEvidenciaPDF()">
+                    <span class="close-icon">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body" style="flex: 1; padding: 0; overflow: hidden;">
+                <iframe id="iframe-evidencia" src="" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+
+            <div class="modal-footer" id="footer-acciones-evidencia" style="background: #f8f9fa; border-top: 1px solid #e9ecef; display: flex; justify-content: flex-end; gap: 10px; padding: 15px;">
+            </div>
+        </div>
+    </div>
+    <!-- Modales de Vulnerabilidades -->
+    <div class="modal-overlay" id="modal-economico" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span class="vuln-icon economic" style="display: inline-flex; margin-right: 12px;">
+                        <i class="glyphicon glyphicon-usd"></i>
+                    </span>
+                    Vulnerables Económicos
+                </h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-economico')">
+                    <span class="close-icon">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="vulnerability-modal-content">
+                    <div class="detail-row">
+                        <span class="detail-label">Cantidad de casos:</span>
+                        <span class="detail-value" style="font-size: 18px; font-weight: 700; color: #ff9f43;">@Html.DisplayFor(model => model.VunerableEconomico)</span>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <h5 style="color: #495057; margin-bottom: 8px;">Problemática:</h5>
+                        <p style="color: #6c757d; line-height: 1.5; margin: 0;">@Html.DisplayFor(model => model.DescripcionEconomico)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-personal" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span class="vuln-icon personal" style="display: inline-flex; margin-right: 12px;">
+                        <i class="glyphicon glyphicon-usd"></i>
+                    </span>
+                    Vulnerables Personal
+                </h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-personal')">
+                    <span class="close-icon">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="vulnerability-modal-content">
+                    <div class="detail-row">
+                        <span class="detail-label">Cantidad de casos:</span>
+                        <span class="detail-value" style="font-size: 18px; font-weight: 700; color: #ee5a52;">@Html.DisplayFor(model => model.VunerablePersonal)</span>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <h5 style="color: #495057; margin-bottom: 8px;">Problemática:</h5>
+                        <p style="color: #6c757d; line-height: 1.5; margin: 0;">@Html.DisplayFor(model => model.DescripcionPersonal)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-academico" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span class="vuln-icon academic" style="display: inline-flex; margin-right: 12px;">
+                        <i class="glyphicon glyphicon-folder-close"></i>
+                    </span>
+                    Vulnerables Académico
+                </h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-academico')">
+                    <span class="close-icon">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="vulnerability-modal-content">
+                    <div class="detail-row">
+                        <span class="detail-label">Cantidad de casos:</span>
+                        <span class="detail-value" style="font-size: 18px; font-weight: 700; color: #3742fa;">@Html.DisplayFor(model => model.VunerableAcademico)</span>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <h5 style="color: #495057; margin-bottom: 8px;">Problemática:</h5>
+                        <p style="color: #6c757d; line-height: 1.5; margin: 0;">@Html.DisplayFor(model => model.DescripcionAcademico)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal-overlay" id="modal-bajas" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span class="vuln-icon" style="display: inline-flex; margin-right: 12px; background-color: #6c757d; color: white; border-radius: 50%; width: 24px; height: 24px; align-items: center; justify-content: center;">
+                        <i class="glyphicon glyphicon-remove-circle" style="font-size: 14px;"></i>
+                    </span>
+                    Alumnos Dados de Baja
+                </h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-bajas')">
+                    <span class="close-icon">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="vulnerability-modal-content">
+                    <div id="loading-alumnos-bajas" class="loading-indicator" style="display: none;">
+                        <i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Cargando alumnos...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-bajas')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-no-vulnerable" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span class="vuln-icon" style="display: inline-flex; margin-right: 12px; background-color: #28a745; color: white; border-radius: 50%; width: 24px; height: 24px; align-items: center; justify-content: center;">
+                        <i class="glyphicon glyphicon-thumbs-up" style="font-size: 14px;"></i>
+                    </span>
+                    Alumnos Sin Vulnerabilidad
+                </h3>
+                <button type="button" class="modal-close" onclick="closeModal('modal-no-vulnerable')">
+                    <span class="close-icon">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="vulnerability-modal-content">
+                    <div class="detail-row">
+                        <span class="detail-label">Cantidad:</span>
+                        <span class="detail-value" style="font-size: 18px; font-weight: 700; color: #28a745;">@ViewBag.NoVulnerablesCount</span>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <h5 style="color: #495057; margin-bottom: 8px;">Descripcion:</h5>
+                        <p style="color: #6c757d; line-height: 1.5; margin: 0;">En esta seccion solamente estan los alumnos que no cuenten con algun tipo de vulnerabilidad.</p>
+                    </div>
+                    <div id="loading-alumnos-no-vulnerable" class="loading-indicator" style="display: none;">
+                        <i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Cargando alumnos...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-no-vulnerable')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón regresar arriba -->
+    <span class="ir-arriba icon-arrow-up2">
+        <span class="glyphicon glyphicon-chevron-up"></span>
+    </span>
+
+    <p style="margin-top: 25px;">
+        <a class="btn btn-primary" href="@Url.Action("PAT")" role="button">
+            <span class="glyphicon glyphicon-arrow-left"></span>
+            Regresar
+        </a>
+    </p>
+
+</div>
+<div class="ir-arriba-btn" onclick="$('html,body').animate({scrollTop:0},'slow');" title="Subir">
+    <span class="glyphicon glyphicon-chevron-up"></span>
+</div>
+<style>
+    .ir-arriba-btn {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: #1ab192;
+        color: white;
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        line-height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+</style>
+<script>
+    $(window).scroll(function () {
+        if ($(this).scrollTop() > 200) $('.ir-arriba-btn').fadeIn(); else $('.ir-arriba-btn').fadeOut();
+    });
+</script>
+<script>
+    // ============================================================================
+    // VARIABLES GLOBALES
+    // ============================================================================
+    var baseUrl = '@Url.Content("~/")';
+    var modoEdicionNotas = false;
+    var modoEdicionActividades = false;
+    var datosOriginales = {};
+    var hayCambiosSinGuardar = false;
+
+    // ============================================================================
+    // FUNCIONES GLOBALES (Llamadas desde HTML o JS)
+    // ============================================================================
+
+    // Basado en Details.cshtml
+    function openModalAgregarSemana() {
+        $('#semana-error').text('');
+        $('#actividad-grupal-error').text('');
+        $('#actividad-individual-error').text('');
+        $('#actividad-grupal').val('');
+        $('#actividad-individual').val('');
+
+        // ✅ NUEVA LÓGICA: Buscar el primer hueco en lugar de siguiente a la máxima
+        var semanasExistentes = [];
+
+        $('.activity-row').each(function () {
+            try {
+                var semanaBadge = $(this).find('.semana-badge').text().trim();
+                if (semanaBadge) {
+                    var numeroSemana = parseInt(semanaBadge.replace('Semana', '').trim());
+                    if (!isNaN(numeroSemana) && semanasExistentes.indexOf(numeroSemana) === -1) {
+                        semanasExistentes.push(numeroSemana);
+                    }
+                }
+            } catch (e) {
+                console.warn("Error al parsear semana:", e);
+            }
+        });
+
+        // Ordenar las semanas
+        semanasExistentes.sort(function (a, b) { return a - b; });
+
+        console.log("Semanas existentes:", semanasExistentes);
+
+        // Buscar el primer hueco del 1 al 16
+        var proximaSemana = null;
+        for (var i = 1; i <= 16; i++) {
+            if (semanasExistentes.indexOf(i) === -1) {
+                proximaSemana = i;
+                break;
+            }
+        }
+
+        if (proximaSemana === null) {
+            mostrarMensaje('Ya se han agregado las 16 semanas.', 'error');
+            return;
+        }
+
+        console.log("Próxima semana a agregar:", proximaSemana);
+
+        $('#proxima-semana-display').text("Semana " + proximaSemana);
+        $('#proxima-semana-hidden').val(proximaSemana);
+        $('#modal-agregar-semana').fadeIn(300);
+    }
+
+    function agregarSemana() {
+        var semanaSeleccionada = document.getElementById('proxima-semana-hidden').value;
+        var actividadGrupal = document.getElementById('actividad-grupal').value;
+        var actividadIndividual = document.getElementById('actividad-individual').value;
+
+        document.getElementById('semana-error').textContent = '';
+        document.getElementById('actividad-grupal-error').textContent = '';
+        document.getElementById('actividad-individual-error').textContent = '';
+
+        if (!semanaSeleccionada || parseInt(semanaSeleccionada) <= 0) {
+            document.getElementById('semana-error').textContent = "Error al determinar la semana. Recargue la página.";
+            return;
+        }
+        if (!actividadGrupal || actividadGrupal.trim() === '') {
+            document.getElementById('actividad-grupal-error').textContent = "Por favor, ingrese la actividad grupal.";
+            return;
+        }
+        if (!actividadIndividual || actividadIndividual.trim() === '') {
+            document.getElementById('actividad-individual-error').textContent = "Por favor, ingrese la actividad individual.";
+            return;
+        }
+
+        var idPat = @Model.IdEntrevistaInicial;
+
+        $.ajax({
+            url: '@Url.Action("AsignarSemana", "PATs")',
+            method: 'POST',
+            data: {
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
+                idPat: idPat,
+                idSemana: parseInt(semanaSeleccionada),
+                actividadGrupal: actividadGrupal.trim(),
+                actividadIndividual: actividadIndividual.trim()
+            },
+            success: function(response) {
+                if (response.success) {
+                    mostrarMensaje('Semana agregada exitosamente', 'success');
+                    closeModal('modal-agregar-semana');
+                    setTimeout(function() {
+                        // location.reload();
+                    }, 500);
+                } else {
+                    mostrarMensaje('Error al agregar la semana: ' + (response.message || 'Error desconocido'), 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", error);
+                mostrarMensaje('Error de conexión al agregar la semana', 'error');
+            }
+        });
+    }
+
+    function cargarSemanasParaEliminar() {
+        var actividades = [];
+        @if (ViewBag.Actividades != null)
+        {
+            var semanasUnicas = new HashSet<int>();
+            foreach (var act in (ViewBag.Actividades as IEnumerable<Plataforma_Web.Models.ClasesPAT.ActividadesSemanal>))
+            {
+                if (!semanasUnicas.Contains(act.IdSemana))
+                {
+                    semanasUnicas.Add(act.IdSemana);
+                    <text>
+                    actividades.push({ id: @act.IdSemana, nombre: '@act.Semana.Nombre' });
+                    </text>
+                }
+            }
+        }
+        var select = document.getElementById('semana-eliminar-select');
+        if (select) {
+            select.innerHTML = '<option value="">Seleccione una semana</option>';
+            actividades.forEach(function(sem){
+                select.innerHTML += '<option value="' + sem.id + '">' + sem.nombre + '</option>';
+            });
+        }
+    }
+
+    function guardarDatosOriginales() {
+        datosOriginales = {};
+        $('.activity-row').each(function() {
+            var actividadId = $(this).data('actividad-id');
+            if (actividadId) {
+                datosOriginales[actividadId] = {
+                    realizado: $(this).data('realizado'),
+                    comentarios: $(this).find('.comentarios-cell .comentarios-display').text().trim()
+                };
+            }
+        });
+    }
+
+    function openModal(modalId, tipoVulnerabilidad) {
+        $('#' + modalId).fadeIn(300);
+
+        if (tipoVulnerabilidad && tipoVulnerabilidad !== 'modal-finalizar-pat') {
+            console.log('Cargando alumnos para tipo:', tipoVulnerabilidad);
+
+            // --- CORRECCIÓN: Declarar variables AL INICIO del bloque ---
+            var tipoVulnId = null;
+            var actionUrl = '';
+            var necesitaTipoId = false; // <--- ESTO FALTABA DECLARARSE AQUÍ
+            // -----------------------------------------------------------
+
+            // --- Configuración de URL y Parámetros ---
+            if (tipoVulnerabilidad === 'economico') {
+                tipoVulnId = 1;
+                actionUrl = '@Url.Action("ObtenerAlumnosVulnerables", "AsignarAsesores")';
+                necesitaTipoId = true;
+            } else if (tipoVulnerabilidad === 'academico') {
+                tipoVulnId = 2;
+                actionUrl = '@Url.Action("ObtenerAlumnosVulnerables", "AsignarAsesores")';
+                necesitaTipoId = true;
+            } else if (tipoVulnerabilidad === 'personal') {
+                tipoVulnId = 3;
+                actionUrl = '@Url.Action("ObtenerAlumnosVulnerables", "AsignarAsesores")';
+                necesitaTipoId = true;
+            } else if (tipoVulnerabilidad === 'bajas') {
+                // Para bajas NO necesitamos tipoId, pero la URL es específica
+                actionUrl = '@Url.Action("ObtenerAlumnosBajas", "AsignarAsesores")';
+                necesitaTipoId = false;
+            } else if (tipoVulnerabilidad === 'no-vulnerable') {
+                actionUrl = '@Url.Action("ObtenerAlumnosNoVulnerables", "AsignarAsesores")';
+                necesitaTipoId = false;
+            } else {
+                console.error('Tipo desconocido:', tipoVulnerabilidad);
+                return;
+            }
+
+            var patId = @Model.IdEntrevistaInicial;
+            var modalBody = $('#' + modalId + ' .modal-body');
+            var loaderId = 'loading-alumnos-' + tipoVulnerabilidad;
+
+            // ... (Resto de tu código de limpieza de modal sigue igual) ...
+            modalBody.find('.alumnos-vulnerables-list').remove();
+            modalBody.find('.alert').remove();
+            modalBody.find('.error-message').remove();
+
+            if ($('#' + loaderId).length === 0) {
+                 modalBody.find('.vulnerability-modal-content').append(
+                    '<div id="' + loaderId + '" class="loading-indicator" style="display: none;">' +
+                    '<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Cargando alumnos...' +
+                    '</div>'
+                 );
+            }
+            $('#' + loaderId).show();
+
+            var ajaxData = { patId: patId };
+
+            // --- AQUÍ ES DONDE FALLABA ANTES, AHORA YA FUNCIONARÁ ---
+            if (necesitaTipoId) {
+                ajaxData.tipoVulnerabilidad = tipoVulnId;
+            }
+
+            $.ajax({
+                url: actionUrl,
+                type: 'GET',
+                data: ajaxData,
+                success: function (data) {
+                    $('#' + loaderId).hide();
+                    if (data && data.success) {
+                        actualizarModalConAlumnos(modalId, data);
+                    } else {
+                        var errorMsg = data && data.message ? data.message : 'Error al cargar los alumnos';
+                        modalBody.find('.vulnerability-modal-content').append(
+                             '<div class="error-message" style="color: #dc3545; margin-top: 10px;">' +
+                             '<i class="glyphicon glyphicon-exclamation-sign"></i> ' + errorMsg +
+                             '</div>'
+                         );
+                    }
+                },
+                error: function (xhr, status, error) {
+                     $('#' + loaderId).hide();
+                     console.error('Error al cargar alumnos:', error);
+                     modalBody.find('.vulnerability-modal-content').append(
+                         '<div class="error-message" style="color: #dc3545; margin-top: 10px;">' +
+                         '<i class="glyphicon glyphicon-exclamation-sign"></i> Error de conexión.' +
+                         '</div>'
+                     );
+                }
+            });
+        }
+    }
+
+    function closeModal(modalId) {
+        $('#' + modalId).fadeOut(300, function () {
+            // Limpiar contenido al cerrar
+            $('#' + modalId + ' .alumnos-vulnerables-list').remove();
+            $('#' + modalId + ' .no-alumnos-message').remove();
+            $('#' + modalId + ' .error-message').remove();
+            $('#' + modalId + ' .loading-indicator').hide();
+        });
+    }
+
+    // Cerrar modal al hacer clic en el overlay
+    $(document).on('click', '.modal-overlay', function (e) {
+        if (e.target === this) {
+            var modalId = $(this).attr('id');
+            closeModal(modalId);
+        }
+    });
+
+    // Cerrar modal con tecla Escape
+    $(document).keydown(function (e) {
+        if (e.keyCode === 27) { // ESC key
+            $('.modal-overlay:visible').each(function () {
+                var modalId = $(this).attr('id');
+                closeModal(modalId);
+            });
+        }
+    });
+
+    // Asegurar que los botones de cerrar funcionen
+    $(document).on('click', '.modal-close', function () {
+        var modal = $(this).closest('.modal-overlay');
+        if (modal.length) {
+            closeModal(modal.attr('id'));
+        }
+    });
+
+    function actualizarModalConAlumnos(modalId, data) {
+        var modalBody = $('#' + modalId + ' .modal-body');
+        // Limpiar contenido previo antes de agregar nuevo
+        modalBody.find('.alumnos-vulnerables-list').remove();
+        modalBody.find('.no-alumnos-message').remove();
+        modalBody.find('.alert-info').remove();
+        modalBody.find('.error-message').remove();
+
+        var listHTML = '';
+        if (data && data.alumnos && Array.isArray(data.alumnos) && data.alumnos.length > 0) {
+            listHTML = '<div class="alumnos-vulnerables-list">' +
+                       '<h6 class="alumnos-list-title"><i class="glyphicon glyphicon-list"></i> Lista de Alumnos (' + data.alumnos.length + '):</h6>' +
+                       '<div class="alumnos-list-container">';
+
+            data.alumnos.forEach(function (alumno, index) {
+                var nombre = alumno.nombre || 'Nombre no disponible';
+                var matricula = alumno.matricula || 'N/A';
+                var email = alumno.email || '';
+                var fotoBase64 = alumno.foto || '';
+                var idPersona = alumno.idPersona || 0;
+                var alternateClass = index % 2 === 0 ? 'alumno-item-even' : 'alumno-item-odd';
+
+                listHTML += '<div class="alumno-item ' + alternateClass + '">' +
+                            '<button type="button" class="alumno-btn" onclick="redirigirADetalleAlumno(' + idPersona + ')">' +
+                            '<div class="alumno-content">';
+
+                if (fotoBase64 && fotoBase64.trim() !== '' && fotoBase64 !== 'null') {
+                    listHTML += '<div class="alumno-photo-container">' +
+                                '<img id="img-' + index + '" src="data:image/jpeg;base64,' + fotoBase64 + '" class="alumno-photo" onerror="mostrarInicialAlumno(' + index + ', \'' + nombre.charAt(0).toUpperCase() + '\')" />' +
+                                '<div id="inicial-' + index + '" class="alumno-initial hidden">' + nombre.charAt(0).toUpperCase() + '</div>' +
+                                '</div>';
+                } else {
+                    listHTML += '<div class="alumno-initial-only">' + nombre.charAt(0).toUpperCase() + '</div>';
+                }
+
+                listHTML += '<div class="alumno-info">' +
+                            '<div class="alumno-name"><i class="glyphicon glyphicon-user"></i>' + nombre + '</div>' +
+                            '<div class="alumno-details">' +
+                            '<span class="alumno-matricula"><i class="glyphicon glyphicon-credit-card"></i>Matrícula: ' + matricula + '</span>' +
+                            (email ? '<br><span class="alumno-email"><i class="glyphicon glyphicon-envelope"></i>' + email + '</span>' : '') +
+                            '</div></div></div></button></div>';
+            });
+            listHTML += '</div></div>';
+        } else {
+            // Mensaje informativo: sin alumnos en esta categoría
+            var msg = (modalId === 'modal-no-vulnerable')
+                ? '<div><strong>Sin registros:</strong> No hay alumnos en esta categoría.</div>'
+                : '<div><strong>Sin registros:</strong> No hay alumnos registrados como vulnerables en esta categoría.</div>';
+            listHTML = '<div class="no-alumnos-message"><div class="no-alumnos-content"><i class="glyphicon glyphicon-info-sign"></i>' + msg + '</div></div>';
+        }
+        modalBody.find('.vulnerability-modal-content').append(listHTML);
+    }
+
+    function redirigirADetalleAlumno(idPersona) {
+        try {
+            if (!idPersona || idPersona === 0) {
+                mostrarMensaje('Error: No se pudo obtener la información del alumno', 'error');
+                return;
+            }
+            var urlDestino = '@Url.Content("~/")' + 'Asesor/Detalles/' + idPersona;
+            $('.modal-overlay').fadeOut(200, function () {
+                window.location.href = urlDestino;
+            });
+        } catch (error) {
+            mostrarMensaje('Error al redirigir a los detalles del alumno', 'error');
+        }
+    }
+
+    function mostrarInicialAlumno(index, inicial) {
+        var img = document.getElementById('img-' + index);
+        var inicialDiv = document.getElementById('inicial-' + index);
+        if (img && inicialDiv) {
+            img.classList.add('hidden');
+            inicialDiv.classList.remove('hidden');
+            inicialDiv.classList.add('show');
+        }
+    }
+
+    function verNotasRevision() {
+        var patId = @Model.IdEntrevistaInicial;
+        $('#modal-notas-revision').modal('show');
+        $('#modal-notas-revision').attr('aria-hidden', 'false');
+        cargarNotasRevision(patId);
+    }
+
+    function cargarNotasRevision(patId) {
+        $('#loading-notas-revision').show();
+        $('#notas-revision-lista').empty();
+        $('#sin-notas-revision').hide();
+        $.ajax({
+            url: '@Url.Action("ObtenerNotas", "PATsNota")',
+            type: 'GET',
+            data: { idPat: patId },
+            success: function(response) {
+                $('#loading-notas-revision').hide();
+                if (response.success && response.notas && response.notas.length > 0) {
+                    mostrarNotasRevision(response.notas);
+                } else {
+                    $('#sin-notas-revision').show();
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#loading-notas-revision').hide();
+                $('#notas-revision-lista').html('<div class="alert alert-danger" style="margin: 20px 0;"><i class="glyphicon glyphicon-exclamation-sign"></i> Error al cargar las notas de revisión.</div>');
+            }
+        });
+    }
+
+    function mostrarNotasRevision(notas) {
+        var html = '';
+        var usuarioActual = '@ViewBag.UserName';
+        var nivelUsuario = @ViewBag.IdNivel;
+        if (notas && notas.length > 0) {
+            notas.forEach(function(nota) {
+                var usuario = nota.Usuario || 'Usuario desconocido';
+                var usuarioId = nota.UsuarioId || '';
+                var fecha = formatearFechaRevision(nota.FechaCreacion);
+                var texto = nota.Comentario || '';
+                var idNota = nota.Id || nota.IdNota || nota.idNota || '';
+                html += '<div class="panel panel-default" style="margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+                html += '<div class="panel-body" style="padding: 15px;">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">';
+                html += '<div style="font-weight: bold; color: #337ab7; display: flex; align-items: center;">';
+                html += '<i class="glyphicon glyphicon-user" style="margin-right: 6px;"></i>';
+                html += usuario;
+                html += '</div>';
+                html += '<div style="font-size: 12px; color: #999; display: flex; align-items: center;">';
+                html += '<i class="glyphicon glyphicon-time" style="margin-right: 4px;"></i>';
+                html += fecha;
+                html += '</div></div>';
+                html += '<div style="background-color: #f9f9f9; border-left: 3px solid #5bc0de; padding: 10px 12px; margin: 8px 0; border-radius: 0 4px 4px 0; white-space: pre-wrap; word-wrap: break-word;">';
+                html += texto;
+                html += '</div>';
+                var puedeEliminar = (nivelUsuario == 4) || (nivelUsuario == 3 && usuarioId === usuarioActual);
+                if (puedeEliminar) {
+                    html += '<div style="margin-top:10px; text-align:right;">';
+                    html += '<button type="button" class="btn btn-danger btn-xs btn-eliminar-comentario" data-notaid="' + idNota + '"><span class="glyphicon glyphicon-trash"></span> Eliminar</button>';
+                    html += '</div>';
+                }
+                html += '</div></div>';
+            });
+        }
+        $('#notas-revision-lista').html(html);
+    }
+
+    function formatearFechaRevision(fechaString) {
+        try {
+            var fecha = new Date(fechaString);
+            if (isNaN(fecha.getTime())) {
+                 if (fechaString.includes('/Date(')) {
+                    var timestamp = parseInt(fechaString.replace(/\/Date\((\d+)\)\//, '$1'));
+                    fecha = new Date(timestamp);
+                 } else {
+                     return 'Fecha inválida';
+                 }
+            }
+            var opciones = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return fecha.toLocaleDateString('es-ES', opciones);
+        } catch (e) {
+            return fechaString || 'Fecha no disponible';
+        }
+    }
+
+    function cerrarModalNotasRevision() {
+        $('#modal-notas-revision').modal('hide');
+        $('#modal-notas-revisión').attr('aria-hidden', 'true');
+    }
+
+    window.cerrarModalVulnerabilidades = function () {
+        $('#modal-editar-vulnerabilidades').fadeOut(250);
+    };
+
+    window.eliminarSemana = function() {
+        var semanaId = document.getElementById('semana-eliminar-select').value;
+ var errorDiv = document.getElementById('semana-eliminar-error');
+        errorDiv.textContent = '';
+        if (!semanaId) {
+            errorDiv.textContent = 'Seleccione una semana a eliminar.';
+ return;
+        }
+        var patId = @Model.IdEntrevistaInicial;
+        var token = $('input[name="__RequestVerificationToken"]').val();
+ var btn = document.querySelector('#modal-eliminar-semana .btn-danger');
+        if (btn) btn.disabled = true;
+ $.ajax({
+            url: '/PATs/EliminarSemana',
+            type: 'POST',
+            data: { idPat: patId, idSemana: semanaId, __RequestVerificationToken: token },
+            success: function (resp) {
+                if (resp.success) {
+                    // --- INICIO DE LA CORRECCIÓN ---
+                    closeModal('modal-eliminar-semana');
+                    mostrarMensaje(resp.message || 'Semana eliminada correctamente', 'success');
+                    setTimeout(function() { location.reload(); }, 1000);
+                    // --- FIN DE LA CORRECCIÓN ---
+                } else {
+                    errorDiv.textContent = resp.message || 'Error al eliminar la semana.';
+                }
+            },
+            error: function () {
+
+      errorDiv.textContent = 'Error de conexión al eliminar la semana.';
+            },
+            complete: function () {
+                if (btn) btn.disabled = false;
+            }
+        });
+    };
+
+    // --- INICIO DEL NUEVO CÓDIGO ---
+// Acción para el nuevo botón "Guardar Nota" individual
+$(document).on('click', '.btn-guardar-nota-individual', function() {
+    var $thisButton = $(this);
+    var $row = $thisButton.closest('tr');
+    var actividadId = $row.data('actividad-id');
+    var $radioChecked = $row.find('input[name="realizado_' + actividadId + '"]:checked');
+    var realizado = $radioChecked.val() === 'true';
+    var comentarios = $row.find('.comentarios-input').val().trim();
+    var token = $('input[name="__RequestVerificationToken"]').val();
+
+    // Validar que el radio esté seleccionado
+    if ($radioChecked.length === 0) {
+        mostrarMensaje('Debe seleccionar "Sí" o "No" para esta actividad.', 'error');
+        return;
+    }
+
+    $thisButton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-spin"></span> Guardando...');
+
+    $.ajax({
+        url: '@Url.Action("GuardarNotaActividad", "PATs")',
+        type: 'POST',
+        data: {
+            __RequestVerificationToken: token,
+            IdActividad: actividadId,
+            Comentarios: comentarios,
+            RealizoActividad: realizado
+        },
+        success: function(response) {
+            if (response.success) {
+                mostrarMensaje('Nota guardada', 'success');
+                $thisButton.hide(); // Ocultar el botón después de guardar
+
+                // Actualizar el texto estático (display) para que coincida con lo guardado
+                $row.find('.comentarios-display').text(comentarios);
+                $row.find('.realizado-texto').html(realizado ? '<span class="status-badge-small status-realizado">Sí</span>' : '<span class="status-badge-small status-no-realizado">No</span>');
+
+                // Actualizar el data-realizado en la fila
+                $row.attr('data-realizado', realizado.toString());
+            } else {
+                mostrarMensaje(response.message || 'Error al guardar', 'error');
+            }
+        },
+        error: function() {
+            mostrarMensaje('Error de conexión al guardar la nota.', 'error');
+        },
+        complete: function() {
+            $thisButton.prop('disabled', false).html('<span class="glyphicon glyphicon-floppy-disk"></span> Guardar Nota');
+        }
+    });
+});
+// --- FIN DEL NUEVO CÓDIGO ---
+
+
+
+
+function cargarEvidenciasPorActividadTabla() {
+    var patId = @Model.IdEntrevistaInicial;
+    var actividades = @Html.Raw(Json.Encode(ViewBag.Actividades));
+    var token = $('input[name="__RequestVerificationToken"]').val();
+
+    console.log('[cargarEvidencias] Iniciando carga para PAT:', patId);
+
+    $.get(baseUrl + 'PATsEvidences/Listar', { patId: patId }, function (resp) {
+        // --- PEGAR ESTO AQUÍ ---
+        var evidencias = resp.evidencias || [];
+
+        // 1. Calcular total de semanas únicas en la tabla
+        var semanasUnicas = [];
+        $('.activity-row').each(function () {
+            var s = $(this).data('semana');
+            if (semanasUnicas.indexOf(s) === -1 && s) semanasUnicas.push(s);
+        });
+
+        // 2. Actualizar etiquetas
+        $('#count-total').text(semanasUnicas.length);
+        $('#count-aprobadas').text(evidencias.filter(function (e) { return e.estadoAprobacion == 1; }).length);
+        $('#count-rechazadas').text(evidencias.filter(function (e) { return e.estadoAprobacion == 2; }).length);
+        // -----------------------
+        actividades.forEach(function (act) {
+            var div = $('#evidencia-list-' + act.IdActividad);
+            var input = $('#file-evidencia-' + act.IdActividad);
+            var btnSubir = $('#btn-subir-evidencia-' + act.IdActividad);
+            var status = $('#status-evidencia-' + act.IdActividad);
+
+            if (!div.length) return;
+
+            div.html('');
+
+            var evidenciasActividad = evidencias.filter(function(ev) {
+                return ev.actividadId == act.IdActividad;
+            });
+
+            var html = '';
+            var tieneEvidencias = evidenciasActividad.length > 0;
+
+            if (tieneEvidencias) {
+                evidenciasActividad.forEach(function (evidencia, idx) {
+
+                    // --- CORRECCIÓN DE URL ---
+                    var urlFinal = evidencia.url;
+
+                    // 1. Si viene nula, poner cadena vacía
+                    if (!urlFinal) urlFinal = "";
+
+                    // 2. Reemplazar barras invertidas (\) por normales (/)
+                    urlFinal = urlFinal.replace(/\\/g, "/");
+
+                    // 3. Si empieza con "~", reemplazar con la ruta base de la app
+                    if (urlFinal.indexOf("~") === 0) {
+                        urlFinal = baseUrl + urlFinal.substring(2); // Quita "~/" y pega base
+                    }
+
+                    // Debug para ver en la consola del navegador qué URL se está generando
+                    console.log("URL Evidencia procesada:", urlFinal);
+                    // -------------------------
+
+                    var estadoHtml = '';
+                    if (evidencia.estadoAprobacion == 1) {
+                        estadoHtml = '<span class="evidencia-status status-active" title="APROBADO" style="position: absolute; top: -8px; right: -8px; background: #28a745; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1;"><i class="glyphicon glyphicon-ok" style="font-size: 11px;"></i></span>';
+                    } else if (evidencia.estadoAprobacion == 2) {
+                        estadoHtml = '<span class="evidencia-status status-inactive" title="RECHAZADO" style="position: absolute; top: -8px; right: -8px; background: #dc3545; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1;"><i class="glyphicon glyphicon-remove" style="font-size: 11px;"></i></span>';
+                    } else {
+                        estadoHtml = '<span class="evidencia-status status-pending" title="PENDIENTE" style="position: absolute; top: -8px; right: -8px; background: #ffc107; color: #333; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1;"><i class="glyphicon glyphicon-time" style="font-size: 11px;"></i></span>';
+                    }
+
+                    html += '<div style="position: relative; display: inline-block; padding: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; margin-right: 10px; margin-bottom: 5px; text-align: left;">';
+                    html += estadoHtml;
+
+                    html += '<div style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; padding-top: 5px;">';
+
+                    // Usamos la variable 'urlFinal' corregida
+                    html += `<button type="button" class="btn btn-info btn-xs" onclick="verEvidenciaModal('${urlFinal}', '${evidencia.id}', ${act.IdActividad}, ${evidencia.estadoAprobacion})">`;
+                    html += '<span class="glyphicon glyphicon-eye-open"></span> VER';
+                    html += '</button>';
+
+                    html += `<button type="button" class="btn btn-danger btn-xs" onclick="eliminarEvidenciaActividad('${evidencia.id}', ${act.IdActividad})" title="ELIMINAR">`;
+                    html += '<span class="glyphicon glyphicon-trash"></span>';
+                    html += '</button>';
+
+                    html += '</div></div>';
+                });
+                div.html(html);
+
+                if (input.length) input.hide();
+                if (btnSubir.length) btnSubir.hide();
+                if (status.length) status.text('');
+            } else {
+                div.html('<span style="font-weight:600; color:#999; text-transform: uppercase;">SIN EVIDENCIA</span>');
+                var enModoEdicionComentarios = $('#btn-guardar-comentarios-todas').is(':visible');
+                if (enModoEdicionComentarios) {
+                    if (input.length) input.show();
+                    if (btnSubir.length) btnSubir.hide();
+                } else {
+                    if (input.length) input.hide();
+                    if (btnSubir.length) btnSubir.hide();
+                }
+                if (status.length) status.text('');
+            }
+        });
+
+    }).fail(function(xhr, status, error) {
+        console.error('[cargarEvidencias] Error al cargar:', error);
+        $('.evidencia-cell [id^="evidencia-list-"]').html('<span style="color:red;">Error al cargar</span>');
+    });
+
+    // Eventos de subida (se mantienen igual)
+    actividades.forEach(function (act) {
+        var input = $('#file-evidencia-' + act.IdActividad);
+        var btnSubir = $('#btn-subir-evidencia-' + act.IdActividad);
+
+        input.on('change', function () {
+            if (this.files && this.files.length > 0) {
+                btnSubir.show();
+            } else {
+                btnSubir.hide();
+            }
+        });
+
+        btnSubir.off('click').on('click', function () {
+            var semanaNum = act.IdSemana || (act.Semana && act.Semana.Nombre ? parseInt(act.Semana.Nombre.replace('Semana ', '')) : 1);
+            subirEvidenciaActividad(act.IdActividad, semanaNum);
+        });
+    });
+}
+function eliminarEvidenciaActividad(evidenciaId, actividadId) {
+    if (!confirm('¿Seguro que deseas eliminar esta evidencia?')) return;
+
+    console.log('[eliminarEvidencia] Eliminando:', evidenciaId, 'de actividad:', actividadId);
+
+    $.post(baseUrl + 'PATsEvidences/Eliminar', { evidenciaId: evidenciaId }, function (resp) {
+        if (resp.success) {
+            console.log('[eliminarEvidencia] Evidencia eliminada exitosamente');
+            // Recargar la lista de evidencias
+            cargarEvidenciasPorActividadTabla();
+            $('#status-evidencia-' + actividadId).text('Evidencia eliminada.');
+
+            // Mostrar mensaje de éxito
+            if (typeof mostrarMensaje === 'function') {
+                mostrarMensaje('Evidencia eliminada correctamente', 'success');
+            }
+        } else {
+            console.error('[eliminarEvidencia] Error al eliminar');
+            alert('No se pudo eliminar la evidencia.');
+        }
+    }).fail(function() {
+        console.error('[eliminarEvidencia] Error de conexión');
+        alert('Error de conexión al eliminar la evidencia.');
+    });
+}
+
+// Función para subir evidencia
+function subirEvidenciaActividad(actividadId, semana) {
+    var patId = @Model.IdEntrevistaInicial;
+    var tutorId = @Model.IdTutor;
+    var periodo = '@Model.Periodo?.Nombre';
+    var ano = '@Model.Fecha.Year';
+    var grupo = '@Model.TutoriaGrupal';
+    var fileInput = document.getElementById('file-evidencia-' + actividadId);
+    var status = $('#status-evidencia-' + actividadId);
+
+    // Detectar tipo de tutoria desde la fila
+    var tipoTutoria = 'grupal'; // Por defecto grupal, ya que solo se muestra en filas TG
+    var row = $(fileInput).closest('tr');
+    if (row.data('tipo') === 'individual') {
+        tipoTutoria = 'individual';
+    }
+
+    if (!fileInput || !fileInput.files.length) {
+        status.text('Seleccione un PDF.');
+        return;
+    }
+
+    var file = fileInput.files[0];
+    if (file.type !== 'application/pdf') {
+        status.text('Solo se permite PDF.');
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('patId', patId);
+    formData.append('ActividadId', actividadId);
+    formData.append('semana', semana);
+    formData.append('tutorId', tutorId);
+    formData.append('periodo', periodo);
+    formData.append('ano', ano);
+    formData.append('grupo', grupo);
+    formData.append('tipoTutoria', tipoTutoria);
+    formData.append('pdf', file);
+
+    status.text('Subiendo...');
+
+    $.ajax({
+        url: baseUrl + 'PATsEvidences/Subir',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (resp) {
+            if (resp.success) {
+                status.text('¡Subido!');
+
+                // Limpiar el input
+                fileInput.value = '';
+                $('#btn-subir-evidencia-' + actividadId).hide();
+
+                // Recargar evidencias
+                cargarEvidenciasPorActividadTabla();
+
+                // Mostrar mensaje de éxito
+                if (typeof mostrarMensaje === 'function') {
+                    mostrarMensaje('Evidencia subida correctamente', 'info');
+                }
+            } else {
+                status.text(resp.message || 'Error al subir.');
+            }
+        },
+        error: function () {
+            status.text('Error de conexión.');
+        }
+    });
+}
+
+// Función para ver evidencia en modal
+    // Función para ver evidencia en modal
+    function verEvidenciaModal(url, evidenciaId, actividadId, estadoActual) {
+        // 1. Bloquear el scroll de la página de fondo
+        $('body').css('overflow', 'hidden');
+
+        // 2. Construir la URL forzando la página 1
+        // Primero limpiamos cualquier fragmento anterior (#)
+        var cleanUrl = url.split('#')[0];
+
+        // Agregamos los parámetros: page=1 (fuerza inicio) y view=FitH (ajuste ancho)
+        var finalUrl = cleanUrl + "#page=1&view=FitH";
+
+        // 3. Limpiar el iframe primero para asegurar que el navegador no use caché de posición
+        var $iframe = $('#iframe-evidencia');
+        $iframe.attr('src', '');
+
+        // Pequeño retardo técnico para asegurar que el navegador procese el src vacío
+        setTimeout(function () {
+            $iframe.attr('src', finalUrl);
+        }, 50);
+
+        // 4. Generar los botones de acción (Tu lógica original)
+        var botonesHtml = '';
+        botonesHtml += '<button type="button" class="btn btn-default" onclick="closeModalEvidenciaPDF()">Cerrar</button>';
+
+        if (estadoActual == 1) { // Aprobado -> Opción Rechazar
+            botonesHtml += `<button type="button" class="btn btn-danger" onclick="cambiarEstadoEvidenciaDesdeModal('${evidenciaId}', 2, ${actividadId})"><i class="glyphicon glyphicon-remove"></i> Cambiar a RECHAZADO</button>`;
+        } else if (estadoActual == 2) { // Rechazado -> Opción Aprobar
+            botonesHtml += `<button type="button" class="btn btn-success" onclick="cambiarEstadoEvidenciaDesdeModal('${evidenciaId}', 1, ${actividadId})"><i class="glyphicon glyphicon-ok"></i> Cambiar a APROBADO</button>`;
+        } else { // Pendiente -> Ambos
+            botonesHtml += `<button type="button" class="btn btn-danger" onclick="cambiarEstadoEvidenciaDesdeModal('${evidenciaId}', 2, ${actividadId})"><i class="glyphicon glyphicon-remove"></i> RECHAZAR</button>`;
+            botonesHtml += `<button type="button" class="btn btn-success" onclick="cambiarEstadoEvidenciaDesdeModal('${evidenciaId}', 1, ${actividadId})"><i class="glyphicon glyphicon-ok"></i> APROBAR</button>`;
+        }
+
+        $('#footer-acciones-evidencia').html(botonesHtml);
+        $('#modal-ver-evidencia-pdf').fadeIn(300);
+    }
+
+    // Función auxiliar para cerrar y recargar tras aprobar/rechazar
+    function cambiarEstadoEvidenciaDesdeModal(evidenciaId, nuevoEstado, actividadId) {
+        // Llamamos a tu función original de cambio de estado
+        cambiarEstadoEvidencia(evidenciaId, nuevoEstado, actividadId);
+
+        // Cerramos el modal automáticamente para que el usuario vea el cambio en la tabla
+        closeModalEvidenciaPDF();
+    }
+
+    function closeModalEvidenciaPDF() {
+        // 1. Limpiar el src para que la próxima vez cargue desde cero
+        $('#modal-ver-evidencia-pdf iframe').attr('src', '');
+
+        // 2. Cerrar modal
+        $('#modal-ver-evidencia-pdf').fadeOut(300);
+
+        // 3. Restaurar el scroll de la página de fondo
+        $('body').css('overflow', '');
+    }
+
+    function mostrarMensaje(mensaje, tipo) {
+        $('.alert-message').remove();
+
+        // CORRECCIÓN: Añadido 'info' y 'glyphicon-info-sign'
+        var alertClass = tipo === 'success' ? 'status-active' : (tipo === 'info' ? 'status-info' : 'status-inactive');
+        var iconClass = tipo === 'success' ? 'glyphicon-ok-circle' : (tipo === 'info' ? 'glyphicon-info-sign' : 'glyphicon-exclamation-sign');
+
+        var alertHtml = '<div class="alert-message" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 16px 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); max-width: 400px; backdrop-filter: blur(10px);">';
+        alertHtml += '<div style="display: flex; align-items: center; gap: 12px;">';
+        alertHtml += '<i class="glyphicon ' + iconClass + '" style="font-size: 18px;"></i>';
+        alertHtml += '<span style="font-weight: 500;">' + mensaje + '</span>';
+        alertHtml += '</div></div>';
+
+        if (tipo === 'success') { // Verde
+            $(alertHtml).css({ 'background': 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)', 'color': '#155724', 'border': '1px solid #28a745' }).appendTo('body');
+        } else if (tipo === 'info') { // <-- NUEVO BLOQUE AZUL
+            $(alertHtml).css({
+                'background': 'linear-gradient(135deg, #d1ecf1 0%, #b6dff1 100%)',
+                'color': '#0c5460',
+                'border': '1px solid #17a2b8'
+            }).appendTo('body');
+        } else { // Rojo
+            $(alertHtml).css({ 'background': 'linear-gradient(135deg, #f8d7da 0%, #f1b6bb 100%)', 'color': '#721c24', 'border': '1px solid #dc3545' }).appendTo('body');
+        }
+
+        setTimeout(function () {
+            $('.alert-message').fadeOut(300, function () { $(this).remove(); });
+        }, 3000);
+    }
+
+
+
+    // --- INICIO: SOLICITUD 2 (Función para Aprobar/Rechazar) ---
+function cambiarEstadoEvidencia(evidenciaId, nuevoEstado, actividadId) {
+    var token = $('input[name="__RequestVerificationToken"]').val();
+    var urlAccion = (nuevoEstado == 1) ? '@Url.Action("AprobarEvidencia", "PATsEvidences")' : '@Url.Action("RechazarEvidencia", "PATsEvidences")';
+    var textoAccion = (nuevoEstado == 1) ? "APROBAR" : "RECHAZAR";
+
+    if (!confirm('¿ESTÁ SEGURO QUE DESEA ' + textoAccion + ' ESTA EVIDENCIA?')) {
+        return;
+    }
+
+    $.ajax({
+        url: urlAccion,
+        type: 'POST',
+        data: { evidenciaId: evidenciaId, __RequestVerificationToken: token },
+        success: function (response) {
+            if (response.success) {
+                mostrarMensaje('ESTADO DE EVIDENCIA ACTUALIZADO', 'success');
+                cargarEvidenciasPorActividadTabla(); // Recargar la lista de evidencias
+            } else {
+                mostrarMensaje('ERROR AL ACTUALIZAR: ' + (response.message || 'ERROR'), 'error');
+            }
+        },
+        error: function () {
+            mostrarMensaje('ERROR DE CONEXIÓN AL ACTUALIZAR LA EVIDENCIA', 'error');
+        }
+    });
+}
+// --- FIN: SOLICITUD 2 ---
+    // ============================================================================
+    // DOCUMENT READY UNIFICADO
+    // ============================================================================
+    $(document).ready(function () {
+
+        console.log('=== INICIALIZACIÓN COMPLETADA ===');
+
+        cargarEvidenciasPorActividadTabla();
+
+        $('.ir-arriba').click(function () {
+            $('body, html').animate({ scrollTop: '0px' }, 300);
+        });
+
+        $(window).scroll(function () {
+            if ($(this).scrollTop() > 0) {
+                $('.ir-arriba').slideDown(300);
+            } else {
+                $('.ir-arriba').slideUp(300);
+            }
+        });
+
+        $('#btn-editar-vulnerabilidades').click(function (e) {
+            e.preventDefault();
+            $('#modal-editar-vulnerabilidades').fadeIn(250);
+        });
+
+        $('#form-vulnerabilidades').submit(function (e) {
+    e.preventDefault();
+    var $form = $(this);
+    var data = $form.serialize();
+
+    // Deshabilitar botón para evitar doble envío
+    var $btn = $form.find('button[type="submit"]');
+    $btn.prop('disabled', true);
+
+    $.ajax({
+        url: $form.attr('action'),
+        type: $form.attr('method'),
+        data: data,
+        success: function (response) {
+            // CORRECCIÓN PUNTO 3: Mostrar mensaje y recargar para ver datos en problemática
+            mostrarMensaje('Vulnerabilidades actualizadas correctamente', 'success');
+            cerrarModalVulnerabilidades();
+
+            // Esperar 1.5 segundos para que el usuario lea el mensaje y luego recargar
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
+        },
+        error: function () {
+            mostrarMensaje('Error al guardar vulnerabilidades', 'error');
+            $btn.prop('disabled', false);
+        }
+    });
+});
+
+        $('#form-cambiar-estado').on('submit', function (e) {
+    e.preventDefault();
+    var nuevoEstado = $('#nuevo-estado').val();
+    var nuevoRevision = $('#nuevo-revision').val();
+    var patId = '@Model.IdEntrevistaInicial';
+    var token = $('input[name="__RequestVerificationToken"]').val();
+
+    $.ajax({
+        url: '@Url.Action("CambiarEstadoPat", "PATs")',
+        type: 'POST',
+        data: { idPat: patId, estado: nuevoEstado, estadoRevision: nuevoRevision, __RequestVerificationToken: token },
+        success: function (response) {
+            if (response.success) {
+                mostrarMensaje('Estado actualizado correctamente', 'success');
+                $('#modal-cambiar-estado').fadeOut(300);
+
+                // CORRECCIÓN PUNTO 1: Recarga automática para ver el cambio
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                mostrarMensaje(response.message || 'No se pudo actualizar el estado', 'error');
+            }
+        },
+        error: function () {
+            mostrarMensaje('Error de conexión al actualizar estado', 'error');
+        }
+    });
+});
+
+        $('#nuevo-estado').on('change', function () {
+            var estado = $(this).val();
+            if (estado === 'false') {
+                $('#nuevo-revision').val('2');
+                $('#nuevo-revision').prop('disabled', true);
+            } else {
+                $('#nuevo-revision').prop('disabled', false);
+            }
+        });
+
+        $('#modal-cambiar-estado').on('show.bs.modal fadein', function () {
+            var estado = $('#nuevo-estado').val();
+            if (estado === 'false') {
+                $('#nuevo-revision').val('2');
+                $('#nuevo-revision').prop('disabled', true);
+            } else {
+                $('#nuevo-revision').prop('disabled', false);
+            }
+        });
+
+        $('.vulnerability-btn').click(function () {
+            var target = $(this).data('target');
+            if (target) {
+                openModal('modal-' + target, target);
+            }
+        });
+
+        $('.modal-overlay').click(function (e) {
+            if (e.target === this) {
+                $(this).fadeOut(300);
+            }
+        });
+
+        $(document).keydown(function (e) {
+            if (e.keyCode === 27) {
+                $('.modal-overlay:visible').fadeOut(300);
+            }
+        });
+
+        $('.activity-filter-btn').click(function () {
+            $('.activity-filter-btn').removeClass('active');
+            $(this).addClass('active');
+            var filter = $(this).data('filter');
+            if (filter === 'all') {
+                $('.activity-row').show();
+            } else {
+                $('.activity-row').hide();
+                $('.activity-row.' + filter).show();
+            }
+        });
+
+
+        // ========================================================================
+        // PREVENCIÓN DE SALIDA SIN GUARDAR
+        // ========================================================================
+
+        // 1. Advertencia al cerrar la pestaña/navegador
+        $(window).on('beforeunload', function () {
+            if (hayCambiosSinGuardar) {
+                // Mensaje estándar que mostrará el navegador
+                return 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+            }
+        });
+
+        // 2. Advertencia al hacer clic en otros enlaces (ej. "Regresar" o menús)
+        $('a').on('click', function (e) {
+            // Solo prevenir si el enlace saca de la página actual y no es un #
+            var href = $(this).attr('href');
+            if (hayCambiosSinGuardar && href && href !== '#') {
+                // Prevenir que el enlace funcione inmediatamente
+                e.preventDefault();
+
+                // Preguntar al usuario
+                if (confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres salir y descartar los cambios?')) {
+                    // Si el usuario confirma, anular la bandera y permitir la salida
+                    hayCambiosSinGuardar = false;
+                    window.location.href = href; // Redirigir manualmente
+                } else {
+                    // Si el usuario cancela, no hacer nada (permanece en la página)
+                    return false;
+                }
+            }
+        });
+        // ========================================================================
+        // EDICIÓN DE NOTAS MASIVA (COORDINADOR)
+        // ========================================================================
+
+        $(document).off('click', '#btn-comentar-todas').on('click', '#btn-comentar-todas', function () {
+            if (!modoEdicionNotas) {
+                modoEdicionNotas = true;
+                hayCambiosSinGuardar = true;
+                guardarDatosOriginales();
+
+                $('#btn-comentar-todas').hide();
+                $('#btn-guardar-comentarios-todas, #btn-cancelar-final').show();
+
+                $('.activity-row').each(function () {
+                    var idActividad = $(this).attr('data-actividad-id');
+                    var realizadoCell = $(this).find('.realizado-cell');
+                    var realizadoAttr = $(this).attr('data-realizado');
+                    var checkedTrue = (realizadoAttr === 'true') ? ' checked' : '';
+                    var checkedFalse = (realizadoAttr === 'false') ? ' checked' : '';
+                    if (realizadoAttr !== 'true' && realizadoAttr !== 'false') {
+                        checkedFalse = ' checked'; // Default a "No" si es nulo
+                    }
+
+                    var radioHtml = '<span class="realizado-radio">' +
+                        '<label style="margin-right: 8px;">' +
+                        '<input type="radio" name="realizado_' + idActividad + '" value="true"' + checkedTrue + ' /> Sí' +
+                        '</label>' +
+                        '<label>' +
+                        '<input type="radio" name="realizado_' + idActividad + '" value="false"' + checkedFalse + ' /> No' +
+                        '</label>' +
+                        '</span>';
+
+                    realizadoCell.find('.realizado-texto').hide();
+                    realizadoCell.append(radioHtml);
+
+                    var comentariosCell = $(this).find('.comentarios-cell');
+                    comentariosCell.find('.comentarios-display').hide();
+                    comentariosCell.find('.comentarios-input').show(); // Mostrar textarea existente
+                });
+
+                // MOSTRAR INPUT DE EVIDENCIA (SOLO PARA GRUPAL)
+                // --- INICIO DE LA CORRECCIÓN ---
+                // MOSTRAR inputs de evidencia SOLO para actividades SIN evidencia
+                $('.evidencia-cell').each(function () {
+                    var actividadId = $(this).closest('tr').data('actividad-id');
+                    var divEvidencias = $(this).find('[id^="evidencia-list-"]');
+
+                    // Solo mostrar input si NO hay botones de VER evidencia (el .btn-info es correcto para esta vista)
+                    if (divEvidencias.find('.btn-info').length === 0) {
+                        $(this).find('input[type="file"]').show();
+                    }
+                });
+                // --- FIN DE LA CORRECCIÓN ---
+            }
+            // ... (código existente para mostrar inputs) ...
+
+            // --- INICIO DEL NUEVO CÓDIGO ---
+            // Hacer que aparezca el botón "Guardar Nota" individual al cambiar
+            $('.comentarios-input, .realizado-radio input').off('input change').on('input change', function () {
+                $(this).closest('tr').find('.btn-guardar-nota-individual').show();
+                hayCambiosSinGuardar = true; // Mantener la advertencia general
+            });
+            // --- FIN DEL NUEVO CÓDIGO ---
+        });
+
+
+
+        $(document).off('click', '#btn-guardar-comentarios-todas').on('click', '#btn-guardar-comentarios-todas', function () {
+            var comentarios = [];
+            var hayErrores = false;
+            var actividadesProcessadas = {}; // NUEVO: Para evitar duplicados cuando hay múltiples grupos
+
+            $('.activity-row').each(function () {
+                var actividadId
+
+                    = $(this).data('actividad-id');
+
+                // NUEVO: Verificar si ya procesamos esta actividad
+                if (actividadesProcessadas[actividadId]) {
+                    console.log('Actividad ' + actividadId + ' ya procesada, saltando...');
+
+                    return; // Saltar esta actividad, ya fue procesada
+                }
+
+                var $radioRealizado = $(this).find('input[name="realizado_' + actividadId + '"]:checked');
+                var comentario = $(this).find('.comentarios-input').val();
+
+                // --- INICIO DE LA CORRECCIÓN ---
+
+                // Esta es la lógica corregida
+                if ($radioRealizado.length === 0) {
+                    // Si no hay radio buttons (ej.oculto por lógica), no es un error
+            // Pero si la celda es visible, SÍ es un error
+            if ($(this).find('.realizado-cell').length > 0 && $(this).is(':visible')) {
+                mostrarMensaje('Debe seleccionar Sí/No para todas las actividades visibles', 'error');
+                hayErrores = true;
+                return false;
+            }
+        }
+                // --- FIN DE LA CORRECCIÓN ---
+
+                if (actividadId) {
+            var realizadoVal = ($radioRealizado.length > 0) ?
+                $radioRealizado.val() === 'true' : $(this).data('realizado');
+            comentarios.push({
+                IdActividad: actividadId,
+                RealizoActividad: realizadoVal,
+                Comentarios: comentario || ''
+
+            });
+
+            // NUEVO: Marcar esta actividad como procesada
+            actividadesProcessadas[actividadId] = true;
+        }
+    });
+
+    if (hayErrores) return;
+    if (comentarios.length === 0) {
+        mostrarMensaje('No hay actividades para guardar', 'error');
+        return;
+    }
+
+    // Log para depuración (OPCIONAL - puede removerse después)
+    console.log('Total actividades procesadas:', Object.keys(actividadesProcessadas).length);
+    console.log('Comentarios a enviar:', comentarios.length);
+
+    var dataToSend = { __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() };
+    for (var i = 0; i < comentarios.length; i++) {
+        dataToSend['comentarios[' + i + '].IdActividad'] = comentarios[i].IdActividad;
+        dataToSend['comentarios[' + i + '].RealizoActividad'] = comentarios[i].RealizoActividad;
+        dataToSend['comentarios[' + i + '].Comentarios'] = comentarios[i].Comentarios;
+    }
+
+    $.ajax({
+        url: baseUrl + 'PATs/EditarVariosComentarios',
+        type: 'POST',
+        data: dataToSend,
+        success: function (response) {
+
+
+
+            if (response.success) {
+                // <-- LUGAR CORRECTO
+                hayCambiosSinGuardar = false;
+
+                mostrarMensaje('Comentarios y estados actualizados correctamente', 'success');
+
+                // --- INICIO DE LA CORRECCIÓN ---
+                // Recargar la página después de 1 seg para ver los cambios
+                setTimeout(function () { location.reload(); }, 1000);
+                // --- FIN DE LA CORRECCIÓN ---
+
+            } else {
+
+                mostrarMensaje('Error al guardar: ' + (response.message || 'Error desconocido'), 'error');
+            }
+
+
+        },
+        error: function (xhr, status, error) {
+            mostrarMensaje('Error de conexión al guardar los comentarios', 'error');
+        }
+    });
+ });
+
+
+        $(document).off('click', '#btn-cancelar-final').on('click', '#btn-cancelar-final', function () {
+            modoEdicionNotas = false;
+            hayCambiosSinGuardar = false;
+
+            $('.activity-row').each(function () {
+                var actividadId = $(this).data('actividad-id');
+                if (datosOriginales[actividadId]) {
+                    var comentariosCell = $(this).find('.comentarios-cell');
+                    comentariosCell.find('.comentarios-input').hide().val(datosOriginales[actividadId].comentarios);
+                    comentariosCell.find('.comentarios-display').show();
+                }
+                $(this).find('.realizado-radio').remove();
+                $(this).find('.realizado-texto').show();
+            });
+
+            $('.evidencia-cell .evidencia-input').hide(); // Ocultar evidencia
+            $('#btn-guardar-comentarios-todas, #btn-cancelar-final').hide();
+            $('#btn-comentar-todas').show();
+            // --- INICIO DEL NUEVO CÓDIGO ---
+            $('.btn-guardar-nota-individual').hide();
+            // --- FIN DEL NUEVO CÓDIGO ---
+        });
+
+        // ========================================================================
+        // EDICIÓN MASIVA DE ACTIVIDADES (PAT EN PROGRESO)
+        // ========================================================================
+
+        $(document).off('click', '#btn-editar-todas').on('click', '#btn-editar-todas', function () {
+            if (!modoEdicionActividades) {
+                modoEdicionActividades = true;
+                hayCambiosSinGuardar = true;
+                $('#btn-editar-todas').hide();
+                $('#btn-guardar-todas, #btn-cancelar-todas').show();
+                $('#btn-agregar-semana').show();
+                $('#btn-eliminar-semana').show();
+
+                $('.activity-row').each(function () {
+                    var actividadCell = $(this).find('.actividad-cell');
+                    var texto = actividadCell.find('.actividad-display').text().trim();
+                    actividadCell.find('.actividad-display').hide();
+                    actividadCell.find('.actividad-input').val(texto).show(); // Usar .actividad-input
+                });
+
+                $('.realizado-cell, .comentarios-cell').css('opacity', '0.5');
+            }
+        });
+
+        $(document).on('click', '#btn-cancelar-todas', function () {
+            if (!modoEdicionActividades) return; // Solo si estamos en modo edición de actividades
+
+            modoEdicionActividades = false;
+            hayCambiosSinGuardar = false;
+            $('#btn-guardar-todas, #btn-cancelar-todas').hide();
+            $('#btn-editar-todas').show();
+            $('#btn-agregar-semana').hide();
+            $('#btn-eliminar-semana').hide();
+
+            $('.activity-row').each(function () {
+                var actividadCell = $(this).find('.actividad-cell');
+                var input = actividadCell.find('.actividad-input');
+                var display = actividadCell.find('.actividad-display');
+                if (input.length) {
+                    input.hide();
+                    display.show(); // No es necesario restaurar texto, solo ocultar/mostrar
+                }
+            });
+
+            $('.realizado-cell, .comentarios-cell').css('opacity', '1');
+        });
+
+        $(document).on('click', '#btn-guardar-todas', function () {
+            var actividades = [];
+            $('.activity-row').each(function () {
+                var idActividad = $(this).attr('data-actividad-id');
+                var actividadInput = $(this).find('.actividad-cell .actividad-input');
+                if (actividadInput.is(':visible')) { // Solo guardar si está en modo edición
+
+
+                    actividades.push({
+                        IdActividad: idActividad,
+                        Actividad: actividadInput.val()
+                    });
+
+                }
+            });
+
+            if (actividades.length === 0) {
+                mostrarMensaje('No hay actividades para guardar', 'error');
+                return;
+            }
+
+            var dataToSend = {};
+
+
+            dataToSend['__RequestVerificationToken'] = $('input[name="__RequestVerificationToken"]').val();
+            for (var i = 0; i < actividades.length; i++) {
+                dataToSend['actividades[' + i + '].IdActividad'] = actividades[i].IdActividad;
+                dataToSend['actividades[' + i + '].Actividad'] = actividades[i].Actividad;
+            }
+
+            $.ajax({
+                url: '/PATs/EditarVariasActividades',
+                type: 'POST',
+                data: dataToSend,
+                success: function (response) {
+
+
+                    if (response.success) {
+                        // <-- LUGAR CORRECTO
+                        hayCambiosSinGuardar = false;
+
+                        mostrarMensaje('Actividades actualizadas correctamente', 'success');
+
+                        // --- INICIO DE LA CORRECCIÓN ---
+                        // Recargar la página después de 1 seg para ver los cambios
+                        setTimeout(function () { location.reload(); }, 1000);
+                        // --- FIN DE LA CORRECCIÓN ---
+
+                    } else {
+
+                        mostrarMensaje('Error al guardar actividades: ' + (response.message || 'Error desconocido'), 'error');
+                    }
+
+                },
+                error: function () {
+                    mostrarMensaje('Error de conexión al guardar actividades', 'error');
+
+                }
+            });
+        });
+
+        // ========================================================================
+        // MODAL: ELIMINAR SEMANA
+        // ========================================================================
+
+        $(document).on('click', '#btn-eliminar-semana', function () {
+            cargarSemanasParaEliminar();
+            $('#modal-eliminar-semana').fadeIn(300);
+        });
+
+        // ========================================================================
+        // COMENTARIOS DE REVISIÓN
+        // ========================================================================
+
+        $(document).on('submit', '#form-agregar-comentario-revision', function (e) {
+            e.preventDefault();
+            var comentario = $('#comentario-nuevo').val().trim();
+            if (!comentario) {
+                mostrarMensaje('El comentario no puede estar vacío', 'error');
+                return;
+            }
+            var patId = @Model.IdEntrevistaInicial;
+            var token = $('input[name="__RequestVerificationToken"]').val();
+            $('#btn-agregar-comentario-revision').prop('disabled', true);
+            $.ajax({
+                url: '@Url.Action("AgregarNota", "PATsNota")',
+                type: 'POST',
+                data: { idPat: patId, nota: comentario, __RequestVerificationToken: token },
+                success: function (response) {
+                    $('#btn-agregar-comentario-revision').prop('disabled', false);
+                    if (response.success) {
+                        $('#comentario-nuevo').val('');
+                        cargarNotasRevision(patId);
+                    } else {
+                        mostrarMensaje(response.message || 'No se pudo agregar el comentario', 'error');
+                    }
+                },
+                error: function () {
+                    $('#btn-agregar-comentario-revision').prop('disabled', false);
+                    mostrarMensaje('Error de conexión al agregar el comentario', 'error');
+                }
+            });
+        });
+
+        $(document).on('click', '.btn-eliminar-comentario', function () {
+            var notaId = $(this).data('notaid');
+            if (!notaId) return;
+            if (!confirm('¿Seguro que deseas eliminar este comentario?')) return;
+            var patId = @Model.IdEntrevistaInicial;
+            var token = $('input[name="__RequestVerificationToken"]').val();
+            $.ajax({
+                url: '@Url.Action("EliminarNota", "PATsNota")',
+                type: 'POST',
+                data: { notaId: notaId, __RequestVerificationToken: token },
+                success: function (response) {
+                    if (response.success) {
+                        cargarNotasRevision(patId);
+                    } else {
+                        mostrarMensaje(response.message || 'No se pudo eliminar el comentario', 'error');
+                    }
+                },
+                error: function () {
+                    mostrarMensaje('Error de conexión al eliminar el comentario', 'error');
+                }
+            });
+        });
+
+    }); // <-- FIN DEL ÚNICO $(document).ready()
+</script>

@@ -1,0 +1,60 @@
+@model IEnumerable<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>
+@{
+    ViewBag.Title = "Grupo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <h2>Grupo</h2>
+    <table id="tablaGrupo" class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>@Html.DisplayNameFor(model => model.Matricula)</th>
+                <th>@Html.DisplayNameFor(model => model.Nombre)</th>
+                <th>@Html.DisplayNameFor(model => model.Estado)</th>
+                <th>Revisar/Editar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var alumnos = ViewBag.Alumnos as List<Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales>;
+                int i = 0;
+            }
+            @foreach (var item in alumnos)
+            {
+                i++;
+                <tr>
+                    <td>@i</td>
+                    <td>@Html.DisplayFor(_ => item.Matricula)</td>
+                    <td>@Html.DisplayFor(_ => item.Nombre)</td>
+
+                    <td>
+                        @if (item.Estado == true)
+                        {
+                            <span class="glyphicon glyphicon-eye-open" style="color:green"></span> @:Revisado
+                        }
+                        else
+                        {
+                            <span class="glyphicon glyphicon-edit" style="color:red"></span> @:Sin Revisar
+                        }
+                    </td>
+
+                    <td>
+                        <a class="btn btn-primary" href="@Url.Action("Detalles", new { id = item.IdPersona })" role="button">
+                            <span class="glyphicon glyphicon-@(item.Estado ? "pencil" : "eye-open")"></span>
+                            @(item.Estado ? "Editar" : "Revisar")
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>
+    @section Scripts {
+        <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+    }

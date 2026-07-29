@@ -1,0 +1,807 @@
+﻿@model Plataforma_Web.Models.PrimeraEntrevista.AspectosPersonales
+@using Plataforma_Web.Models.PrimeraEntrevista;
+
+
+@{
+    AspectosPersonales personales = ViewBag.Aspectos as AspectosPersonales;
+    DatosPersonales datos = ViewBag.Datos as DatosPersonales;
+    // Asegurar que no sean null
+    if (datos == null) { datos = new DatosPersonales(); }
+    if (personales == null) { personales = new AspectosPersonales(); }
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <link rel="icon" type="image/png" href="~/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Aspectos Personales</title>
+    <!-- custom style sheet -->
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/animate.css">
+    <!-- Icomoon Icon Fonts-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/icomoon.css">
+    <!-- Themify Icons-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/themify-icons.css">
+    <!-- Bootstrap  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/magnific-popup.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap-datepicker.min.css">
+
+    <!-- Owl Carousel  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.theme.default.min.css">
+
+    <!-- Theme style  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/style.css">
+
+    <!-- Modernizr JS -->
+    <script src="~/EstilosEntrevista/js/modernizr-2.6.2.min.js"></script>
+
+</head>
+<body>
+
+
+    <div id="page">
+        <header id="gtco-header" role="banner" style="background-image: url(../../EstilosEntrevista/images/img_bg_1.jpg)" data-stellar-background-ratio="0.8">
+            <div class="overlay"></div>
+            <div class="gtco-container">
+                <div class="row">
+                    <div class="col-md-12 col-md-offset-0 text-left">
+
+
+
+
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel panel-default" style="background-color:white;">
+                                        <div class="panel-heading" style="text-align:center;">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    @if (datos?.Grado?.Nombre != "1")
+                                                    {
+                                                        <h2 style="color: black;">Entrevista de Seguimiento</h2>
+                                                    }
+                                                    else
+                                                    {
+                                                        <h2 style="color: black;">Entrevista Inicial</h2>
+
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="panel-body"></div>
+                                        <div class="row">
+                                            <div class="col-md-12 col-md-push-1">
+                                                <div class="row">
+
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+
+                                                            @if (datos?.Sexo == "HOMBRE")
+                                                            {
+                                                                <label>¿Estás casado?</label>
+                                                            }
+                                                            else
+                                                            {
+                                                                <label>¿Estás casada?</label>
+                                                            }
+                                                            <br />
+                                                            @(personales?.Respuesta4?.Nombre ?? "Sin especificar")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿Tienes hijos?</label>
+                                                            <br />
+                                                            @(personales?.Respuesta5?.Nombre ?? "Sin especificar")
+                                                        </div>
+                                                    </div>
+
+                                                    @if (datos?.Sexo == "MUJER")
+                                                    {
+                                                        <div class="col-md-2">
+                                                            <div class="form-group">
+                                                                <label>¿Estás embarazada?</label>
+                                                                <br />
+                                                                @(personales?.Respuesta11?.Nombre ?? "Sin especificar")
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿Padeces alguna enfermedad o alergia?</label>
+                                                            <br />
+                                                            @(personales?.Respuesta6?.Nombre ?? "Sin especificar")
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>Especifica tu enfermedad o alergia</label>
+                                                            <br />
+                                                            @(personales?.Especifica ?? "")
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿Fumas?</label>
+                                                            <br />
+                                                            @(personales?.Respuesta7?.Nombre ?? "Sin especificar")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>Cantidad y frecuencia</label>
+                                                            <br />
+                                                            @(personales?.CantidadFuma ?? "")
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿Ingieres bebidas alcohólicas?</label>
+                                                            <br />
+                                                            @(personales?.Respuesta8?.Nombre ?? "Sin especificar")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>Cantidad y frecuencia</label>
+                                                            <br />
+                                                            @(personales?.CantidadBedida ?? "")
+
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿En tu familia has observado que hay violencia?</label>
+                                                            <br />
+                                                            @(personales?.Observacio?.Nombre ?? "Sin especificar")
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿Has pensado que la vida no tiene sentido?</label>
+                                                            <br />
+                                                            @(personales?.Respuesta9?.Nombre ?? "Sin especificar")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿Por qué?</label>
+                                                            <br />
+                                                            @(personales?.Porque ?? "")
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>¿Consideras que el apoyo de tu familia cuando tienes un problema es el adecuado?</label>
+                                                            <br />
+                                                            @(personales?.ApoyoFamiliaEnProblemas ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>¿Por qué?</label>
+                                                            <br />
+                                                            @(personales?.ApoyoFamiliaEnProblemasPorque ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>¿Los problemas económicos de tu familia te desconcentran?</label>
+                                                            <br />
+                                                            @(personales?.ProblemasEconomicosFamilia ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-group">
+                                                            <label>¿Por qué?</label>
+                                                            <br />
+                                                            @(personales?.ProblemasEconomicosFamiliaPorque ?? "")
+
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-4 seguimiento">
+                                                        <div class="form-group">
+                                                            <label>¿Cómo te llevas con tus padres / hermanos? </label>
+                                                            <br />
+                                                            @(personales?.AmbienteFamiliar ?? "")
+
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="row">
+
+                                                    <div class="col-md-5 seguimiento">
+                                                        <div class="form-group">
+                                                            <label>¿Qué haces en un día común? </label>
+                                                            <br />
+                                                            @(personales?.DiaComun ?? "")
+
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-5 seguimiento">
+                                                        <div class="form-group">
+                                                            <label>¿Qué es lo que mas te gusta de la escuela? </label>
+                                                            <br />
+                                                            @(personales?.GustoEscuela ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class=" row">
+                                                    <div class="col-md-5 seguimiento">
+                                                        <div class="form-group">
+                                                            <label>¿Tienes algún pasatiempo?</label>
+                                                            <br />
+                                                            @(personales?.Responsabilidades ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-5 seguimiento">
+                                                        <div class="form-group">
+                                                            <label>¿Cómo es tu estado de salud en general?</label>
+                                                            <br />
+                                                            @(personales?.SentidoUltimamente ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!--div.row>div.col-md-12-->
+                                        <div class="panel-footer">
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <div class=" col-md-10">
+                                                        <a class="btn btn-primary"
+                                                           role="button" id="11" onclick="Mostrar()">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Editar
+
+                                                        </a>
+                                                        <a class="btn btn-primary hidden"
+                                                           role="button" id="22" style="background-color:#be0e0e; border: #be0e0e !important;" onclick="Ocultar()">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Cancelar
+
+                                                        </a>
+                                                        <a class="btn btn-primary" id="33" href="@Url.Action("Fin", new { id=2} )"
+                                                           role="button">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Siguiente
+
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">&nbsp;</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        @using (Html.BeginForm())
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(model => model.IdAspectosPersonales)
+                            @Html.HiddenFor(model => model.IdPersona)
+
+                            <div class="row hidden" id="Editar" style="margin-top: 2em;">
+
+                                <div class="col-md-10 col-md-push-1 animate-box" data-animate-effect="fadeInRight">
+                                    <div class="form-wrap">
+                                        <div class="tab">
+
+                                            <div class="tab-content">
+                                                <div class="tab-content-inner active" data-content="signup">
+                                                    <h3>Aspectos Personales</h3>
+                                                    <form action="#">
+                                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                                        @Html.HiddenFor(model => model.IdAspectosPersonales)
+
+                                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                                        @Html.HiddenFor(model => model.IdPersona)
+
+
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="fullname">¿Estás casado(a)?</label>
+                                                                        @Html.DropDownList("IdCasado", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdCasado, "", new { @class = "text-danger" })
+
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="activities">¿Tienes hijos?</label>
+                                                                        @Html.DropDownList("IdHijo", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta1" })
+                                                                        @Html.ValidationMessageFor(model => model.IdHijo, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                @if (datos.Sexo == "MUJER")
+                                                                {
+                                                                    <div class="row form-group">
+                                                                        <div class="col-md-12">
+                                                                            <label for="lastfullname">¿Estás embarazada?</label>
+                                                                            @Html.DropDownList("IdEmbarazo", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                            @Html.ValidationMessageFor(model => model.IdEmbarazo, "", new { @class = "text-danger" })
+                                                                        </div>
+                                                                    </div>
+
+                                                                }
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Padeces alguna enfermedad o alergia?</label>
+                                                                        @Html.DropDownList("IdEnfermedad", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta2" })
+                                                                        @Html.ValidationMessageFor(model => model.IdEnfermedad, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12 hidden" id="2">
+                                                                        <label for="lastfullname">Especifica tu enfermedad o alergia</label>
+                                                                        @Html.EditorFor(model => model.Especifica, new { htmlAttributes = new { @class = "form-control", placeholder = "Especifica que enfermedad o alergia padeces", @Value = (Model.Especifica != null ? Model.Especifica.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.Especifica, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Fumas?</label>
+                                                                        @Html.DropDownList("IdFuma", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta3" })
+                                                                        @Html.ValidationMessageFor(model => model.IdFuma, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12 hidden" id="3">
+                                                                        <label for="lastfullname">Especifica la cantidad y frecuencia</label>
+                                                                        @Html.EditorFor(model => model.CantidadFuma, new { htmlAttributes = new { @class = "form-control", placeholder = "Numero de cigarrillos y con que frecuencia", @Value = (Model.CantidadFuma != null ? Model.CantidadFuma.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.CantidadFuma, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Ingieres bebidas alcohólicas?</label>
+                                                                        @Html.DropDownList("IdBebida", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta4" })
+                                                                        @Html.ValidationMessageFor(model => model.IdBebida, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12 hidden" id="4">
+                                                                        <label for="lastfullname">Especifica la cantidad y frecuencia con que ingieres bebidas alcoholicas</label>
+                                                                        @Html.EditorFor(model => model.CantidadBedida, new { htmlAttributes = new { @class = "form-control", placeholder = "Cantidad y frecuencia", @Value = (Model.CantidadBedida != null ? Model.CantidadBedida.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.CantidadBedida, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿En los ultimos 3 años has pensado que la vida no tiene sentido?</label>
+                                                                        @Html.DropDownList("IdVidaSinSentido", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta5" })
+                                                                        @Html.ValidationMessageFor(model => model.IdVidaSinSentido, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12 hidden" id="5">
+                                                                        <label for="lastfullname">¿Por qué?</label>
+                                                                        @Html.EditorFor(model => model.Porque, new { htmlAttributes = new { @class = "form-control", placeholder = "Expresa por que piensas eso", @Value = (Model.Porque != null ? Model.Porque.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.Porque, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿En tu familia has observado que hay violencia?</label>
+                                                                        @Html.DropDownList("IdObservacionFamilia", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdObservacionFamilia, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Consideras que el apoyo de tu familia es el adecuado cuando tienes un problema?</label>
+                                                                        @Html.EditorFor(model => model.ApoyoFamiliaEnProblemas, new { htmlAttributes = new { @class = "form-control", @Value = (Model.ApoyoFamiliaEnProblemas != null ? Model.ApoyoFamiliaEnProblemas.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.ApoyoFamiliaEnProblemas, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Por qué?</label>
+                                                                        @Html.EditorFor(model => model.ApoyoFamiliaEnProblemasPorque, new { htmlAttributes = new { @class = "form-control", placeholder = "Especifica", @Value = (Model.ApoyoFamiliaEnProblemasPorque != null ? Model.ApoyoFamiliaEnProblemasPorque.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.ApoyoFamiliaEnProblemasPorque, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Los problemas económicos de tu familia te afectan o te desconcentran?</label>
+                                                                        @Html.EditorFor(model => model.ProblemasEconomicosFamilia, new { htmlAttributes = new { @class = "form-control", @Value = (Model.ProblemasEconomicosFamilia != null ? Model.ProblemasEconomicosFamilia.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.ProblemasEconomicosFamilia, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Por qué?</label>
+                                                                        @Html.EditorFor(model => model.ProblemasEconomicosFamiliaPorque, new { htmlAttributes = new { @class = "form-control", placeholder = "Especifica", @Value = (Model.ProblemasEconomicosFamiliaPorque != null ? Model.ProblemasEconomicosFamiliaPorque.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.ProblemasEconomicosFamiliaPorque, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                @if (datos.IdGrado != 1)
+                                                                {
+                                                                    <div class="row form-group seguimiento">
+                                                                        <div class="col-md-12">
+                                                                            <label for="lastfullname">¿Qué haces en un día común? </label>
+                                                                            @Html.EditorFor(model => model.DiaComun, new { htmlAttributes = new { @class = "form-control", placeholder = "Detalla tu respuesta", @Value = (Model.DiaComun != null ? Model.DiaComun.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                            @Html.ValidationMessageFor(model => model.DiaComun, "", new { @class = "text-danger" })
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row form-group seguimiento">
+                                                                        <div class="col-md-12">
+                                                                            <label for="lastfullname">¿Qué es lo que mas te gusta de la escuela? </label>
+                                                                            @Html.EditorFor(model => model.GustoEscuela, new { htmlAttributes = new { @class = "form-control", placeholder = "Detalla tu respuesta", @Value = (Model.GustoEscuela != null ? Model.GustoEscuela.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                            @Html.ValidationMessageFor(model => model.GustoEscuela, "", new { @class = "text-danger" })
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row form-group seguimiento">
+                                                                        <div class="col-md-12">
+                                                                            <label for="lastfullname">¿Cómo te llevas con tus padres / hermanos? </label>
+                                                                            @Html.EditorFor(model => model.AmbienteFamiliar, new { htmlAttributes = new { @class = "form-control", placeholder = "Detalla tu ambiente", @Value = (Model.AmbienteFamiliar != null ? Model.AmbienteFamiliar.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                            @Html.ValidationMessageFor(model => model.AmbienteFamiliar, "", new { @class = "text-danger" })
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row form-group seguimiento">
+                                                                        <div class="col-md-12">
+                                                                            <label for="lastfullname">¿Tienes algún pasatiempo? </label>
+                                                                            @Html.DropDownList("ResponsabilidadesExtra", (SelectList)ViewBag.SentidoMal, new { @class = "form-control", @id = "ResponsabilidadesExtra" })
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="row form-group hidden" id="ResponsabilidadesExtraInput">
+                                                                        <div class="col-md-12">
+                                                                            <label for="lastfullname">¿Cuál?</label>
+                                                                            @Html.EditorFor(model => model.Responsabilidades, new { htmlAttributes = new { @class = "form-control", placeholder = "Escribe tus pasatiempos", @Value = (Model.Responsabilidades != null ? Model.Responsabilidades.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                            @Html.ValidationMessageFor(model => model.Responsabilidades, "", new { @class = "text-danger" })
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="row form-group seguimiento">
+                                                                        <div class="col-md-12">
+                                                                            <label for="lastfullname">¿Cómo es tu estado de salud en general?</label>
+                                                                            @Html.EditorFor(model => model.SentidoUltimamente, new { htmlAttributes = new { @class = "form-control", placeholder = "Escribe como te sientes", @Value = (Model.SentidoUltimamente != null ? Model.SentidoUltimamente.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                            @Html.ValidationMessageFor(model => model.SentidoUltimamente, "", new { @class = "text-danger" })
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row form-group">
+                                                            <div class="col-md-12">
+                                                                <input type="submit" class="btn btn-primary btn-block" value="Finalizar Entrevista">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        }
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+
+    @Html.Partial("~/ViewsStyles/Entrevista/views/ModalCamposFaltantes.cshtml")
+
+    <!-- jQuery -->
+    <script src="~/EstilosEntrevista/js/jquery.min.js"></script>
+    <!-- jQuery Easing -->
+    <script src="~/EstilosEntrevista/js/jquery.easing.1.3.js"></script>
+    <!-- Bootstrap -->
+    <script src="~/EstilosEntrevista/js/bootstrap.min.js"></script>
+    <!-- Waypoints -->
+    <script src="~/EstilosEntrevista/js/jquery.waypoints.min.js"></script>
+    <!-- Carousel -->
+    <script src="~/EstilosEntrevista/js/owl.carousel.min.js"></script>
+    <!-- countTo -->
+    <script src="~/EstilosEntrevista/js/jquery.countTo.js"></script>
+
+    <!-- Stellar Parallax -->
+    <script src="~/EstilosEntrevista/js/jquery.stellar.min.js"></script>
+
+    <!-- Magnific Popup -->
+    <script src="~/EstilosEntrevista/js/jquery.magnific-popup.min.js"></script>
+    <script src="~/EstilosEntrevista/js/magnific-popup-options.js"></script>
+
+    <!-- Datepicker -->
+    <script src="~/EstilosEntrevista/js/bootstrap-datepicker.min.js"></script>
+
+    <!-- Validacion de Campos -->
+    <script src="~/ViewsStyles/Entrevista/js/ValidacionCampos.js"></script>
+
+    <!-- Main -->
+    <script src="~/EstilosEntrevista/js/main.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            if ($('#Pregunta1').val() == 1) {
+                $("#1").removeClass("hidden");
+            };
+
+            $("#Pregunta1").change(function (e) {
+                if ($('#Pregunta1').val() == 1) {
+                    $("#1").removeClass("hidden");
+                } else {
+                    $("#1").addClass("hidden");
+                }
+            });
+            if ($('#Pregunta2').val() == 1) {
+                $("#2").removeClass("hidden");
+            };
+
+            $("#Pregunta2").change(function (e) {
+                if ($('#Pregunta2').val() == 1) {
+                    $("#2").removeClass("hidden");
+                } else {
+                    $("#2").addClass("hidden");
+                }
+            });
+
+            if ($('#Pregunta3').val() == 1) {
+                $("#3").removeClass("hidden");
+            };
+
+            $("#Pregunta3").change(function (e) {
+                if ($('#Pregunta3').val() == 1) {
+                    $("#3").removeClass("hidden");
+                } else {
+                    $("#3").addClass("hidden");
+                }
+            });
+
+            if ($('#Pregunta4').val() == 1) {
+                $("#4").removeClass("hidden");
+            };
+
+            $("#Pregunta4").change(function (e) {
+                if ($('#Pregunta4').val() == 1) {
+                    $("#4").removeClass("hidden");
+                } else {
+                    $("#4").addClass("hidden");
+                }
+            });
+            if ($('#Pregunta5').val() == 1) {
+                $("#5").removeClass("hidden");
+            };
+
+            $("#Pregunta5").change(function (e) {
+                if ($('#Pregunta5').val() == 1) {
+                    $("#5").removeClass("hidden");
+                } else {
+                    $("#5").addClass("hidden");
+                }
+            });
+
+            const sentidomal = '@(personales?.SentidoMal?.Replace("'", "\\'") ?? "N/A")';
+
+                if ($('#SentidoDecaido').val() == 1) {
+                    $("#SentidoDecaidoInput").removeClass("hidden");
+                    if (sentidomal == 'N/A') {
+                        $('#SentidoDecaidoInput input').val('');
+                    } else {
+                        $('#SentidoDecaidoInput input').val(sentidomal);
+                    }
+
+                }
+
+                $("#SentidoDecaido").change(function (e) {
+                    if ($('#SentidoDecaido').val() == 1) {
+                        $("#SentidoDecaidoInput").removeClass("hidden");
+                        if (sentidomal == 'N/A') {
+                            $('#SentidoDecaidoInput input').val('');
+                        } else {
+                            $('#SentidoDecaidoInput input').val(sentidomal);
+                        }
+                    } else {
+                        $("#SentidoDecaidoInput").addClass("hidden");
+                        $('#SentidoDecaidoInput input').val('N/A');
+
+                    }
+                });
+
+            const responsabilidades = '@(personales?.Responsabilidades?.Replace("'", "\\'") ?? "N/A")';
+
+                if ($('#ResponsabilidadesExtra').val() == 1) {
+                    $("#ResponsabilidadesExtraInput").removeClass("hidden");
+                    if (responsabilidades == 'N/A') {
+                        $('#ResponsabilidadesExtraInput input').val('');
+                    } else {
+                        $('#ResponsabilidadesExtraInput input').val(responsabilidades);
+                    }
+
+                }
+
+                $("#ResponsabilidadesExtra").change(function (e) {
+                    if ($('#ResponsabilidadesExtra').val() == 1) {
+                        $("#ResponsabilidadesExtraInput").removeClass("hidden");
+                        if (responsabilidades == 'N/A') {
+                            $('#ResponsabilidadesExtraInput input').val('');
+                        } else {
+                            $('#ResponsabilidadesExtraInput input').val(responsabilidades);
+                        }
+                    } else {
+                        $("#ResponsabilidadesExtraInput").addClass("hidden");
+                        $('#ResponsabilidadesExtraInput input').val('N/A');
+
+                    }
+                });
+
+            const situaciondif = '@(personales?.SituacionDif?.Replace("'", "\\'") ?? "N/A")';
+
+                if ($('#SituacionDificil').val() == 1) {
+                    $("#SituacionDificilInput").removeClass("hidden");
+                    $("#MejorarSituacionInput").removeClass("hidden");
+                    $("#ApoyoInstitucionInput").removeClass("hidden");
+                    $("#CompartirExtraInput").removeClass("hidden");
+
+                    if (situaciondif == 'N/A') {
+                        $('#SituacionDificilInput input').val('');
+                        $('#MejorarSituacionInput input').val('');
+                        $('#ApoyoInstitucionInput input').val('');
+                        $('#CompartirExtraInput input').val('');
+
+                    } else {
+                        $('#SituacionDificilInput input').val(situaciondif);
+                        $('#MejorarSituacionInput input').val(situaciondif);
+                        $('#ApoyoInstitucionInput input').val(situaciondif);
+                        $('#CompartirExtraInput input').val(situaciondif);
+
+                    }
+
+                }
+
+                $("#SituacionDificil").change(function (e) {
+                    if ($('#SituacionDificil').val() == 1) {
+                        $("#SituacionDificilInput").removeClass("hidden");
+                        $("#MejorarSituacionInput").removeClass("hidden");
+                        $("#ApoyoInstitucionInput").removeClass("hidden");
+                        $("#CompartirExtraInput").removeClass("hidden");
+
+                        if (situaciondif == 'N/A') {
+                            $('#SituacionDificilInput input').val('');
+                            $('#MejorarSituacionInput input').val('');
+                            $('#ApoyoInstitucionInput input').val('');
+                            $('#CompartirExtraInput input').val('');
+
+                        } else {
+                            $('#SituacionDificilInput input').val(situaciondif);
+                            $('#MejorarSituacionInput input').val(situaciondif);
+                            $('#ApoyoInstitucionInput input').val(situaciondif);
+                            $('#CompartirExtraInput input').val(situaciondif);
+                        }
+                    } else {
+                        $("#SituacionDificilInput").addClass("hidden");
+                        $('#SituacionDificilInput input').val('N/A');
+
+                        $("#MejorarSituacionInput").addClass("hidden");
+                        $('#MejorarSituacionInput input').val('N/A');
+
+                        $("#ApoyoInstitucionInput").addClass("hidden");
+                        $('#ApoyoInstitucionInput input').val('N/A');
+
+                        $("#CompartirExtraInput").addClass("hidden");
+                        $('#CompartirExtraInput input').val('N/A');
+
+                    }
+                });
+
+            const idGrado = @(datos?.IdGrado ?? 0);
+                if (idGrado == 1) {
+                    $(".seguimiento").addClass("hidden");
+                }
+
+        });
+    </script>
+    <script>
+        function Mostrar() {
+            $("#Editar").removeClass("hidden");
+            $("#11").addClass("hidden");
+            $("#33").addClass("hidden");
+            $("#22").removeClass("hidden");
+
+        }
+        function Ocultar() {
+            $("#Editar").addClass("hidden");
+            $("#11").removeClass("hidden");
+            $("#33").removeClass("hidden");
+            $("#22").addClass("hidden");
+        }
+    </script>
+    <script>
+        $(document).ready(function () {
+            function removeEmojisAndUppercase(input) {
+                input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+            }
+
+            var camposTexto = [
+                'input[name="Especifica"]',
+                'input[name="CantidadFuma"]',
+                'input[name="CantidadBebida"]',
+                'input[name="Porque"]',
+                'input[name="ApoyoFamiliaEnProblemas"]',
+                'input[name="ApoyoFamiliaEnProblemasPorque"]',
+                'input[name="ProblemasEconomicosFamilia"]',
+                'input[name="ProblemasEconomicosFamiliaPorque"]',
+                'input[name="DiaComun"]',
+                'input[name="GustoEscuela"]',
+                'input[name="AmbienteFamiliar"]',
+                'input[name="Responsabilidades"]',
+                'input[name="SentidoUltimamente"]'
+            ];
+
+            camposTexto.forEach(function (selector) {
+                var campo = $(selector);
+
+                campo.on('input', function () {
+                    removeEmojisAndUppercase(this);
+                });
+
+                campo.on('paste', function (e) {
+                    e.preventDefault();
+                    var pastedText = (e.originalEvent || e).clipboardData.getData('text/plain');
+                    pastedText = pastedText.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+
+                    var start = this.selectionStart;
+                    var end = this.selectionEnd;
+                    var value = this.value;
+                    this.value = value.substring(0, start) + pastedText + value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + pastedText.length;
+
+                    $(this).trigger('input');
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

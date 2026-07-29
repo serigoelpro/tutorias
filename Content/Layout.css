@@ -1,0 +1,118 @@
+﻿.navbar-inverse {
+    background-color: #1ab192;
+    border-color: #f1eeee;
+    color: #fff;
+}
+
+.navbar-inverse .navbar-brand {
+    color: #f1eeee;
+}
+
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover,
+.navbar-inverse .navbar-nav > .active > a:focus {
+    color: #ffffff;
+    background-color: #09dca9;
+}
+
+.navbar-inverse .navbar-nav > li > a {
+    color: #ffffff;
+}
+
+.navbar-inverse .navbar-nav > .open > a,
+.navbar-inverse .navbar-nav > .open > a:hover,
+.navbar-inverse .navbar-nav > .open > a:focus {
+    color: #ffffff;
+    background-color: #09dca9;
+}
+
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+    color: #ffffff;
+    text-decoration: none;
+    background-color: #09dca9;
+}
+
+.div.Login {
+    margin: auto;
+    width: 50%;
+    max-width: 500px;
+    background-color: aquamarine;
+}
+
+@media (max-width: 1200px) {
+    .navbar-header {
+        float: none;
+    }
+
+    .navbar-toggle {
+        display: block;
+    }
+
+    .navbar-collapse.collapse {
+        display: none !important;
+    }
+
+        .navbar-collapse.collapse.in {
+            display: block !important;
+        }
+
+    .navbar-nav {
+        float: none !important;
+        margin: 7.5px -15px;
+    }
+
+        .navbar-nav > li {
+            float: none;
+        }
+
+            .navbar-nav > li > a {
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+}
+
+/* footer */
+.footer-style {
+    padding-top: 10px;
+    background-color: #1ab192;
+    color: white;
+}
+
+/* Dropdown menú fondo y links */
+.navbar-inverse .navbar-nav .open .dropdown-menu,
+.navbar-inverse .navbar-collapse .dropdown-menu {
+    background-color: #1ab192 !important; /* mismo color que navbar */
+    border: none; /* opcional, quita borde */
+    box-shadow: none; /* opcional */
+}
+
+/* Links dentro del dropdown */
+.navbar-inverse .navbar-nav .dropdown-menu > li > a {
+    color: #ffffff !important; /* blanco siempre */
+}
+
+    /* Hover y focus */
+    .navbar-inverse .navbar-nav .dropdown-menu > li > a:hover,
+    .navbar-inverse .navbar-nav .dropdown-menu > li > a:focus {
+        color: #ffffff !important;
+        background-color: #09dca9 !important;
+    }
+
+/* Para móviles, cuando el dropdown colapsa */
+@media (max-width: 767px) {
+    .navbar-inverse .navbar-nav .open .dropdown-menu {
+        background-color: #1ab192 !important;
+    }
+}
+/* Estilo para los títulos dentro de dropdowns */
+.navbar-inverse .navbar-nav .dropdown-menu > .dropdown-header {
+    color: #ffffff !important; /* blanco siempre */
+    background-color: #1ab192 !important; /* mismo color que navbar */
+    font-weight: bold; /* opcional, para resaltar */
+}
+
+/* Opcional: separadores y divisores dentro del dropdown */
+.navbar-inverse .navbar-nav .dropdown-menu > .divider {
+    background-color: #09dca9 !important; /* verde claro */
+}

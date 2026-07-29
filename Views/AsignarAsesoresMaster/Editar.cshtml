@@ -1,0 +1,149 @@
+﻿@model Plataforma_Web.Models.TutoriaGrupal
+
+@{
+    ViewBag.Title = "Editar";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Obtener el nivel del usuario desde la sesión
+    var usuario = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var userNivel = usuario?.IdNivel ?? 0;
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <h2>Editar</h2>
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-horizontal">
+            <h4>Editar Grupo</h4>
+            <hr />
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+            @Html.HiddenFor(model => model.IdTutoriaGrupal)
+            @Html.HiddenFor(model => model.IdPeriodo)
+            @Html.HiddenFor(model => model.IdUsuario)
+
+            @* --- CAMBIO REALIZADO AQUÍ --- *@
+            <div class="form-group col-md-12">
+                @* Se usa LabelFor para tomar el DisplayName del modelo *@
+                @Html.LabelFor(model => model.Año, htmlAttributes: new { @class = "control-label" })
+                <div class="">
+                    @* Se usa TextBoxFor para enlazar directo a la propiedad *@
+                    @Html.TextBoxFor(model => model.Año, new { @class = "form-control", type = "number", min = "2000", max = "2100" })
+
+                    @* Se usa ValidationMessageFor *@
+                    @Html.ValidationMessageFor(model => model.Año, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            @* --- FIN DEL CAMBIO --- *@
+
+            <div class="form-group col-md-12">
+                @Html.LabelFor(model => model.IdGrado, htmlAttributes: new { @class = "control-label" })
+                <div class="">
+                    @Html.DropDownList("IdGrado", null, htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdGrado, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="form-group col-md-12">
+                @Html.LabelFor(model => model.IdGrupo, htmlAttributes: new { @class = "control-label" })
+                <div class="">
+                    @Html.DropDownList("IdGrupo", null, htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdGrupo, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group col-md-12">
+                @Html.LabelFor(model => model.IdTurno, htmlAttributes: new { @class = "control-label" })
+                <div class="">
+                    @Html.DropDownList("IdTurno", null, htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdTurno, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            @* Campo de carrera solo visible para usuarios nivel 4 o superior *@
+            @if (userNivel >= 4)
+            {
+                <div class="form-group col-md-12">
+                    @Html.LabelFor(model => model.IdCarrera, htmlAttributes: new { @class = "control-label" })
+                    <div class="">
+                        @Html.DropDownList("IdCarrera", null, htmlAttributes: new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.IdCarrera, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+            }
+            else
+            {
+                @* Campo oculto para usuarios nivel 3 - mantiene el valor actual *@
+                @Html.HiddenFor(model => model.IdCarrera)
+            }
+
+            <div class="form-group col-md-12">
+                @Html.LabelFor(model => model.IdEspecialidad, "Especialidad", htmlAttributes: new { @class = "control-label" })
+                <div class="">
+                    @Html.DropDownList("IdEspecialidad", null, "Seleccione una especialidad", htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdEspecialidad, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" value="Guardar" class="btn btn-default" />
+                </div>
+            </div>
+        </div>
+    }
+
+    <div>
+        @Html.ActionLink("Cancelar", "Asesorados", new { id = Model.IdUsuario }, new { @class = "btn btn-default" })
+    </div>
+</div>
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var carreraDropdown = $("#IdCarrera");
+            var especialidadDropdown = $("#IdEspecialidad");
+            var especialidadActual = '@Model.IdEspecialidad';
+
+            if (carreraDropdown.is(":visible")) {
+                carreraDropdown.change(function () {
+                    var selectedCarreraId = $(this).val();
+                    especialidadDropdown.empty();
+
+                    if (selectedCarreraId) {
+                        especialidadDropdown.append($('<option/>', { value: '', text: 'Cargando especialidades...' }));
+
+                        var url = '@Url.Action("GetEspecialidadesPorCarrera", "AsignarAsesoresMaster")';
+                        $.getJSON(url, { idCarrera: selectedCarreraId })
+                            .done(function (data) {
+                                especialidadDropdown.empty();
+                                especialidadDropdown.append($('<option/>', { value: '', text: 'Seleccione una especialidad' }));
+                                $.each(data, function (index, item) {
+                                    especialidadDropdown.append($('<option/>', { value: item.Id, text: item.Nombre }));
+                                });
+                                if (especialidadActual) {
+                                    especialidadDropdown.val(especialidadActual);
+                                }
+                            })
+                            .fail(function () {
+                                especialidadDropdown.empty();
+                                especialidadDropdown.append($('<option/>', { value: '', text: 'Error al cargar especialidades' }));
+                            });
+                    } else {
+                        especialidadDropdown.append($('<option/>', { value: '', text: 'Seleccione una carrera primero' }));
+                    }
+                });
+
+                if (carreraDropdown.val() != "") {
+                    carreraDropdown.trigger('change');
+                }
+            }
+        });
+    </script>
+}

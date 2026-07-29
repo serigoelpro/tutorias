@@ -1,0 +1,81 @@
+﻿@model IEnumerable<PlataformaWeb.BecasTransporte.Models.Estudiante>
+@using Plataforma_Web.Models;
+
+@{
+    ViewBag.Title = "DetallesBeca";
+    List<SelectListItem> GruposMatutino = ViewBag.GruposMatutino as List<SelectListItem>;
+    List<SelectListItem> GruposVespertino = ViewBag.GruposVespertino as List<SelectListItem>;
+    List<SelectListItem> GruposDespresurizado = ViewBag.GruposDespresurizado as List<SelectListItem>;
+
+
+}
+
+
+@if (ViewBag.Mensaje != null)
+{
+    <div class="col-md-12 text-center">
+        <br />
+        <br />
+        <div class="alert alert-info">@ViewBag.Mensaje</div>
+        <a class="btn btn-default" href="@Url.Action("Estadisticas", "Estudiantes")"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a>
+    </div>
+}
+else
+{
+    <div class="row">
+                <h2 class="col-md-6">
+                    Detalles de Becas
+                    <a class="btn btn-default" href="@Url.Action("Estadisticas", "Estudiantes")"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a>
+                </h2>
+
+
+        <h2 class="col-md-6">Total Por Carrera: <strong>@ViewBag.montoTotalPorCuatrimestre</strong></h2>
+
+    </div>
+    <ul class="nav nav-tabs">
+        <li role="presentation" class="active"><a href="#">Becas Por Grupos</a></li>
+        <li role="presentation"><a href="@Url.Action("DetallesBecaGrado", "Estudiantes")">Becas Por Grado</a></li>
+        <li role="presentation"><a href="@Url.Action("DetallesBecaEspecialidad", "Estudiantes")">Becas Por Especialidad</a></li>
+    </ul>
+    <br />
+    <div class="row">
+            @if (GruposMatutino != null)
+            {
+                <div class="col-md-6">
+                    <p>Grupos Turno Matutino</p>
+                    @foreach (var grupo in GruposMatutino)
+                    {
+                        <a href="@Url.Action("_Graficas", "Estudiantes", new { id = Convert.ToInt32(grupo.Value) })" class="btn btn-primary btn-sm">@grupo.Text</a>
+                    }
+                </div>
+            }
+
+            @if (GruposVespertino != null)
+            {
+                <div class="col-md-6">
+                    <p>Grupos Turno Vespertino</p>
+                    @foreach (var grupo in GruposVespertino)
+                    {
+                        <a href="@Url.Action("_Graficas", "Estudiantes", new { id = Convert.ToInt32(grupo.Value) })" class="btn btn-primary btn-sm">@grupo.Text</a>
+                    }
+                </div>
+            }
+        </div>
+
+    if (GruposDespresurizado.Count() >= 1)
+    {
+        <div class="row">
+            <div class="col-md-6">
+                <p>Grupos Turno Despresurizado.</p>
+                @foreach (var grupo in GruposDespresurizado)
+                {
+                    <a href="@Url.Action("_Graficas", "Estudiantes", new { id = Convert.ToInt32(grupo.Value) })" class="btn btn-primary btn-sm">@grupo.Text</a>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        @Html.Partial("_Graficas")
+    </div>
+}

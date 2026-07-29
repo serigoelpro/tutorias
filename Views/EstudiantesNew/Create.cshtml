@@ -1,0 +1,88 @@
+@model Plataforma_Web.Models.Usuario
+
+@{
+    ViewBag.Title = "Crear Estudiante";
+    Layout = "~/Views/Shared/_SGALayout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+<h2>Registrar nuevo estudiante</h2>
+
+@if (ViewBag.Mensaje != null)
+{
+    <div class="alert alert-warning">
+        @ViewBag.Mensaje
+    </div>
+}
+
+@using (Html.BeginForm("Create", "EstudiantesNew", FormMethod.Post, new { @class = "form" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.NombreCompleto)
+        @Html.TextBoxFor(model => model.NombreCompleto, new { @class = "form-control", placeholder = "Nombre completo", required = "required" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.UserName, "Usuario")
+        @Html.TextBoxFor(model => model.UserName, new { @class = "form-control", placeholder = "Nombre de usuario", required = "required" })
+    </div>
+
+    @* Added password visibility toggle *@
+    <div class="form-group">
+        @Html.LabelFor(model => model.Password)
+        <div class="input-group">
+            @Html.PasswordFor(model => model.Password, new { @class = "form-control", placeholder = "Contraseña", required = "required", @id = "passwordField" })
+            <div class="input-group-addon">
+                <button type="button" class="btn btn-default btn-sm" onclick="togglePasswordVisibility('passwordField', this)" title="Mostrar/Ocultar contraseña">
+                    <span class="glyphicon glyphicon-eye-open"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.CorreoElectronico)
+        @Html.TextBoxFor(model => model.CorreoElectronico, new { @class = "form-control", placeholder = "Correo electrónico", required = "required", type = "email" })
+    </div>
+
+    @* Solo mostrar selección de carrera si el usuario es master (nivel 4) *@
+    if (ViewBag.Carreras != null)
+    {
+        <div class="form-group">
+            @Html.LabelFor(model => model.IdCarrera, "Carrera")
+            @Html.DropDownListFor(model => model.IdCarrera,
+                ViewBag.Carreras as SelectList,
+                "-- Selecciona una carrera --",
+                new { @class = "form-control", required = "required" })
+        </div>
+    }
+
+    <button type="submit" class="btn btn-success">Guardar Estudiante</button>
+    @Html.ActionLink("Cancelar", "Index", null, new { @class = "btn btn-secondary ml-2" })
+}
+
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+    @* Added password visibility toggle script *@
+    <script>
+        function togglePasswordVisibility(fieldId, button) {
+            var field = document.getElementById(fieldId);
+            var icon = button.querySelector('span');
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.className = 'glyphicon glyphicon-eye-close';
+                button.title = 'Ocultar contraseña';
+            } else {
+                field.type = 'password';
+                icon.className = 'glyphicon glyphicon-eye-open';
+                button.title = 'Mostrar contraseña';
+            }
+        }
+    </script>
+}

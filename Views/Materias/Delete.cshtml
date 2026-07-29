@@ -1,0 +1,632 @@
+﻿@model PlataformaWeb.Models.Materia
+
+@{
+    ViewBag.Title = "Eliminar Materia";
+}
+
+<h2>
+    <span class="glyphicon glyphicon-warning-sign"></span> Eliminar Materia
+</h2>
+
+<div class="alert alert-danger">
+    <h4><span class="glyphicon glyphicon-exclamation-sign"></span> ¿Está seguro que desea eliminar esta materia?</h4>
+    <p>Esta acción no se puede deshacer y eliminará todos los datos asociados.</p>
+</div>
+
+@if (!string.IsNullOrEmpty(ViewBag.Error as string))
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @ViewBag.Error
+    </div>
+}
+
+<div class="well">
+    <h4><span class="glyphicon glyphicon-info-sign"></span> Información de la Materia a Eliminar</h4>
+
+    <div class="row">
+        <div class="col-md-6">
+            <dl class="dl-horizontal">
+                <dt>
+                    <span class="glyphicon glyphicon-edit"></span> Nombre de la Materia:
+                </dt>
+                <dd>
+                    <strong class="materia-name">@Model.Nombre</strong>
+                </dd>
+
+                <dt>
+                    <span class="glyphicon glyphicon-education"></span> Programa Educativo:
+                </dt>
+                <dd>
+                    @(Model.NombreCarrera ?? "N/A")
+                </dd>
+
+                <dt>
+                    <span class="glyphicon glyphicon-cog"></span> Área:
+                </dt>
+                <dd>
+                    @(Model.NombreEspecialidad ?? "N/A")
+                </dd>
+
+                <dt>
+                    <span class="glyphicon glyphicon-signal"></span> Cuatrimestre:
+                </dt>
+                <dd>
+                    @(Model.NombreGrado ?? "N/A")
+                </dd>
+            </dl>
+        </div>
+
+        <div class="col-md-6">
+            <!-- Información del Plan de Estudio -->
+            <dl class="dl-horizontal">
+                <dt>
+                    <span class="glyphicon glyphicon-calendar"></span> Plan de Estudio:
+                </dt>
+                <dd>
+                    @if (!string.IsNullOrEmpty(Model.NombrePlanEstudio))
+                    {
+                        <span class="label @(Model.LabelPlan ?? "label-default")">@Model.NombrePlanEstudio</span>
+                        if (Model.AñoPlan.HasValue)
+                        {
+                            <small class="text-muted">(@Model.AñoPlan)</small>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">No especificado</span>
+                    }
+                </dd>
+
+                @if (Model.CalificacionMinima.HasValue)
+                {
+                    <dt>
+                        <span class="glyphicon glyphicon-ok-sign"></span> Calificación Mínima:
+                    </dt>
+                    <dd>
+                        <strong>@Model.CalificacionMinima.Value puntos</strong>
+                    </dd>
+                }
+
+                @if (Model.PermiteDecimales.HasValue)
+                {
+                    <dt>
+                        <span class="glyphicon glyphicon-cog"></span> Tipo de Calificación:
+                    </dt>
+                    <dd>
+                        <span class="badge @(Model.PermiteDecimales.Value ? "badge-success" : "badge-warning")">
+                            @(Model.TipoCalificacion ?? "N/A")
+                        </span>
+                    </dd>
+                }
+
+                <dt>
+                    <span class="glyphicon glyphicon-ok-circle"></span> Estado Actual:
+                </dt>
+                <dd>
+                    @if (Model.Activo)
+                    {
+                        <span class="label label-success">Activa</span>
+                    }
+                    else
+                    {
+                        <span class="label label-danger">Inactiva</span>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Información detallada del plan de estudio -->
+@if (!string.IsNullOrEmpty(Model.NombrePlanEstudio))
+{
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <span class="glyphicon glyphicon-info-sign"></span> Detalles del Plan de Estudio
+            </h4>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <p><strong>Plan:</strong> @Model.NombrePlanEstudio</p>
+                    @if (Model.AñoPlan.HasValue)
+                    {
+                        <p><strong>Año:</strong> @Model.AñoPlan</p>
+                    }
+                    @if (Model.CalificacionMinima.HasValue)
+                    {
+                        <p><strong>Requisitos de aprobación:</strong> @(Model.RequisitoTexto ?? "N/A")</p>
+                    }
+                    @if (Model.PermiteDecimales.HasValue)
+                    {
+                        <p>
+                            <strong>Sistema de calificación:</strong>
+                            @if (Model.PermiteDecimales.Value)
+                            {
+                                <span>Permite decimales (ej: 7.5, 8.3, 9.7)</span>
+                            }
+                            else
+                            {
+                                <span>Solo números enteros (redondeo automático)</span>
+                            }
+                        </p>
+                    }
+                </div>
+                <div class="col-md-4">
+                    <div class="plan-summary-card">
+                        <div class="plan-icon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </div>
+                        <div class="plan-details">
+                            <h5>@Model.NombrePlanEstudio</h5>
+                            @if (Model.AñoPlan.HasValue)
+                            {
+                                <p class="plan-year">Año @Model.AñoPlan</p>
+                            }
+                            @if (Model.CalificacionMinima.HasValue)
+                            {
+                                <p class="plan-requirement">Mínima: @Model.CalificacionMinima</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Advertencias sobre la eliminación -->
+<div class="panel panel-warning">
+    <div class="panel-heading">
+        <h3 class="panel-title">
+            <span class="glyphicon glyphicon-warning-sign"></span> Advertencias Importantes
+        </h3>
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5><span class="glyphicon glyphicon-trash"></span> Lo que se eliminará:</h5>
+                <ul class="warning-list">
+                    <li>Registro completo de la materia</li>
+                    <li>Configuración del plan de estudio asociado</li>
+                    <li>Relaciones con programas educativos y áreas</li>
+                    <li>Historial de la materia en el sistema</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h5><span class="glyphicon glyphicon-exclamation-sign"></span> Considere antes de eliminar:</h5>
+                <ul class="consideration-list">
+                    <li>¿Hay estudiantes inscritos en esta materia?</li>
+                    <li>¿Existen calificaciones registradas?</li>
+                    <li>¿Se usa en reportes o estadísticas?</li>
+                    <li>¿Podría desactivarla en lugar de eliminarla?</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="alert alert-info" style="margin-top: 15px; margin-bottom: 0;">
+            <h5><span class="glyphicon glyphicon-lightbulb"></span> Alternativa recomendada:</h5>
+            <p>En lugar de eliminar, considere <strong>desactivar</strong> la materia. Esto preservará los datos históricos pero la materia no aparecerá en las listas activas.</p>
+            <p>
+                @Html.ActionLink("Editar materia para desactivar", "Edit", new { id = Model.IdMateria }, new { @class = "btn btn-warning btn-sm" })
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-danger">
+    <div class="panel-heading">
+        <h3 class="panel-title">
+            <span class="glyphicon glyphicon-warning-sign"></span> Confirmación de Eliminación
+        </h3>
+    </div>
+    <div class="panel-body">
+        <div class="confirmation-section">
+            <div class="materia-to-delete">
+                <h4>Materia a eliminar:</h4>
+                <div class="materia-card">
+                    <div class="materia-header">
+                        <span class="materia-name">@Model.Nombre</span>
+                        @if (!string.IsNullOrEmpty(Model.NombrePlanEstudio))
+                        {
+                            <span class="plan-badge label @(Model.LabelPlan ?? "label-default")">@Model.NombrePlanEstudio</span>
+                        }
+                    </div>
+                    <div class="materia-details">
+                        <span>@(Model.NombreCarrera ?? "N/A")</span> •
+                        <span>@(Model.NombreEspecialidad ?? "N/A")</span> •
+                        <span>@(Model.NombreGrado ?? "N/A")</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="warning-text">
+                <strong>Esta acción es irreversible.</strong> Una vez eliminada, esta materia ya no estará disponible en el sistema
+                y no podrá ser recuperada.
+            </p>
+
+            @using (Html.BeginForm())
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-danger btn-lg" onclick="return confirmarEliminacion()">
+                        <span class="glyphicon glyphicon-trash"></span> Confirmar Eliminación
+                    </button>
+                    @Html.ActionLink("Cancelar", "Index", null, new { @class = "btn btn-default btn-lg", style = "margin-left: 10px;" })
+                    @Html.ActionLink("Editar en su lugar", "Edit", new { id = Model.IdMateria }, new { @class = "btn btn-warning", style = "margin-left: 10px;" })
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="well well-sm">
+    <h4><span class="glyphicon glyphicon-info-sign"></span> Información Técnica</h4>
+    <div class="row">
+        <div class="col-md-4">
+            <p><strong>ID de la Materia:</strong> @Model.IdMateria</p>
+            <p><strong>ID del Plan:</strong> @Model.IdPlanEstudio</p>
+        </div>
+        <div class="col-md-4">
+            <p><strong>ID de Carrera:</strong> @Model.IdCarrera</p>
+            <p><strong>ID de Especialidad:</strong> @Model.IdEspecialidad</p>
+        </div>
+        <div class="col-md-4">
+            <p><strong>ID de Grado:</strong> @Model.IdGrado</p>
+            <p><strong>Fecha de consulta:</strong> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarEliminacion() {
+    var nombreMateria = '@Html.Raw(Model.Nombre.Replace("'", "\\'"))';
+    var planEstudio = '@(Model.NombrePlanEstudio ?? "")';
+
+    var mensaje = '¿Está completamente seguro que desea eliminar la materia "' + nombreMateria + '"?';
+
+    if (planEstudio) {
+        mensaje += '\n\nPlan de estudio: ' + planEstudio;
+    }
+
+    mensaje += '\n\n⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER ⚠️';
+    mensaje += '\n\nConsidere desactivar la materia en lugar de eliminarla para preservar el historial.';
+
+    var confirmacion = confirm(mensaje);
+
+    if (confirmacion) {
+        // Segunda confirmación para estar seguros
+        var segundaConfirmacion = confirm('ÚLTIMA CONFIRMACIÓN:\n\n¿Realmente desea ELIMINAR PERMANENTEMENTE la materia "' + nombreMateria + '"?\n\nEscriba "ELIMINAR" en la siguiente ventana para confirmar.');
+
+        if (segundaConfirmacion) {
+            var textoConfirmacion = prompt('Para confirmar la eliminación, escriba exactamente: ELIMINAR');
+
+            if (textoConfirmacion === 'ELIMINAR') {
+                // Mostrar indicador de carga
+                $('button[type="submit"]').prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Eliminando...');
+                return true;
+            } else {
+                alert('Eliminación cancelada. El texto no coincide.');
+                return false;
+            }
+        }
+    }
+
+    return false;
+}
+
+$(document).ready(function() {
+    // Resaltar el nombre de la materia
+    $('.materia-name').css('color', '#d9534f');
+
+    // Efecto hover en la tarjeta de materia
+    $('.materia-card').hover(
+        function() {
+            $(this).addClass('highlight-danger');
+        },
+        function() {
+            $(this).removeClass('highlight-danger');
+        }
+    );
+
+    // Advertencia al cargar la página
+    setTimeout(function() {
+        $('.alert-danger').first().effect ? $('.alert-danger').first().effect('shake', { times: 2, distance: 5 }, 1000) : null;
+    }, 500);
+});
+</script>
+
+<style>
+    .glyphicon-refresh-animate {
+        -animation: spin .7s infinite linear;
+        -webkit-animation: spin2 .7s infinite linear;
+    }
+
+    @@-webkit-keyframes spin2 {
+        from {
+            -webkit-transform: rotate(0deg);
+        }
+
+        to {
+            -webkit-transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes spin {
+        from {
+            transform: scale(1) rotate(0deg);
+        }
+
+        to {
+            transform: scale(1) rotate(360deg);
+        }
+    }
+
+    .well {
+        margin-top: 20px;
+    }
+
+    .panel-danger {
+        margin-top: 20px;
+    }
+
+    /* Para información del plan de estudio */
+    .plan-summary-card {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .plan-summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .plan-icon {
+        font-size: 24px;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+
+    .plan-details h5 {
+        margin: 0 0 8px 0;
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .plan-year {
+        color: #6c757d;
+        margin: 2px 0;
+        font-size: 12px;
+    }
+
+    .plan-requirement {
+        color: #28a745;
+        margin: 2px 0;
+        font-weight: 500;
+        font-size: 13px;
+    }
+
+    /* Estilos para las listas de advertencias */
+    .warning-list,
+    .consideration-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .warning-list li,
+    .consideration-list li {
+        padding: 4px 0 4px 20px;
+        position: relative;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .warning-list li:before {
+        content: "⚠️";
+        position: absolute;
+        left: 0;
+        top: 4px;
+        font-size: 12px;
+    }
+
+    .consideration-list li:before {
+        content: "❓";
+        position: absolute;
+        left: 0;
+        top: 4px;
+        font-size: 12px;
+    }
+
+    /* Estilos para la sección de confirmación */
+    .confirmation-section {
+        background-color: #fff5f5;
+        border: 2px dashed #d9534f;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+    }
+
+    .materia-to-delete h4 {
+        color: #d9534f;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .materia-card {
+        background-color: white;
+        border: 2px solid #d9534f;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 10px 0;
+        transition: all 0.3s ease;
+    }
+
+    .materia-card.highlight-danger {
+        background-color: #f2dede;
+        box-shadow: 0 0 15px rgba(217, 83, 79, 0.3);
+    }
+
+    .materia-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .materia-header .materia-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #d9534f;
+    }
+
+    .plan-badge {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .materia-details {
+        font-size: 13px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .warning-text {
+        margin: 15px 0;
+        padding: 10px;
+        background-color: #fcf8e3;
+        border: 1px solid #faebcc;
+        border-radius: 4px;
+        color: #8a6d3b;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    /* Mejorar botones de acción */
+    .form-actions {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #d9534f;
+    }
+
+    .btn-lg {
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-danger:hover {
+        background-color: #c9302c;
+        border-color: #ac2925;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(217, 83, 79, 0.3);
+    }
+
+    /* Badges personalizados */
+    .badge-success {
+        background-color: #5cb85c;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+
+    .badge-warning {
+        background-color: #f0ad4e;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+
+    /* Mejoras a las etiquetas de planes */
+    .label-success {
+        background-color: #5cb85c !important;
+    }
+
+    .label-warning {
+        background-color: #f0ad4e !important;
+    }
+
+    .label-info {
+        background-color: #5bc0de !important;
+    }
+
+    .label-default {
+        background-color: #777 !important;
+    }
+
+    /* Estilos responsivos */
+    @@media (max-width: 768px) {
+        .dl-horizontal dt {
+            text-align: left;
+            width: auto;
+            clear: both;
+            margin-bottom: 5px;
+        }
+
+        .dl-horizontal dd {
+            margin-left: 0;
+            margin-bottom: 15px;
+        }
+
+        .materia-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .materia-header .materia-name {
+            margin-bottom: 8px;
+        }
+
+        .plan-summary-card {
+            margin-top: 15px;
+        }
+
+        .form-actions .btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+
+    /* Animaciones sutiles */
+    .panel {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Estados de focus para accesibilidad */
+    .btn:focus {
+        outline: 3px solid rgba(217, 83, 79, 0.3);
+        outline-offset: 2px;
+    }
+
+    /* Mejoras al panel de información técnica */
+    .well-sm p {
+        margin-bottom: 5px;
+        font-size: 12px;
+    }
+
+    .well-sm strong {
+        color: #333;
+    }
+</style>

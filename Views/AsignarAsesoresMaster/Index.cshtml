@@ -1,0 +1,272 @@
+﻿@model IEnumerable<Plataforma_Web.Models.Usuario>
+
+@{
+    ViewBag.Title = "Gestión de Tutores";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userNivel = ViewBag.UserNivel as int? ?? 0;
+    var carrerasSL = ViewBag.CarrerasSelectList as SelectList;
+    var carrerasDict = ViewBag.Carreras as IDictionary<int, string>;
+
+    var _usrSesion = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var esDirector = _usrSesion != null && _usrSesion.EsDirector;
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <style>
+        @if (userNivel < 3)
+        {
+            <text>
+            /* Ocultar columna de carrera para usuarios nivel < 3 */
+            #tutoresTable th:nth-child(6),
+            #tutoresTable td:nth-child(6) {
+                display: none;
+            }
+            </text>
+        }
+
+            #tutoresTable th, #tutoresTable td {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+                #tutoresTable td[data-label="Acciones"] {
+                    white-space: normal;
+                    text-align: center;
+                }
+
+                #tutoresTable td[data-label="Acciones"] {
+                    white-space: normal;
+                    text-align: center;
+                    display: flex;
+                    flex-wrap: nowrap;
+                    justify-content: center;
+                    gap: 5px;
+                }
+
+                    #tutoresTable td[data-label="Acciones"] .btn {
+                        margin: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 0.9rem 1.0rem;
+                    }
+
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+
+    </style>
+}
+<div class="sga-scope">
+    <h2>Gestión de Tutores</h2>
+
+    <div class="row" style="margin-bottom:12px;">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="buscarTutores" class="control-label">Buscar:</label>
+                <input id="buscarTutores" type="text" class="form-control" placeholder="Escribe para filtrar los resultados..." />
+            </div>
+        </div>
+    </div>
+
+    @* Filtro por carrera - Solo para usuarios Master (nivel ≥ 4) *@
+    @if (userNivel >= 4)
+    {
+        <div class="row" style="margin-bottom: 20px;">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="filtroCarrera" class="control-label">Filtrar por carrera:</label>
+                    @using (Html.BeginForm("Index", "AsignarAsesoresMaster", FormMethod.Get, new { id = "formFiltroCarrera" }))
+                    {
+                        @Html.DropDownList("idCarrera", carrerasSL, "-- Todas las carreras --",
+                            new { @class = "form-control", @id = "filtroCarrera", @onchange = "this.form.submit();" })
+                    }
+                </div>
+            </div>
+            @if (ViewBag.CarreraSeleccionada != null)
+            {
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label class="control-label">&nbsp;</label>
+                        <div>
+                            @Html.ActionLink("Limpiar filtro", "Index", null, new { @class = "btn btn-utt-outline" })
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="alert alert-info">
+            @ViewBag.Mensaje
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.Error
+        </div>
+    }
+
+    @* Información de debug para desarrollo - remover en producción *@
+    @if (ViewBag.UserNivel == 0)
+    {
+        <div class="alert alert-warning">
+            <strong>Advertencia:</strong> No se pudo determinar el nivel del usuario.
+            Esto puede indicar un problema de autenticación o sesión expirada.
+        </div>
+    }
+
+
+
+    @* Información del filtro activo (solo master) *@
+    @if (userNivel >= 4 && ViewBag.CarreraSeleccionada != null)
+    {
+        var carreraSeleccionada = carrerasSL?.FirstOrDefault(x => x.Value == ViewBag.CarreraSeleccionada.ToString());
+        if (carreraSeleccionada != null)
+        {
+            <div class="sga-filter-bar" style="margin-bottom: 20px; margin-top: 15px;">
+                <strong>Filtro activo:</strong> Mostrando tutores de la carrera: <strong>@carreraSeleccionada.Text</strong>
+                <a href="@Url.Action("Index")" class="btn btn-utt-outline" style="margin-left: 10px;">
+                    <span class="glyphicon glyphicon-remove"></span> Quitar filtro
+                </a>
+            </div>
+        }
+    }
+
+    <div class="mb-3 d-flex gap-2" style="margin-bottom: 20px; margin-top: 15px;">
+        @if (!esDirector)
+        {
+        <a href="@Url.Action("AsignarTutor")" class="btn btn-utt-outline">
+            <i class="fa fa-user-plus"></i> Asignar nuevo tutor
+        </a>
+        }
+        <a href="@Url.Action("Index", "GruposGenerales")" class="btn btn-utt-outline">
+            <i class="fa fa-users"></i> Ver grupos generales
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table id="tutoresTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>@Html.DisplayNameFor(model => model.NombreCompleto)</th>
+                    <th>@Html.DisplayNameFor(model => model.UserName)</th>
+                    <th>Estado</th>
+                    <th>@Html.DisplayNameFor(model => model.CorreoElectronico)</th>
+                    <th>Microsoft ID</th>
+                    <th>Carrera</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        // Ocultar en vista filas sin OID solo para nivel 3 (refuerzo visual)
+                        if (userNivel == 3 && (string.IsNullOrEmpty(item.MicrosoftIdentifier) || item.MicrosoftIdentifier.Trim() == ""))
+                        {
+                            continue;
+                        }
+                        <tr>
+                            <td data-label="Nombre completo">@Html.DisplayFor(m => item.NombreCompleto)</td>
+                            <td data-label="Usuario">@Html.DisplayFor(m => item.UserName)</td>
+                            <td data-label="Estado">@(item.Estado ? "Activo" : "Inactivo")</td>
+                            <td data-label="Correo Electrónico">@Html.DisplayFor(m => item.CorreoElectronico)</td>
+                            <td data-label="Microsoft ID">@(string.IsNullOrEmpty(item.MicrosoftIdentifier) ? "No asignado" : "Asignado")</td>
+                            <td data-label="Carrera">
+                                @(carrerasDict != null && carrerasDict.ContainsKey(item.IdCarrera) ? carrerasDict[item.IdCarrera] : "Sin carrera")
+                            </td>
+                            <td data-label="Acciones">
+                                <a href="@Url.Action("Asesorados", new { id = item.IdUsuario })" class="btn btn-info btn-sm">
+                                    <i class="fa fa-users"></i>
+                                </a>
+                                @if (!esDirector)
+                                {
+                                <a href="@Url.Action("EditarAsesor", new { id = item.IdUsuario })" class="btn btn-warning btn-sm">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a href="@Url.Action("EliminarAsesor", new { id = item.IdUsuario })" class="btn btn-danger btn-sm">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!(Model != null && Model.Any()))
+    {
+        <div class="alert alert-info text-center" style="margin-top:10px;">
+            @if (userNivel == 0)
+            {
+                <em>No se pueden mostrar tutores debido a problemas de autenticación.</em>
+            }
+            else
+            {
+                <em>No hay tutores registrados para mostrar.</em>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            const tablaTutores = $('#tutoresTable').DataTable({
+                pageLength: 10, // 10 tutores por página
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+                dom: 'rtip',
+
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json"
+                },
+
+                columnDefs: [
+                    { "orderable": false, "targets": 6 } // La columna 6 es la de Acciones
+                ],
+
+                order: [[0, "asc"]]
+            });
+
+            $('#buscarTutores').on('keyup', function () {
+                tablaTutores.search(this.value).draw();
+            });
+        });
+    </script>
+}

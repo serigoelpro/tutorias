@@ -1,0 +1,19 @@
+﻿@{
+    var titulo = ViewBag.ErrorTitle ?? "Permiso denegado";
+    var mensaje = ViewBag.ErrorMessage ?? ViewBag.Error ?? "No tienes permisos para acceder a esta información.";
+}
+
+<div class="alert alert-danger" style="margin:40px auto; max-width:900px; padding:32px 40px; border-radius:12px; border:1px solid #e4bcbc; box-shadow:0 2px 9px #00000015;">
+    <div style="display:flex; align-items:center;">
+        <span class="glyphicon glyphicon-ban-circle" style="font-size:42px; color:#b94a48; margin-right:22px;"></span>
+        <div>
+            <h2 style="color:#b94a48; font-weight:600; margin-bottom:12px;">@titulo</h2>
+            <div style="font-size:17px; color:#a94442; margin-bottom:22px;">
+                @mensaje
+            </div>
+            <button class="btn btn-primary" onclick="window.history.back();">
+                <span class="glyphicon glyphicon-arrow-left"></span> Regresar
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,78 @@
+﻿@model IEnumerable<PlataformaWeb.BecasTransporte.Models.Estudiante>
+@using Plataforma_Web.Models;
+
+@{
+    ViewBag.Title = "DetallesBeca";
+    List<SelectListItem> Especialidades = ViewBag.Especialidades as List<SelectListItem>;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+@{
+    string accionEstadisticas = "Estadisticas";
+    string controlador = "EstudiantesMaster";
+
+    var usuario = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var idNivel = usuario?.IdNivel ?? 0;
+
+    if (idNivel == 3) { accionEstadisticas = "EstadisticasCoordinador"; }
+    else if (idNivel == 4) { accionEstadisticas = "EstadisticasMaster"; }
+}
+
+@if (ViewBag.Mensaje != null)
+{
+    <div class="col-md-12 text-center">
+        <br /><br />
+        <div class="alert alert-info">@ViewBag.Mensaje</div>
+        <a class="btn btn-default" href="@Url.Action(accionEstadisticas, controlador)">
+            <span class="glyphicon glyphicon-arrow-left"></span> Regresar
+        </a>
+    </div>
+}
+else
+{
+    <div class="becas-detalles">
+        <div class="row">
+            <h2 class="col-md-6">
+                Detalles de Becas
+                <a class="btn btn-default" href="@Url.Action(accionEstadisticas, controlador)">
+                    <span class="glyphicon glyphicon-arrow-left"></span> Regresar
+                </a>
+            </h2>
+
+            <h2 class="col-md-6">
+                Total Por Carrera: <strong>@ViewBag.montoTotalPorCuatrimestre</strong>
+            </h2>
+        </div>
+
+        <ul class="nav nav-tabs">
+            <li role="presentation"><a href="@Url.Action("DetallesBeca", "EstudiantesMaster")">Becas Por Grupos</a></li>
+            <li role="presentation"><a href="@Url.Action("DetallesBecaGrado", "EstudiantesMaster")">Becas Por Grado</a></li>
+            <li role="presentation" class="active"><a href="#">Becas Por Especialidad</a></li>
+        </ul>
+
+        <br />
+
+        <div class="row">
+            @if (Especialidades != null)
+            {
+                <div class="col-md-12 section-box">
+                    <p>Especialidades</p>
+                    @foreach (var especialidad in Especialidades)
+                    {
+                        <a href="@Url.Action("_GraficasEspecialidad", "EstudiantesMaster", new { id = Convert.ToInt32(especialidad.Value) })"
+                           class="btn btn-primary btn-sm">@especialidad.Text</a>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="row">
+            @Html.Partial("_GraficasEspecialidad")
+        </div>
+    </div>
+}

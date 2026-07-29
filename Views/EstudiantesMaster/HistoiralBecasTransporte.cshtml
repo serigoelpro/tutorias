@@ -1,0 +1,139 @@
+﻿@model List<PlataformaWeb.BecasTransporte.Models.Historial>
+@using System.Globalization;
+
+@{
+    ViewBag.Title = "Histoiral Becas Transporte";
+    CultureInfo ci = new CultureInfo("es-MX");
+
+}
+
+<br />
+
+@if (ViewBag.Mensaje != null)
+{
+    <div class="col-md-12 text-center">
+        <br />
+        <br />
+        <div class="alert alert-info">@ViewBag.Mensaje</div>
+        <a class="btn btn-default" href="@Url.Action("Estadisticas","Estudiantes")">Volver</a>
+    </div>
+}
+else
+{
+    <div class="panel panel-default text-center">
+        <!-- Default panel contents -->
+        <div class="panel-heading">
+            <h2>Historial de Becas y Transporte <a class="btn btn-default" href="@Url.Action("Estadisticas", "Estudiantes")"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a></h2>
+        </div>
+        <div class="panel-body">
+            <div class="container">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <tr>
+                        <th class="text-center">Periodo</th>
+                        <th class="text-center">Fecha</th>
+                        <th class="text-center">Total Alumnos por Carrera</th>
+                        <th class="text-center">Alumnos que Usan Transporte</th>
+                        <th class="text-center">Alumnos con Beca</th>
+                        <th class="text-center">Monto Total Recibido</th>
+                        <th class="text-center"></th>
+                    </tr>
+                    @foreach (var historial in Model)
+                {
+                        <tr class="text-center">
+                            @if (historial.PeriodoActual == 1)
+                            {
+                                <td>Enero - Abril</td>
+                            }
+                            else if (historial.PeriodoActual == 2)
+                            {
+                                <td>Mayo - Agosto</td>
+                            }
+                            else
+                            {
+                                <td>Septiembre - Diciembre</td>
+                            }
+                            <td>@historial.Fecha.ToShortDateString()</td>
+                            <td>@historial.CantidadTotalEstudiantes</td>
+                            <td>@historial.CantidadUsanTransporte</td>
+                            <td>@historial.CantidadBecados</td>
+                            <td>@historial.MontoTotal.ToString("C", ci)</td>
+                            <td><button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#@historial.Id">Detalles</button></td>
+                        </tr>
+
+                            <!-- Modal -->
+                        <div class="modal fade" id="@historial.Id" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3>Detalles Historial</h3>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <h2>Datos Por Carrera</h2>
+                                            <div class="col-md-6">
+                                                <h5>Total de Alumnos por Carrera: <strong>@historial.CantidadTotalEstudiantes</strong></h5>
+                                                <h5>Monto Total por Carrera: <strong>@historial.MontoTotal.ToString("C", ci)</strong></h5>
+                                                <h5>Fecha de Registro: <strong>@historial.Fecha.ToShortDateString()</strong></h5>
+                                            </div>
+                                            <div class="col-md-6">
+
+                                                @if (historial.PeriodoActual == 1)
+                                                {
+                                                    <h5>Periodo: <strong>Enero - Abril</strong></h5>
+                                                }
+                                                else if (historial.PeriodoActual == 2)
+                                                {
+                                                    <h5>Periodo: <strong>Mayo - Agosto</strong></h5>
+                                                }
+                                                else
+                                                {
+                                                    <h5>Periodo: <strong>Septiembre - Diciembre</strong></h5>
+                                                }
+                                                <h5>Alumnos con Beca: <strong>@historial.CantidadBecados</strong></h5>
+                                                <h5>Alumnos con Transporte: <strong>@historial.CantidadUsanTransporte</strong></h5>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <h4><strong>Matutino</strong></h4>
+                                                <p><small>Cantidad de Alumnos: @historial.CantidadTotalEstudiantesMatutino</small></p>
+                                                <p><small>Alumnos con Beca: @historial.CantidadBecadosMatutino</small></p>
+                                                <p><small>Monto Becas: @historial.MontoTotalMatutino.ToString("C", ci)</small></p>
+                                                <p><small>Alumnos con Transporte: @historial.CantidadUsanTransporteMatutino</small></p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <h4><strong>Vespertino</strong></h4>
+                                                <p><small>Cantidad de Alumnos: @historial.CantidadTotalEstudiantesVespertino</small></p>
+                                                <p><small>Alumnos con Beca: @historial.CantidadBecadosVespertino</small></p>
+                                                <p><small>Monto Becas: @historial.MontoTotalVespertino.ToString("C", ci)</small></p>
+                                                <p><small>Alumnos con Transporte: @historial.CantidadUsanTransporteVespertino</small></p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <h4><strong>Despresurizado</strong></h4>
+                                                <p><small>Cantidad de Alumnos: @historial.CantidadTotalEstudiantesDespresurizado</small></p>
+                                                <p><small>Alumnos con Beca: @historial.CantidadBecadosDespresurizado</small></p>
+                                                <p><small>Monto Becas: @historial.MontoTotalDespresurizado.ToString("C", ci)</small></p>
+                                                <p><small>Alumnos con Transporte: @historial.CantidadUsanTransporteDespresurizado</small></p>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </table>
+</div>
+            </div>
+        </div>
+    </div>
+
+}
+

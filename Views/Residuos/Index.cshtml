@@ -1,0 +1,54 @@
+﻿@model IEnumerable<Plataforma_Web.Models.Usuario>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Residuos</h2>
+<h4>Usuarios que no han sido utilizados en los ultimos 5 meses</h4>
+
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.NombreCompleto)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.UserName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Password)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Nivel)
+        </th>
+      
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.NombreCompleto)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.UserName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Password)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Nivel.Descripcion)
+        </td>
+       
+        <td>
+            <a class="btn btn-primary" href="@Url.Action("Elimiar", new { id = item.IdUsuario })"
+               role="button" style=" background-color:red; border-color: #000000;">
+                <span class="glyphicon glyphicon-eye-open"></span>
+                Eliminar
+
+            </a>
+        </td>
+    </tr>
+}
+
+</table>

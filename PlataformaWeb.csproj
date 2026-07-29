@@ -1,0 +1,1137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props" Condition="Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" />
+  <Import Project="..\packages\EntityFramework.6.5.1\build\EntityFramework.props" Condition="Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{37D0FCE9-EB9D-4F01-B5BB-43501BA06A45}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>PlataformaWeb</RootNamespace>
+    <AssemblyName>PlataformaWeb</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <MvcBuildViews>false</MvcBuildViews>
+    <UseIISExpress>true</UseIISExpress>
+    <Use64BitIISExpress />
+    <IISExpressSSLPort>44363</IISExpressSSLPort>
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DnsClient, Version=1.4.0.0, Culture=neutral, PublicKeyToken=4574bb5573c51424, processorArchitecture=MSIL">
+      <HintPath>..\packages\DnsClient.1.4.0\lib\net45\DnsClient.dll</HintPath>
+    </Reference>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.9.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.9\lib\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.5.1\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.5.1\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="EPPlus, Version=4.5.3.3, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
+      <HintPath>..\packages\EPPlus.4.5.3.3\lib\net40\EPPlus.dll</HintPath>
+    </Reference>
+    <Reference Include="itextsharp, Version=5.5.13.3, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.13.3\lib\itextsharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.1.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Data.SqlClient, Version=4.1.0.0, Culture=neutral, PublicKeyToken=23ec7fc2d6eaa4a5, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Data.SqlClient.4.1.1\lib\net461\Microsoft.Data.SqlClient.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin, Version=4.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.4.2.3\lib\net45\Microsoft.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Host.SystemWeb, Version=4.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Host.SystemWeb.4.2.3\lib\net45\Microsoft.Owin.Host.SystemWeb.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security, Version=4.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.4.2.3\lib\net45\Microsoft.Owin.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Security.Cookies, Version=4.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Owin.Security.Cookies.4.2.3\lib\net45\Microsoft.Owin.Security.Cookies.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.Common, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.140.1000.523\lib\net40\Microsoft.ReportViewer.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.DataVisualization, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.140.1000.523\lib\net40\Microsoft.ReportViewer.DataVisualization.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.Design, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.140.1000.523\lib\net40\Microsoft.ReportViewer.Design.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.ProcessingObjectModel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.140.1000.523\lib\net40\Microsoft.ReportViewer.ProcessingObjectModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.WebDesign, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.140.1000.523\lib\net40\Microsoft.ReportViewer.WebDesign.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.WebForms, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.140.1000.523\lib\net40\Microsoft.ReportViewer.WebForms.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.WinForms, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.WebForms.140.1000.523\lib\net40\Microsoft.ReportViewer.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SqlServer.Types, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.SqlServer.Types.14.0.314.76\lib\net40\Microsoft.SqlServer.Types.dll</HintPath>
+    </Reference>
+    <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Bson, Version=2.12.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MongoDB.Bson.2.12.0\lib\net452\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver, Version=2.12.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MongoDB.Driver.2.12.0\lib\net452\MongoDB.Driver.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver.Core, Version=2.12.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MongoDB.Driver.Core.2.12.0\lib\net452\MongoDB.Driver.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.LibMongocrypt, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MongoDB.LibMongocrypt.1.2.0\lib\net452\MongoDB.LibMongocrypt.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="ReportViewerForMvc, Version=1.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ReportViewerForMvc14.140.1000.523\lib\net45\ReportViewerForMvc.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpCompress, Version=0.23.0.0, Culture=neutral, PublicKeyToken=afb0a02973931d96, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpCompress.0.23.0\lib\net45\SharpCompress.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Activities" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Configuration.ConfigurationManager, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Configuration.ConfigurationManager.5.0.0\lib\net461\System.Configuration.ConfigurationManager.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.OracleClient" />
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Diagnostics.DiagnosticSource.4.6.0\lib\net46\System.Diagnostics.DiagnosticSource.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.5.0.0\lib\net45\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IdentityModel" />
+    <Reference Include="System.IdentityModel.Tokens.Jwt, Version=6.8.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IdentityModel.Tokens.Jwt.6.8.0\lib\net461\System.IdentityModel.Tokens.Jwt.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net" />
+    <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.5.0.0\lib\net45\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Security.Cryptography.Algorithms, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.1\lib\net461\System.Security.Cryptography.Algorithms.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.0\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.AccessControl, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.AccessControl.5.0.0\lib\net461\System.Security.AccessControl.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.ProtectedData, Version=4.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.ProtectedData.4.5.0\lib\net461\System.Security.Cryptography.ProtectedData.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Permissions, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Permissions.5.0.0\lib\net461\System.Security.Permissions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Principal.Windows, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Principal.Windows.5.0.0\lib\net461\System.Security.Principal.Windows.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Text.Encodings.Web, Version=4.0.5.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Encodings.Web.4.7.2\lib\net461\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json, Version=4.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Json.4.6.0\lib\net461\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.2\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net461\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Abstractions" />
+    <Reference Include="System.Web.Routing" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest">
+    </Reference>
+    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.4\lib\net45\System.Web.Helpers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.2.4\lib\net45\System.Web.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Optimization">
+      <HintPath>..\packages\Microsoft.AspNet.Web.Optimization.1.1.3\lib\net40\System.Web.Optimization.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.Razor.3.2.4\lib\net45\System.Web.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.4\lib\net45\System.Web.WebPages.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.4\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.4\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.11.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="WebGrease">
+      <Private>True</Private>
+      <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
+    </Reference>
+    <Reference Include="Antlr3.Runtime">
+      <Private>True</Private>
+      <HintPath>..\packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="App_Start\BundleConfig.cs" />
+    <Compile Include="App_Start\FilterConfig.cs" />
+    <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="BajaAlumno.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>BajaAlumno.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="BecasTransporte\Models\Beca.cs" />
+    <Compile Include="BecasTransporte\Models\BecaHelper.cs" />
+    <Compile Include="BecasTransporte\Models\Ciudad.cs" />
+    <Compile Include="BecasTransporte\Models\Colonia.cs" />
+    <Compile Include="BecasTransporte\Models\Especialidad.cs" />
+    <Compile Include="BecasTransporte\Models\Estadistica.cs" />
+    <Compile Include="BecasTransporte\Models\Estudiante.cs" />
+    <Compile Include="BecasTransporte\Models\Historial.cs" />
+    <Compile Include="BecasTransporte\Models\Transporte.cs" />
+    <Compile Include="Controllers\AlumnosController.cs" />
+    <Compile Include="Controllers\Asesorar\AsesorController.cs" />
+    <Compile Include="Controllers\Asesorar\AsesorMasterController.cs" />
+    <Compile Include="Controllers\Asesorar\AsignarAsesoresController.cs" />
+    <Compile Include="Controllers\Asesorar\AsignarAsesoresMasterController.cs" />
+    <Compile Include="Controllers\Asesorar\EntrevistasController.cs" />
+    <Compile Include="Controllers\Asesorar\AsignarCoordinadoresController.cs" />
+    <Compile Include="Controllers\BajasController.cs" />
+    <Compile Include="Controllers\BecasTransporte\BecasController.cs" />
+    <Compile Include="Controllers\BecasTransporte\CiudadsController.cs" />
+    <Compile Include="Controllers\BecasTransporte\ColoniasController.cs" />
+    <Compile Include="Controllers\BecasTransporte\EstudiantesController.cs" />
+    <Compile Include="Controllers\BecasTransporte\EstudiantesMasterController.cs" />
+    <Compile Include="Controllers\BecasTransporte\TransportesController.cs" />
+    <Compile Include="Controllers\Canalización\CanalizacionesController.cs" />
+    <Compile Include="Controllers\Canalización\CanalizacionesEController.cs" />
+    <Compile Include="Controllers\EntrevistaController.cs" />
+    <Compile Include="Controllers\EstudiantesNewController.cs" />
+    <Compile Include="Controllers\Extras\ContraseñaController.cs" />
+    <Compile Include="Controllers\Extras\ReportarController.cs" />
+    <Compile Include="Controllers\Extras\ResiduosController.cs" />
+    <Compile Include="Controllers\Extras\UsuariosController.cs" />
+    <Compile Include="Controllers\GruposController.cs" />
+    <Compile Include="Controllers\GruposGeneralesController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\IndividualsController.cs" />
+    <Compile Include="Controllers\Materias\ArrastreGrupoController.cs" />
+    <Compile Include="Controllers\Materias\ConsultaArrastreCoordinadorController.cs" />
+    <Compile Include="Controllers\Materias\ExportarController.cs" />
+    <Compile Include="Controllers\Materias\ImportarController.cs" />
+    <Compile Include="Controllers\Materias\MateriasAlumnoController.cs" />
+    <Compile Include="Controllers\Materias\MateriasController.cs" />
+    <Compile Include="Controllers\Materias\MisMateriasController.cs" />
+    <Compile Include="Controllers\NuevasEstadisticasController.cs" />
+    <Compile Include="Controllers\PATsController.cs" />
+    <Compile Include="Controllers\PATsEvidencesController.cs" />
+    <Compile Include="Controllers\PATsExcelController.cs" />
+    <Compile Include="Controllers\PATsNotaController.cs" />
+    <Compile Include="Controllers\SeguimientoesController.cs" />
+    <Compile Include="Controllers\SeguimientosReporteController.cs" />
+    <Compile Include="Controllers\SGAController.cs" />
+    <Compile Include="Controllers\SeguimientoTutorialController.cs" />
+    <Compile Include="Controllers\SeguimientoTutoresController.cs" />
+    <Compile Include="Controllers\UsuarioAlumnos\AlumnosGestionController.cs" />
+    <Compile Include="Controllers\UsuarioAlumnos\UsuarioAlumnosController.cs" />
+    <Compile Include="Controllers\UsuariosAlumnoMaster\UsuariosAlumnoMasterController.cs" />
+    <Compile Include="Data\EstadiasUTTNContext.cs" />
+    <Compile Include="Data\GestionUsuariosContext.cs" />
+    <Compile Include="Data\TutoriasContext.cs" />
+    <Compile Include="Entrevistas.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Entrevistas.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="Functionalities\Cypher.cs" />
+    <Compile Include="Functionalities\ExternalLoginToken.cs" />
+    <Compile Include="Functionalities\LinkGenerator.cs" />
+    <Compile Include="Functionalities\EmailService.cs" />
+    <Compile Include="Functionalities\PeriodoHelper.cs" />
+    <Compile Include="Global.asax.cs">
+      <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\AccesoSeguroHelper.cs" />
+    <Compile Include="Helpers\Selector.cs" />
+    <Compile Include="IndividualAlumno.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>IndividualAlumno.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="ModeloPlataforma.cs" />
+    <Compile Include="Models\Historico\EstadisticasHistoricoCorte.cs" />
+    <Compile Include="Models\Historico\EstadisticasHistoricoSeccion.cs" />
+    <Compile Include="Models\AlumnoGrupoBajaVM.cs" />
+    <Compile Include="Models\AlumnoVulnerableViewModel.cs" />
+    <Compile Include="Models\Baja.cs" />
+    <Compile Include="Models\BajaViewModel.cs" />
+    <Compile Include="Models\Canalizaciones.cs" />
+    <Compile Include="Models\ClasesExtras\Administrativo.cs" />
+    <Compile Include="Models\ClasesExtras\Alumno.cs" />
+    <Compile Include="Models\ClasesExtras\AlumnoMateria.cs" />
+    <Compile Include="Models\ClasesExtras\Archivo.cs" />
+    <Compile Include="Models\ClasesExtras\Asesor.cs" />
+    <Compile Include="Models\ClasesExtras\BajaAlumno.cs" />
+    <Compile Include="Models\ClasesExtras\Carrera.cs" />
+    <Compile Include="Models\ClasesExtras\EntrevistaInicialView.cs" />
+    <Compile Include="Models\ClasesExtras\FileHelper.cs" />
+    <Compile Include="Models\ClasesExtras\Grado.cs" />
+    <Compile Include="Models\ClasesExtras\Grupo.cs" />
+    <Compile Include="Models\ClasesExtras\Materia.cs" />
+    <Compile Include="Models\ClasesExtras\Nivel.cs" />
+    <Compile Include="Models\ClasesExtras\NivelDesempeño.cs" />
+    <Compile Include="Models\ClasesExtras\ObservacioFamilia.cs" />
+    <Compile Include="Models\ClasesExtras\RespuestaEvaluacion.cs" />
+    <Compile Include="Models\ClasesExtras\RespuestaRubrica.cs" />
+    <Compile Include="Models\ClasesExtras\ResultadoExani.cs" />
+    <Compile Include="Models\ClasesExtras\Turno.cs" />
+    <Compile Include="Models\ClasesExtras\TutoriaGrupal.cs" />
+    <Compile Include="Models\ClasesExtras\TutoriasGrupalByArea.cs" />
+    <Compile Include="Models\ClasesExtras\Usuario.cs" />
+    <Compile Include="Models\ClasesExtras\Vulnerabilidad.cs" />
+    <Compile Include="Models\ClasesPAT\ActividadesSemanal.cs" />
+    <Compile Include="Models\ClasesPAT\ActividadSemanalAux.cs" />
+    <Compile Include="Models\ClasesPAT\AuxiliarPAT.cs" />
+    <Compile Include="Models\ClasesPAT\EvidenciaPAT.cs" />
+    <Compile Include="Models\ClasesPAT\GrupoNom.cs" />
+    <Compile Include="Models\ClasesPAT\NotaPAT.cs" />
+    <Compile Include="Models\ClasesPAT\Periodo.cs" />
+    <Compile Include="Models\ClasesPAT\Semana.cs" />
+    <Compile Include="Models\ClasesPAT\SemanasPeriodo.cs" />
+    <Compile Include="Models\ClasesPAT\TipoTutoria.cs" />
+    <Compile Include="Models\ClasesSeguridad\CustomAuthorize.cs" />
+    <Compile Include="Models\ClasesSeguridad\Security.cs" />
+    <Compile Include="Models\ClasesSeguridad\SoloLecturaDirector.cs" />
+    <Compile Include="Models\ComentariosPAT.cs" />
+    <Compile Include="Models\DashboardResumenViewModel.cs" />
+    <Compile Include="Models\EntrevistaInicial.cs" />
+    <Compile Include="Models\GestionUsuarios\Administradore.cs" />
+    <Compile Include="Models\GestionUsuarios\Alumno.cs" />
+    <Compile Include="Models\GestionUsuarios\Carrera.cs" />
+    <Compile Include="Models\GestionUsuarios\Docente.cs" />
+    <Compile Include="Models\GestionUsuarios\Sesion.cs" />
+    <Compile Include="Models\GestionUsuarios\usuarios_model_db.cs" />
+    <Compile Include="Models\GrupoConTutorViewModel.cs" />
+    <Compile Include="Models\Individual.cs" />
+    <Compile Include="Models\Materias\ArrastreGrupoModels.cs" />
+    <Compile Include="Models\Materias\ConsultaArrastreCoordinadorModels.cs" />
+    <Compile Include="Models\Materias\ExportarMateriasGrupo.cs" />
+    <Compile Include="Models\Materias\HistorialMateriaAlumno.cs" />
+    <Compile Include="Models\Materias\Materia.cs" />
+    <Compile Include="Models\Materias\MateriaAlumno.cs" />
+    <Compile Include="Models\Materias\PlanEstudio.cs" />
+    <Compile Include="Models\Materias\PlanInfo.cs" />
+    <Compile Include="Models\NivelDesempenoPerfi.cs" />
+    <Compile Include="Models\Notificaciones.cs" />
+    <Compile Include="Models\PAT.cs" />
+    <Compile Include="Models\PlataformaWebDbContext.cs" />
+    <Compile Include="Models\PrimeraEntrevista\AspectosAcademicos.cs" />
+    <Compile Include="Models\PrimeraEntrevista\AspectosEconomicos.cs" />
+    <Compile Include="Models\PrimeraEntrevista\AspectosPersonales.cs" />
+    <Compile Include="Models\PrimeraEntrevista\DatosPersonales.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta12.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta13.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta14.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta15.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta16.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta17.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta18.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta0.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta1.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta10.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta11.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta2.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta3.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta4.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta5.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta6.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta7.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta8.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Respuesta9.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\TempGrupo.cs" />
+    <Compile Include="Models\PrimeraEntrevista\Secundarios\Vulnerable.cs" />
+    <Compile Include="Models\Psicologia\PsiAreaAtencion.cs" />
+    <Compile Include="Models\Psicologia\Psicologos.cs" />
+    <Compile Include="Models\Psicologia\PsicologoTurno.cs" />
+    <Compile Include="Models\Psicologia\Psicologo_PsiDetalle.cs" />
+    <Compile Include="Models\Psicologia\PsiDetalleAtencion.cs" />
+    <Compile Include="Models\ResultadoSP.cs" />
+    <Compile Include="Models\Seguimiento.cs" />
+    <Compile Include="Models\SeguimientoPlanoVM.cs" />
+    <Compile Include="Models\SeguimientoTutorialViewModel.cs" />
+    <Compile Include="Models\TipoCanalizaciones.cs" />
+    <Compile Include="Models\UsuarioAlumnos\AlumnoGestion.cs" />
+    <Compile Include="Models\UsuarioAlumnos\UsuarioAlumno.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\AlumnoGestion.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\CarreraEstadias.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\CarreraGestion.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\EstadiasDbContext.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\GestionDbContext.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\TutoriasDbContext.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\UsuarioEstadias.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\UsuariosViewModel.cs" />
+    <Compile Include="Models\UsuariosAlumnoMaster\UsuarioTutorias.cs" />
+    <Compile Include="Models\Vulnerable.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="SeguimientoAlumno.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SeguimientoAlumno.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="Services\MongoDBService.cs" />
+    <Compile Include="SqlServerTypes\Loader.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\uttn.png" />
+    <Content Include="bin\PlataformaWeb.dll" />
+    <Content Include="bin\PlataformaWeb.pdb" />
+    <Content Include="Content\bootstrap-theme.css" />
+    <Content Include="Content\bootstrap-theme.min.css" />
+    <Content Include="Content\bootstrap.css" />
+    <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\css\jquery.dataTables.css" />
+    <Content Include="Content\css\jquery.dataTables.min.css" />
+    <Content Include="Content\css\jquery.dataTables_themeroller.css" />
+    <Content Include="Content\datatables.extensions\AutoFill\css\dataTables.autoFill.css" />
+    <Content Include="Content\datatables.extensions\AutoFill\css\dataTables.autoFill.min.css" />
+    <Content Include="Content\datatables.extensions\AutoFill\images\filler.png" />
+    <Content Include="Content\datatables.extensions\ColReorder\css\dataTables.colReorder.css" />
+    <Content Include="Content\datatables.extensions\ColReorder\css\dataTables.colReorder.min.css" />
+    <Content Include="Content\datatables.extensions\ColReorder\images\insert.png" />
+    <Content Include="Content\datatables.extensions\ColVis\css\dataTables.colVis.css" />
+    <Content Include="Content\datatables.extensions\ColVis\css\dataTables.colvis.jqueryui.css" />
+    <Content Include="Content\datatables.extensions\ColVis\css\dataTables.colVis.min.css" />
+    <Content Include="Content\datatables.extensions\FixedColumns\css\dataTables.fixedColumns.css" />
+    <Content Include="Content\datatables.extensions\FixedColumns\css\dataTables.fixedColumns.min.css" />
+    <Content Include="Content\datatables.extensions\FixedHeader\css\dataTables.fixedHeader.css" />
+    <Content Include="Content\datatables.extensions\FixedHeader\css\dataTables.fixedHeader.min.css" />
+    <Content Include="Content\datatables.extensions\KeyTable\css\dataTables.keyTable.css" />
+    <Content Include="Content\datatables.extensions\KeyTable\css\dataTables.keyTable.min.css" />
+    <Content Include="Content\datatables.extensions\Responsive\css\dataTables.responsive.css" />
+    <Content Include="Content\datatables.extensions\Scroller\css\dataTables.scroller.css" />
+    <Content Include="Content\datatables.extensions\Scroller\css\dataTables.scroller.min.css" />
+    <Content Include="Content\datatables.extensions\Scroller\images\loading-background.png" />
+    <Content Include="Content\datatables.extensions\TableTools\css\dataTables.tableTools.css" />
+    <Content Include="Content\datatables.extensions\TableTools\css\dataTables.tableTools.min.css" />
+    <Content Include="Content\datatables.extensions\TableTools\images\background.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\collection.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\collection_hover.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\copy.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\copy_hover.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\csv.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\csv_hover.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\pdf.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\pdf_hover.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\print.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\print_hover.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\xls.png" />
+    <Content Include="Content\datatables.extensions\TableTools\images\xls_hover.png" />
+    <Content Include="Content\images\back_disabled.png" />
+    <Content Include="Content\images\back_enabled.png" />
+    <Content Include="Content\images\back_enabled_hover.png" />
+    <Content Include="Content\images\favicon.ico" />
+    <Content Include="Content\images\forward_disabled.png" />
+    <Content Include="Content\images\forward_enabled.png" />
+    <Content Include="Content\images\forward_enabled_hover.png" />
+    <Content Include="Content\images\sort_asc.png" />
+    <Content Include="Content\images\sort_asc_disabled.png" />
+    <Content Include="Content\images\sort_both.png" />
+    <Content Include="Content\images\sort_desc.png" />
+    <Content Include="Content\images\sort_desc_disabled.png" />
+    <Content Include="Content\Site.css" />
+    <Content Include="Content\Layout.css" />
+    <Content Include="Core\Compression\Snappy\lib\win\snappy32.dll" />
+    <Content Include="Core\Compression\Snappy\lib\win\snappy64.dll" />
+    <Content Include="Core\Compression\Zstandard\lib\win\libzstd.dll" />
+    <Content Include="EstilosEntrevista\css\animate.css" />
+    <Content Include="EstilosEntrevista\css\bootstrap-datepicker.min.css" />
+    <Content Include="EstilosEntrevista\css\bootstrap.css" />
+    <Content Include="EstilosEntrevista\css\Canalizaciones.css" />
+    <Content Include="EstilosEntrevista\css\CanalizacionesFix.css" />
+    <Content Include="EstilosEntrevista\css\flexslider.css" />
+    <Content Include="EstilosEntrevista\css\icomoon.css" />
+    <Content Include="EstilosEntrevista\css\magnific-popup.css" />
+    <Content Include="EstilosEntrevista\css\owl.carousel.min.css" />
+    <Content Include="EstilosEntrevista\css\owl.theme.default.min.css" />
+    <Content Include="EstilosEntrevista\css\style.css" />
+    <Content Include="EstilosEntrevista\css\MainGrupos.css" />
+    <Content Include="EstilosEntrevista\css\themify-icons.css" />
+    <Content Include="EstilosEntrevista\fonts\bootstrap\glyphicons-halflings-regular.svg" />
+    <Content Include="EstilosEntrevista\fonts\icomoon\icomoon.svg" />
+    <Content Include="EstilosEntrevista\fonts\themify-icons\themify.svg" />
+    <Content Include="EstilosEntrevista\images\img_1.jpg" />
+    <Content Include="EstilosEntrevista\images\img_2.jpg" />
+    <Content Include="EstilosEntrevista\images\img_3.jpg" />
+    <Content Include="EstilosEntrevista\images\img_4.jpg" />
+    <Content Include="EstilosEntrevista\images\img_5.jpg" />
+    <Content Include="EstilosEntrevista\images\img_6.jpg" />
+    <Content Include="EstilosEntrevista\images\img_bg_1.jpg" />
+    <Content Include="EstilosEntrevista\images\img_bg_2.jpg" />
+    <Content Include="EstilosEntrevista\images\img_bg_3.jpg" />
+    <Content Include="EstilosEntrevista\images\img_bg_4.jpg" />
+    <Content Include="EstilosEntrevista\images\loader.gif" />
+    <Content Include="EstilosEntrevista\js\bootstrap-datepicker.min.js" />
+    <Content Include="EstilosEntrevista\js\bootstrap.min.js" />
+    <Content Include="EstilosEntrevista\js\Canalizacion.js" />
+    <Content Include="EstilosEntrevista\js\google_map.js" />
+    <Content Include="EstilosEntrevista\js\jquery.countTo.js" />
+    <Content Include="EstilosEntrevista\js\jquery.easing.1.3.js" />
+    <Content Include="EstilosEntrevista\js\jquery.easypiechart.min.js" />
+    <Content Include="EstilosEntrevista\js\jquery.magnific-popup.min.js" />
+    <Content Include="EstilosEntrevista\js\jquery.min.js" />
+    <Content Include="EstilosEntrevista\js\jquery.stellar.min.js" />
+    <Content Include="EstilosEntrevista\js\jquery.waypoints.min.js" />
+    <Content Include="EstilosEntrevista\js\magnific-popup-options.js" />
+    <Content Include="EstilosEntrevista\js\main.js" />
+    <Content Include="EstilosEntrevista\js\modernizr-2.6.2.min.js" />
+    <Content Include="EstilosEntrevista\js\owl.carousel.min.js" />
+    <Content Include="EstilosEntrevista\js\respond.min.js" />
+    <Content Include="favicon.ico" />
+    <Content Include="fonts\glyphicons-halflings-regular.svg" />
+    <Content Include="Global.asax" />
+    <Content Include="Imagenes\310818 %281%29.png" />
+    <Content Include="Imagenes\425139-sepik.jpg" />
+    <Content Include="Imagenes\avatar.png" />
+    <Content Include="Imagenes\depositphotos_44463685-stock-illustration-vector-3d-login-icon.jpg" />
+    <Content Include="Imagenes\descarga.png" />
+    <Content Include="Imagenes\Firmas\firma_celia_velarde.png" />
+    <Content Include="Imagenes\Firmas\firma_myriam_benitez.png" />
+    <Content Include="Imagenes\Firmas\firma_soledad_ocanas.png" />
+    <Content Include="Imagenes\holi.png" />
+    <Content Include="Imagenes\ImagenesPagina\holi %283%29.ico" />
+    <Content Include="Imagenes\ImagenesPagina\LogoEstadias.jpg" />
+    <Content Include="Imagenes\ImagenesPagina\LogoPlataB3.jpg" />
+    <Content Include="Imagenes\ImagenesPagina\LogoPlataE2.jpg" />
+    <Content Include="Imagenes\ImagenesPagina\LogoPlataT.jpg" />
+    <Content Include="Imagenes\ImagenesPagina\LogoTutorias.jpg" />
+    <Content Include="Imagenes\ImagenesPagina\OPCION4.jpg" />
+    <Content Include="Imagenes\ImagenesPagina\UT-Bis.png" />
+    <Content Include="Imagenes\images %281%29.png" />
+    <Content Include="Imagenes\markermap.png" />
+    <Content Include="Imagenes\noGroupSelected.png" />
+    <Content Include="Imagenes\sello_ADMIN.png" />
+    <Content Include="Imagenes\sello_AEURONAUTICA.png" />
+    <Content Include="Imagenes\sello_ENERGIAS.png" />
+    <Content Include="Imagenes\sello_INDUSTRIAL.png" />
+    <Content Include="Imagenes\sello_LOGISTICA.png" />
+    <Content Include="Imagenes\sello_MANT.png" />
+    <Content Include="Imagenes\sello_MECA.png" />
+    <Content Include="Imagenes\sello_TI.png" />
+    <Content Include="Images\actualizada.png" />
+    <Content Include="Scripts\Canalizacion.js" />
+    <Content Include="ViewScripts\Entrevistas\MainGrupos.js" />
+    <Content Include="ViewScripts\Entrevista\EntrevistaDetalles.js" />
+    <Content Include="ViewsStyles\Entrevista\css\Styles.css" />
+    <Content Include="ViewsStyles\Entrevista\Images\EntrevistaInicial.png" />
+    <Content Include="Images\inicial.png" />
+    <Content Include="mongocrypt.dll" />
+    <Content Include="ReportViewerWebForm.aspx" />
+    <Content Include="Scripts\bootstrap.js" />
+    <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="EstilosEntrevista\css\bootstrap.css.map" />
+    <Content Include="EstilosEntrevista\css\style.css.map" />
+    <Content Include="EstilosEntrevista\fonts\bootstrap\glyphicons-halflings-regular.eot" />
+    <Content Include="EstilosEntrevista\fonts\bootstrap\glyphicons-halflings-regular.ttf" />
+    <Content Include="EstilosEntrevista\fonts\bootstrap\glyphicons-halflings-regular.woff" />
+    <Content Include="EstilosEntrevista\fonts\bootstrap\glyphicons-halflings-regular.woff2" />
+    <Content Include="EstilosEntrevista\fonts\icomoon\icomoon.eot" />
+    <Content Include="EstilosEntrevista\fonts\icomoon\icomoon.ttf" />
+    <Content Include="EstilosEntrevista\fonts\icomoon\icomoon.woff" />
+    <Content Include="EstilosEntrevista\fonts\themify-icons\themify.eot" />
+    <Content Include="EstilosEntrevista\fonts\themify-icons\themify.ttf" />
+    <Content Include="EstilosEntrevista\fonts\themify-icons\themify.woff" />
+    <Content Include="EstilosEntrevista\sass\.DS_Store" />
+    <Content Include="EstilosEntrevista\sass\bootstrap.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_alerts.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_background-variant.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_border-radius.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_buttons.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_center-block.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_clearfix.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_forms.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_gradients.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_grid-framework.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_grid.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_hide-text.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_image.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_labels.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_list-group.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_nav-divider.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_nav-vertical-align.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_opacity.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_pagination.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_panels.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_progress-bar.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_reset-filter.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_reset-text.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_resize.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_responsive-visibility.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_size.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_tab-focus.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_table-row.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_text-emphasis.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_text-overflow.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\mixins\_vendor-prefixes.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_alerts.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_badges.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_breadcrumbs.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_button-groups.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_buttons.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_carousel.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_close.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_code.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_component-animations.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_dropdowns.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_forms.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_glyphicons.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_grid.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_input-groups.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_jumbotron.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_labels.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_list-group.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_media.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_mixins.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_modals.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_navbar.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_navs.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_normalize.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_pager.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_pagination.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_panels.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_popovers.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_print.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_progress-bars.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_responsive-embed.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_responsive-utilities.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_scaffolding.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_tables.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_theme.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_thumbnails.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_tooltip.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_type.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_utilities.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_variables.scss" />
+    <Content Include="EstilosEntrevista\sass\bootstrap\_wells.scss" />
+    <Content Include="EstilosEntrevista\sass\style.scss" />
+    <Content Include="EstilosEntrevista\sass\_bootstrap-compass.scss" />
+    <Content Include="EstilosEntrevista\sass\_bootstrap-mincer.scss" />
+    <Content Include="EstilosEntrevista\sass\_bootstrap-sprockets.scss" />
+    <Content Include="BajaAlumno.xsc">
+      <DependentUpon>BajaAlumno.xsd</DependentUpon>
+    </Content>
+    <None Include="BajaAlumno.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>BajaAlumno.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <Content Include="BajaAlumno.xss">
+      <DependentUpon>BajaAlumno.xsd</DependentUpon>
+    </Content>
+    <Content Include="IndividualAlumno.xsc">
+      <DependentUpon>IndividualAlumno.xsd</DependentUpon>
+    </Content>
+    <Content Include="Content\bootstrap-theme.css.map" />
+    <Content Include="Content\bootstrap-theme.min.css.map" />
+    <Content Include="Content\bootstrap.css.map" />
+    <Content Include="Content\bootstrap.min.css.map" />
+    <Content Include="Content\datatables.extensions\Responsive\css\dataTables.responsive.scss" />
+    <Content Include="Content\datatables.extensions\TableTools\images\psd\collection.psd" />
+    <Content Include="Content\datatables.extensions\TableTools\images\psd\copy document.psd" />
+    <Content Include="Content\datatables.extensions\TableTools\images\psd\file_types.psd" />
+    <Content Include="Content\datatables.extensions\TableTools\images\psd\printer.psd" />
+    <Content Include="Content\images\Sorting icons.psd" />
+    <Content Include="Entrevistas.xsc">
+      <DependentUpon>Entrevistas.xsd</DependentUpon>
+    </Content>
+    <None Include="Entrevistas.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>Entrevistas.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <Content Include="Entrevistas.xss">
+      <DependentUpon>Entrevistas.xsd</DependentUpon>
+    </Content>
+    <None Include="IndividualAlumno.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>IndividualAlumno.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <Content Include="IndividualAlumno.xss">
+      <DependentUpon>IndividualAlumno.xsd</DependentUpon>
+    </Content>
+    <Content Include="libmongocrypt.so" />
+    <Content Include="libmongocrypt.dylib" />
+    <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
+    <None Include="Properties\PublishProfiles\TICServer.pubxml" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Scripts\jquery-3.3.1.intellisense.js" />
+    <Content Include="Scripts\jquery-3.3.1.js" />
+    <Content Include="Scripts\jquery-3.3.1.min.js" />
+    <Content Include="Scripts\jquery-3.3.1.slim.js" />
+    <Content Include="Scripts\jquery-3.3.1.slim.min.js" />
+    <None Include="Scripts\jquery.validate-vsdoc.js" />
+    <Content Include="Scripts\jquery.validate.js" />
+    <Content Include="Scripts\jquery.validate.min.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.js" />
+    <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="Script\locationpicker.jquery.js" />
+    <Content Include="Script\obtenerColonias.js" />
+    <Content Include="Script\Preguntas.js" />
+    <Content Include="SqlServerTypes\readme.htm" />
+    <Content Include="ViewsStyles\Master\estadisticas-coordinador.js" />
+    <Content Include="ViewsStyles\Master\estadisticas-master.js" />
+    <Content Include="ViewsStyles\Master\estadisticas-styles.css" />
+    <Content Include="ViewsStyles\Master\sga-theme.css" />
+    <Content Include="ViewsStyles\Master\sga-theme.js" />
+    <Content Include="ViewsStyles\PAT\ListPAT.css" />
+    <Content Include="ViewsStyles\Arrastre\Index.css" />
+    <Content Include="Views\Main\avatar.png" />
+    <Content Include="ViewsStyles\Entrevista\Images\EntrevistaSeguimiento.png" />
+    <Content Include="ViewsStyles\Entrevista\js\Camara.js" />
+    <Content Include="ViewsStyles\Entrevista\js\ValidacionCampos.js" />
+    <Content Include="Views\MisMaterias\Index.cshtml" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Views\Web.config" />
+    <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Views\Shared\Error.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Home\About.cshtml" />
+    <Content Include="Views\Home\Contact.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Asesor\Detalles.cshtml" />
+    <Content Include="Views\Asesor\Grupo.cshtml" />
+    <Content Include="Views\Asesor\Index.cshtml" />
+    <Content Include="Views\Asesor\ReporteEntrevista.cshtml" />
+    <Content Include="Views\AsignarAsesores\Asesorados.cshtml" />
+    <Content Include="Views\AsignarAsesores\Asignar.cshtml" />
+    <Content Include="Views\AsignarAsesores\Editar.cshtml" />
+    <Content Include="Views\AsignarAsesores\Eliminar.cshtml" />
+    <Content Include="Views\AsignarAsesores\Index.cshtml" />
+    <Content Include="Views\Entrevista\AspectosAcademicos.cshtml" />
+    <Content Include="Views\Entrevista\AspectosAcademicosEdit.cshtml" />
+    <Content Include="Views\Entrevista\AspectosEconomicos.cshtml" />
+    <Content Include="Views\Entrevista\AspectosEconomicosEdit.cshtml" />
+    <Content Include="Views\Entrevista\AspectosPersonales.cshtml" />
+    <Content Include="Views\Entrevista\AspectosPersonalesEdit.cshtml" />
+    <Content Include="Views\Entrevista\Buscar.cshtml" />
+    <Content Include="Views\Entrevista\DatosPersonales.cshtml" />
+    <Content Include="Views\Entrevista\DatosPersonalesEdit.cshtml" />
+    <Content Include="Views\Entrevista\Index.cshtml" />
+    <Content Include="Views\Home\EntradaPagina.cshtml" />
+    <Content Include="Views\Home\Estadias.cshtml" />
+    <Content Include="Views\Home\Login.cshtml" />
+    <Content Include="Views\Home\Restringido.cshtml" />
+    <Content Include="Views\PATs\AsignarTutoria.cshtml" />
+    <Content Include="Views\PATs\Details.cshtml" />
+    <Content Include="Views\PATs\Index.cshtml" />
+    <Content Include="Views\PATs\Reporte.cshtml" />
+    <Content Include="Views\Usuarios\Create.cshtml" />
+    <Content Include="Views\Usuarios\Delete.cshtml" />
+    <Content Include="Views\Usuarios\Details.cshtml" />
+    <Content Include="Views\Usuarios\Edit.cshtml" />
+    <Content Include="Views\Usuarios\Index.cshtml" />
+    <Content Include="Views\AsignarAsesores\Crear.cshtml" />
+    <Content Include="Services\EditarAsesor.cshtml" />
+    <Content Include="Views\AsignarAsesores\EliminarAsesor.cshtml" />
+    <Content Include="Views\Residuos\Index.cshtml" />
+    <Content Include="Views\Residuos\Eliminar.cshtml" />
+    <Content Include="Views\Contraseña\Index.cshtml" />
+    <Content Include="Views\AsignarAsesores\PAT.cshtml" />
+    <Content Include="Views\AsignarAsesores\PatDetalles.cshtml" />
+    <Content Include="Views\AsignarAsesores\PatReporte.cshtml" />
+    <Content Include="Views\Asesor\Error.cshtml" />
+    <Content Include="Views\Entrevistas\Detalles.cshtml" />
+    <Content Include="Views\Entrevistas\Index.cshtml" />
+    <Content Include="Views\Entrevistas\Grupo.cshtml" />
+    <Content Include="Views\Entrevistas\Error.cshtml" />
+    <Content Include="Views\Entrevistas\ReporteEntrevista.cshtml" />
+    <Content Include="Views\Reportar\Index.cshtml" />
+    <Content Include="Views\Reportar\Opcion1.cshtml" />
+    <Content Include="Views\Reportar\Opcion2.cshtml" />
+    <Content Include="Views\Reportar\Editar.cshtml" />
+    <Content Include="Views\Reportar\Terminar.cshtml" />
+    <Content Include="Views\Reportar\Eliminar.cshtml" />
+    <Content Include="Views\Entrevista\Fin.cshtml" />
+    <Content Include="Views\Entrevistas\Eliminar.cshtml" />
+    <Content Include="Views\AsignarAsesores\EliminarPAT.cshtml" />
+    <Content Include="Views\Bajas\Create.cshtml" />
+    <Content Include="Views\Bajas\Delete.cshtml" />
+    <Content Include="Views\Bajas\Details.cshtml" />
+    <Content Include="Views\Bajas\Edit.cshtml" />
+    <Content Include="Views\Bajas\Index.cshtml" />
+    <Content Include="Views\Individuals\Create.cshtml" />
+    <Content Include="Views\Individuals\Delete.cshtml" />
+    <Content Include="Views\Individuals\Details.cshtml" />
+    <Content Include="Views\Individuals\Edit.cshtml" />
+    <Content Include="Views\Individuals\Index.cshtml" />
+    <Content Include="Views\Seguimientoes\Create.cshtml" />
+    <Content Include="Views\Seguimientoes\Delete.cshtml" />
+    <Content Include="Views\Seguimientoes\Details.cshtml" />
+    <Content Include="Views\Seguimientoes\Edit.cshtml" />
+    <Content Include="Views\Seguimientoes\Index.cshtml" />
+    <Content Include="SeguimientoAlumno.xsc">
+      <DependentUpon>SeguimientoAlumno.xsd</DependentUpon>
+    </Content>
+    <None Include="SeguimientoAlumno.xsd">
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>SeguimientoAlumno.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <Content Include="SeguimientoAlumno.xss">
+      <DependentUpon>SeguimientoAlumno.xsd</DependentUpon>
+    </Content>
+    <Content Include="Views\Estudiantes\Create.cshtml" />
+    <Content Include="Views\Estudiantes\Delete.cshtml" />
+    <Content Include="Views\Estudiantes\Details.cshtml" />
+    <Content Include="Views\Estudiantes\Edit.cshtml" />
+    <Content Include="Views\Estudiantes\Index.cshtml" />
+    <Content Include="Views\Estudiantes\GruposPorTutor.cshtml" />
+    <Content Include="Views\Estudiantes\Grupo.cshtml" />
+    <Content Include="Views\Estudiantes\AsignarBeca.cshtml" />
+    <Content Include="Views\Estudiantes\AsignarTransporte.cshtml" />
+    <Content Include="Views\Estudiantes\Estadisticas.cshtml" />
+    <Content Include="Views\Estudiantes\DetallesBeca.cshtml" />
+    <Content Include="Views\Estudiantes\_Graficas.cshtml" />
+    <Content Include="Views\Estudiantes\MapaTransporte.cshtml" />
+    <Content Include="Views\Estudiantes\HistoiralBecasTransporte.cshtml" />
+    <Content Include="Views\Becas\Create.cshtml" />
+    <Content Include="Views\Becas\Delete.cshtml" />
+    <Content Include="Views\Becas\Details.cshtml" />
+    <Content Include="Views\Becas\Edit.cshtml" />
+    <Content Include="Views\Becas\Index.cshtml" />
+    <Content Include="Views\Ciudads\Create.cshtml" />
+    <Content Include="Views\Ciudads\Delete.cshtml" />
+    <Content Include="Views\Ciudads\Details.cshtml" />
+    <Content Include="Views\Ciudads\Edit.cshtml" />
+    <Content Include="Views\Ciudads\Index.cshtml" />
+    <Content Include="Views\Colonias\Create.cshtml" />
+    <Content Include="Views\Colonias\Delete.cshtml" />
+    <Content Include="Views\Colonias\Details.cshtml" />
+    <Content Include="Views\Colonias\Edit.cshtml" />
+    <Content Include="Views\Colonias\Index.cshtml" />
+    <Content Include="Views\Transportes\Create.cshtml" />
+    <Content Include="Views\Transportes\Delete.cshtml" />
+    <Content Include="Views\Transportes\Details.cshtml" />
+    <Content Include="Views\Transportes\Edit.cshtml" />
+    <Content Include="Views\Transportes\Index.cshtml" />
+    <Content Include="Views\Estudiantes\_GraficasGrado.cshtml" />
+    <Content Include="Views\Estudiantes\DetallesBecaGrado.cshtml" />
+    <Content Include="Views\Estudiantes\DetallesBecaEspecialidad.cshtml" />
+    <Content Include="Views\Estudiantes\_GraficasEspecialidad.cshtml" />
+    <Content Include="Views\Home\Registrarse.cshtml" />
+    <Content Include="Views\ImportarMateriasGrupo\ResultadoParcial.cshtml" />
+    <Content Include="Views\Materias\Agregar.cshtml" />
+    <Content Include="Views\Materias\Create.cshtml" />
+    <Content Include="Views\Materias\Delete.cshtml" />
+    <Content Include="Views\Materias\Edit.cshtml" />
+    <Content Include="Views\Materias\ImportarExcel.cshtml" />
+    <Content Include="Views\Materias\Index.cshtml" />
+    <Content Include="Views\Materias\_TablaMaterias.cshtml" />
+    <Content Include="Views\MateriasAlumno\Index.cshtml" />
+    <Content Include="Views\MateriasAlumno\ArrastrePorGrupo.cshtml" />
+    <Content Include="Views\MateriasAlumno\_TablaArrastre.cshtml" />
+    <Content Include="Views\Bajas\ReporteBajas.cshtml" />
+    <Content Include="Views\Main\Index.cshtml" />
+    <Content Include="Views\Entrevistas\ReporteEntrevistaSegumiento.cshtml" />
+    <Content Include="ViewsStyles\Entrevista\views\ModalCamposFaltantes.cshtml" />
+    <Content Include="Views\ImportarMateriasGrupo\Index.cshtml" />
+    <Content Include="Views\ImportarMateriasGrupo\Resultado.cshtml" />
+    <Content Include="Views\ConsultaArrastreCoordinador\ArrastrePorCarrera.cshtml" />
+    <Content Include="Views\ConsultaArrastreCoordinador\_TablaArrastreCarrera.cshtml" />
+    <Content Include="Views\CanalizacionesE\IndexE.cshtml" />
+    <Content Include="Views\Canalizaciones\EscribirCanalizacion.cshtml" />
+    <Content Include="Views\Canalizaciones\Index.cshtml" />
+    <Content Include="Views\Canalizaciones\IndexC.cshtml" />
+    <Content Include="Views\Canalizaciones\Vulnerabilidades.cshtml" />
+    <Content Include="Views\AsesorMaster\Detalles.cshtml" />
+    <Content Include="Views\AsesorMaster\Error.cshtml" />
+    <Content Include="Views\AsesorMaster\Grupo.cshtml" />
+    <Content Include="Views\AsesorMaster\Index.cshtml" />
+    <Content Include="Views\AsesorMaster\ReporteEntrevista.cshtml" />
+    <Content Include="Views\AsignarAsesoresMaster\Asesorados.cshtml" />
+    <Content Include="Views\AsignarAsesoresMaster\Asignar.cshtml" />
+    <Content Include="Views\AsignarAsesoresMaster\AsignarTutor.cshtml" />
+    <Content Include="Views\AsignarAsesoresMaster\Editar.cshtml" />
+    <Content Include="Views\AsignarAsesoresMaster\EditarAsesor.cshtml" />
+    <Content Include="Views\AsignarAsesoresMaster\Eliminar.cshtml" />
+    <Content Include="Views\AsignarAsesoresMaster\EliminarAsesor.cshtml" />
+    <Content Include="Views\AsignarAsesoresMaster\Index.cshtml" />
+    <Content Include="Views\SGA\Dashboard.cshtml" />
+    <Content Include="Views\SGA\Especialidades\Create.cshtml" />
+    <Content Include="Views\SGA\Especialidades\Delete.cshtml" />
+    <Content Include="Views\SGA\Especialidades\Edit.cshtml" />
+    <Content Include="Views\SGA\Especialidades\Index.cshtml" />
+    <Content Include="Views\EstudiantesMaster\AsignarBeca.cshtml" />
+    <Content Include="Views\EstudiantesMaster\AsignarTransporte.cshtml" />
+    <Content Include="Views\EstudiantesMaster\Create.cshtml" />
+    <Content Include="Views\EstudiantesMaster\Delete.cshtml" />
+    <Content Include="Views\EstudiantesMaster\Details.cshtml" />
+    <Content Include="Views\EstudiantesMaster\DetallesBeca.cshtml" />
+    <Content Include="Views\EstudiantesMaster\DetallesBecaEspecialidad.cshtml" />
+    <Content Include="Views\EstudiantesMaster\DetallesBecaGrado.cshtml" />
+    <Content Include="Views\EstudiantesMaster\DetallesBecaMaster.cshtml" />
+    <Content Include="Views\EstudiantesMaster\Edit.cshtml" />
+    <Content Include="Views\EstudiantesMaster\Estadisticas.cshtml" />
+    <Content Include="Views\EstudiantesMaster\EstadisticasCoordinador.cshtml" />
+    <Content Include="Views\EstudiantesMaster\EstadisticasMaster.cshtml" />
+    <Content Include="Views\EstudiantesMaster\Grupo.cshtml" />
+    <Content Include="Views\EstudiantesMaster\GruposPorTutor.cshtml" />
+    <Content Include="Views\EstudiantesMaster\HistoiralBecasTransporte.cshtml" />
+    <Content Include="Views\EstudiantesMaster\Index.cshtml" />
+    <Content Include="Views\EstudiantesMaster\MapaTransporte.cshtml" />
+    <Content Include="Views\EstudiantesMaster\_Graficas.cshtml" />
+    <Content Include="Views\EstudiantesMaster\_GraficasEspecialidad.cshtml" />
+    <Content Include="Views\EstudiantesMaster\_GraficasGrado.cshtml" />
+    <Content Include="Views\EstudiantesMaster\_ViewStar.cshtml" />
+    <Content Include="Views\EstudiantesNew\Delete.cshtml" />
+    <Content Include="Views\EstudiantesNew\Edit.cshtml" />
+    <Content Include="Views\EstudiantesNew\Index.cshtml" />
+    <Content Include="Views\SeguimientoTutorial\Index.cshtml" />
+    <Content Include="Views\AsignarCoordinadoresMaster\IndexCoordinadores.cshtml" />
+    <Content Include="Views\AsignarCoordinadoresMaster\EliminarCoordinador.cshtml" />
+    <Content Include="Views\AsignarCoordinadoresMaster\EditarCoordinador.cshtml" />
+    <Content Include="Views\AsignarCoordinadoresMaster\AsignarCoordinador.cshtml" />
+    <Content Include="Views\Canalizaciones\HistorialCanalizaciones.cshtml" />
+    <Content Include="Views\GruposGenerales\Index.cshtml" />
+    <Content Include="Views\ExportarMateriasGrupo\Index.cshtml" />
+    <Content Include="Views\SeguimientosReporte\Index.cshtml" />
+    <Content Include="Views\UsuarioAlumnos\Index.cshtml" />
+    <Content Include="Views\UsuariosAlumnoMaster\Index.cshtml" />
+    <Content Include="Views\Canalizaciones\HistorialGrupo.cshtml" />
+    <Content Include="Views\Alumnos\Index.cshtml" />
+    <Content Include="Views\Asesor\ErrorPermiso.cshtml" />
+    <Content Include="Views\NuevasEstadisticas\SeguimientoEstadisticas.cshtml" />
+    <Content Include="Views\Bajas\Revocar.cshtml" />
+    <Content Include="Views\SeguimientoTutores\Index.cshtml" />
+    <Content Include="Views\SeguimientoTutores\DetallesTutor.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="App_Data\" />
+    <Folder Include="Content\EvidenciasPAT\" />
+    <Folder Include="EstilosEntrevista\.sass-cache\1312249659bbfaed97ebc9c4fe4615ab409979f2\" />
+    <Folder Include="EstilosEntrevista\.sass-cache\c131d579e72184e91f426d1f22b65b5f0ae1d20f\" />
+    <Folder Include="EstilosEntrevista\.sass-cache\c578ac96aea90b3ef48d5ddbbb0ad284ee4fb7fd\" />
+    <Folder Include="SqlServerTypes\x64\" />
+    <Folder Include="SqlServerTypes\x86\" />
+    <Folder Include="Views\DatosPersonales\" />
+    <Folder Include="Views\Grupos\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="fonts\glyphicons-halflings-regular.woff2" />
+    <Content Include="fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="fonts\glyphicons-halflings-regular.eot" />
+    <None Include="packages.config" />
+    <Content Include="Scripts\jquery-3.3.1.slim.min.map" />
+    <Content Include="Scripts\jquery-3.3.1.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Reporte\AprobacionDeProyectos.rdlc" />
+    <EmbeddedResource Include="Reporte\AsignacionDeAlumnos.rdlc" />
+    <EmbeddedResource Include="Reporte\ConstanciasDeNoAdeudo.rdlc" />
+    <Content Include="Reporte\EntrevistaSeguimientoAlumno.rdlc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reporte\EntrevistaInicialAlumno.rdlc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="Reporte\EstadiasEnElSectorProductivo.rdlc" />
+    <EmbeddedResource Include="Reporte\EvaluacionesDeLaEmpresa.rdlc" />
+    <Content Include="Reporte\ReportePAT.rdlc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Reporte\rptBajaAlumno.rdlc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="Reporte\ReportesQuite\rptTutoriaGrupal.rdlc" />
+    <EmbeddedResource Include="Reporte\rptCanalizacion.rdlc" />
+    <EmbeddedResource Include="Reporte\rptEstadia.rdlc" />
+    <EmbeddedResource Include="Reporte\rptPAT.rdlc" />
+    <EmbeddedResource Include="Reporte\rptPIT.rdlc" />
+    <Content Include="Reporte\rptSeguimientoTutIndividual.rdlc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="Reporte\rptSeguimientoTutorial.rdlc" />
+    <EmbeddedResource Include="Reporte\RubricasDeEvaluacion.rdlc" />
+    <EmbeddedResource Include="Reporte\SeguimientoYEvaluacionDeEstadia.rdlc" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <Target Name="MvcBuildViews" AfterTargets="AfterBuild" Condition="'$(MvcBuildViews)'=='true'">
+    <AspNetCompiler VirtualPath="temp" PhysicalPath="$(WebProjectOutputDir)" />
+  </Target>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>False</AutoAssignPort>
+          <DevelopmentServerPort>50527</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://tutorias.localhost.local:5123/</IISUrl>
+          <OverrideIISAppRootUrl>True</OverrideIISAppRootUrl>
+          <IISAppRootUrl>http://tutorias.localhost.local:5123/</IISAppRootUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>Este proyecto hace referencia a los paquetes NuGet que faltan en este equipo. Use la restauración de paquetes NuGet para descargarlos. Para obtener más información, consulte http://go.microsoft.com/fwlink/?LinkID=322105. El archivo que falta es {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\MongoDB.LibMongocrypt.1.2.0\build\MongoDB.Libmongocrypt.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MongoDB.LibMongocrypt.1.2.0\build\MongoDB.Libmongocrypt.targets'))" />
+    <Error Condition="!Exists('..\packages\MongoDB.Driver.Core.2.12.0\build\MongoDB.Driver.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MongoDB.Driver.Core.2.12.0\build\MongoDB.Driver.Core.targets'))" />
+    <Error Condition="!Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EntityFramework.6.5.1\build\EntityFramework.props'))" />
+    <Error Condition="!Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EntityFramework.6.5.1\build\EntityFramework.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Data.SqlClient.SNI.4.0.1\build\net46\Microsoft.Data.SqlClient.SNI.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Data.SqlClient.SNI.4.0.1\build\net46\Microsoft.Data.SqlClient.SNI.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\build\net46\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.props'))" />
+  </Target>
+  <Import Project="..\packages\MongoDB.LibMongocrypt.1.2.0\build\MongoDB.Libmongocrypt.targets" Condition="Exists('..\packages\MongoDB.LibMongocrypt.1.2.0\build\MongoDB.Libmongocrypt.targets')" />
+  <Import Project="..\packages\MongoDB.Driver.Core.2.12.0\build\MongoDB.Driver.Core.targets" Condition="Exists('..\packages\MongoDB.Driver.Core.2.12.0\build\MongoDB.Driver.Core.targets')" />
+  <Import Project="..\packages\EntityFramework.6.5.1\build\EntityFramework.targets" Condition="Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.targets')" />
+  <Import Project="..\packages\Microsoft.Data.SqlClient.SNI.4.0.1\build\net46\Microsoft.Data.SqlClient.SNI.targets" Condition="Exists('..\packages\Microsoft.Data.SqlClient.SNI.4.0.1\build\net46\Microsoft.Data.SqlClient.SNI.targets')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target> -->
+</Project>

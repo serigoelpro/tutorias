@@ -1,0 +1,105 @@
+﻿@model IEnumerable<PlataformaWeb.BecasTransporte.Models.Estudiante>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Nombre)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.ApellidoP)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.ApellidoM)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Matricula)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Sexo)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IdTransporte)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IdBeca)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.MontoBeca)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IdCarrera)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IdGrado)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IdGrupo)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IdTurno)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Direccion)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Nombre)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ApellidoP)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ApellidoM)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Matricula)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Sexo)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IdTransporte)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IdBeca)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.MontoBeca)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IdCarrera)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IdGrado)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IdGrupo)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IdTurno)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Direccion)
+        </td>
+        <td>
+            @Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
+            @Html.ActionLink("Details", "Details", new { id=item.Id }) |
+            @Html.ActionLink("Delete", "Delete", new { id=item.Id })
+        </td>
+    </tr>
+}
+
+</table>

@@ -1,0 +1,157 @@
+@using Plataforma_Web.Models
+@using PlataformaWeb.BecasTransporte.Models
+@{
+    ViewBag.Title = "Inicio";
+<<<<<<< HEAD
+    Layout = "~/Views/Shared/_Layout.cshtml";
+=======
+    Layout = "~/Views/Shared/_SGALayout.cshtml";
+>>>>>>> ed6bc8305f16c485fc4f73afc4930f3d32ff181e
+    var usuario = Session["Usuario"] as Usuario;
+    var carreras = ViewBag.Carreras as List<Carrera>; // Solo para master
+    var especialidades = ViewBag.Especialidades as List<Especialidad>; // Para ambos
+    int? selectedCarrera = ViewBag.SelectedCarrera as int?;
+    int? selectedEspecialidad = ViewBag.SelectedEspecialidad as int?;
+}
+
+@if (usuario != null)
+{
+    <div class="dashboard-logo-container">
+        <img src="~/Assets/uttn.png" alt="Logo Universidad Tecnológica de Tamaulipas Norte" class="dashboard-logo" />
+        <h2 class="dashboard-bienvenida">Bienvenido(a) al Sistema de Tutorías</h2>
+        <p class="dashboard-desc">Selecciona una opción del menú lateral para comenzar.</p>
+    </div>
+}
+
+<style>
+    .dashboard-logo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 58vh;
+        background: #f9fafb;
+        padding: 4rem 1rem 2rem 1rem;
+        border-radius: 1.5rem;
+        box-shadow: 0 2px 12px 0 rgba(60,60,100,0.10);
+        margin-top: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .dashboard-logo {
+        width: 220px;
+        max-width: 95vw;
+        margin-bottom: 2.5rem;
+        filter: drop-shadow(0 4px 16px #00917533);
+        border-radius: 20px;
+        background: #fff;
+        padding: 0.5rem 1rem;
+    }
+
+    .dashboard-bienvenida {
+        color: #0c5a4a;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: .5rem;
+        letter-spacing: .01em;
+        text-align: center;
+    }
+
+    .dashboard-desc {
+        font-size: 1.1rem;
+        color: #666;
+        text-align: center;
+        max-width: 430px;
+    }
+</style>
+
+<!-- SOLO COORDINADOR/MASTER: SECCIONES ADMINISTRATIVAS -->
+<div class="dashboard-sections-grid">
+    @if (usuario.IdNivel >= 3)
+    {
+        <!-- Becas -->
+        <div class="dashboard-section-card">
+            <div class="section-header">
+                <svg class="section-icon" viewBox="0 0 24 24">
+                    <path d="M12 3l1.5 4.5H18l-3.75 2.75L15 15l-3-2.25L9 15l.75-4.75L6 7.5h4.5z" />
+                </svg>
+                <h3 class="section-title">Becas</h3>
+            </div>
+            <p class="section-description">Gestión y seguimiento de becas</p>
+            <div class="section-links">
+                <a href="@Url.Action("Index", "Becas")" class="section-link">Ver Becas</a>
+                <a href="@Url.Action("Create", "Becas")" class="section-link">Nueva Beca</a>
+            </div>
+        </div>
+        <!-- Estudiantes -->
+        <div class="dashboard-section-card">
+            <div class="section-header">
+                <svg class="section-icon" viewBox="0 0 24 24">
+                    <path d="M12 3l1.5 4.5H18l-3.75 2.75L15 15l-3-2.25L9 15l.75-4.75L6 7.5h4.5z" />
+                </svg>
+                <h3 class="section-title">Estudiantes</h3>
+            </div>
+            <p class="section-description">Gestión y seguimiento de estudiantes</p>
+            <div class="section-links">
+                <a href="@Url.Action("Index", "EstudiantesNew")" class="section-link">Ver Estudiantes</a>
+            </div>
+        </div>
+    }
+</div>
+
+    <!-- Solo Master -->
+    @if (usuario.IdNivel == 4)
+    {
+        <!-- Transportes -->
+        <div class="dashboard-section-card">
+            <div class="section-header"><h3 class="section-title">Transportes</h3></div>
+            <p class="section-description">Gestión de transportes</p>
+            <div class="section-links">
+                <a href="@Url.Action("Index", "Transportes")" class="section-link">Ver Transportes</a>
+            </div>
+        </div>
+
+        <!-- Ciudades -->
+        <div class="dashboard-section-card">
+            <div class="section-header"><h3 class="section-title">Ciudades</h3></div>
+            <p class="section-description">Gestión de ciudades</p>
+            <div class="section-links">
+                <a href="@Url.Action("Index", "Ciudads")" class="section-link">Ver Ciudades</a>
+                <a href="@Url.Action("Create", "Ciudads")" class="section-link">Nueva Ciudad</a>
+            </div>
+        </div>
+
+        <!-- Colonias -->
+        <div class="dashboard-section-card">
+            <div class="section-header"><h3 class="section-title">Colonias</h3></div>
+            <p class="section-description">Gestión de colonias</p>
+            <div class="section-links">
+                <a href="@Url.Action("Index", "Colonias")" class="section-link">Ver Colonias</a>
+                <a href="@Url.Action("Create", "Colonias")" class="section-link">Nueva Colonia</a>
+            </div>
+        </div>
+    }
+
+<style>
+    .dashboard-tutor-resumen, .dashboard-admin-resumen {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+
+    .tutor-groups-summary, .admin-summary-cards, .dashboard-sections-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+    }
+
+    .group-resumen-card, .admin-card, .dashboard-section-card {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px #0002;
+        padding: 2rem;
+        min-width: 230px;
+        flex: 1;
+    }
+</style>

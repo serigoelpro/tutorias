@@ -1,0 +1,136 @@
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userNivel = ViewBag.UserNivel != null ? (int)ViewBag.UserNivel : 0;
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+}
+
+<div class="sga-scope">
+    <h2>
+        Datos de Estudiantes
+    </h2>
+    @* Botón Exportar Excel solo para MASTER (IdNivel 4) *@
+    @if (userNivel == 4)
+    {
+        <a href="@Url.Action("ExportarEstudiantesExcel", "EstudiantesNew")" class="btn btn-success" target="_blank">
+            <i class="fas fa-file-excel"></i> Exportar Excel
+        </a>
+    }
+    <div class="card-body">
+        <!-- Mensajes -->
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                @TempData["Mensaje"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="mb-3" style="margin-bottom: 20px; margin-top: 15px;">
+            <label class="control-label">Buscar:</label>
+            <input type="text" id="Buscador" class="form-control" placeholder="Buscar estudiante... " />
+        </div>
+
+        <!-- Tabla con DataTables Server-Side -->
+        <div class="table-responsive">
+            <table id="usuariosTable" class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nombre Completo</th>
+                        <th>Usuario</th>
+                        <th>Carrera</th>
+                        <th>Estado</th>
+                        <th>Contraseña</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- DataTables llenará esto automáticamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            var table = $('#usuariosTable').DataTable({
+                "processing": true,
+                "serverSide": true,
+
+                // Configuración de paginación
+                "pageLength": 10,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6">>' +
+                    '<"row"<"col-sm-12"tr>>' +
+                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                // Traducción al español
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json",
+                    "processing": 'Cargando...'
+                },
+
+                // Configuración AJAX
+                "ajax": {
+                    "url": "@Url.Action("GetEstudiantes", "EstudiantesNew")",
+                    "type": "POST",
+                    "error": function(xhr, error, code) {
+                        console.error('Error al cargar datos:', error);
+                        alert('Error al cargar los estudiantes. Por favor, recargue la página.');
+                    }
+                },
+
+                "columns": [
+                    { "data": "NombreCompleto", "width": "30%", "orderable": true },
+                    { "data": "UserName", "width": "15%", "orderable": true },
+                    { "data": "CarreraNombre", "width": "25%", "orderable": true },
+                    {
+                        "data": "Estado",
+                        "width": "15%",
+                        "orderable": true,
+                        "render": function(data, type, row) {
+                            if (data) {
+                                return '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Habilitado</span>';
+                            } else {
+                                return '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Deshabilitado</span>';
+                            }
+                        }
+                    },
+                    { "data": "Password", "width": "15%", "orderable": false }
+                ],
+
+                "order": [[0, "asc"]],
+
+                "responsive": false,
+
+                "info": true
+            });
+
+            $('#Buscador').on('keyup', function () {
+                table.search(this.value).draw();
+            });
+
+        });
+    </script>
+}

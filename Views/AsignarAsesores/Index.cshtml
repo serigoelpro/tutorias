@@ -1,0 +1,76 @@
+﻿@model IEnumerable<Plataforma_Web.Models.Usuario>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Tutores</h2>
+<p>
+    <a class="btn btn-primary" href="@Url.Action("Crear")"
+       role="button">
+        <span class="glyphicon glyphicon-plus"></span>
+        Crear nuevo tutor
+        <span class="glyphicon glyphicon-user"></span>
+    </a>
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Nivel.Descripcion)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.NombreCompleto)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.UserName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Password)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Estado)
+        </th>
+        <th> Acciones</th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Nivel.Descripcion)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.NombreCompleto)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.UserName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Password)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Estado)
+        </td>
+        <td>
+            <a class="btn btn-primary" href="@Url.Action("Asesorados", new { id = item.IdUsuario })"
+               role="button" style="background-color:#1bb192; border-color: #000000;">
+                <span class="glyphicon glyphicon-eye-open"></span>
+                Grupos
+
+            </a>
+            <a class="btn btn-primary" href="@Url.Action("EditarAsesor", new { id = item.IdUsuario })"
+               role="button" style="background-color:cadetblue; border-color: #000000;">
+                <span class="glyphicon glyphicon-eye-open"></span>
+                Editar
+
+            </a>
+            @*<a class="btn btn-primary" href="@Url.Action("EliminarAsesor", new { id = item.IdUsuario })"
+               role="button" style=" background-color:red; border-color: #000000;">
+                <span class="glyphicon glyphicon-eye-open"></span>
+                Eliminar
+
+            </a>*@
+        </td>
+    </tr>
+}
+
+</table>

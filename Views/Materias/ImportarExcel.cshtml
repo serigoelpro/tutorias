@@ -1,0 +1,848 @@
+﻿@using System.Linq
+@using System.Collections.Generic
+@using PlataformaWeb.Models.Materias
+@{
+    ViewBag.Title = "Importar Materias desde Excel";
+
+    // ✅ VALIDACIÓN DE ROL
+    var usuario = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var esMaster = usuario != null && usuario.IdNivel == 4;
+    var esCoordinador = usuario != null && usuario.IdNivel == 3;
+
+    if (usuario == null || (!esMaster && !esCoordinador))
+    {
+        Response.Redirect(Url.Action("Index", "Home"));
+        return;
+    }
+}
+
+@section Styles{
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+<div class="sga-scope">
+
+    <h2>Importar Materias desde Excel</h2>
+
+    <!-- SECCIÓN DE IMPORTACIÓN -->
+    <div class="row import-section">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-success">
+                <div class="sga-filter-bar" style="margin-bottom: 20px;">
+                    <h3 class="panel-title">
+                        <span class="glyphicon glyphicon-cloud-upload"></span> Cargar y Procesar Archivo Excel
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="sga-filter-bar" style="margin-bottom: 20px; margin-top: 15px;">
+                                <strong><span class="glyphicon glyphicon-info-sign"></span> ¿Listo para importar?</strong>
+                                Seleccione su archivo Excel preparado según el formato requerido.
+                                <a href="#info-section" class="alert-link">Ver formato detallado ↓</a>
+                            </div>
+
+                            <form id="formImportar" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="archivoExcel">
+                                        <span class="glyphicon glyphicon-file"></span> Seleccionar archivo Excel *
+                                    </label>
+                                    <input type="file" id="archivoExcel" name="archivo" class="form-control"
+                                           accept=".xlsx,.xls" required />
+                                    <small class="text-muted">
+                                        Formatos: .xlsx, .xls (Máximo 5MB) - <strong>Incluye 6 columnas</strong>
+                                    </small>
+                                </div>
+
+                                <!-- Barra de progreso (oculta inicialmente) -->
+                                <div id="progressContainer" style="display: none; margin: 15px 0;">
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-striped active" role="progressbar" style="width: 100%">
+                                            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>
+                                            Procesando archivo...
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="action-buttons">
+                                <button type="submit" form="formImportar" class="btn btn-success btn-lg btn-block">
+                                    <span class="glyphicon glyphicon-upload"></span> Importar Materias
+                                </button>
+                                <a href="@Url.Action("DescargarPlantilla", "Materias")" class="btn btn-info btn-block" style="margin-top: 10px;">
+                                    <span class="glyphicon glyphicon-download"></span> Descargar Plantilla Excel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultados de la importación -->
+                    <div id="resultados" style="display: none; margin-top: 20px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEPARADOR VISUAL -->
+    <hr class="section-separator" />
+
+    <!-- SECCIÓN INFORMATIVA -->
+    <div id="info-section" class="row info-section">
+        <div class="col-md-12">
+            <div class="sga-filter-bar" style="margin-bottom: 20px; margin-top: 15px">
+                <h4><span class="glyphicon glyphicon-question-sign"></span> ¿Necesita ayuda con el formato?</h4>
+                <p>A continuación encontrará toda la información necesaria para preparar correctamente su archivo Excel.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row info-section">
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="sga-filter-bar" style="margin-bottom: 20px;">
+                    <h3 class="panel-title">
+                        <span class="glyphicon glyphicon-download-alt"></span> Plantilla Excel
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="text-muted">
+                        <strong>La plantilla incluye:</strong>
+                    </div>
+                    <ul class="text-muted">
+                        <li>Formato de 6 columnas requeridas</li>
+                        <li>Instrucciones de uso</li>
+                        <li>Áreas organizadas por programa educativos</li>
+                        <li>Información de planes de estudio disponibles</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <span class="glyphicon glyphicon-exclamation-sign"></span> Formato e Instrucciones
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <h4><span class="glyphicon glyphicon-th-list"></span> Estructura del Archivo:</h4>
+                    <div class="table-responsive">
+                        <table class="table table-condensed table-bordered instruction-table">
+                            <thead>
+                                <tr style="background-color: #f5f5f5;">
+                                    <th class="text-center">Columna A</th>
+                                    <th class="text-center">Columna B</th>
+                                    <th class="text-center">Columna C</th>
+                                    <th class="text-center">Columna D</th>
+                                    <th class="text-center">Columna E</th>
+                                    <th class="text-center">Columna F</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="header-row">
+                                    <td class="text-center"><strong>Asignatura</strong></td>
+                                    <td class="text-center"><strong>Programa Educativo</strong></td>
+                                    <td class="text-center"><strong>Área</strong></td>
+                                    <td class="text-center"><strong>Cuatrimestre</strong></td>
+                                    <td class="text-center"><strong>Plan de Estudio</strong></td>
+                                    <td class="text-center"><strong>Unidades</strong></td>
+                                </tr>
+                                <tr class="example-row">
+                                    <td>Integradora</td>
+                                    <td>Tecnologias de la Informacion</td>
+                                    <td>TSU EN DESARROLLO SOFTWARE MULTIPLATAFORMA</td>
+                                    <td class="text-center">3</td>
+                                    <td class="text-center">2020</td>
+                                    <td class="text-center">2</td>
+                                </tr>
+                                <tr class="example-row">
+                                    <td>Inglés</td>
+                                    <td>Tecnologias de la Informacion</td>
+                                    <td>TSU EN DESARROLLO SOFTWARE MULTIPLATAFORMA</td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center">2024</td>
+                                    <td class="text-center">6</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4><span class="glyphicon glyphicon-list"></span> Reglas Importantes:</h4>
+                    <div class="rules-container">
+                        <div class="rule-item">
+                            <span class="glyphicon glyphicon-chevron-right text-primary"></span>
+                            <strong>Encabezados:</strong> La fila 1 debe contener exactamente: Asignatura, Programa Educativo, Área, Cuatrimestre, Plan de Estudio, Unidades
+                        </div>
+                        <div class="rule-item">
+                            <span class="glyphicon glyphicon-chevron-right text-primary"></span>
+                            <strong>Datos:</strong> Comienzan desde la fila 2 en adelante
+                        </div>
+                        <div class="rule-item">
+                            <span class="glyphicon glyphicon-chevron-right text-primary"></span>
+                            <strong>Campos obligatorios:</strong> Todos los campos son requeridos (6 columnas)
+                        </div>
+                        <div class="rule-item">
+                            <span class="glyphicon glyphicon-chevron-right text-primary"></span>
+                            <strong>Nombres exactos:</strong> Programa Educativo, Área, Cuatrimestre, Plan de Estudio y Unidades deben coincidir exactamente con los registrados en el sistema
+                        </div>
+                        <div class="rule-item">
+                            <span class="glyphicon glyphicon-chevron-right text-primary"></span>
+                            <strong>Correspondencia:</strong> Verifique que el área pertenezca al programa educativo seleccionado
+                        </div>
+                        <div class="rule-item">
+                            <span class="glyphicon glyphicon-chevron-right text-primary"></span>
+                            <strong>Plan de Estudio:</strong> Debe ser exactamente "2020" o "2024"
+                        </div>
+                        <div class="rule-item">
+                            <span class="glyphicon glyphicon-chevron-right text-primary"></span>
+                            <strong>Unidades:</strong> El campo de uniades permite de 1 hasta 6 unidades
+                        </div>
+                        <div class="rule-item">
+                            <span class="glyphicon glyphicon-chevron-right text-primary"></span>
+                            <strong>Duplicados:</strong> Las asignaturas duplicadas se omitirán automáticamente
+                        </div>
+                    </div>
+
+                    <div class="sga-filter-bar" style="margin-bottom: 20px; margin-top: 15px;">
+                        <h5><span class="glyphicon glyphicon-lightbulb"></span> Consejo:</h5>
+                        <p class="small">
+                            Para evitar errores, copie y pegue los nombres directamente desde la plantilla.
+                            <strong>No escriba manualmente</strong>los nombres de programas educativos, áreas, planes de estudio y unidades.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <!-- Información detallada de planes de estudio -->
+            <div class="panel panel-success">
+                <div class="sga-filter-bar2" style="margin-bottom: 20px;">
+                    <h3 class="panel-title">
+                        <span class="glyphicon glyphicon-time"></span> Planes de Estudio Disponibles
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="text-sm" style="margin-bottom: 15px;">
+                        <strong>Seleccione el plan apropiado para cada materia:</strong>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="plan-card plan-2020">
+                                <h5><span class="label label-warning">Plan de Estudios 2020</span></h5>
+                                <ul class="plan-details-list">
+                                    <li><strong>Calificación mínima:</strong> 8.0</li>
+                                    <li><strong>Tipo:</strong> Solo números enteros</li>
+                                    <li><strong>Redondeo:</strong> Automático</li>
+                                    <li><strong>Ejemplo:</strong> 7.8 → 7, 8.6 → 9</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="plan-card plan-2024">
+                                <h5><span class="label label-success">Plan de Estudios 2024</span></h5>
+                                <ul class="plan-details-list">
+                                    <li><strong>Calificación mínima:</strong> 7.0</li>
+                                    <li><strong>Tipo:</strong> Permite decimales</li>
+                                    <li><strong>Ejemplo:</strong> 7.5, 8.3, 9.7</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información condensada de programas educativos -->
+            <div class="panel panel-info">
+                <div class="sga-filter-bar" style="margin-bottom: 20px;">
+                    <h3 class="panel-title">
+                        <span class="glyphicon glyphicon-tree-deciduous"></span> Información Adicional
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="text-sm" style="margin-bottom: 15px;">
+                        <strong>Recuerde:</strong>
+                    </div>
+
+                    <ul class="help-list">
+                        <li><strong>Programas Educativos:</strong> Use los nombres exactos como aparecen en el sistema</li>
+                        <li><strong>Áreas:</strong> Deben corresponder al programa educativo seleccionado</li>
+                        <li><strong>Cuatrimestres:</strong> Escriba solo el número (1, 2, 3, etc.)</li>
+                        <li><strong>Planes:</strong> Exactamente "2020" o "2024"</li>
+                        <li><strong>Unidades:</strong> Escriba solo el número (1-6)</li>
+                    </ul>
+
+                    <div class="alert alert-success" style="margin-top: 15px; margin-bottom: 0;">
+                        <h6><span class="glyphicon glyphicon-ok-sign"></span> Para mejores resultados:</h6>
+                        <ol class="small">
+                            <li>Descargue la plantilla Excel</li>
+                            <li>Complete sus datos siguiendo los ejemplos</li>
+                            <li>Verifique que todos los campos estén llenos</li>
+                            <li>Importe el archivo</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#formImportar').submit(function(e) {
+        e.preventDefault();
+
+        var archivo = $('#archivoExcel')[0].files[0];
+
+        // Validaciones básicas
+        if (!archivo) {
+            mostrarAlerta('error', 'Por favor seleccione un archivo Excel');
+            return false;
+        }
+
+        if (archivo.size > 5 * 1024 * 1024) { // 5MB
+            mostrarAlerta('error', 'El archivo es demasiado grande. Máximo 5MB permitido.');
+            return false;
+        }
+
+        var extension = archivo.name.split('.').pop().toLowerCase();
+        if (extension !== 'xlsx' && extension !== 'xls') {
+            mostrarAlerta('error', 'Solo se permiten archivos Excel (.xlsx, .xls)');
+            return false;
+        }
+
+        // Mostrar barra de progreso
+        $('#progressContainer').show();
+        $('#resultados').hide();
+        $('button[type="submit"]').prop('disabled', true);
+
+        // Crear FormData para enviar el archivo
+        var formData = new FormData();
+        formData.append('archivo', archivo);
+
+        // Enviar archivo via AJAX
+        $.ajax({
+            url: '@Url.Action("ImportarExcel", "Materias")',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            timeout: 60000, // 60 segundos timeout
+            success: function(result) {
+                $('#progressContainer').hide();
+                $('button[type="submit"]').prop('disabled', false);
+                mostrarResultados(result);
+            },
+            error: function(xhr, status, error) {
+                $('#progressContainer').hide();
+                $('button[type="submit"]').prop('disabled', false);
+
+                var mensaje = 'Error de conexión: ' + error;
+                if (status === 'timeout') {
+                    mensaje = 'El archivo tardó demasiado en procesarse. Intente con un archivo más pequeño.';
+                }
+
+                mostrarAlerta('error', mensaje);
+            }
+        });
+    });
+
+    function mostrarAlerta(tipo, mensaje) {
+        var claseAlerta = tipo === 'error' ? 'alert-danger' : 'alert-info';
+        var icono = tipo === 'error' ? 'glyphicon-remove-circle' : 'glyphicon-info-sign';
+
+        var html = '<div class="alert ' + claseAlerta + ' alert-dismissible">';
+        html += '<button type="button" class="close" data-dismiss="alert">&times;</button>';
+        html += '<span class="glyphicon ' + icono + '"></span> ' + mensaje;
+        html += '</div>';
+
+        $('#resultados').html(html).show();
+    }
+
+    function mostrarResultados(result) {
+        var html = '';
+
+        // Mostrar resumen principal
+        if (result.success) {
+            html += '<div class="alert alert-success">';
+            html += '<h4><span class="glyphicon glyphicon-ok-circle"></span> Importación Exitosa</h4>';
+            html += '<p><strong>Se procesaron correctamente ' + result.exitosos + ' asignaturas</strong></p>';
+
+            if (result.fallidos > 0) {
+                html += '<p class="text-warning text-center">Se encontraron ' + result.fallidos + ' registros con problemas que no se pudieron importar.</p>';
+            }
+            html += '</div>';
+        } else {
+            html += '<div class="alert alert-danger">';
+            html += '<h4><span class="glyphicon glyphicon-remove-circle"></span> Error en la Importación</h4>';
+            html += '<p><strong>' + result.message + '</strong></p>';
+            html += '</div>';
+        }
+
+        // Mostrar estadísticas detalladas
+        if (result.exitosos > 0 || result.fallidos > 0) {
+            html += '<div class="row">';
+
+            // Exitosos
+            if (result.exitosos > 0) {
+                html += '<div class="col-md-6">';
+                html += '<div class="panel panel-success">';
+                html += '<div class="panel-heading">';
+                html += '<h3 class="panel-title"><span class="glyphicon glyphicon-ok"></span> Registros Exitosos</h3>';
+                html += '</div>';
+                html += '<div class="panel-body text-center">';
+                html += '<h2 class="text-success">' + result.exitosos + '</h2>';
+                html += '<p>asignaturas importadas correctamente</p>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+
+            // Fallidos
+            if (result.fallidos > 0) {
+                html += '<div class="col-md-6">';
+                html += '<div class="panel panel-warning">';
+                html += '<div class="panel-heading-error">';
+                html += '<h3 class="panel-title"><span class="glyphicon glyphicon-warning-sign"></span> Registros con Problemas</h3>';
+                html += '</div>';
+                html += '<div class="panel-body text-center">';
+                html += '<h2 class="text-danger text-center">' + result.fallidos + '</h2>';
+                html += '<p class="text-center">registros no se pudieron importar</p>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+
+            html += '</div>';
+        }
+
+        // Mostrar errores detallados si los hay
+        if (result.errores && result.errores.length > 0) {
+            html += '<div class="panel panel-warning">';
+            html += '<div class="panel-heading-error">';
+            html += '<h3 class="panel-title">';
+            html += '<span class="glyphicon glyphicon-list-alt"></span> Detalle de Problemas Encontrados (' + result.totalErrores + ')';
+            html += '</h3>';
+            html += '</div>';
+            html += '<div class="panel-body">';
+            html += '<div class="sga-filter-bar" style="margin-bottom: 20px;">';
+            html += '<strong>Los siguientes registros no se pudieron importar:</strong>';
+            html += '</div>';
+
+            html += '<ul class="list-group">';
+            $.each(result.errores, function(i, error) {
+                html += '<li class="list-group-item">';
+                html += '<span class="glyphicon glyphicon-exclamation-sign text-warning"></span> ';
+                html += error;
+                html += '</li>';
+            });
+            html += '</ul>';
+
+            if (result.totalErrores > result.errores.length) {
+                html += '<div class="alert alert-warning">';
+                html += '<em>... y ' + (result.totalErrores - result.errores.length) + ' problemas adicionales. ';
+                html += 'Revise los datos en su archivo Excel y vuelva a intentar.</em>';
+                html += '</div>';
+            }
+
+            html += '</div>';
+            html += '</div>';
+        }
+
+        // Acciones disponibles
+        html += '<div class="panel panel-info">';
+        html += '<div class="panel-heading">';
+        html += '<h3 class="panel-title">¿Qué hacer ahora?</h3>';
+        html += '</div>';
+        html += '<div class="panel-body">';
+
+        if (result.exitosos > 0) {
+            html += '<div class="text-center" style="margin-bottom: 15px;">';
+            html += '<a href="' + '@Url.Action("Index", "Materias")' + '" class="btn btn-info btn-lg">';
+            html += 'Ver Todas las Materias';
+            html += '</a>';
+            html += '</div>';
+        }
+
+        if (result.fallidos > 0) {
+            html += '<div class="sga-filter-bar" style="margin-bottom: 20px;">';
+            html += '<h5>Para corregir los problemas:</h5>';
+            html += '<ol>';
+            html += '<li>Descargue la plantilla Excel</li>';
+            html += '<li>Verifique que los nombres de Programa Educativo, Área, Cuatrimestre y Plan de Estudio sean exactos</li>';
+            html += '<li>Asegúrese de que el área corresponda al programa educativo seleccionado</li>';
+            html += '<li>Use exactamente "2020" o "2024" para el plan de estudio</li>';
+            html += '<li>Complete todos los campos obligatorios (6 columnas)</li>';
+            html += '<li>Elimine las filas de instrucciones antes de importar</li>';
+            html += '</ol>';
+            html += '</div>';
+
+            html += '<div class="text-center">';
+            html += '<a href="' + '@Url.Action("DescargarPlantilla", "Materias")' + '" class="btn btn-info">';
+            html += '<span class="glyphicon glyphicon-download"></span> Descargar Plantilla Excel';
+            html += '</a>';
+            html += '</div>';
+        }
+
+        html += '</div>';
+        html += '</div>';
+
+        $('#resultados').html(html).show();
+
+        // Limpiar el input de archivo para permitir nueva selección
+        $('#archivoExcel').val('');
+
+        // Scroll hacia los resultados
+        $('html, body').animate({
+            scrollTop: $("#resultados").offset().top - 100
+        }, 1000);
+    }
+
+    // Hacer la función available globalmente para debugging
+    window.mostrarResultados = mostrarResultados;
+});
+</script>
+
+<style>
+    /* Estilos existentes */
+    .glyphicon-refresh-animate {
+        animation: spin .7s infinite linear;
+        -webkit-animation: spin2 .7s infinite linear;
+    }
+
+    @@-webkit-keyframes spin2 {
+        from {
+            -webkit-transform: rotate(0deg);
+        }
+
+        to {
+            -webkit-transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes spin {
+        from {
+            transform: scale(1) rotate(0deg);
+        }
+
+        to {
+            transform: scale(1) rotate(360deg);
+        }
+    }
+
+    /* Para tarjetas de planes de estudio */
+    .plan-card {
+        background-color: #f9f9f9;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+
+        .plan-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+    .plan-2020 {
+        border-color: #4DB6AC;
+        background: linear-gradient(135deg, #f0fafa, #f5fcfc);
+    }
+
+    .plan-2024 {
+        border-color: #20c997;
+        background: linear-gradient(135deg, #f0fff8, #f5fffb);
+    }
+
+    .plan-details-list {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0 0;
+    }
+
+        .plan-details-list li {
+            padding: 3px 0;
+            font-size: 12px;
+            border-bottom: 1px dotted #ddd;
+        }
+
+            .plan-details-list li:last-child {
+                border-bottom: none;
+            }
+
+        .plan-details-list strong {
+            color: #333;
+        }
+
+    /* Tabla de comparación rápida */
+    .comparison-quick {
+        margin-top: 15px;
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+    }
+
+        .comparison-quick h5 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 13px;
+        }
+
+        .comparison-quick .table {
+            margin-bottom: 0;
+            font-size: 11px;
+        }
+
+            .comparison-quick .table th,
+            .comparison-quick .table td {
+                padding: 4px 6px;
+                vertical-align: middle;
+            }
+
+    /* Alertas compactas */
+    .compact-alert {
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+        line-height: 1.3;
+    }
+
+        .compact-alert.alert-warning {
+            border-left: 4px solid #f0ad4e;
+            background-color: #fcf8e3;
+            border-color: #faebcc;
+        }
+
+    /* Mejoras a la tabla de instrucciones */
+    .instruction-table .header-row {
+        background-color: #d9edf7 !important;
+        color: #31708f !important;
+        font-weight: bold !important;
+    }
+
+    .instruction-table .example-row {
+        background-color: #f9f9f9 !important;
+        color: #666 !important;
+        font-style: italic;
+    }
+
+    /* Reglas */
+    .rules-container {
+        background-color: #f8f9fa;
+        padding: 12px;
+        border-radius: 4px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .rule-item {
+        margin-bottom: 6px;
+        padding: 3px 0;
+        display: flex;
+        align-items: flex-start;
+        font-size: 12px;
+    }
+
+        .rule-item .glyphicon {
+            margin-right: 6px;
+            margin-top: 1px;
+            flex-shrink: 0;
+            font-size: 11px;
+            color: var(--primary);
+        }
+
+        .rule-item .text-danger {
+            color: #d9534f !important;
+        }
+
+    /* Lista de ayuda */
+    .help-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 12px;
+    }
+
+        .help-list li {
+            padding: 3px 0 3px 15px;
+            border-bottom: 1px dotted #dee2e6;
+            position: relative;
+            line-height: 1.3;
+        }
+
+            .help-list li:before {
+                content: "▸";
+                position: absolute;
+                left: 0;
+                color: #007bff;
+                font-weight: bold;
+                font-size: 10px;
+            }
+
+            .help-list li:last-child {
+                border-bottom: none;
+            }
+
+    /* Resto de estilos */
+    .import-section {
+        margin-bottom: 30px;
+    }
+
+    .info-section {
+        margin-top: 30px;
+    }
+
+    .import-section .panel-success {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border: 2px solid #d4edda;
+    }
+
+        .import-section .panel-success .panel-heading {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            padding: 12px 15px;
+        }
+
+        .import-section .panel-success .panel-heading-error {
+            background: var(--danger);
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            padding: 12px 15px;
+        }
+
+    .action-buttons {
+        padding-left: 15px;
+    }
+
+        .action-buttons .btn-lg {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+            .action-buttons .btn-lg:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+            }
+
+    hr.section-separator {
+        margin: 40px 0;
+        border: none;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #ddd, transparent);
+        position: relative;
+    }
+
+    .label {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .label-warning {
+        background-color: #4DB6AC !important;
+    }
+
+    .label-success {
+        background-color: #20c997 !important;
+    }
+
+    /* Estilos responsivos */
+    @@media (max-width: 768px) {
+        .plan-card {
+            padding: 10px;
+        }
+
+        .plan-details-list {
+            font-size: 11px;
+        }
+
+        .comparison-quick {
+            padding: 8px;
+        }
+
+        .col-md-6 {
+            margin-bottom: 20px;
+        }
+
+        .action-buttons {
+            padding-left: 0;
+            margin-top: 20px;
+        }
+    }
+
+    .sga-scope .sga-filter-bar {
+        border: 1px solid #cfe8e2;
+        color: var(--primary);
+        background: #e9f8f4;
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 10px 15px;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px 10px;
+    }
+
+        .sga-scope .sga-filter-bar strong {
+            margin-right: 5px;
+        }
+
+        .sga-scope .sga-filter-bar .btn-utt-outline {
+            padding: 4px 10px;
+            font-size: 1.2rem;
+        }
+
+    .sga-scope .sga-filter-bar2 {
+        border: 1px solid #cfe8e2;
+        color: var(--white);
+        background: var(--primary);
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 10px 15px;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px 10px;
+    }
+
+    /* Color para los planes 2024+ */
+    .sga-scope .plan-summary-label.label-success {
+        background-color: #20c997 !important;
+    }
+
+    /* Color para los planes 2020+ */
+    .sga-scope .plan-summary-label.label-warning {
+        background-color: #4DB6AC !important;
+    }
+
+    .plan-info-container .label-success {
+        background-color: #20c997 !important;
+    }
+
+    .plan-info-container .label-warning {
+        background-color: #4DB6AC !important;
+    }
+
+    .sga-scope #info-section .sga-filter-bar {
+        text-align: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    #resultados .panel-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+</style>

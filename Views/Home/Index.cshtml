@@ -1,0 +1,26 @@
+﻿@{
+    /**/
+    ViewBag.Title = "Home Page";
+}
+<div class="container">
+    <div style="font-family:Arial; font-size:15px;">
+        <br />
+        @*<div class="col-md-1 col-sm-1"></div>*@
+        @*<div class="col-md-19 col-sm-19">*@
+        <div style="text-align:center" class="center-block">
+            @*<a href="@Url.Action("Estadias", "Home")">
+                    <img class="img-responsive" style="float:left; padding:3px; margin-right:10px;
+                    margin-left:20px; height:450px; width:450px;" src="~/Imagenes/ImagenesPagina/LogoEstadias.jpg" />
+                </a>*@
+            <img class="img-responsive" style="float:none; display: block; display: inline-block; padding:3px;
+            height:450px; width:450px;" src="~/Imagenes/ImagenesPagina/LogoTutorias.jpg" />
+        </div>
+        <div class="col-md-1 col-sm-1"></div>
+    </div>
+</div>
+@if (!string.IsNullOrEmpty(ViewBag.Mensaje))
+{
+    <script type="text/javascript">
+                alert("@ViewBag.Mensaje");
+    </script>
+}

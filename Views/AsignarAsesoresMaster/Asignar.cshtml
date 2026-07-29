@@ -1,0 +1,174 @@
+@model Plataforma_Web.Models.TutoriaGrupal
+
+@{
+    ViewBag.Title = "Asignar Grupo a Usuario Tutor";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var usuario = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var userNivel = usuario?.IdNivel ?? 0;
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <h2>Asignar Grupo a Tutor</h2>
+
+    @if (ViewBag.Usuario != null)
+    {
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h4>Tutor: @ViewBag.Usuario.NombreCompleto</h4>
+            </div>
+            <div class="panel-body">
+                <p><strong>Correo:</strong> @ViewBag.Usuario.CorreoElectronico</p>
+            </div>
+        </div>
+    }
+
+    @using (Html.BeginForm("Asignar", "AsignarAsesoresMaster", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        @Html.Hidden("tutorId", (int?)ViewBag.Usuario?.IdUsuario)
+
+        <div class="form-horizontal">
+            <h4>Información del Grupo</h4>
+
+            @if (ViewBag.Mensaje != null)
+            {
+                <div class="alert alert-danger">
+                    @ViewBag.Mensaje
+                </div>
+            }
+
+            @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.IdGrado, "Grado", htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.DropDownList("IdGrado", null, "Seleccione un grado", htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdGrado, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.IdGrupo, "Grupo", htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.DropDownList("IdGrupo", null, "Seleccione un grupo", htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdGrupo, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            @if (userNivel >= 4)
+            {
+                <div class="form-group">
+                    @Html.LabelFor(model => model.IdCarrera, "Carrera", htmlAttributes: new { @class = "control-label col-md-2" })
+                    <div class="col-md-10">
+                        @Html.DropDownList("IdCarrera", null, "Seleccione una carrera", htmlAttributes: new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.IdCarrera, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+            }
+            else
+            {
+                @Html.Hidden("IdCarrera", usuario?.IdCarrera)
+            }
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.IdTurno, "Turno", htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.DropDownList("IdTurno", null, "Seleccione un turno", htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdTurno, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.IdEspecialidad, "Especialidad", htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.DropDownList("IdEspecialidad", null, "Seleccione una especialidad", htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdEspecialidad, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            @Html.Hidden("Año", DateTime.Now.Year)
+
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" value="Asignar Grupo" class="btn btn-success" />
+                    @Html.ActionLink("Cancelar", "Asesorados", new { id = ViewBag.Usuario?.IdUsuario }, new { @class = "btn btn-danger" })
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            var carreraDropdown = $("#IdCarrera");
+
+            if (carreraDropdown.is(":visible")) {
+
+                carreraDropdown.change(function () {
+                    var selectedCarreraId = $(this).val();
+                    var especialidadDropdown = $("#IdEspecialidad");
+
+                    especialidadDropdown.empty();
+
+                    if (selectedCarreraId) {
+                        especialidadDropdown.append($('<option/>', {
+                            value: '',
+                            text: 'Cargando especialidades...'
+                        }));
+
+                        var url = '@Url.Action("GetEspecialidadesPorCarrera", "AsignarAsesoresMaster")';
+
+                        $.getJSON(url, { idCarrera: selectedCarreraId })
+                            .done(function (data) {
+                                especialidadDropdown.empty();
+                                especialidadDropdown.append($('<option/>', {
+                                    value: '',
+                                    text: 'Seleccione una especialidad'
+                                }));
+
+                                if (data.length > 0) {
+                                    $.each(data, function (index, item) {
+                                        especialidadDropdown.append($('<option/>', {
+                                            value: item.Id,
+                                            text: item.Nombre
+                                        }));
+                                    });
+                                } else {
+                                    especialidadDropdown.empty();
+                                    especialidadDropdown.append($('<option/>', {
+                                        value: '',
+                                        text: 'No hay especialidades para esta carrera'
+                                    }));
+                                }
+                            })
+                            .fail(function () {
+                                especialidadDropdown.empty();
+                                especialidadDropdown.append($('<option/>', {
+                                    value: '',
+                                    text: 'Error al cargar especialidades'
+                                }));
+                            });
+                    } else {
+                        especialidadDropdown.append($('<option/>', {
+                            value: '',
+                            text: 'Seleccione una carrera primero'
+                        }));
+                    }
+                });
+
+                if(carreraDropdown.val() != "") {
+                    carreraDropdown.trigger('change');
+                }
+
+            }
+        });
+    </script>
+}

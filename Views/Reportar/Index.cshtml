@@ -1,0 +1,161 @@
+﻿@model IEnumerable<Plataforma_Web.Models.PAT>
+@Styles.Render("~/ViewsStyles/PAT/ListPAT.css")
+@{
+    ViewBag.Title = "Planes de acción tutorial";
+    var pats = Model?.ToList() ?? new List<Plataforma_Web.Models.PAT>();
+}
+
+
+<h2>
+    Plan de Acción Tutorial
+</h2>
+<div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 12px; margin-bottom: 16px;">
+    <button id="btn-forzar-pats" class="btn btn-primary" onclick="forzarPATs()">
+        <span class="glyphicon glyphicon-refresh"></span> Generar PATs
+    </button>
+</div>
+<script>
+function forzarPATs() {
+    if (!confirm('Utilice este botón si falta el PAT de uno de sus grupos tutorados. ¿Seguro que desea forzar la generación de PATs?')) return;
+    fetch('@Url.Action("ForzarGenerarPATs", "PATs")', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'No se pudo generar los PATs.');
+            }
+        })
+        .catch(() => alert('Error de conexión.'));
+}
+</script>
+
+@if (!pats.Any())
+{
+    <div class="empty-state">
+        <div class="empty-icon"><span class="glyphicon glyphicon-info-sign"></span></div>
+        <div class="empty-title">No hay PATs asignados en este periodo.</div>
+        <div class="empty-message">Solicita a tu coordinador la asignación correspondiente.</div>
+    </div>
+}
+else
+{
+    <div class="pat-filters" id="pat-chips-group" style="font-weight: bold;">
+        @for (int i = 0; i < pats.Count; i++)
+        {
+            <div class="filter-chip @(i == 0 ? "active" : "")"
+                 data-patid="@pats[i].IdEntrevistaInicial"
+                 onclick="seleccionarChipPAT(this)">
+                <span class="chip-icon glyphicon glyphicon-education"></span>
+                @pats[i].TutoriaGrupal
+            </div>
+        }
+    </div>
+    <!-- Contenedor de detalles de PAT -->
+    <div id="patDetailsContainer">
+        <div id="patDetailsContent"></div>
+    </div>
+}
+
+<div id="notificationMessage" class="alert" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+<script>
+
+    // Función para guardar el grupo seleccionado
+    function guardarGrupoSeleccionado(patId) {
+        sessionStorage.setItem('patSeleccionado', patId);
+    }
+
+    function seleccionarChipPAT(element) {
+        $('.filter-chip').removeClass('active');
+        $(element).addClass('active');
+        var patId = $(element).data('patid');
+
+        // Guardar el grupo seleccionado
+        guardarGrupoSeleccionado(patId);
+
+        // Animación de salida antes de cargar el nuevo PAT
+        $('#patDetailsContainer').removeClass('card-animate-in');
+        $('#patDetailsContainer').addClass('switching');
+        setTimeout(function () {
+            cargarDetalles(patId);
+        }, 180);
+    }
+    // Al cargar, muestra el primer PAT por default y resalta el chip
+    $(document).ready(function () {
+        // Verificar si hay un grupo guardado en sessionStorage
+        var patSeleccionado = sessionStorage.getItem('patSeleccionado');
+        var chipASeleccionar;
+
+        if (patSeleccionado) {
+            // Buscar el chip correspondiente al PAT guardado
+            chipASeleccionar = $('.filter-chip[data-patid="' + patSeleccionado + '"]');
+
+            // Si no se encuentra el chip guardado, usar el primero
+            if (chipASeleccionar.length === 0) {
+                chipASeleccionar = $('.filter-chip').first();
+            }
+        } else {
+            // Si no hay grupo guardado, usar el primero
+            chipASeleccionar = $('.filter-chip').first();
+        }
+
+        if (chipASeleccionar.length > 0) {
+            var patId = chipASeleccionar.data('patid');
+            cargarDetalles(patId);
+            seleccionarChipPAT(chipASeleccionar[0]);
+        }
+    });
+
+    function seleccionarChipPAT(element) {
+    $('.filter-chip').removeClass('active');
+    $(element).addClass('active');
+    var patId = $(element).data('patid');
+    // Animación de salida antes de cargar el nuevo PAT
+    $('#patDetailsContainer').removeClass('card-animate-in'); // Por si ya tenía la clase
+    $('#patDetailsContainer').addClass('switching');
+    setTimeout(function () {
+        cargarDetalles(patId);
+    }, 180); // Un tiempo corto para que se note el efecto out
+}
+
+function cargarDetalles(patId) {
+    $.ajax({
+        url: '@Url.Action("Details", "PATs")/' + patId + '?ajax=true',
+        type: 'GET',
+        success: function (response) {
+            // Animación: quitar contenido y ponerlo animado
+            $('#patDetailsContent').html(response);
+            $('#patDetailsContainer').show();
+            $('#patDetailsContainer').removeClass('switching');
+            // Forzar reflow para reiniciar la animación
+            void $('#patDetailsContainer')[0].offsetWidth;
+            $('#patDetailsContainer').addClass('card-animate-in');
+            // Quitar la clase de animación después para poder repetirla si cambia de nuevo
+            setTimeout(function () {
+                $('#patDetailsContainer').removeClass('card-animate-in');
+            }, 700); // Debe ser igual o mayor a la duración de la animación en el CSS
+        },
+        error: function () {
+            mostrarNotificacion("Error al cargar los detalles del PAT.", "error");
+        }
+    });
+}
+
+    function mostrarNotificacion(mensaje, tipo) {
+        var $notif = $('#notificationMessage');
+        $notif.removeClass('alert-success alert-danger alert-warning alert-info');
+
+        switch (tipo) {
+            case 'success': $notif.addClass('alert-success'); break;
+            case 'error': $notif.addClass('alert-danger'); break;
+            case 'warning': $notif.addClass('alert-warning'); break;
+            default: $notif.addClass('alert-info');
+        }
+
+        $notif.text(mensaje).show();
+        setTimeout(function () { $notif.fadeOut(); }, 5000);
+    }
+
+
+</script>

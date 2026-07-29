@@ -1,0 +1,48 @@
+﻿@model Plataforma_Web.Models.TutoriaGrupal
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Entrevista Inicial</h2>
+
+@* Enlace visible solo para usuarios con rol "Admin" *@
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        @Html.ActionLink(
+            "➕ Agregar Materias",      // texto del enlace
+            "Agregar",                 // acción en MateriasController
+            "Materias",                // controlador
+            routeValues: null,
+            htmlAttributes: new { @class = "btn btn-success" }
+        )
+    </p>
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Seleccione un Grupo</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.IdCarrera, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(
+                    m => m.IdTutoriaGrupal,
+                    (List<SelectListItem>)ViewBag.Grupos,
+                    "Seleccione un Grupo",
+                    new { @class = "form-control small" }
+                )
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Buscar" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}

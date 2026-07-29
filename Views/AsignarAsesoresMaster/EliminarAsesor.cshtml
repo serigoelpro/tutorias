@@ -1,0 +1,115 @@
+@model Plataforma_Web.Models.Usuario
+
+@{
+    ViewBag.Title = "Eliminar Tutor";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+<div class="sga-scope">
+    <h2>Eliminar Tutor</h2>
+
+    <div class="alert alert-warning">
+        <h4>¿Está seguro de que desea eliminar este tutor?</h4>
+        <p>Esta acción cambiará el nivel de acceso del usuario, pero no eliminará el registro completamente.</p>
+    </div>
+
+    <div>
+        <h4>Información del Tutor</h4>
+        <dl class="dl-horizontal">
+            <dt>
+                @Html.DisplayNameFor(model => model.NombreCompleto)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.NombreCompleto)
+            </dd>
+
+            <dt>
+                @Html.DisplayNameFor(model => model.UserName)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.UserName)
+            </dd>
+
+            <dt>
+                Estado
+            </dt>
+            <dd>
+                @(Model.Estado ? "Activo" : "Inactivo")
+            </dd>
+
+            @if (!string.IsNullOrEmpty(Model.MicrosoftIdentifier))
+            {
+                <dt>
+                    Microsoft Identifier
+                </dt>
+                <dd>
+                    @Model.MicrosoftIdentifier
+                </dd>
+            }
+
+            <dt>
+                @Html.DisplayNameFor(model => model.Tiempo)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.Tiempo)
+            </dd>
+        </dl>
+
+        @using (Html.BeginForm("EliminarAsesor", "AsignarAsesoresMaster", FormMethod.Post, new { id = "form-eliminar" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="form-actions no-color">
+                <input type="button" value="Confirmar Eliminación" class="btn btn-danger"
+                       data-toggle="modal" data-target="#eliminarModal" />
+                @Html.ActionLink("Cancelar", "Index", null, new { @class = "btn btn-warning" })
+            </div>
+        }
+    </div>
+
+    <div class="modal fade" id="eliminarModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="modalLabel">Confirmar Eliminación</h4>
+                </div>
+                <div class="modal-body">
+                    <h4>¿Está seguro de que desea eliminar este tutor?</h4>
+                    <p><strong>Tutor:</strong> @Model.NombreCompleto</p>
+                    <p><strong>Usuario:</strong> @Model.UserName</p>
+                    <hr>
+                    <p class="text-warning">
+                        <span class="glyphicon glyphicon-warning-sign"></span>
+                        Esta acción cambiará el nivel de acceso del usuario, pero no eliminará el registro completamente.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Confirmar Eliminación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var botonConfirmar = document.getElementById('btnConfirmarEliminar');
+            var formEliminar = document.getElementById('form-eliminar');
+            if (botonConfirmar && formEliminar) {
+
+                botonConfirmar.addEventListener('click', function () {
+                    formEliminar.submit();
+                });
+            }
+        });
+    </script>
+}

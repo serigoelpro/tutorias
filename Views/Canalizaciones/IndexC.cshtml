@@ -1,0 +1,293 @@
+﻿@model IEnumerable<Plataforma_Web.Controllers.CanalizacionesController.EstudianteCanalizacionViewModel>
+
+@{
+    ViewBag.Title = "Canalizaciones";
+}
+
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/CanalizacionesFix.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/Canalizaciones.css" />
+    <style>
+        .group-selection {
+            margin-right: 20px;
+        }
+
+        .group-dropdown {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<div class="canalizacion-container">
+    <div class="header-row">
+        <h2 class="header-title">FORMULARIO DE CANALIZACIÓN A LOS SERVICIOS PEDAGÓGICOS</h2>
+        <div class="notification-container">
+            <div class="notification-bell" id="notificationBell">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-header">
+                        <h4><i class="fas fa-bell"></i> Notificaciones</h4>
+                    </div>
+                    <div class="notification-list" id="notificationList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-row">
+        <div class="group-selection">
+            <label for="grupoSelect">Seleccionar Grupo:</label>
+            @Html.DropDownList("idGrupo", ViewBag.Grupos as SelectList, new { @id = "grupoSelect", @class = "group-dropdown" })
+        </div>
+        <div class="group-header">Grupo Seleccionado: @ViewBag.NombreGrupo</div>
+        <button onclick="toggleView()" class="btn-toggle" id="vistaBtn">Vista Lista</button>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Buscar alumno..." id="searchInput" />
+        </div>
+    </div>
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="student-card" style="background-color: #D1E7FF; color: #0066CC;">
+            <i class="fas fa-info-circle"></i> @ViewBag.Mensaje
+        </div>
+    }
+    else if (!Model.Any())
+    {
+        <div class="student-card" style="background-color: #FFE8B8; color: #CC6600;">
+            <i class="fas fa-exclamation-triangle"></i> No hay estudiantes en este grupo.
+        </div>
+    }
+    else
+    {
+        <div id="cardView" class="card-grid">
+            @foreach (var item in Model)
+            {
+                <div class="student-card">
+                    <div class="student-avatar">
+                        @{
+                            var fotoUrl = item.TieneFoto
+                                ? Url.Action("ObtenerFoto", "Canalizaciones", new { id = item.IdPersona })
+                                : Url.Content("~/css/estudiantes/default.png");
+                        }
+                        <img src="@fotoUrl" alt="@item.Nombre" />
+                    </div>
+                    <div class="student-name">@item.Nombre</div>
+                    <div class="student-matricula">Matrícula: @item.Matricula</div>
+                    <div class="status-container">
+                        @if (item.CanalizacionCompleta)
+                        {
+                            <span class="status-tag status-complete">
+                                <i class="fas fa-check"></i> Completo
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="status-tag status-incomplete">
+                                <i class="fas fa-times"></i> Incompleto
+                            </span>
+                        }
+                    </div>
+                    @if (item.Vulnerable)
+                    {
+                        <div class="status-container">
+                            <span class="status-tag status-vulnerable">
+                                <i class="fas fa-exclamation-triangle"></i> Requiere canalización
+                            </span>
+                        </div>
+                    }
+                    <div class="btn-group">
+                        <a href="@Url.Action("Vulnerabilidades", new { id = item.IdPersona })" class="btn-action btn-details">
+                            <i class="fas fa-eye"></i> Ver Vulnerabilidades
+                        </a>
+                        <a href="@Url.Action("EscribirCanalizacion", new { id = item.IdPersona })" class="btn-action btn-note">
+                            <i class="fas fa-pen"></i> Escribir reporte
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <table id="tableView" class="table-view hidden">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nombre</th>
+                    <th>Matrícula</th>
+                    <th>Estado</th>
+                    <th>Vulnerable</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <img src="@(item.TieneFoto ? Url.Action("ObtenerFoto", "Canalizaciones", new { id = item.IdPersona }) : Url.Content("~/css/estudiantes/default.png"))" alt="@item.Nombre" />
+                        </td>
+                        <td>@item.Nombre</td>
+                        <td>@item.Matricula</td>
+                        <td>
+                            @if (item.CanalizacionCompleta)
+                            {
+                                <span class="status-tag status-complete">
+                                    <i class="fas fa-check"></i> Completo
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-tag status-incomplete">
+                                    <i class="fas fa-times"></i> Incompleto
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.Vulnerable)
+                            {
+                                <span class="status-tag status-vulnerable">
+                                    <i class="fas fa-exclamation-triangle"></i> Requiere atención
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            <a href="@Url.Action("Vulnerabilidades", new { id = item.IdPersona })" class="btn-action btn-details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="@Url.Action("EscribirCanalizacion", new { id = item.IdPersona })" class="btn-action btn-note">
+                                <i class="fas fa-pen"></i> Escribir reporte
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#grupoSelect').on('change', function () {
+            var idGrupo = $(this).val();
+            window.location.href = '@Url.Action("IndexC", "Canalizaciones")' + '?idGrupo=' + idGrupo;
+        });
+
+        $('#notificationBell').click(function (e) {
+            e.stopPropagation();
+            $('#notificationDropdown').toggleClass('active');
+            loadNotifications();
+        });
+
+        $(document).click(function () {
+            $('#notificationDropdown').removeClass('active');
+        });
+
+        function loadNotifications() {
+            $.get('/Canalizaciones/GetUnreadNotifications', function (data) {
+                const notificationList = $('#notificationList');
+                notificationList.empty();
+
+                if (data.length === 0) {
+                    notificationList.append('<div class="notification-empty">No hay notificaciones nuevas</div>');
+                    return;
+                }
+
+                data.forEach(function (notification) {
+                    const fecha = new Date(notification.FechaEnvio);
+                    const hora = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const fechaStr = fecha.toLocaleDateString() + ' ' + hora;
+
+                    const item = `
+                        <div class="notification-item" data-id="${notification.IdNotificacion}">
+                            <img src="/Canalizaciones/ObtenerFoto?id=${notification.IdEstudiante}"
+                                 alt="${notification.NombreEstudiante}"
+                                 class="notification-avatar"
+                                 onerror="this.src='/css/estudiantes/default.png'">
+                            <div class="notification-content">
+                                <div class="notification-title">
+                                    <i class="fas fa-exclamation-circle"></i> Solicitud de canalización
+                                </div>
+                                <div class="notification-message">
+                                    <strong>${notification.NombreEstudiante}</strong>: ${notification.Mensaje}
+                                </div>
+                                <span class="notification-time">${fechaStr}</span>
+                                <div class="notification-actions">
+                                    <button class="notification-btn btn-mark-read" onclick="markAsRead(${notification.IdNotificacion})">
+                                        <i class="fas fa-check"></i> Marcar como leída
+                                    </button>
+                                    <button class="notification-btn btn-delete" onclick="deleteNotification(${notification.IdNotificacion})">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    notificationList.append(item);
+                });
+            });
+        }
+
+        function updateNotificationCount() {
+            $.get('/Canalizaciones/GetUnreadNotificationCount')
+                .done(function (count) {
+                    const badge = $('#notificationBadge');
+                    if (count > 0) {
+                        badge.text(count).show();
+                    } else {
+                        badge.hide();
+                    }
+                })
+                .fail(function (xhr, status, error) {
+                    console.error('Error in updateNotificationCount:', status, error, xhr.responseText);
+                });
+        }
+
+        updateNotificationCount();
+        setInterval(updateNotificationCount, 30000);
+
+        function toggleView() {
+            $('#cardView').toggleClass('hidden');
+            $('#tableView').toggleClass('hidden');
+            const btn = $('#vistaBtn');
+            btn.text(btn.text() === 'Vista Lista' ? 'Vista Tarjetas' : 'Vista Lista');
+        }
+
+        $('#searchInput').on('keyup', function () {
+            const value = $(this).val().toLowerCase();
+            $('.student-card').filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+            $('#tableView tbody tr').filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+    });
+
+    function markAsRead(id) {
+        $.post('/Canalizaciones/MarkNotificationAsRead', { id: id }, function () {
+            $(`.notification-item[data-id="${id}"]`).remove();
+            updateNotificationCount();
+            if ($('#notificationList').children().length === 0) {
+                $('#notificationList').append('<div class="notification-empty">No hay notificaciones nuevas</div>');
+            }
+        });
+    }
+
+    function deleteNotification(id) {
+        $.post('/Canalizaciones/DeleteNotification', { id: id }, function () {
+            $(`.notification-item[data-id="${id}"]`).remove();
+            updateNotificationCount();
+            if ($('#notificationList').children().length === 0) {
+                $('#notificationList').append('<div class="notification-empty">No hay notificaciones nuevas</div>');
+            }
+        });
+    }
+</script>

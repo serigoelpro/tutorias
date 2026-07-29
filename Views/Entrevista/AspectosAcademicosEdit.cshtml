@@ -1,0 +1,649 @@
+﻿@model Plataforma_Web.Models.PrimeraEntrevista.AspectosAcademicos
+@using Plataforma_Web.Models.PrimeraEntrevista;
+@using Plataforma_Web.Models.PrimeraEntrevista.Secundarios;
+
+@{
+    AspectosAcademicos academicos = ViewBag.Aspectos as AspectosAcademicos;
+    DatosPersonales datos = ViewBag.Datos as DatosPersonales;
+    // Asegurar que no sean null
+    if (datos == null) { datos = new DatosPersonales(); }
+    if (academicos == null) { academicos = new AspectosAcademicos(); }
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <link rel="icon" type="image/png" href="~/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Aspectos Academicos</title>
+    <!-- custom style sheet -->
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/animate.css">
+    <!-- Icomoon Icon Fonts-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/icomoon.css">
+    <!-- Themify Icons-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/themify-icons.css">
+    <!-- Bootstrap  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/magnific-popup.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap-datepicker.min.css">
+
+    <!-- Owl Carousel  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.theme.default.min.css">
+
+    <!-- Theme style  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/style.css">
+
+    <!-- Modernizr JS -->
+    <script src="~/EstilosEntrevista/js/modernizr-2.6.2.min.js"></script>
+
+</head>
+<body>
+
+
+
+    <div id="page">
+        <header id="gtco-header" role="banner" style="background-image: url(../../EstilosEntrevista/images/img_bg_1.jpg)" data-stellar-background-ratio="0.8">
+            <div class="overlay"></div>
+
+
+            <div class="gtco-container " id="dats">
+                <div class="row">
+                    <div class="col-md-12 col-md-offset-0 text-left">
+
+
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel panel-default" style="background-color:white;">
+                                        <div class="panel-heading" style="text-align:center;">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    @if (datos?.IdGrado == 1)
+                                                    {
+                                                        <h2 style="color: black;">Entrevista Inicial</h2>
+                                                    }
+                                                    else
+                                                    {
+                                                        <h2 style="color: black;">Entrevista de Seguimiento</h2>
+
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="panel-body"></div>
+                                        <div class="row">
+                                            @if (datos?.IdGrado == 1)
+                                            {
+                                                <div class="col-md-12 col-md-push-1">
+                                                    <div class="row">
+
+                                                        @if (academicos.IdListaBachillerato == 1)
+                                                        {
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label>¿De qué bachillerato egresaste?</label>
+                                                                    <br />
+                                                                    @(academicos?.Bachillerato ?? "")
+
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label>¿De qué bachillerato egresaste?</label>
+                                                                    <br />
+                                                                    @(academicos?.Respuesta12?.Nombre ?? "N/A")
+
+                                                                </div>
+                                                            </div>
+
+                                                        }
+                                                        <div class="col-md-4">
+                                                            <div class="form-group">
+                                                                <label>Especialidad en el bachillerato</label>
+                                                                <br />
+                                                                @(academicos?.Especialidad ?? "")
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-2">
+                                                            <div class="form-group">
+                                                                <label>Promedio general (Bachillerato)</label>
+                                                                <br />
+                                                                @(academicos?.Promedio ?? "")
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <div class="form-group">
+                                                                <label>¿Cuentas con equipo de cómputo para estudiar?</label>
+                                                                <br />
+                                                                @((academicos?.IdEquipoComp ?? 0) == 1 ? "Sí" : (academicos?.IdEquipoComp ?? 0) == 2 ? "No" : (academicos?.Respuesta13?.Nombre ?? "Sin especificar"))
+                                                            </div>
+                                                        </div>
+                                                        @if ((academicos?.IdEquipoComp ?? 0) != 2)
+                                                        {
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Especifica el tipo de dispositivo</label>
+                                                                    <br />
+                                                                    @(ViewBag.NombreDispositivo ?? "Sin especificar")
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        <div class="col-md-3">
+                                                            <div class="form-group">
+                                                                <label>¿Cuentas con servicio de conexión a internet?</label>
+                                                                <br />
+                                                                @((academicos?.IdAccesoInternet ?? 0) == 1 ? "Sí" : (academicos?.IdAccesoInternet ?? 0) == 2 ? "No" : (academicos?.Respuesta15?.Nombre ?? "Sin especificar"))
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="col-md-12 col-md-push-1">
+                                                    <div class="row">
+                                                        <div class="col-md-2">
+                                                            <div class="form-group">
+                                                                <label>Promedio general (Universidad)</label>
+                                                                <br />
+                                                                @(academicos?.Promedio ?? "")
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <div class="form-group">
+                                                                <label>¿Cuentas con equipo de cómputo para estudiar?</label>
+                                                                <br />
+                                                                @((academicos?.IdEquipoComp ?? 0) == 1 ? "Sí" : (academicos?.IdEquipoComp ?? 0) == 2 ? "No" : (academicos?.Respuesta13?.Nombre ?? "Sin especificar"))
+                                                            </div>
+                                                        </div>
+                                                        @if ((academicos?.IdEquipoComp ?? 0) != 2)
+                                                        {
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Especifica el tipo de dispositivo</label>
+                                                                    <br />
+                                                                    @(ViewBag.NombreDispositivo ?? "Sin especificar")
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        <div class="col-md-3">
+                                                            <div class="form-group">
+                                                                <label>¿Cuentas con servicio de conexión a internet?</label>
+                                                                <br />
+                                                                @((academicos?.IdAccesoInternet ?? 0) == 1 ? "Sí" : (academicos?.IdAccesoInternet ?? 0) == 2 ? "No" : (academicos?.Respuesta15?.Nombre ?? "Sin especificar"))
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-5">
+                                                            <div class="form-group">
+                                                                <label>¿Cómo es tu rendimiento en clase?</label>
+                                                                <br />
+                                                                @(academicos?.RendimientoClase ?? "")
+
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-5">
+                                                            <div class="form-group">
+                                                                <label>¿Cómo es tu experiencia con los profesores?</label>
+                                                                <br />
+                                                                @(academicos?.ExperienciaProfe ?? "")
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-5">
+                                                            <div class="form-group">
+                                                                @if ((academicos?.MateriasRepro ?? "N/A") == "N/A" || string.IsNullOrEmpty(academicos?.MateriasRepro))
+                                                                {
+                                                                    <label>¿Acreditó todas las materias del cuatrimestre anterior?</label>
+                                                                    <br />
+                                                                    <span>Sí</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <label>¿Qué materias reprobó el periodo anterior?</label>
+                                                                    <br />
+                                                                    @(academicos?.MateriasRepro ?? "")
+                                                                }
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-5">
+                                                            <div class="form-group">
+                                                                <label>¿Qué materia se le dificulta más actualmente?</label>
+                                                                <br />
+                                                                @(academicos?.MateriasDif ?? "")
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            }
+
+                                        </div>
+                                        <!--div.row>div.col-md-12-->
+                                        <div class="panel-footer">
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <div class=" col-md-10">
+                                                        <a class="btn btn-primary"
+                                                           role="button" id="11" onclick="Mostrar()">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Editar
+
+                                                        </a>
+                                                        <a class="btn btn-primary hidden"
+                                                           role="button" id="22" style="background-color:#be0e0e; border: #be0e0e !important;" onclick="Ocultar()">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Cancelar
+
+                                                        </a>
+                                                        <a class="btn btn-primary" id="33" href="@Url.Action("AspectosEconomicosEdit", new { id= ViewBag.Id} )"
+                                                           role="button">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Siguiente
+
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">&nbsp;</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        @using (Html.BeginForm())
+                        {
+
+                            @Html.AntiForgeryToken()
+
+                            @Html.HiddenFor(model => model.IdAcademicos)
+                            @Html.HiddenFor(model => model.IdPersona)
+                            @Html.HiddenFor(model => model.Bachillerato)
+                            @*@Html.HiddenFor(model => model.Especialidad)*@
+
+                            <div class="row hidden" id="Editar" style="margin-top: 2em; margin-bottom:3em;">
+
+                                <div class="col-md-6 col-md-push-3 animate-box" data-animate-effect="fadeInRight">
+                                    <div class="form-wrap">
+                                        <div class="tab">
+
+                                            <div class="tab-content">
+                                                <div class="tab-content-inner active" data-content="signup">
+                                                    <h3>Datos Escolares Actuales</h3>
+                                                    <div>
+                                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                                        @Html.HiddenFor(model => model.IdAcademicos)
+
+                                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                                        @Html.HiddenFor(model => model.IdPersona)
+                                                        <div class="row form-group">
+
+                                                            @if (datos?.IdGrado == 1)
+                                                            {
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿De qué bachillerato egresaste?</label>
+                                                                        @Html.DropDownList("IdListaBachillerato", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdListaBachillerato, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group hidden" id="1">
+                                                                    <div class="col-md-12">
+                                                                        <label for="fullname">Especifica cuál bachillerato</label>
+                                                                        @Html.EditorFor(model => model.Bachillerato, new { htmlAttributes = new { @class = "form-control", placeholder = "Especifica el nombre del bachillerato", @Value = (Model.Bachillerato != null ? Model.Bachillerato.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.Bachillerato, "", new { @class = "text-danger" })
+
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="activities">Especialidad en el bachillerato</label>
+                                                                        @Html.EditorFor(model => model.Especialidad, new { htmlAttributes = new { @class = "form-control", placeholder = "Especialidad en el bachillerato", @Value = (Model.Especialidad != null ? Model.Especialidad.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.Especialidad, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="activities">Promedio general (Bachillerato)</label>
+                                                                        @Html.EditorFor(model => model.Promedio, new { htmlAttributes = new { @class = "form-control", placeholder = "Promedio general en bachillerato con numeros enteros", @Value = (Model.Promedio != null ? Model.Promedio.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.Promedio, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Cuentas con equipo de cómputo para estudiar?</label>
+                                                                        @Html.DropDownList("IdEquipoComp", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdEquipoComp, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group divTipoDispositivo">
+                                                                    <div class="col-md-12">
+                                                                        <label for="fullname">Especifica el tipo de dispositivo</label>
+                                                                        @Html.DropDownList("IdTipoDispositivo", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdTipoDispositivo, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="fullname">¿Cuentas con servicio de conexión a internet?</label>
+                                                                        @Html.DropDownList("IdAccesoInternet", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdAccesoInternet, "", new { @class = "text-danger" })
+
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="activities">Promedio general (Universidad)</label>
+                                                                        @Html.EditorFor(model => model.Promedio, new { htmlAttributes = new { @class = "form-control", placeholder = "Promedio con las calificaciones actuales con numeros enteros", @Value = (Model.Promedio != null ? Model.Promedio.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.Promedio, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Cuentas con equipo de cómputo para estudiar?</label>
+                                                                        @Html.DropDownList("IdEquipoComp", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdEquipoComp, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group divTipoDispositivo">
+                                                                    <div class="col-md-12">
+                                                                        <label for="fullname">Especifica el tipo de dispositivo</label>
+                                                                        @Html.DropDownList("IdTipoDispositivo", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdTipoDispositivo, "", new { @class = "text-danger" })
+
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="fullname">¿Cuentas con servicio de conexión a internet?</label>
+                                                                        @Html.DropDownList("IdAccesoInternet", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdAccesoInternet, "", new { @class = "text-danger" })
+
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Cómo es tu rendimiento en clase?</label>
+                                                                        @Html.EditorFor(model => model.RendimientoClase, new { htmlAttributes = new { @class = "form-control", placeholder = "Califica tú rendimiento", @Value = (Model.RendimientoClase != null ? Model.RendimientoClase.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.RendimientoClase, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Cómo es tu experiencia con los profesores?</label>
+                                                                        @Html.EditorFor(model => model.ExperienciaProfe, new { htmlAttributes = new { @class = "form-control", placeholder = "Comparte tú experiencia", @Value = (Model.ExperienciaProfe != null ? Model.ExperienciaProfe.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.ExperienciaProfe, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Acreditó todas las materias del cuatrimestre anterior?</label>
+                                                                        @Html.DropDownList("AcreditoTodo", (SelectList)ViewBag.MateriasAcreditadas, new { @class = "form-control", @id = "AcreditoTodo" })
+
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group hidden" id="AcreditoTodoInput">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Qué materias reprobó el periodo anterior?</label>
+                                                                        @Html.EditorFor(model => model.MateriasRepro, new { htmlAttributes = new { @class = "form-control", placeholder = "Especifica cuáles materías", @Value = (Model.MateriasRepro != null ? Model.MateriasRepro.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.MateriasRepro, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Qué materia se le dificulta más actualmente? ¿Por qué?</label>
+                                                                        @Html.EditorFor(model => model.MateriasDif, new { htmlAttributes = new { @class = "form-control", placeholder = "Nombre de la materia y razón", @Value = (Model.MateriasDif != null ? Model.MateriasDif.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                        @Html.ValidationMessageFor(model => model.MateriasDif, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                            }
+
+                                                            <div class="row form-group">
+                                                                <div class="col-md-12">
+                                                                    <input type="submit" class="btn btn-primary btn-block" value="Siguiente">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        }
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+    @Html.Partial("~/ViewsStyles/Entrevista/views/ModalCamposFaltantes.cshtml")
+
+
+    <!-- jQuery -->
+    <script src="~/EstilosEntrevista/js/jquery.min.js"></script>
+    <!-- jQuery Easing -->
+    <script src="~/EstilosEntrevista/js/jquery.easing.1.3.js"></script>
+    <!-- Bootstrap -->
+    <script src="~/EstilosEntrevista/js/bootstrap.min.js"></script>
+    <!-- Waypoints -->
+    <script src="~/EstilosEntrevista/js/jquery.waypoints.min.js"></script>
+    <!-- Carousel -->
+    <script src="~/EstilosEntrevista/js/owl.carousel.min.js"></script>
+    <!-- countTo -->
+    <script src="~/EstilosEntrevista/js/jquery.countTo.js"></script>
+
+    <!-- Stellar Parallax -->
+    <script src="~/EstilosEntrevista/js/jquery.stellar.min.js"></script>
+
+    <!-- Magnific Popup -->
+    <script src="~/EstilosEntrevista/js/jquery.magnific-popup.min.js"></script>
+    <script src="~/EstilosEntrevista/js/magnific-popup-options.js"></script>
+
+    <!-- Datepicker -->
+    <script src="~/EstilosEntrevista/js/bootstrap-datepicker.min.js"></script>
+
+    <!-- Validacion de Campos -->
+    <script src="~/ViewsStyles/Entrevista/js/ValidacionCampos.js"></script>
+
+    <!-- Main -->
+    <script src="~/EstilosEntrevista/js/main.js"></script>
+    <script>
+            $(document).ready(function () {
+                if ($('#IdTecnicaEst').val() == 1) {
+                    $("#1").removeClass("hidden");
+                };
+
+                $("#IdTecnicaEst").change(function (e) {
+                    if ($('#IdTecnicaEst').val() == 1) {
+                        $("#1").removeClass("hidden");
+                    } else {
+                        $("#1").addClass("hidden");
+                    }
+                });
+            });
+
+            $(document).ready(function () {
+                if ($('#IdListaBachillerato').val() == 1) {
+                    $("#1").removeClass("hidden");
+                };
+
+                $("#IdListaBachillerato").change(function (e) {
+                    if ($('#IdListaBachillerato').val() == 1) {
+                        $("#1").removeClass("hidden");
+                    } else {
+                        $("#1").addClass("hidden");
+                    }
+                });
+            });
+
+            $(document).ready(function () {
+                // Initialize on load
+                var toggleOptions = function() {
+                    var equipoVal = $('#IdEquipoComp').val();
+
+                    if (equipoVal == 2) { // 2 = NO tiene equipo
+                        // Ocultar el div de tipo dispositivo
+                        $(".divTipoDispositivo").addClass("hidden");
+
+                        // Seleccionar automaticamente "NO CUENTO CON EQUIPO DE TRABAJO"
+                        var noEquipoOption = $("#IdTipoDispositivo option").filter(function() {
+                            return $(this).text().trim().toUpperCase() === 'NO CUENTO CON EQUIPO DE TRABAJO';
+                        });
+                        if (noEquipoOption.length > 0) {
+                            $('#IdTipoDispositivo').val(noEquipoOption.val());
+                        }
+                    } else if (equipoVal == 1) { // 1 = SI tiene equipo
+                        // Mostrar el div de tipo dispositivo
+                        $(".divTipoDispositivo").removeClass("hidden");
+
+                        // Si el valor actual es "NO CUENTO", seleccionar la primera opcion valida
+                        var currentText = $('#IdTipoDispositivo option:selected').text().trim().toUpperCase();
+                        if (currentText === 'NO CUENTO CON EQUIPO DE TRABAJO' || currentText === 'ELIJA UNA OPCIÓN' || $('#IdTipoDispositivo').val() === '') {
+                            // Buscar primera opcion valida (no vacia, no "elija una opcion", no "no cuento")
+                            var primeraValida = $("#IdTipoDispositivo option").filter(function() {
+                                var texto = $(this).text().trim().toUpperCase();
+                                var val = $(this).val();
+                                return val !== '' && texto !== 'NO CUENTO CON EQUIPO DE TRABAJO' && texto !== 'ELIJA UNA OPCIÓN';
+                            }).first();
+
+                            if (primeraValida.length > 0) {
+                                $('#IdTipoDispositivo').val(primeraValida.val());
+                            }
+                        }
+                    }
+                };
+
+                toggleOptions(); // Run on load
+
+                $("#IdEquipoComp").change(toggleOptions); // Run on change
+            });
+
+            $(document).ready(function () {
+
+                const materiaRepro = '@(academicos?.MateriasRepro?.Replace("'", "\\'") ?? "N/A")';
+
+                if ($('#AcreditoTodo').val() == 2) {
+                    $("#AcreditoTodoInput").removeClass("hidden");
+                    if (materiaRepro == 'N/A') {
+                        $('#AcreditoTodoInput input').val('');
+                    } else {
+                        $('#AcreditoTodoInput input').val(materiaRepro);
+                    }
+
+                }
+
+                $("#AcreditoTodo").change(function (e) {
+                    if ($('#AcreditoTodo').val() == 2) {
+                        $("#AcreditoTodoInput").removeClass("hidden");
+                        if (materiaRepro == 'N/A') {
+                            $('#AcreditoTodoInput input').val('');
+                        } else {
+                            $('#AcreditoTodoInput input').val(materiaRepro);
+                        }
+                    } else {
+                        $("#AcreditoTodoInput").addClass("hidden");
+                        $('#AcreditoTodoInput input').val('N/A');
+
+                    }
+                });
+            });
+
+
+    </script>
+    <script>
+        function Mostrar() {
+            $("#Editar").removeClass("hidden");
+            $("#11").addClass("hidden");
+            $("#33").addClass("hidden");
+            $("#22").removeClass("hidden");
+
+        }
+        function Ocultar() {
+            $("#Editar").addClass("hidden");
+            $("#11").removeClass("hidden");
+            $("#33").removeClass("hidden");
+            $("#22").addClass("hidden");
+        }
+    </script>
+    <script>
+        $(document).ready(function () {
+            function removeEmojisAndUppercase(input) {
+                input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+            }
+
+            var camposTexto = [
+                'input[name="Bachillerato"]',
+                'input[name="Especialidad"]',
+                'input[name="Promedio"]',
+                'input[name="RendimientoClase"]',
+                'input[name="ExperienciaProfe"]',
+                'input[name="MateriasRepro"]',
+                'input[name="MateriasDif"]'
+            ];
+
+            camposTexto.forEach(function (selector) {
+                var campo = $(selector);
+
+                campo.on('input', function () {
+                    removeEmojisAndUppercase(this);
+                });
+
+                campo.on('paste', function (e) {
+                    e.preventDefault();
+                    var pastedText = (e.originalEvent || e).clipboardData.getData('text/plain');
+                    pastedText = pastedText.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+
+                    var start = this.selectionStart;
+                    var end = this.selectionEnd;
+                    var value = this.value;
+                    this.value = value.substring(0, start) + pastedText + value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + pastedText.length;
+
+                    $(this).trigger('input');
+                });
+            });
+        });
+    </script>
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <script type="text/javascript">
+            alert("@Html.Raw(ViewBag.Mensaje)");
+        </script>
+    }
+
+</body>
+</html>

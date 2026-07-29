@@ -1,0 +1,736 @@
+﻿@model Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales
+@using Plataforma_Web.Models.PrimeraEntrevista;
+@using PlataformaWeb.BecasTransporte.Models;
+
+@{
+    /**/
+    DatosPersonales datos = ViewBag.Datos as DatosPersonales;
+    // Asegurar que no sean null
+    if (datos == null) { datos = new DatosPersonales(); }
+    //var esp = ViewBag.Especialidades;
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <link rel="icon" type="image/png" href="~/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Datos Personales</title>
+    <!-- custom style sheet -->
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/animate.css">
+    <!-- Icomoon Icon Fonts-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/icomoon.css">
+    <!-- Themify Icons-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/themify-icons.css">
+    <!-- Bootstrap  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/magnific-popup.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap-datepicker.min.css">
+
+    <!-- Owl Carousel  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.theme.default.min.css">
+
+    <!-- Theme style  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/style.css">
+
+    <!-- Modernizr JS -->
+    <script src="~/EstilosEntrevista/js/modernizr-2.6.2.min.js"></script>
+
+</head>
+<body>
+
+
+    <div id="page">
+        <header id="gtco-header" role="banner" style="background-image: url(../../EstilosEntrevista/images/img_bg_1.jpg)" data-stellar-background-ratio="0.8">
+            <div class="overlay"></div>
+
+            <div class="gtco-container " id="dats">
+                <div class="row">
+                    <div class="col-md-12 col-md-offset-0 text-left">
+
+
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel panel-default" style="background-color:white;">
+                                        <div class="panel-heading" style="text-align:center;">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    @if (datos?.Grado?.Nombre != "1")
+                                                    {
+                                                        <h2 style="color: black;">Entrevista de Seguimiento</h2>
+                                                    }
+                                                    else
+                                                    {
+                                                        <h2 style="color: black;">Entrevista Inicial</h2>
+
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="panel-body"></div>
+                                        <div class="row">
+                                            <div class="col-md-12 col-md-push-1">
+                                                <div class="row">
+                                                    <div class="col-md-8">
+                                                        <div class="row">
+
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Nombre</label>
+                                                                    <br />
+                                                                    @datos.Nom
+
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Apellido paterno</label>
+                                                                    <br />
+                                                                    @datos.Paterno
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Apellido materno</label>
+                                                                    <br />
+                                                                    @datos.Materno
+
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Edad</label>
+                                                                    <br />
+                                                                    @datos.Edad AÑOS
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="row">
+                                                                    <div class="col-md-2">
+                                                                        <div class="form-group">
+                                                                            <label>Sexo</label>
+                                                                            <br />
+                                                                            @datos.Sexo
+
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Grado</label>
+                                                                    <br />
+                                                                    @if (datos?.Grado != null)
+                                                                    {
+                                                                        @datos.Grado.Nombre
+                                                                    }
+
+
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Grupo</label>
+                                                                    <br />
+                                                                    @if (datos?.Grupo != null)
+                                                                    {
+                                                                        @datos.Grupo.Nombre
+                                                                    }
+
+
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label>Carrera</label>
+                                                                    <br />
+
+                                                                    @(datos?.Carrera?.Nombre ?? "Sin asignar")
+
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label>Área</label>
+                                                                    <br />
+                                                                    @if (datos?.Especialidad != null)
+                                                                    {
+                                                                        @datos.Especialidad
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <label class="text-danger">Selecciona tu especialidad</label>
+                                                                    }
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Turno</label>
+                                                                    <br />
+                                                                    @if (datos?.Turno != null)
+                                                                    {
+                                                                        @datos.Turno.Nombre
+                                                                    }
+
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Teléfono celular</label>
+                                                                    <br />
+                                                                    @datos.Celular
+
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Teléfono de casa</label>
+                                                                    <br />
+                                                                    @datos.Telefono
+
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <div class="form-group">
+                                                                    <label>Teléfono de emergencia</label>
+                                                                    <br />
+                                                                    @datos.TelEmergencia
+
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+                                                    <div class="col-md-2 text-center">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group">
+                                                                <label>Fotografía</label>
+                                                                <br />
+                                                                @if ((datos?.Foto ?? "") == "")
+                                                                {
+                                                                    <p>Imagen Inexistente</p>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <img src="@datos.Foto" style="max-width: 200px; max-height: 200px;">
+                                                                }
+
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                        <!--div.row>div.col-md-12-->
+                                        <div class="panel-footer">
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <div class="col-md-12">
+                                                        @if (datos?.Grado != null)
+                                                        {
+                                                            <a class="btn btn-primary"
+                                                               role="button" id="11" onclick="Mostrar()">
+                                                                <span class="glyphicon glyphicon-arrow-left"></span>
+                                                                Editar
+
+                                                            </a>
+                                                            <a class="btn btn-primary hidden"
+                                                               role="button" id="22" style="background-color:#be0e0e; border: #be0e0e !important;" onclick="Ocultar()">
+                                                                <span class="glyphicon glyphicon-arrow-left"></span>
+                                                                Cancelar
+
+                                                            </a>
+                                                            if (ViewBag.Id != null)
+                                                            {
+                                                                <a class="btn btn-primary" id="33" href="@Url.Action("AspectosAcademicosEdit", new { id= ViewBag.Id} )"
+                                                                   role="button">
+                                                                    <span class="glyphicon glyphicon-arrow-left"></span>
+                                                                    Siguiente
+                                                                </a>
+                                                            }
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <br />
+                                                            <h4 class="text-center text-success"><strong>Por favor desliza hacia abajo y llena los datos correspondientes</strong></h4>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">&nbsp;</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        @using (Html.BeginForm("DatosPersonalesEdit", "Entrevista", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                        {
+                            string hidden = "hidden";
+
+                            @Html.AntiForgeryToken()
+
+                            <div class="row @hidden" id="Editar" style="margin-top: 2em; margin-bottom:2em;">
+
+                                <div class="col-md-10 col-md-push-1 animate-box" data-animate-effect="fadeInRight">
+                                    <div class="form-wrap">
+                                        <div class="tab">
+                                            <div class="tab-content">
+                                                <div class="tab-content-inner active" data-content="signup">
+                                                    <h3>Datos Escolares</h3>
+                                                    <form action="#">
+                                                        @Html.HiddenFor(model => model.IdPersona)
+                                                        @Html.HiddenFor(model => model.Foto, new { id = "FotoBase64" })
+                                                        @Html.HiddenFor(model => model.Matricula)
+                                                        @Html.HiddenFor(model => model.Email)
+                                                        @Html.HiddenFor(model => model.Nombre)
+
+                                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                                        <div class="row form-group">
+
+
+                                                            <div class="col-md-6">
+                                                                <label for="activities">Nombre</label>
+                                                                @Html.EditorFor(model => model.Nom, new { htmlAttributes = new { @class = "form-control", placeholder = "Nombre", @Value = (Model.Nom != null ? Model.Nom.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.Nom, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="fullname">Apellido paterno</label>
+                                                                @Html.EditorFor(model => model.Paterno, new { htmlAttributes = new { @class = "form-control", placeholder = "Apellido Paterno", @Value = (Model.Paterno != null ? Model.Paterno.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.Paterno, "", new { @class = "text-danger" })
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="row form-group">
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Apellido materno</label>
+                                                                @Html.EditorFor(model => model.Materno, new { htmlAttributes = new { @class = "form-control", placeholder = "Apellido Materno", @Value = (Model.Materno != null ? Model.Materno.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.Materno, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="activities">Edad</label>
+                                                                @Html.EditorFor(model => model.Edad, new { htmlAttributes = new { @class = "form-control", placeholder = "Años cumplidos" } })
+                                                                @Html.ValidationMessageFor(model => model.Edad, "", new { @class = "text-danger" })
+                                                            </div>
+
+
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-4">
+                                                                <label for="lastfullname">Turno</label>
+                                                                @Html.DropDownList("IdTurno", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "editTurnInpt" })
+                                                                @Html.ValidationMessageFor(model => model.IdTurno, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="lastfullname">Carrera</label>
+                                                                @Html.DropDownList("IdCarrera", null, htmlAttributes: new { @class = "form-control", id = "Carrera" })
+                                                                @Html.ValidationMessageFor(model => model.IdCarrera, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="lastfullname">Especialidad</label>
+                                                                @Html.DropDownList("Especialidad", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "es" })
+                                                                @Html.ValidationMessageFor(model => model.Especialidad, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Grado</label>
+                                                                @Html.DropDownList("IdGrado", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "editGradoInpt" })
+                                                                @Html.ValidationMessageFor(model => model.IdGrado, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Grupo</label>
+                                                                @Html.DropDownList("IdGrupo", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                @Html.ValidationMessageFor(model => model.IdGrupo, "", new { @class = "text-danger" })
+                                                            </div>
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            @Html.HiddenFor(model => model.Direccion)
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Teléfono celular</label>
+                                                                @Html.EditorFor(model => model.Celular, new { htmlAttributes = new { @class = "form-control", placeholder = "(XXX) XXX XXXX", type = "tel", pattern = "[0-9]*", maxlength = "15", onkeypress = "return event.charCode >= 48 && event.charCode <= 57" } })
+                                                                @Html.ValidationMessageFor(model => model.Celular, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Teléfono de casa</label>
+                                                                @Html.EditorFor(model => model.Telefono, new { htmlAttributes = new { @class = "form-control", placeholder = "(XXX) XXX XXXX", type = "tel", pattern = "[0-9]*", maxlength = "15", onkeypress = "return event.charCode >= 48 && event.charCode <= 57" } })
+                                                                @Html.ValidationMessageFor(model => model.Telefono, "", new { @class = "text-danger" })
+                                                            </div>
+                                                        </div>
+                                                        <div class="row form-group">
+
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Teléfono de emergencia</label>
+                                                                @Html.EditorFor(model => model.TelEmergencia, new { htmlAttributes = new { @class = "form-control", placeholder = "(XXX) XXX XXXX", type = "tel", pattern = "[0-9]*", maxlength = "15", onkeypress = "return event.charCode >= 48 && event.charCode <= 57" } })
+                                                                @Html.ValidationMessageFor(model => model.TelEmergencia, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Sexo</label>
+                                                                @Html.DropDownList("Sexo", new List<SelectListItem>
+                                                                                                                                                                                                                                                                                                                                                                        {
+                                                                            new SelectListItem{ Text="HOMBRE", Value = "HOMBRE" },
+                                                                            new SelectListItem{ Text="MUJER", Value = "MUJER" }
+                                                                        }, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                @Html.ValidationMessageFor(model => model.Sexo, "", new { @class = "text-danger" })
+
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-6">
+
+                                                                <label for="lastfullname">Seleccionar foto de perfil (JPG, máximo 20KB)</label>
+
+                                                                @Html.TextBoxFor(model => model.FotoFile, new { type = "file", id = "fileInput", accept = ".jpg,.jpeg", @class = "form-control" })
+                                                                @Html.ValidationMessageFor(model => model.FotoFile, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Tomar foto de perfil (JPG, máximo 20KB)</label>
+                                                                <button type="button" class="btn btn-primary text-danger " id="takePhotoBtn">
+                                                                    <i class="glyphicon glyphicon-camera"></i> Tomar Foto
+                                                                </button>
+                                                            </div>
+
+                                                        </div>
+
+
+                                                        <div id="cameraContainer" style="display:none; text-align: center;">
+                                                            <video id="video" width="200" height="200" autoplay playsinline style="transform: scaleX(-1)"></video>
+                                                            <div class="camera-controls" style="margin-top: 10px;">
+                                                                <button type="button" id="captureBtn" class="btn btn-success">
+                                                                    <i class="glyphicon glyphicon-ok"></i> Capturar
+                                                                </button>
+                                                                <button type="button" id="cancelCameraBtn" class="btn btn-danger">
+                                                                    <i class="glyphicon glyphicon-remove"></i> Cancelar
+                                                                </button>
+
+
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div id="imagePreview" style="display:none; text-align: center; margin-top: 10px;">
+                                                            <img id="previewImage" style="max-width: 200px; max-height: 200px; margin-bottom: 10px;" />
+                                                        </div>
+
+                                                        <div class="row form-group">
+                                                            <div class="col-md-12">
+                                                                <input type="submit" class="btn btn-primary btn-block" value="Siguiente">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+
+    @Html.Partial("~/ViewsStyles/Entrevista/views/ModalCamposFaltantes.cshtml")
+
+    <!-- jQuery -->
+    <script src="~/EstilosEntrevista/js/jquery.min.js"></script>
+    <!-- jQuery Easing -->
+    <script src="~/EstilosEntrevista/js/jquery.easing.1.3.js"></script>
+    <!-- Bootstrap -->
+    <script src="~/EstilosEntrevista/js/bootstrap.min.js"></script>
+    <!-- Waypoints -->
+    <script src="~/EstilosEntrevista/js/jquery.waypoints.min.js"></script>
+    <!-- Carousel -->
+    <script src="~/EstilosEntrevista/js/owl.carousel.min.js"></script>
+    <!-- countTo -->
+    <script src="~/EstilosEntrevista/js/jquery.countTo.js"></script>
+
+    <!-- Stellar Parallax -->
+    <script src="~/EstilosEntrevista/js/jquery.stellar.min.js"></script>
+
+    <!-- Magnific Popup -->
+    <script src="~/EstilosEntrevista/js/jquery.magnific-popup.min.js"></script>
+    <script src="~/EstilosEntrevista/js/magnific-popup-options.js"></script>
+
+    <!-- Datepicker -->
+    <script src="~/EstilosEntrevista/js/bootstrap-datepicker.min.js"></script>
+
+    <!-- Validacion de Campos -->
+    <script src="~/ViewsStyles/Entrevista/js/ValidacionCampos.js"></script>
+
+    <script src="~/ViewsStyles/Entrevista/js/Camara.js"></script>
+
+
+
+    <!-- Main -->
+    <script src="~/EstilosEntrevista/js/main.js"></script>
+    @if (!string.IsNullOrEmpty(ViewBag.Mensaje))
+    {
+        <script type="text/javascript">
+            alert("@ViewBag.Mensaje");
+        </script>
+    }
+
+
+
+    <script>
+        function Mostrar() {
+            $("#Editar").removeClass("hidden");
+            $("#11").addClass("hidden");
+            $("#33").addClass("hidden");
+            $("#22").removeClass("hidden");
+
+        }
+        function Ocultar() {
+            $("#Editar").addClass("hidden");
+            $("#11").removeClass("hidden");
+            $("#33").removeClass("hidden");
+            $("#22").addClass("hidden");
+        }
+
+        $(document).ready(function () {
+
+            if ($('#PreguntaHijos').val() == 1) {
+                $("#cantidadHijos").removeClass("hidden");
+            }
+
+            $("#PreguntaHijos").change(function (e) {
+                if ($('#PreguntaHijos').val() == 1) {
+                    $("#cantidadHijos").removeClass("hidden");
+                } else {
+                    $("#cantidadHijos").addClass("hidden");
+                }
+            });
+
+            $.ajax({
+                url: "/Main/GetGrades",
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+                    const $gradesBtn = $("#grados");
+
+                    $gradesBtn.empty();
+                    response.forEach(function (grado) {
+                        if (grado.Nombre == "0" || grado.Nombre == "12") {
+                            return;
+                        }
+
+                        if (Number(grado.Nombre) > 6) {
+
+                            let newGrade = Number(grado.Nombre) - 6;
+
+                            $gradesBtn.append(
+                                `<option value = "` +
+                                grado.IdGrado +
+                                `">` +
+                                newGrade.toString() +
+                                "&deg; / " + grado.Nombre + "&deg; en Ingeniería</option>"
+                            )
+                        }
+                        else {
+
+                            $gradesBtn.append(
+                                `<option value = "` +
+                                grado.IdGrado +
+                                `">` +
+                                grado.Nombre +
+                                "&deg;</option>"
+                            );
+                        }
+                    });
+                },
+            });
+
+            var editGradoInpt = $("#editGradoInpt");
+
+            $.ajax({
+                url: "/Main/GetGrades",
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+                    const $gradesBtn = editGradoInpt;
+                    var selectedGrade = $gradesBtn.find("option:selected").val();
+
+                    $gradesBtn.empty();
+
+                    response.forEach(function (grado) {
+                        if (grado.Nombre == "0" || grado.Nombre == "12") {
+                            return;
+                        }
+
+                        if (Number(grado.Nombre) > 6) {
+
+                            $gradesBtn.append(
+                                `<option value = "` +
+                                grado.IdGrado +
+                                `">` +
+                                grado.Nombre +
+                                "&deg; en Ingeniería</option>"
+                            )
+                        }
+                        else {
+
+                            $gradesBtn.append(
+                                `<option value = "` +
+                                grado.IdGrado +
+                                `">` +
+                                grado.Nombre +
+                                "&deg; en TSU</option>"
+                            );
+                        }
+                    });
+                    $gradesBtn.val(selectedGrade);
+                }
+            });
+
+            var editTurnInpt = $("#editTurnInpt");
+
+            var currentGrade = @(datos?.Grado?.Nombre ?? "0");
+            var currentGradeNum = Number(currentGrade);
+
+            if (currentGradeNum > 6) {
+                editTurnInpt.val(2);
+            }
+            else {
+                editTurnInpt.val(1);
+            }
+
+            editGradoInpt.on("change", function () {
+                if ($(this).val() > 6) {
+                    editTurnInpt.val(2);
+                }
+                else {
+                    editTurnInpt.val(1);
+                }
+            });
+
+            editTurnInpt.on('mousedown keydown', function (e) {
+                e.preventDefault();
+            });
+
+            var select = $("#es");
+
+            var selectedCarrera = $("#Carrera").find("option:selected");
+            const Carreravalue = $("#Carrera").val();
+
+            $.ajax({
+                url: "/Main/GetSpecialties",
+                type: "GET",
+                data: { userCarrera: Carreravalue },
+                dataType: "json",
+                success: function (response) {
+                    const $specialtyButtonList = $("#es");
+
+                    $specialtyButtonList.empty();
+                    response.forEach(function (especialidad) {
+                        $specialtyButtonList.append(
+                            `<option value = "` +
+                            especialidad.Nombre +
+                            `">` +
+                            especialidad.Nombre +
+                            "</option>"
+                        );
+                    });
+                    document.getElementById("es").selectedIndex = -1;
+                }
+            });
+
+            $("#Carrera").on("change", function () {
+                var selectedOption = $(this).find("option:selected");
+                const selectedValue = $(this).val();
+
+                $.ajax({
+                    url: "/Main/GetSpecialties",
+                    type: "GET",
+                    data: { userCarrera: selectedValue },
+                    dataType: "json",
+                    success: function (response) {
+                        const $specialtyButtonList = $("#es");
+
+
+                        $specialtyButtonList.empty();
+
+                        response.forEach(function (especialidad) {
+                            $specialtyButtonList.append(
+                                `<option value = "` +
+                                especialidad.Nombre +
+                                `">` +
+                                especialidad.Nombre +
+                                "</option>"
+                            );
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            function removeEmojisAndUppercase(input) {
+                input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+            }
+
+            var camposTexto = [
+                'input[name="Nom"]',
+                'input[name="Paterno"]',
+                'input[name="Materno"]'
+            ];
+
+            camposTexto.forEach(function (selector) {
+                var campo = $(selector);
+
+                campo.on('input', function () {
+                    removeEmojisAndUppercase(this);
+                });
+
+                campo.on('paste', function (e) {
+                    e.preventDefault();
+                    var pastedText = (e.originalEvent || e).clipboardData.getData('text/plain');
+                    pastedText = pastedText.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+
+                    var start = this.selectionStart;
+                    var end = this.selectionEnd;
+                    var value = this.value;
+                    this.value = value.substring(0, start) + pastedText + value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + pastedText.length;
+
+                    $(this).trigger('input');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

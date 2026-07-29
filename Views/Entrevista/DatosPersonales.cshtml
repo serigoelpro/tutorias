@@ -1,0 +1,556 @@
+﻿@model Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales
+@using Plataforma_Web.Models.PrimeraEntrevista;
+
+@{
+    /**/
+    DatosPersonales datos = ViewBag.Datos as DatosPersonales;
+
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <link rel="icon" type="image/png" href="~/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Datos Personales</title>
+    <!-- custom style sheet -->
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/animate.css">
+    <!-- Icomoon Icon Fonts-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/icomoon.css">
+    <!-- Themify Icons-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/themify-icons.css">
+    <!-- Bootstrap  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/magnific-popup.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap-datepicker.min.css">
+
+    <!-- Owl Carousel  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.theme.default.min.css">
+
+    <!-- Theme style  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/style.css">
+
+    <!-- Modernizr JS -->
+    <script src="~/EstilosEntrevista/js/modernizr-2.6.2.min.js"></script>
+
+
+
+
+
+</head>
+<body>
+    @using (Html.BeginForm("DatosPersonales", "Entrevista", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+
+
+        <div id="page">
+            <header id="gtco-header" role="banner" style="background-image: url(../../EstilosEntrevista/images/img_bg_1.jpg)" data-stellar-background-ratio="0.8">
+                <div class="overlay"></div>
+                <div class="gtco-container">
+                    <div class="row">
+                        <div class="col-md-12 col-md-offset-0 text-left">
+
+
+                            <div class="row" style="margin-top: 2em;">
+
+                                <div class="col-md-10 col-md-push-1 animate-box" data-animate-effect="fadeInRight">
+                                    <div class="form-wrap">
+                                        <div class="tab">
+
+
+                                            <div class="tab-content">
+                                                <div class="tab-content-inner active" data-content="signup">
+                                                    <h3>Datos Escolares</h3>
+                                                    <form action="#">
+                                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                                        <div class="row form-group">
+                                                            <div class="col-md-6">
+                                                                <label for="fullname">Nombre</label>
+                                                                @Html.EditorFor(model => model.Nom, new { htmlAttributes = new { @class = "form-control", placeholder = "Nombre" } })
+                                                                @Html.ValidationMessageFor(model => model.Nom, "", new { @class = "text-danger" })
+
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label for="activities">Apellido paterno</label>
+                                                                @Html.EditorFor(model => model.Paterno, new { htmlAttributes = new { @class = "form-control", placeholder = "Apellido Paterno" } })
+                                                                @Html.ValidationMessageFor(model => model.Paterno, "", new { @class = "text-danger" })
+                                                            </div>
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Apellido materno</label>
+                                                                @Html.EditorFor(model => model.Materno, new { htmlAttributes = new { @class = "form-control", placeholder = "Apellido Materno" } })
+                                                                @Html.ValidationMessageFor(model => model.Materno, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label for="activities">Edad</label>
+                                                                @Html.EditorFor(model => model.Edad, new { htmlAttributes = new { @class = "form-control", placeholder = "Años cumplidos" } })
+                                                                @Html.ValidationMessageFor(model => model.Edad, "", new { @class = "text-danger" })
+                                                            </div>
+
+
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Turno</label>
+                                                                @Html.DropDownList("IdTurno", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "editTurnInpt" })
+                                                                @Html.ValidationMessageFor(model => model.IdTurno, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Carrera</label>
+                                                                @Html.DropDownList("IdCarrera", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Carrera" })
+                                                                @Html.ValidationMessageFor(model => model.IdCarrera, "", new { @class = "text-danger" })
+                                                            </div>
+
+
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-4">
+                                                                <label for="lastfullname">Área</label>
+                                                                @Html.DropDownList("Especialidad", new List<SelectListItem>
+                                                                                                                                                                                                                                                                                                                 {
+                                                                    new SelectListItem{ Text="Elija una carrera para mostrar opciones", Value = "" }
+                                                                 }, htmlAttributes: new { @class = "form-control", id = "es" })
+                                                                @Html.ValidationMessageFor(model => model.Especialidad, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="lastfullname">Grado</label>
+                                                                @Html.DropDownList("IdGrado", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "grados" })
+                                                                @Html.ValidationMessageFor(model => model.IdGrado, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label for="lastfullname">Grupo</label>
+                                                                @Html.DropDownList("IdGrupo", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                @Html.ValidationMessageFor(model => model.IdGrupo, "", new { @class = "text-danger" })
+                                                            </div>
+
+
+                                                        </div>
+                                                        <div class="row form-group">
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Teléfono celular</label>
+                                                                @Html.EditorFor(model => model.Celular, new { htmlAttributes = new { @class = "form-control", placeholder = "(XXX) XXX XXXX", type = "tel", pattern = "[0-9]*", maxlength = "15", onkeypress = "return event.charCode >= 48 && event.charCode <= 57" } })
+                                                                @Html.ValidationMessageFor(model => model.Celular, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Teléfono de casa</label>
+                                                                @Html.EditorFor(model => model.Telefono, new { htmlAttributes = new { @class = "form-control", placeholder = "(XXX) XXX XXXX", type = "tel", pattern = "[0-9]*", maxlength = "15", onkeypress = "return event.charCode >= 48 && event.charCode <= 57" } })
+                                                                @Html.ValidationMessageFor(model => model.Telefono, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row form-group">
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Teléfono de emergencia</label>
+                                                                @Html.EditorFor(model => model.TelEmergencia, new { htmlAttributes = new { @class = "form-control", placeholder = "(XXX) XXX XXXX", type = "tel", pattern = "[0-9]*", maxlength = "15", onkeypress = "return event.charCode >= 48 && event.charCode <= 57" } })
+                                                                @Html.ValidationMessageFor(model => model.TelEmergencia, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Sexo</label>
+                                                                @Html.DropDownList("Sexo", new List<SelectListItem>
+                                                                                                                                                                                                                                                                                                                                                                {
+                                                                    new SelectListItem{ Text="HOMBRE", Value = "HOMBRE" },
+                                                                    new SelectListItem{ Text="MUJER", Value = "MUJER" }
+                                                                }, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                @Html.ValidationMessageFor(model => model.Sexo, "", new { @class = "text-danger" })
+                                                            </div>
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-6">
+
+                                                                @Html.HiddenFor(model => model.Foto, new { id = "FotoBase64" })
+
+                                                                <label for="lastfullname">Seleccionar foto de perfil (JPG, máximo 20KB)</label>
+
+                                                                @Html.TextBoxFor(model => model.FotoFile, new { type = "file", id = "fileInput", accept = ".jpg,.jpeg", @class = "form-control" })
+                                                                @Html.ValidationMessageFor(model => model.FotoFile, "", new { @class = "text-danger" })
+
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Tomar foto de perfil (JPG, máximo 20KB)</label>
+                                                                <button type="button" class="btn btn-primary text-danger " id="takePhotoBtn">
+                                                                    <i class="glyphicon glyphicon-camera"></i> Tomar Foto
+                                                                </button>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div id="cameraContainer" style="display:none; text-align: center;">
+                                                            <video id="video" width="200" height="200" autoplay playsinline style="transform: scaleX(-1)"></video>
+                                                            <div class="camera-controls" style="margin-top: 10px;">
+                                                                <button type="button" id="captureBtn" class="btn btn-success">
+                                                                    <i class="glyphicon glyphicon-ok"></i> Capturar
+                                                                </button>
+                                                                <button type="button" id="cancelCameraBtn" class="btn btn-danger">
+                                                                    <i class="glyphicon glyphicon-remove"></i> Cancelar
+                                                                </button>
+
+                                                                @Html.ValidationMessageFor(model => model.Foto, "", new { @class = "text-danger" })
+
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div id="imagePreview" style="display:none; text-align: center; margin-top: 10px;">
+                                                            <img id="previewImage" style="max-width: 200px; max-height: 200px; margin-bottom:10px;" />
+                                                        </div>
+
+                                                        <div class="row form-group">
+                                                            <div class="col-md-12">
+                                                                <button type="submit" name="submitButton" value="Siguiente" class="btn btn-primary btn-block">
+                                                                    Siguiente
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+        </div>
+
+        <!-- jQuery -->
+        <script src="~/EstilosEntrevista/js/jquery.min.js"></script>
+        <!-- jQuery Easing -->
+        <script src="~/EstilosEntrevista/js/jquery.easing.1.3.js"></script>
+        <!-- Bootstrap -->
+        <script src="~/EstilosEntrevista/js/bootstrap.min.js"></script>
+        <!-- Waypoints -->
+        <script src="~/EstilosEntrevista/js/jquery.waypoints.min.js"></script>
+        <!-- Carousel -->
+        <script src="~/EstilosEntrevista/js/owl.carousel.min.js"></script>
+        <!-- countTo -->
+        <script src="~/EstilosEntrevista/js/jquery.countTo.js"></script>
+
+        <!-- Stellar Parallax -->
+        <script src="~/EstilosEntrevista/js/jquery.stellar.min.js"></script>
+
+        <!-- Magnific Popup -->
+        <script src="~/EstilosEntrevista/js/jquery.magnific-popup.min.js"></script>
+        <script src="~/EstilosEntrevista/js/magnific-popup-options.js"></script>
+
+        <!-- Datepicker -->
+        <script src="~/EstilosEntrevista/js/bootstrap-datepicker.min.js"></script>
+
+        <script src="~/ViewsStyles/Entrevista/js/Camara.js"></script>
+
+
+        @*<script src='https://maps.google.com/maps/api/js?sensor=false&libraries=places&key=AIzaSyAPJNRGq4MDbDV9PiIFTEH8KXd-GsXZYRc'></script>
+            <script src="~/Script/locationpicker.jquery.js"></script>*@
+
+        <!-- Main -->
+        <script src="~/EstilosEntrevista/js/main.js"></script>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                // Manejador para el botón de Tramitar Baja
+                $('button[name="submitButton"][value="GuardarContinuar"]').on('click', function (e) {
+                    // Prevenir el envío automático del formulario
+                    e.preventDefault();
+
+                    // Obtener los valores del formulario
+                    var nombre = $('input[name="Nom"]').val().trim();
+                    var paterno = $('input[name="Paterno"]').val().trim();
+                    var materno = $('input[name="Materno"]').val().trim();
+                    var edad = $('input[name="Edad"]').val().trim();
+                    var turno = $('#editTurnInpt option:selected').text();
+                    var carrera = $('#Carrera option:selected').text();
+                    var grado = $('#grados option:selected').text();
+                    var grupo = $('select[name="IdGrupo"] option:selected').text();
+                    var foto = $('#FotoBase64').val();
+
+                    // Validaciones básicas
+                    if (!nombre || !paterno || !materno) {
+                        alert('Por favor completa tu nombre completo antes de continuar.');
+                        return false;
+                    }
+
+                    if (!edad || edad < 15 || edad > 100) {
+                        alert('Por favor ingresa una edad válida.');
+                        return false;
+                    }
+
+                    if (!turno || turno === 'Elija una opción') {
+                        alert('Por favor selecciona un turno.');
+                        return false;
+                    }
+
+                    if (!carrera || carrera === 'Elija una opción') {
+                        alert('Por favor selecciona una carrera.');
+                        return false;
+                    }
+
+                    if (!grado || grado === 'Elija una opción') {
+                        alert('Por favor selecciona un grado.');
+                        return false;
+                    }
+
+                    if (!grupo || grupo === 'Elija una opción') {
+                        alert('Por favor selecciona un grupo.');
+                        return false;
+                    }
+
+                    if (!foto) {
+                        alert('Por favor proporciona una foto de perfil antes de continuar.');
+                        return false;
+                    }
+
+                    // Construir mensaje de confirmación detallado
+                    var nombreCompleto = nombre + ' ' + paterno + ' ' + materno;
+                    var mensajeConfirmacion =
+                        'CONFIRMACIÓN DE DATOS PARA TRAMITAR BAJA\n' +
+                        '═══════════════════════════════════\n' +
+                        'Nombre: ' + nombreCompleto + '\n' +
+                        'Edad: ' + edad + ' años\n' +
+                        'Turno: ' + turno + '\n' +
+                        'Carrera: ' + carrera + '\n' +
+                        'Grado: ' + grado + '\n' +
+                        'Grupo: ' + grupo + '\n' +
+                        '═══════════════════════════════════\n' +
+                        '¿DESEA CONTINUAR CON EL REGISTRO?';
+
+                    // Mostrar confirmación
+                    var confirmacion = confirm(mensajeConfirmacion);
+
+                    if (confirmacion) {
+                        // Deshabilitar el botón para evitar clics múltiples
+                        var boton = $(this);
+                        boton.prop('disabled', true);
+                        boton.html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Guardando datos...');
+
+                        // Deshabilitar también el otro botón
+                        $('button[name="submitButton"][value="Siguiente"]').prop('disabled', true);
+
+                        // Mostrar mensaje de progreso
+                        if (!$('#progressMessage').length) {
+                            $('form').prepend(
+                                '<div id="progressMessage" class="alert alert-info text-center" style="margin: 20px;">' +
+                                '<strong>Procesando...</strong><br>' +
+                                'Por favor espera mientras se guarda la información.' +
+                                '</div>'
+                            );
+                        }
+
+                        // ⬇️⬇️⬇️ SOLUCIÓN: Agregar campo oculto con el valor del botón ⬇️⬇️⬇️
+                        // Eliminar cualquier campo submitButton previo
+                        $('input[name="submitButton"]').remove();
+
+                        // Agregar campo oculto con el valor correcto
+                        $('form').append('<input type="hidden" name="submitButton" value="GuardarContinuar" />');
+
+                        // Enviar el formulario
+                        setTimeout(function () {
+                            $('form').submit();
+                        }, 500);
+
+                        return true;
+                    } else {
+                        console.log('Usuario canceló el trámite de baja');
+                        return false;
+                    }
+                });
+
+                // Manejador para el botón "Siguiente" (flujo normal)
+                $('button[name="submitButton"][value="Siguiente"]').on('click', function (e) {
+                    // Validaciones básicas antes de continuar
+                    var nombre = $('input[name="Nom"]').val().trim();
+                    var paterno = $('input[name="Paterno"]').val().trim();
+                    var materno = $('input[name="Materno"]').val().trim();
+                    var foto = $('#FotoBase64').val();
+
+                    if (!nombre || !paterno || !materno) {
+                        e.preventDefault();
+                        alert('Por favor completa tu nombre completo.');
+                        return false;
+                    }
+
+                    if (!foto) {
+                        e.preventDefault();
+                        alert('Por favor proporciona una foto de perfil.');
+                        return false;
+                    }
+
+                    // SOLUCIÓN: Agregar campo oculto y enviar el formulario
+                    // Eliminar cualquier campo submitButton previo
+                    $('input[name="submitButton"]').remove();
+
+                    // Agregar campo oculto con el valor correcto
+                    $('form').append('<input type="hidden" name="submitButton" value="Siguiente" />');
+
+                    // Deshabilitar botón para evitar doble clic
+                    $(this).prop('disabled', true).html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Procesando...');
+
+                    // CRÍTICO: Enviar el formulario
+                    $('form').submit();
+
+                    return true; // Permitir que continúe el envío
+                });
+
+                // Prevenir envío del formulario con Enter
+                $('form input').on('keypress', function (e) {
+                    if (e.which === 13) { // Enter key
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+            });
+        </script>
+
+        if (!string.IsNullOrEmpty(ViewBag.Mensaje))
+        {
+            <script type="text/javascript">
+                alert("@ViewBag.Mensaje");
+            </script>
+        }
+        <script>
+            $(document).ready(function () {
+                var select = document.getElementById("es");
+
+                $.ajax({
+                    url: "/Main/GetGrades",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (response) {
+                        const $gradesBtn = $("#grados");
+
+                        $gradesBtn.empty();
+                        response.forEach(function (grado) {
+                            if (grado.Nombre == "0" || grado.Nombre == "12") {
+                                return;
+                            }
+
+                            if (Number(grado.Nombre) > 6) {
+
+                                $gradesBtn.append(
+                                    `<option value = "` +
+                                    grado.IdGrado +
+                                    `">` +
+                                    grado.Nombre +
+                                    "&deg; en Ingeniería</option>"
+                                )
+                            }
+                            else {
+
+                                $gradesBtn.append(
+                                    `<option value = "` +
+                                    grado.IdGrado +
+                                    `">` +
+                                    grado.Nombre +
+                                    "&deg; en TSU</option>"
+                                );
+                            }
+                        });
+                    },
+                })
+
+                var editGradoInpt = $("#grados");
+
+                var editTurnInpt = $("#editTurnInpt");
+
+                editTurnInpt.val(1);
+                editGradoInpt.on("change", function () {
+                    if ($(this).val() > 6) {
+                        editTurnInpt.val(2);
+                    }
+                    else {
+                        editTurnInpt.val(1);
+                    }
+                })
+
+                editTurnInpt.on('mousedown keydown', function (e) {
+                    e.preventDefault();
+                });
+
+                $("#Carrera").on("change", function () {
+                    var selectedOption = $(this).find("option:selected");
+                    const selectedValue = $(this).val();
+
+                    $.ajax({
+                        url: "/Main/GetSpecialties",
+                        type: "GET",
+                        data: { userCarrera: selectedValue },
+                        dataType: "json",
+                        success: function (response) {
+                            const $specialtyButtonList = $("#es");
+
+                            $specialtyButtonList.empty();
+                            response.forEach(function (especialidad) {
+                                $specialtyButtonList.append(
+                                    `<option value = "` +
+                                    especialidad.Nombre +
+                                    `">` +
+                                    especialidad.Nombre +
+                                    "</option>"
+                                );
+                            });
+                        },
+                    })
+                });
+
+            });
+        </script>
+        <script>
+            $(document).ready(function () {
+                function removeEmojisAndUppercase(input) {
+                    input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+                }
+
+                var camposTexto = [
+                    'input[name="Nom"]',
+                    'input[name="Paterno"]',
+                    'input[name="Materno"]'
+                ];
+
+                camposTexto.forEach(function (selector) {
+                    var campo = $(selector);
+
+                    campo.on('input', function () {
+                        removeEmojisAndUppercase(this);
+                    });
+
+                    campo.on('paste', function (e) {
+                        e.preventDefault();
+                        var pastedText = (e.originalEvent || e).clipboardData.getData('text/plain');
+                        pastedText = pastedText.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+
+                        var start = this.selectionStart;
+                        var end = this.selectionEnd;
+                        var value = this.value;
+                        this.value = value.substring(0, start) + pastedText + value.substring(end);
+                        this.selectionStart = this.selectionEnd = start + pastedText.length;
+
+                        $(this).trigger('input');
+                    });
+                });
+            });
+        </script>
+
+    }
+
+</body>
+</html>

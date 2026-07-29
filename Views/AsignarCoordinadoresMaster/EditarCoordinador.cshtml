@@ -1,0 +1,150 @@
+@model Plataforma_Web.Models.Usuario
+
+@{
+    ViewBag.Title = "Editar Coordinador";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <h2>Editar Coordinador</h2>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Mensaje"]
+        </div>
+    }
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="alert alert-warning">
+            @ViewBag.Mensaje
+        </div>
+    }
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-horizontal">
+            <h4>Información del Coordinador</h4>
+            <hr />
+
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            @Html.HiddenFor(model => model.IdUsuario)
+            @Html.HiddenFor(model => model.MicrosoftIdentifier)
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.NombreCompleto, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.NombreCompleto, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                    @Html.ValidationMessageFor(model => model.NombreCompleto, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.UserName, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.UserName, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                    @Html.ValidationMessageFor(model => model.UserName, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.CorreoElectronico, htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.CorreoElectronico, new { htmlAttributes = new { @class = "form-control", @type = "email", required = "required" } })
+                    @Html.ValidationMessageFor(model => model.CorreoElectronico, "", new { @class = "text-danger" })
+                    <small class="form-text text-muted">Este campo es obligatorio</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Password, "Contraseña", htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    <div class="input-group">
+                        @Html.EditorFor(model => model.Password, new { htmlAttributes = new { @class = "form-control", @type = "password", @id = "passwordField", required = "required" } })
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-default" onclick="togglePassword()" id="toggleBtn">
+                                <span class="glyphicon glyphicon-eye-open" id="toggleIcon"></span>
+                            </button>
+                        </span>
+                    </div>
+                    @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+                    <small class="form-text text-muted">
+                        <strong>Nota:</strong> La contraseña se muestra desencriptada para su edición.
+                        Al guardar se encriptará automáticamente.
+                    </small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.Label("IdCarrera", "Carrera", htmlAttributes: new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.DropDownList("IdCarrera", ViewBag.Carreras as SelectList, "Seleccione una carrera", htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.IdCarrera, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.MicrosoftIdentifier))
+            {
+                <div class="form-group">
+                    <label class="control-label col-md-2">Microsoft Identifier</label>
+                    <div class="col-md-10">
+                        <p class="form-control-static" style="font-family: monospace; background-color: #f5f5f5; padding: 8px; border-radius: 3px;">
+                            @{
+                                var mid = Model.MicrosoftIdentifier;
+                                string mostrado = mid.Length > 10
+                                    ? mid.Substring(0, 4) + "..." + mid.Substring(mid.Length - 4)
+                                    : "••••••••";
+                            }
+                            @mostrado
+                        </p>
+                        <small class="form-text text-muted">Este campo no se puede editar</small>
+                    </div>
+                </div>
+            }
+
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <input type="submit" value="Guardar Cambios" class="btn btn-primary" />
+                    @Html.ActionLink("Cancelar", "Index", null, new { @class = "btn btn-default" })
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+
+    <script>
+        function togglePassword() {
+            var passwordField = document.getElementById('passwordField');
+            var toggleIcon = document.getElementById('toggleIcon');
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.className = 'glyphicon glyphicon-eye-close';
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.className = 'glyphicon glyphicon-eye-open';
+            }
+        }
+
+        $(document).ready(function() {
+            @if (!string.IsNullOrEmpty(Model.Password))
+            {
+                <text>
+                console.log('Contraseña cargada y desencriptada para edición');
+                </text>
+            }
+        });
+    </script>
+}
+
+

@@ -1,0 +1,140 @@
+<<<<<<< HEAD
+﻿@model Plataforma_Web.Models.Usuario
+@{
+    ViewBag.Title = "Eliminar Usuario";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+=======
+@model Plataforma_Web.Models.Usuario
+@{
+    ViewBag.Title = "Eliminar Usuario";
+    Layout = "~/Views/Shared/_SGALayout.cshtml";
+>>>>>>> ed6bc8305f16c485fc4f73afc4930f3d32ff181e
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                    </h4>
+                </div>
+
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(ViewBag.Error as string))
+                    {
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> @ViewBag.Error
+                        </div>
+                    }
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>¡Atención!</strong> Esta acción no se puede deshacer.
+                        ¿Está seguro de que desea eliminar este usuario?
+                    </div>
+
+                    <!-- Información simplificada del usuario -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Información del Usuario</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label font-weight-bold">
+                                            <i class="fas fa-user"></i> Nombre Completo:
+                                        </label>
+                                        <p class="form-control-plaintext">@Model.NombreCompleto</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label font-weight-bold">
+                                            <i class="fas fa-id-card"></i> Usuario:
+                                        </label>
+                                        <p class="form-control-plaintext">@Model.UserName</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label font-weight-bold">
+                                            <i class="fas fa-envelope"></i> Correo Electrónico:
+                                        </label>
+                                        <p class="form-control-plaintext">@(Model.CorreoElectronico ?? "Sin correo")</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label font-weight-bold">
+                                            <i class="fas fa-calendar"></i> Fecha de Registro:
+                                        </label>
+                                        <p class="form-control-plaintext">@Model.Tiempo.ToString("dd/MM/yyyy HH:mm")</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label font-weight-bold">
+                                            <i class="fas fa-toggle-on"></i> Estado:
+                                        </label>
+                                        <p class="form-control-plaintext">
+                                            @if (Model.Estado)
+                                            {
+                                                <span class="badge bg-success">Habilitado</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Deshabilitado</span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label font-weight-bold">
+                                            <i class="fas fa-key"></i> Contraseña:
+                                        </label>
+                                        <p class="form-control-plaintext">
+                                            <span class="badge bg-secondary">
+                                                @(string.IsNullOrEmpty(Model.Password) ? "Sin contraseña" : "••••••••")
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de confirmación -->
+                    <div class="text-center">
+                        @using (Html.BeginForm("Delete", "EstudiantesNew", FormMethod.Post, new { @class = "d-inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.Hidden("id", Model.IdUsuario)
+
+                            <button type="submit" class="btn btn-danger btn-lg" onclick="return confirm('¿Está completamente seguro de eliminar este usuario? Esta acción no se puede deshacer.');">
+                                <i class="fas fa-trash"></i> Sí, Eliminar Usuario
+                            </button>
+                        }
+
+                        <a href="@Url.Action("Index")" class="btn btn-secondary btn-lg ml-3">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

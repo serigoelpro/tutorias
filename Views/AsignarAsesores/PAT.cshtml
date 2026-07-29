@@ -1,0 +1,3756 @@
+﻿@model IEnumerable<Plataforma_Web.Models.PAT>
+@Styles.Render("~/ViewsStyles/PAT/ListPAT.css")
+@{
+    ViewBag.Title = "PAT";
+    var _usr = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    bool esDirector = _usr != null && _usr.EsDirector;
+}
+
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <div class="pat-container">
+        <!-- Header consistente -->
+        <div class="pat-header">
+            <h2 class="pat-title">Plan de Acción Tutorial</h2>
+
+            <!-- Buscador + Selector de Vista en la misma línea -->
+            <div class="search-and-view-row">
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon glyphicon glyphicon-search"></span>
+                        <input type="text" class="search-input" id="patSearchInput" placeholder="Buscar...">
+                        <button type="button" class="search-clear" id="clearSearchBtn" style="display: none;">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="view-selector">
+                    <button type="button" class="view-toggle-btn" id="porRevisarBtn" style="background: #17a2b8; color: white;">
+                        <span class="glyphicon glyphicon-eye-open"></span>
+                        Revisión de PATs
+                    </button>
+                    <button type="button" class="view-toggle-btn" id="generarExcelBtn" style="background: #28a745; color: white;">
+                        <span class="glyphicon glyphicon-download-alt"></span>
+                        Generar reportes
+                    </button>
+                    @if (ViewBag.IdNivel == 4)
+                    {
+                        <button type="button" class="view-toggle-btn" id="crearPATsBtn" style="background: #ff6b35; color: white;">
+                            <span class="glyphicon glyphicon-plus"></span>
+                            Crear PATs
+                        </button>
+                    }
+                </div>
+            </div>
+
+
+            <!-- Filtros Multi-Selección -->
+            <div class="pat-filters">
+                <!-- Filtro Carrera (siempre visible para IdNivel 3 y 4) -->
+                @if (ViewBag.IdNivel == 4)
+                {
+                    <div class="filter-dropdown">
+                        <button type="button" class="filter-btn" id="btnCarrera">
+                            <span class="filter-label">Carrera</span>
+                            <span class="filter-count" id="countCarrera">(Seleccione carrera)</span>
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </button>
+                        <div class="filter-content" id="dropdownCarrera" style="display: none;">
+                            <div class="filter-options">
+                                <!-- Opción "Todos" -->
+                                <div class="checkbox-option select-all-option">
+                                    <input type="checkbox" id="carrera_todos" value="" data-filter="carrera" data-action="select-all" checked>
+                                    <label for="carrera_todos"><strong>Seleccione carrera</strong></label>
+                                </div>
+                                <div class="filter-separator"></div>
+                                <!-- Las opciones se poblarán dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                }
+                <!-- Filtro Estado -->
+                <div class="filter-dropdown">
+                    <button type="button" class="filter-btn" id="btnEstado">
+                        <span class="filter-label">Estado</span>
+                        <span class="filter-count" id="countEstado">(4 seleccionados)</span>
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </button>
+                    <div class="filter-content" id="dropdownEstado" style="display: none;">
+                        <div class="filter-options">
+                            <!-- Opción "Todos" -->
+                            <div class="checkbox-option select-all-option">
+                                <input type="checkbox" id="estado_todos" value="" data-filter="estado" data-action="select-all">
+                                <label for="estado_todos"><strong>Todos los Estados</strong></label>
+                            </div>
+                            <div class="filter-separator"></div>
+
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="estado_finalizado" value="Aprobado" checked>
+                                <label for="estado_finalizado">Aprobado</label>
+                            </div>
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="estado_progreso" value="En progreso" checked>
+                                <label for="estado_progreso">En progreso</label>
+                            </div>
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="estado_revision" value="En revisión" checked>
+                                <label for="estado_revision">En revisión</label>
+                            </div>
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="estado_rechazado" value="Rechazado" checked>
+                                <label for="estado_rechazado">Rechazado</label>
+                            </div>
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="estado_inactivo" value="Inactivo">
+                                <label for="estado_inactivo">Inactivo</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtro Grado -->
+                <div class="filter-dropdown">
+                    <button type="button" class="filter-btn" id="btnGrado">
+                        <span class="filter-label">Grado</span>
+                        <span class="filter-count" id="countGrado">(Todos)</span>
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </button>
+                    <div class="filter-content" id="dropdownGrado" style="display: none;">
+                        <div class="filter-options">
+                            <!-- Opción "Todos" -->
+                            <div class="checkbox-option select-all-option">
+                                <input type="checkbox" id="grado_todos" value="" data-filter="grado" data-action="select-all" checked>
+                                <label for="grado_todos"><strong>Todos los Grados</strong></label>
+                            </div>
+                            <div class="filter-separator"></div>
+                            <!-- Las opciones se poblarán dinámicamente como checkboxes -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtro Grupo -->
+                <div class="filter-dropdown">
+                    <button type="button" class="filter-btn" id="btnGrupo">
+                        <span class="filter-label">Grupo</span>
+                        <span class="filter-count" id="countGrupo">(Todos)</span>
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </button>
+                    <div class="filter-content" id="dropdownGrupo" style="display: none;">
+                        <div class="filter-options">
+                            <!-- Opción "Todos" -->
+                            <div class="checkbox-option select-all-option">
+                                <input type="checkbox" id="grupo_todos" value="" data-filter="grupo" data-action="select-all" checked>
+                                <label for="grupo_todos"><strong>Todos los Grupos</strong></label>
+                            </div>
+                            <div class="filter-separator"></div>
+                            <!-- Las opciones se poblarán dinámicamente como checkboxes -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtro Período -->
+                <div class="filter-dropdown">
+                    <button type="button" class="filter-btn" id="btnPeriodo">
+                        <span class="filter-label">Período</span>
+                        <span class="filter-count" id="countPeriodo">(Todos)</span>
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </button>
+                    <div class="filter-content" id="dropdownPeriodo" style="display: none;">
+                        <div class="filter-options">
+                            <!-- Opción "Todos" -->
+                            <div class="checkbox-option select-all-option">
+                                <input type="checkbox" id="periodo_todos" value="" data-filter="periodo" data-action="select-all" checked>
+                                <label for="periodo_todos"><strong>Todos los Períodos</strong></label>
+                            </div>
+                            <div class="filter-separator"></div>
+                            <!-- Las opciones se poblarán dinámicamente como checkboxes -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtro Año -->
+                <div class="filter-dropdown">
+                    <button type="button" class="filter-btn" id="btnAno">
+                        <span class="filter-label">Año</span>
+                        <span class="filter-count" id="countAno">(Todos)</span>
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </button>
+                    <div class="filter-content" id="dropdownAno" style="display: none;">
+                        <div class="filter-options">
+                            <!-- Opción "Todos" -->
+                            <div class="checkbox-option select-all-option">
+                                <input type="checkbox" id="ano_todos" value="" data-filter="ano" data-action="select-all" checked>
+                                <label for="ano_todos"><strong>Todos los Años</strong></label>
+                            </div>
+                            <div class="filter-separator"></div>
+                            <!-- Las opciones se poblarán dinámicamente como checkboxes -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtro Turno -->
+                <div class="filter-dropdown">
+                    <button type="button" class="filter-btn" id="btnTurno">
+                        <span class="filter-label">Turno</span>
+                        <span class="filter-count" id="countTurno">(Todos)</span>
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </button>
+                    <div class="filter-content" id="dropdownTurno" style="display: none;">
+                        <div class="filter-options">
+                            <!-- Opción "Todos" -->
+                            <div class="checkbox-option select-all-option">
+                                <input type="checkbox" id="turno_todos" value="" data-filter="turno" data-action="select-all" checked>
+                                <label for="turno_todos"><strong>Todos los Turnos</strong></label>
+                            </div>
+                            <div class="filter-separator"></div>
+                            <!-- Opciones específicas de turno -->
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="turno_matutino" value="MATUTINO">
+                                <label for="turno_matutino">Matutino</label>
+                            </div>
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="turno_vespertino" value="VESPERTINO">
+                                <label for="turno_vespertino">Vespertino</label>
+                            </div>
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="turno_despresurizado" value="DESPRESURIZADO">
+                                <label for="turno_despresurizado">Despresurizado</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Ordenamiento Alfabético -->
+                <div style="display: inline-block; margin-right: 8px;">
+                    <button type="button" class="btn btn-default" id="btnOrdenarAZ" style="padding: 8px 12px;" title="Ordenar A-Z">
+                        <span class="glyphicon glyphicon-sort-by-alphabet"></span>
+                        A-Z
+                    </button>
+                    <button type="button" class="btn btn-default" id="btnOrdenarZA" style="padding: 8px 12px; margin-left: 4px;" title="Ordenar Z-A">
+                        <span class="glyphicon glyphicon-sort-by-alphabet-alt"></span>
+                        Z-A
+                    </button>
+                </div>
+
+                <!-- Botón para limpiar filtros -->
+                <button type="button" id="clearFiltersBtn" class="btn btn-default clear-filters-btn">
+                    <span class="glyphicon glyphicon-remove"></span>
+                    Limpiar
+                </button>
+            </div>
+        </div>
+
+        <!-- Indicadores de filtros activos -->
+        <div id="activeFiltersDisplay" class="active-filters-container" style="display: none;">
+            <h4>Filtros activos:</h4>
+            <div id="activeFiltersList"></div>
+        </div>
+        <div class="row" style="margin: 15px 0;">
+            <div class="col-md-12">
+                <div class="panel panel-default" style="border-left: 4px solid #1ab192; box-shadow: 0 2px 5px rgba(0,0,0,0.05); background-color: #1ab192; color: white;">
+                    <div class="panel-body" id="resumen-pats-container" style="padding: 15px;">
+
+                        @if (ViewBag.IdNivel == 4 && ViewBag.EstadisticasDetalladas != null)
+                        {
+                            <div style="font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
+                                <strong>PATs Totales: @ViewBag.TotalGlobal</strong>
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 15px; font-size: 13px;">
+                                @foreach (var item in (Dictionary<string, int>)ViewBag.EstadisticasDetalladas)
+                                {
+                                    <span style="background: rgba(0,0,0,0.1); padding: 3px 8px; border-radius: 4px;">
+                                        <strong>@item.Key:</strong> @item.Value
+                                    </span>
+                                }
+                            </div>
+                        }
+                        else if (ViewBag.ResumenCoordinador != null)
+                        {
+                            <div style="font-size: 18px;">
+                                <strong>@ViewBag.ResumenCoordinador</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <span id="stats-fallback">Cargando estadísticas...</span>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Vista de Tabla -->
+    <div class="table-responsive" id="patTableContainer">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Grupo</th>
+                    <th>Turno</th>
+                    <th>Tutor</th>
+                    @if (ViewBag.IdNivel == 4)
+                    {
+                        <th>Carrera</th>
+                    }
+                    <th>Período</th>
+                    <th>Año</th>
+                    <th>Alumnos</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="patTableBody">
+                @{
+
+                    var nombresTurno = ViewBag.NombresTurno as Dictionary<int, string> ?? new Dictionary<int, string>();
+                    // ====================================================
+                    // OPTIMIZACIÓN: Calcular una sola vez valores repetitivos
+                    // ====================================================
+                    var tiempo = DateTime.Now;
+                    var periodoActual = 0;
+                    if (tiempo.Month >= 1 && tiempo.Month <= 4) { periodoActual = 1; }
+                    else if (tiempo.Month >= 5 && tiempo.Month <= 8) { periodoActual = 2; }
+                    else { periodoActual = 3; }
+                    var añoActual = tiempo.Year;
+
+
+                    // Cerca de la línea 60
+                    Func<int, int, bool, int, string> DeterminarEstadoTexto = (idPeriodo, fechaYear, estado, estadoRevision) =>
+                    {
+                        if (idPeriodo != periodoActual || fechaYear != añoActual)
+                            return "Inactivo";
+                        else if (estado == true) // Si la planeación está "En progreso"
+                        {
+                            if (estadoRevision == 1) return "En revisión";
+                            if (estadoRevision == 2) return "Aprobado"; // Esto ya coincide
+                            if (estadoRevision == 3) return "Rechazado";
+                            return "En progreso"; // Default (EstadoRevision == 0)
+                        }
+                        else // Si la planeación está "Finalizada" (estado == false)
+                        {
+                            return "Cerrado"; // <-- CAMBIA "Finalizado" POR "Aprobado"
+                        }
+                    };
+                    Func<int, int, bool, int, string> DeterminarEstadoClase = (idPeriodo, fechaYear, estado, estadoRevision) =>
+                    {
+                        if (idPeriodo != periodoActual || fechaYear != añoActual)
+                            return "status-inactive"; // Rojo (Inactivo)
+                        else if (estado == true) // Si la planeación está "En progreso"
+                        {
+                            if (estadoRevision == 1) return "status-review";  // <-- NUEVO: Azul para En Revisión
+                            if (estadoRevision == 2) return "status-active";  // Verde (Aprobado)
+                            if (estadoRevision == 3) return "status-inactive"; // Rojo (Rechazado)
+                            return "status-pending"; // Amarillo (En progreso, sin enviar)
+                        }
+                        else // Si la planeación está Cerrada (estado == false)
+                        {
+                            return "status-active";  // <-- VUELVE A VERDE para Cerrado
+                        }
+                    };
+
+                }
+
+                @foreach (var item in Model)
+                {
+                    string nombreTurnoReal = nombresTurno.ContainsKey(item.IdEntrevistaInicial) ? nombresTurno[item.IdEntrevistaInicial] : "Sin turno";
+                    // Usar la misma lógica optimizada del primer foreach
+                    string estadoPAT = DeterminarEstadoTexto(item.IdPeriodo, item.Fecha.Year, item.estado, item.EstadoRevision);
+                    string claseEstado = DeterminarEstadoClase(item.IdPeriodo, item.Fecha.Year, item.estado, item.EstadoRevision);
+
+
+                    <tr class="pat-row"
+                        data-pat-id="@item.IdEntrevistaInicial"
+                        data-carrera="@item.Carrera.Nombre"
+                        data-tutor="@item.Tutor"
+                        data-periodo="@item.Periodo.Nombre"
+                        data-grado="@item.TutoriaGrupal"
+                        data-grupo="@item.TutoriaGrupal"
+                        data-ano="@item.Fecha.Year"
+                        data-estado="@estadoPAT"
+                        data-turno="@nombreTurnoReal"
+                        data-alumnos="@item.CantidadAlumno">
+                        <td class="group-cell">
+                            <div class="table-cell-content">
+                                @item.TutoriaGrupal
+                            </div>
+                        </td>
+                        <td>@nombreTurnoReal</td>
+                        <td>@item.Tutor</td>
+                        @if (ViewBag.IdNivel == 4)
+                        {
+                            <td>@item.Carrera.Nombre</td>
+                        }
+                        <td>@item.Periodo.Nombre</td>
+                        <td>@item.Fecha.Year</td>
+                        <td><span class="students-badge">@item.CantidadAlumno</span></td>
+                        <td>
+                            <span class="status-badge @claseEstado">
+                                @estadoPAT
+                            </span>
+
+                            @* LÓGICA MODIFICADA: Si está cerrado, muestra palomita. Si no, deja el espacio para el reloj de pendientes *@
+                            @if (item.estado == false)
+                            {
+                                <span class="glyphicon glyphicon-ok-circle" title="PAT completado" style="color: #28a745; margin-left: 5px; font-size: 14px; cursor: help;"></span>
+                            }
+                            else
+                            {
+                                <span class="clock-icon-placeholder"></span>
+                            }
+                        </td>
+                        <td>
+                            <!-- Acciones -->
+                            <a href="@Url.Action("PatDetalles", new { id = item.IdEntrevistaInicial, returnUrl = Request.Url.ToString() })" class="btn-action btn-view">
+                                <span class="glyphicon glyphicon-eye-open action-icon"></span>
+                                Ver
+                            </a>
+                            <a href="@Url.Action("PatReporte", new { id = item.IdEntrevistaInicial, returnUrl = Request.Url.ToString() })" class="btn-action btn-report">
+                                <span class="glyphicon glyphicon-th-list action-icon"></span>
+                                Reporte
+                            </a>
+                            @if (!esDirector)
+                            {
+                            <button type="button" class="btn-action btn-delete" onclick="openDeleteModal(@item.IdEntrevistaInicial, '@Html.Raw(Html.Encode(item.Carrera.Nombre))', '@Html.Raw(Html.Encode(item.Tutor))', '@Html.Raw(Html.Encode(item.Periodo.Nombre))', '@Html.Raw(Html.Encode(item.TutoriaGrupal))', '@item.Fecha.ToString("dd/MM/yyyy")', @item.Fecha.Year, '@estadoPAT')">
+                                <span class="glyphicon glyphicon-trash action-icon"></span>
+                                Eliminar
+                            </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mensaje de sin resultados -->
+    <div class="empty-state" id="patNoResults" style="display: none;">
+        <div class="empty-icon">
+            <span class="glyphicon glyphicon-search"></span>
+        </div>
+        <h3 class="empty-title">No hay PATs disponibles</h3>
+        <p class="empty-message">
+            No hay PATs que coincidan con los filtros aplicados.
+            Intente cambiar los criterios de búsqueda o filtros.
+        </p>
+    </div>
+
+    <!-- Paginación -->
+    <div class="pagination-section" style="margin-top: 30px; margin-bottom: 20px;">
+        <div class="simple-pagination" id="simplePagination" style="display: none;">
+            <div class="pagination-info">
+                <span id="paginationInfo">Mostrando 1-30 de 150 elementos</span>
+            </div>
+            <div class="pagination-nav">
+                <button type="button" id="prevPageBtn" class="btn btn-default pagination-btn">
+                    <span class="glyphicon glyphicon-chevron-left"></span>
+                    Anterior
+                </button>
+                <span class="current-page">
+                    Página <span id="currentPageNum">1</span> de <span id="totalPagesNum">5</span>
+                </span>
+                <button type="button" id="nextPageBtn" class="btn btn-default pagination-btn">
+                    Siguiente
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón regresar arriba -->
+    <span class="ir-arriba icon-arrow-up2">
+        <span class="glyphicon glyphicon-chevron-up"></span>
+    </span>
+
+    <!-- Modal de Eliminación de PAT -->
+    <div id="deleteModal" class="modal-overlay" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Eliminar PAT</h3>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message">
+                    <div class="warning-text">
+                        <p><strong>¿Está seguro que desea eliminar este PAT?</strong></p>
+                        <p class="warning-note">
+                            <strong style="color: #dc3545;">
+                                La tutoría grupal asociada a este PAT también se eliminará.
+                            </strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="delete-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Carrera:</span>
+                        <span id="deleteCarrera" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tutor:</span>
+                        <span id="deleteTutor" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Período:</span>
+                        <span id="deletePeriodo" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Grupo:</span>
+                        <span id="deleteGrupo" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Estado:</span>
+                        <span id="deleteEstado" class="detail-value"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Fecha de creación:</span>
+                        <span id="deleteFecha" class="detail-value"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="closeDeleteModal()">
+                    <span class="glyphicon glyphicon-remove"></span> Cancelar
+                </button>
+                @if (!esDirector)
+                {
+                <form id="deleteForm" method="post" style="display: inline;" onsubmit="return handleDeletePAT(event)">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-action btn-danger">
+                        <span class="glyphicon glyphicon-trash"></span> Eliminar
+                    </button>
+                </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Crear PATs -->
+    @if (ViewBag.IdNivel == 4)
+    {
+        <div id="crearPATsModal" class="modal-overlay" style="display: none;">
+            <div class="modal-container" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <span class="glyphicon glyphicon-plus"></span>
+                        Crear PATs para Tutores
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeCrearPATsModal()">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Filtro de Carrera -->
+                    <div class="row" style="margin-bottom: 16px;">
+                        <div class="col-md-4">
+                            <label for="filtro-carrera-crear" style="font-weight:600;">Filtrar por carrera:</label>
+                            <select id="filtro-carrera-crear" class="form-control">
+                                <option value="">Todas las carreras</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="loading-tutores" style="text-align: center; padding: 20px;">
+                        <span class="glyphicon glyphicon-refresh glyphicon-spin"></span>
+                        Cargando tutores disponibles...
+                    </div>
+                    <div id="tutores-container" style="display: none;">
+                        <div class="info-periodo" style="background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+                            <h5 style="margin: 0 0 8px 0; color: #1976d2;">
+                                <span class="glyphicon glyphicon-info-sign"></span>
+                                Información del Período Actual
+                            </h5>
+                            <p style="margin: 0; color: #424242;" id="info-periodo-texto"></p>
+                        </div>
+                        <div id="sin-tutores" style="display: none; text-align: center; padding: 20px;">
+                            <span class="glyphicon glyphicon-ok-circle" style="font-size: 48px; color: #4caf50; margin-bottom: 16px; display: block;"></span>
+                            <h4 style="color: #4caf50; margin-bottom: 8px;">¡Excelente!</h4>
+                            <p style="color: #666;">Todos los tutores con grupos asignados ya tienen sus PATs creados para el período actual.</p>
+                        </div>
+                        <div id="lista-tutores">
+                            <h5 style="margin-bottom: 16px; color: #333;">
+                                <span class="glyphicon glyphicon-list"></span>
+                                Tutores Disponibles (con grupos asignados pero sin PATs):
+                            </h5>
+                            <div style="margin-bottom: 16px;">
+                                <label style="font-weight: normal; margin-bottom: 0;">
+                                    <input type="checkbox" id="selectAllTutores" style="margin-right: 8px;">
+                                    Seleccionar todos los tutores
+                                </label>
+                            </div>
+                            <div id="tutores-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 6px; padding: 0;">
+                                <!-- Aquí se cargarán los tutores dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" id="modal-footer-tutores" style="display: none;">
+                    <button type="button" class="btn btn-danger" onclick="closeCrearPATsModal()">
+                        <span class="glyphicon glyphicon-remove"></span> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnCrearPATs" onclick="crearPATsSeleccionados()">
+                        <span class="glyphicon glyphicon-plus"></span> Crear PATs
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Modal para revisión de PATs -->
+    <div class="modal fade" id="modal-revision-pats" tabindex="-1" role="dialog" aria-labelledby="modalRevisionTitle" aria-hidden="true">
+        <div class="modal-dialog" style="max-width: 1100px; width: 95%;" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalRevisionTitle">
+                        <span class="glyphicon glyphicon-eye-open"></span> PATs pendientes de revisión
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <!-- Filtro de Carrera solo para Master
+                    @if (ViewBag.IdNivel == 4)
+                    {
+                        <div class="row" style="margin-bottom: 16px;">
+                            <div class="col-md-4">
+                                <label for="filtro-carrera-revision" style="font-weight:600;">Filtrar por carrera:</label>
+                                <select id="filtro-carrera-revision" class="form-control">
+                                    <option value="">Todas las carreras</option>
+                                </select>
+                            </div>
+                        </div>
+                    } -->
+                    <div class="row" style="margin-bottom: 16px;">
+                        <div class="col-md-12 text-right">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-default btn-sm" id="btnOrdenarModalAZ" title="Ordenar A-Z">
+                                    <span class="glyphicon glyphicon-sort-by-alphabet"></span> A-Z
+                                </button>
+                                <button type="button" class="btn btn-default btn-sm" id="btnOrdenarModalZA" title="Ordenar Z-A">
+                                    <span class="glyphicon glyphicon-sort-by-alphabet-alt"></span> Z-A
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="revision-pats-loading" class="text-center" style="padding: 20px;">
+                        <span class="glyphicon glyphicon-refresh glyphicon-spin"></span> Cargando PATs pendientes...
+                    </div>
+                    <div id="revision-pats-content" style="display: none;">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Grupo</th>
+                                    <th>Carrera</th>
+                                    <th>Tutor</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revision-pats-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para comentario (Bootstrap 3) -->
+    <div class="modal fade" id="modal-comentario-pat" tabindex="-1" role="dialog" aria-labelledby="modalComentarioPATTitle" aria-hidden="true">
+        <div class="modal-dialog" style="max-width:500px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalComentarioPATTitle" style="display:inline-block;">
+                        <i class="glyphicon glyphicon-comment" style="color: #f0ad4e; margin-right: 12px;"></i>
+                        Añadir comentarios-lista al tutor
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="comentario-pat-id" value="" />
+                    <div style="margin-bottom: 10px;">
+                        <strong>Grupo:</strong> <span id="comentario-pat-grupo"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="comentario-pat-text">Comentario para el tutor:</label>
+                        <textarea id="comentario-pat-text" class="form-control" rows="4" maxlength="500" placeholder="Escriba su comentario aquí..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="cerrarModalComentarioPAT()">Cancelar</button>
+                    @if (!esDirector)
+                    {
+                    <button type="button" class="btn btn-warning" onclick="enviarComentarioPAT()">
+                        <span class="glyphicon glyphicon-send"></span> Guardar
+                    </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver comentarios anteriores (Bootstrap 3) -->
+    <div class="modal fade" id="modal-comentarios-anteriores" tabindex="-1" role="dialog" aria-labelledby="modalComentariosAnterioresTitle" aria-hidden="true">
+        <div class="modal-dialog" style="max-width:700px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalComentariosAnterioresTitle" style="display:inline-block;">
+                        <i class="glyphicon glyphicon-list-alt" style="color: #5bc0de; margin-right: 12px;"></i>
+                        Comentarios anteriores
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="comentarios-anteriores-pat-id" value="" />
+                    <div style="margin-bottom: 15px;">
+                        <strong>Grupo:</strong> <span id="comentarios-anteriores-grupo"></span>
+                    </div>
+
+                    <!-- Loading indicator -->
+                    <div id="comentarios-loading" style="text-align: center; padding: 20px;">
+                        <i class="glyphicon glyphicon-refresh glyphicon-spin" style="font-size: 24px; color: #5bc0de;"></i>
+                        <p>Cargando comentarios...</p>
+                    </div>
+
+                    <!-- Contenedor de comentarios -->
+                    <div id="comentarios-container" style="display: none;">
+                        <div id="comentarios-lista">
+                            <!-- Los comentarios se cargarán aquí dinámicamente -->
+                        </div>
+
+                        <!-- Mensaje cuando no hay comentarios -->
+                        <div id="no-comentarios" style="display: none; text-align: center; padding: 20px; color: #999;">
+                            <i class="glyphicon glyphicon-info-sign" style="font-size: 24px; margin-bottom: 10px;"></i>
+                            <p>No hay comentarios anteriores para este PAT.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="cerrarModalComentariosAnteriores()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para generar reportes -->
+    <div class="modal fade" id="modal-generar-excel" tabindex="-1" role="dialog" aria-labelledby="modalExcelTitle" aria-hidden="true">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalExcelTitle">
+                        <span class="glyphicon glyphicon-download-alt"></span> Generar reportes Excel
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <!-- ============ Selector de Año + Cuatris ============ -->
+                    <div id="reporte-scope" style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px;">
+                        <div style="display:flex; flex-wrap:wrap; align-items:flex-start; gap:24px;">
+                            <div>
+                                <label for="reporte-anio" style="font-weight:600; display:block; margin-bottom:6px;">Año del reporte:</label>
+                                <select id="reporte-anio" class="form-control" style="min-width:140px;"></select>
+                                <small id="reporte-anio-hint" class="text-muted" style="display:block; margin-top:4px;"></small>
+                            </div>
+                            <div style="flex:1; min-width:280px;">
+                                <label style="font-weight:600; display:block; margin-bottom:6px;">Cuatrimestres a incluir:</label>
+                                <div style="display:flex; flex-wrap:wrap; gap:14px;">
+                                    <label style="font-weight:normal; margin:0;"><input type="checkbox" class="reporte-cuatri" value="1"> Enero - Abril</label>
+                                    <label style="font-weight:normal; margin:0;"><input type="checkbox" class="reporte-cuatri" value="2"> Mayo - Agosto</label>
+                                    <label style="font-weight:normal; margin:0;"><input type="checkbox" class="reporte-cuatri" value="3"> Septiembre - Diciembre</label>
+                                </div>
+                                <small class="text-muted" style="display:block; margin-top:6px;">Si seleccionas varios cuatrimestres, se descargará un <strong>.zip</strong> con un Excel por cuatri.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-muted">Seleccione el tipo de reporte que desea generar:</p>
+
+                    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                        <!-- Reporte de actividades -->
+                        <div class="panel panel-default">
+                            <div class="panel-heading" role="tab" id="headingActividades">
+                                <h4 class="panel-title">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div>
+
+                                            <strong>Reporte de actividades por PAT</strong>
+                                        </div>
+                                        <button type="button" class="btn btn-success btn-sm" onclick="generarReporteActividades()">
+                                            <span class="glyphicon glyphicon-download-alt"></span> Descargar
+                                        </button>
+                                    </div>
+                                </h4>
+                            </div>
+                            <div class="panel-body">
+                                <p>
+                                    <small class="text-muted">
+                                        Genera una tabla Excel con todas las actividades de todos los PATs de la carrera. Solo aparecen PATs que posean actividades ya establecidas, no aparecen aquellos PATs que estén vacíos.
+                                        <br><strong>Estructura:</strong> Grado | Grupo | Tutor | Tipo de actividad | Actividad | Comentarios | Estado de realización
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Reporte de gráficos -->
+                        <div class="panel panel-default">
+                            <div class="panel-heading" role="tab" id="headingGraficos">
+                                <h4 class="panel-title">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div>
+                                            <strong>Reporte de estadísticas y gráficos</strong>
+                                        </div>
+                                        <button type="button" class="btn btn-success btn-sm" onclick="generarReporteGraficos()">
+                                            <span class="glyphicon glyphicon-download-alt"></span> Descargar
+                                        </button>
+                                    </div>
+                                </h4>
+                            </div>
+                            <div class="panel-body">
+                                <p>
+                                    <small class="text-muted">
+                                        Genera gráficos de barras Excel con estadísticas de actividades organizadas para visualización.
+                                        <br><strong>Gráfico 1:</strong> Actividades registradas por PAT
+                                        <br><strong>Gráfico 2:</strong> Actividades realizadas por PAT
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Reporte de alumnos vulnerables -->
+                        <div class="panel panel-default">
+                            <div class="panel-heading" role="tab" id="headingVulnerables">
+                                <h4 class="panel-title">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div>
+                                            <strong>Reporte de alumnos vulnerables</strong>
+                                        </div>
+                                        <button type="button" class="btn btn-success btn-sm" onclick="generarReporteVulnerables()">
+                                            <span class="glyphicon glyphicon-download-alt"></span> Descargar
+                                        </button>
+                                    </div>
+                                </h4>
+                            </div>
+                            <div class="panel-body">
+                                <p>
+                                    <small class="text-muted">
+                                        Genera estadísticas detalladas sobre alumnos vulnerables organizadas para análisis.
+                                        <br><strong>Gráfico 1:</strong> Alumnos vulnerables por grupo
+                                        <br><strong>Gráfico 2:</strong> Alumnos por tipo de vulnerabilidad (Económico, Académico, Personal)
+                                        <br><strong>Resumen:</strong> Estadísticas generales y porcentajes
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reporte de notas de revisión PAT -->
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingNotasPAT">
+                            <h4 class="panel-title">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div>
+                                        <strong>Reporte de comentarios de revisión PAT</strong>
+                                    </div>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="generarReporteNotasPAT()">
+                                        <span class="glyphicon glyphicon-download-alt"></span> Descargar
+                                    </button>
+                                </div>
+                            </h4>
+                        </div>
+                        <div class="panel-body">
+                            <p>
+                                <small class="text-muted">
+                                    Tabla con todas los comentarios de revisión agrupadas por tutor y PAT. Incluye fecha, autor y contenido de cada comentario.
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+
+
+
+
+
+                    <div id="excel-loading" class="text-center" style="display: none; padding: 20px;">
+                        <span class="glyphicon glyphicon-refresh glyphicon-spin"></span> <span id="excel-loading-text">Generando archivo Excel...</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span> Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    @Html.AntiForgeryToken()
+
+    <!-- Modal de Aprobación de PAT -->
+    <div class="modal-overlay" id="modal-aprobar-pat" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="glyphicon glyphicon-ok-circle" style="color: #28a745; margin-right: 12px;"></i>
+                    Aprobar Plan de Acción Tutorial
+                </h3>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message" style="background: #e7f5e7; border-color: #b8e6b8;">
+                    <div class="warning-icon" style="color: #28a745;">
+                        <i class="glyphicon glyphicon-info-sign"></i>
+                    </div>
+                    <div class="warning-text">
+                        <p><strong>¿Está seguro de aprobar este PAT?</strong></p>
+                        <p class="warning-note">Una vez aprobado, el PAT cambiará su estado y el tutor podrá agregar evidencias.</p>
+                    </div>
+                </div>
+
+                <div class="delete-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Grupo:</span>
+                        <span class="detail-value" id="pat-grupo-aprobar">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Carrera:</span>
+                        <span class="detail-value" id="pat-carrera-aprobar">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tutor:</span>
+                        <span class="detail-value" id="pat-tutor-aprobar">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Período:</span>
+                        <span class="detail-value" id="pat-periodo-aprobar">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Estado actual:</span>
+                        <span class="detail-value" id="pat-estado-aprobar" style="color: #ffc107; font-weight: 600;">En revisión</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="closeAprobarModal()">
+                    <span class="glyphicon glyphicon-remove"></span> Cancelar
+                </button>
+                @if (!esDirector)
+                {
+                <button type="button" class="btn-confirm-approve" onclick="confirmarAprobarPAT()" style="padding: 10px 20px; border: none; background: #28a745; color: white; border-radius: 4px; font-weight: 500; cursor: pointer;">
+                    <i class="glyphicon glyphicon-ok"></i> Confirmar Aprobación
+                </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Rechazo de PAT -->
+    <div class="modal-overlay" id="modal-rechazar-pat" style="display: none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="glyphicon glyphicon-remove-circle" style="color: #dc3545; margin-right: 12px;"></i>
+                    Rechazar Plan de Acción Tutorial
+                </h3>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message" style="background: #f8d7da; border-color: #f5c6cb;">
+                    <div class="warning-icon" style="color: #dc3545;">
+                        <i class="glyphicon glyphicon-exclamation-sign"></i>
+                    </div>
+                    <div class="warning-text">
+                        <p><strong>¿Está seguro de rechazar este PAT?</strong></p>
+                        <p class="warning-note">Una vez rechazado, el PAT cambiará su estado y deberá ser revisado nuevamente por el tutor responsable.</p>
+                    </div>
+                </div>
+
+                <div class="delete-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Grupo:</span>
+                        <span class="detail-value" id="pat-grupo-rechazar">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Carrera:</span>
+                        <span class="detail-value" id="pat-carrera-rechazar">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tutor:</span>
+                        <span class="detail-value" id="pat-tutor-rechazar">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Período:</span>
+                        <span class="detail-value" id="pat-periodo-rechazar">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Estado actual:</span>
+                        <span class="detail-value" id="pat-estado-rechazar" style="color: #ffc107; font-weight: 600;">En revisión</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-danger" onclick="closeRechazarModal()">
+                    <i class="glyphicon glyphicon-remove"></i> Cancelar
+                </button>
+                @if (!esDirector)
+                {
+                <button type="button" class="btn-confirm-reject" onclick="confirmarRechazarPAT()" style="padding: 10px 20px; border: none; background: #dc3545; color: white; border-radius: 4px; font-weight: 500; cursor: pointer;">
+                    <i class="glyphicon glyphicon-ban-circle"></i> Confirmar Rechazo
+                </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+        // Variables para ordenamiento
+        let ordenActual = null; // 'asc', 'desc', o null
+
+        // ====================================================
+        // Variables globales para filtros persistentes
+        // ====================================================
+
+        // Recuperar filtros desde URL o localStorage al cargar la página
+        let currentSearch = '';
+        let activeFilters = {
+            carrera: [],
+            grado: [],
+            grupo: [],
+            periodo: [],
+            ano: [],
+            estado: [],
+            turno: []
+        };
+        let currentView = 'table'; // Solo vista de tabla
+
+        // Variables para paginación
+        let currentPage = 1;
+        let itemsPerPage = 30;
+        let totalItems = 0;
+        let totalPages = 0;
+        let filteredItems = [];
+
+        // Variables para ordenamiento
+        let currentSort = {
+            column: null,
+            direction: 'neutral' // 'asc', 'desc', 'neutral'
+        };
+
+        function sortTable(column) {
+            const tableBody = document.getElementById('patTableBody');
+            const rows = Array.from(tableBody.querySelectorAll('.pat-row'));
+            let direction = 'asc';
+            if (currentSort.column === column) {
+                direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            }
+            currentSort = { column, direction };
+
+            rows.sort((a, b) => {
+                let aValue = a.dataset[column] || '';
+                let bValue = b.dataset[column] || '';
+
+                // Eliminar espacios iniciales/finales antes de comparar
+                aValue = aValue.trim().toLowerCase();
+                bValue = bValue.trim().toLowerCase();
+
+                // Comparación especial para año y alumnos (numérico)
+                if (column === 'ano' || column === 'alumnos') {
+                    aValue = parseInt(aValue) || 0;
+                    bValue = parseInt(bValue) || 0;
+                }
+
+                if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // Limpiar el tbody y agregar las filas ordenadas
+            rows.forEach(row => tableBody.appendChild(row));
+
+            // Actualizar indicadores visuales
+            document.querySelectorAll('.sort-indicator').forEach(ind => ind.className = 'sort-indicator neutral');
+            document.querySelectorAll('.sortable-header').forEach(h => h.classList.remove('sorting'));
+            const indicator = document.getElementById('sort-' + column);
+            const header = document.querySelector('[data-sort="' + column + '"]');
+            if (indicator) indicator.className = 'sort-indicator ' + direction;
+            if (header) header.classList.add('sorting');
+        }
+
+        // ====================================================
+        // Funciones de persistencia de filtros
+        // ====================================================
+
+        function saveFiltersToURL() {
+            const params = new URLSearchParams();
+
+            // Guardar búsqueda
+            if (currentSearch.trim()) {
+                params.set('search', currentSearch);
+            }
+
+            // Guardar filtros activos
+            Object.keys(activeFilters).forEach(filterType => {
+                if (activeFilters[filterType].length > 0) {
+                    params.set(filterType, activeFilters[filterType].join(','));
+                }
+            });
+
+            // Guardar vista actual
+            params.set('view', currentView);
+
+            // Guardar página actual
+            if (currentPage > 1) {
+                params.set('page', currentPage);
+            }
+
+            // Actualizar URL sin recargar la página
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        function loadFiltersFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Cargar búsqueda
+            currentSearch = urlParams.get('search') || '';
+
+            // Cargar filtros
+            Object.keys(activeFilters).forEach(filterType => {
+                const paramValue = urlParams.get(filterType);
+                if (paramValue) {
+                    activeFilters[filterType] = paramValue.split(',').filter(v => v.trim());
+                }
+            });
+
+            // Cargar vista
+            currentView = urlParams.get('view') || 'table';
+
+            // Cargar página
+            currentPage = parseInt(urlParams.get('page')) || 1;
+        }
+
+        function applyFiltersFromURL() {
+            // Aplicar búsqueda
+            const searchInput = document.getElementById('patSearchInput');
+            if (searchInput && currentSearch) {
+                searchInput.value = currentSearch;
+                const clearBtn = document.getElementById('clearSearchBtn');
+                if (clearBtn) {
+                    clearBtn.style.display = 'block';
+                }
+            }
+
+            // Aplicar filtros a checkboxes
+            Object.keys(activeFilters).forEach(filterType => {
+                const values = activeFilters[filterType];
+
+                // Primero desmarcar todos los checkboxes de este filtro
+                const allCheckboxes = document.querySelectorAll(`input[type="checkbox"][id^="${filterType}_"]:not([data-action="select-all"])`);
+                allCheckboxes.forEach(cb => cb.checked = false);
+
+                // Marcar los checkboxes correspondientes a los valores activos
+                values.forEach(value => {
+                    const checkbox = document.querySelector(`input[type="checkbox"][value="${value}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+
+                // Determinar si marcar "Todos"
+                const selectAllCheckbox = document.querySelector(`[data-filter="${filterType}"][data-action="select-all"]`);
+                if (selectAllCheckbox) {
+                    if (filterType === 'estado') {
+                        // Para estado, "Todos" está marcado si están los 3 valores
+                        selectAllCheckbox.checked = values.length === 5 &&
+                            values.includes('Aprobado') &&
+                            values.includes('En progreso') &&
+                            values.includes('En revisión') &&
+                            values.includes('Rechazado') &&
+                            values.includes('Inactivo');
+                    } else {
+                        // Para otros filtros, "Todos" está marcado si no hay valores específicos
+                        selectAllCheckbox.checked = values.length === 0;
+                    }
+                }
+
+                // Actualizar botón de filtro
+                updateFilterButton(filterType, values, values.length);
+            });
+
+            // Aplicar vista
+            switchView(currentView);
+
+            // Aplicar filtros y paginación
+            filterAndSearchPATs();
+        }
+
+        // ====================================================
+        // Funciones del selector de vista
+        // ====================================================
+
+        function switchView(viewType) {
+            console.log('Vista fija en tabla');
+            currentView = 'table';
+
+            const tableContainer = document.getElementById('patTableContainer');
+
+            console.log('Elemento encontrado:', {
+                tableContainer: !!tableContainer
+            });
+
+            if (tableContainer) {
+                tableContainer.style.display = 'block';
+                console.log('Vista tabla activada');
+            }
+
+            // Reaplicar filtros
+            setTimeout(() => {
+                applyFiltersToCurrentView();
+                // Recargar turnos después para asegurar consistencia
+                cargarTurnosReales();
+                saveFiltersToURL();
+            }, 100);
+        }
+
+        function applyFiltersToCurrentView() {
+            applyFiltersToTable();
+        }
+
+        function applyFiltersToTable() {
+            const rows = document.querySelectorAll('.pat-row');
+            const filtered = [];
+
+            rows.forEach(row => {
+                let showRow = true;
+
+                // Aplicar filtro de búsqueda
+                if (currentSearch.trim()) {
+                    const searchText = currentSearch.toLowerCase();
+                    const rowText = (
+                        (row.dataset.carrera || '') + ' ' +
+                        (row.dataset.tutor || '') + ' ' +
+                        (row.dataset.grupo || '') + ' ' +
+                        (row.dataset.periodo || '') + ' ' +
+                        (row.dataset.ano || '') + ' ' +
+                        (row.dataset.estado || '') + ' ' +
+                        (row.dataset.turno || '')
+                    ).toLowerCase();
+
+                    if (!rowText.includes(searchText)) {
+                        showRow = false;
+                    }
+                }
+
+                // Aplicar filtros de dropdowns
+                if (showRow) {
+                    // ✅ CORRECCIÓN: Filtro carrera
+                    if (activeFilters.carrera.length > 0 && showRow) {
+                        const rowCarrera = row.dataset.carrera || '';
+                        // Si hay filtros activos de carrera, debe coincidir con alguno
+                        if (!activeFilters.carrera.includes(rowCarrera)) {
+                            showRow = false;
+                        }
+                    }
+
+                    // Filtro grado
+                    if (activeFilters.grado.length > 0 && showRow) {
+                        const gradoMatch = (row.dataset.grado || '').match(/\d+/);
+                        const rowGrado = gradoMatch ? gradoMatch[0] : '';
+                        if (!activeFilters.grado.includes(rowGrado)) {
+                            showRow = false;
+                        }
+                    }
+
+                    // Filtro grupo
+                    if (activeFilters.grupo.length > 0 && showRow) {
+                        const rowGrupo = row.dataset.grupo || '';
+                        if (!activeFilters.grupo.includes(rowGrupo)) {
+                            showRow = false;
+                        }
+                    }
+
+                    // Filtro período
+                    if (activeFilters.periodo.length > 0 && showRow) {
+                        const rowPeriodo = row.dataset.periodo || '';
+                        if (!activeFilters.periodo.includes(rowPeriodo)) {
+                            showRow = false;
+                        }
+                    }
+
+                    // Filtro año
+                    if (activeFilters.ano.length > 0 && showRow) {
+                        const rowAno = row.dataset.ano || '';
+                        if (!activeFilters.ano.includes(rowAno)) {
+                            showRow = false;
+                        }
+                    }
+
+                    // Filtro estado
+                    if (activeFilters.estado.length > 0 && showRow) {
+                        const rowEstado = row.dataset.estado || '';
+                        if (!activeFilters.estado.includes(rowEstado)) {
+                            showRow = false;
+                        }
+                    }
+
+                    // Filtro turno
+                    if (activeFilters.turno.length > 0 && showRow) {
+                        const rowTurno = row.dataset.turno || '';
+                        if (!activeFilters.turno.includes(rowTurno)) {
+                            showRow = false;
+                        }
+                    }
+                }
+
+                if (showRow) {
+                    filtered.push(row);
+                }
+            });
+
+            // Aplicar paginación a tabla
+            applyPaginationToTable(filtered);
+        }
+
+        function applyPaginationToTable(filteredRows) {
+            filteredItems = filteredRows;
+            totalItems = filteredRows.length;
+            totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            // Ajustar página actual si es necesario
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            }
+            if (currentPage < 1) {
+                currentPage = 1;
+            }
+
+            // Ocultar todas las filas primero
+            const allRows = document.querySelectorAll('.pat-row');
+            allRows.forEach(row => {
+                row.style.display = 'none';
+                row.classList.add('hidden');
+            });
+
+            // Mostrar solo las filas de la página actual
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const rowsToShow = filteredRows.slice(startIndex, endIndex);
+
+            rowsToShow.forEach(row => {
+                row.style.display = 'table-row';
+                row.classList.remove('hidden');
+            });
+
+            // Actualizar controles de paginación
+            updatePaginationControls();
+            updateResultsDisplay();
+        }
+
+        // ====================================================
+        // FUNCIONES PARA OPCIÓN "TODOS"
+        // ====================================================
+
+        function handleSelectAllChange(checkbox) {
+            const filterType = checkbox.dataset.filter;
+            const dropdownId = 'dropdown' + filterType.charAt(0).toUpperCase() + filterType.slice(1);
+            const dropdown = document.getElementById(dropdownId);
+            const otherCheckboxes = dropdown.querySelectorAll('input[type="checkbox"]:not([data-action="select-all"])');
+
+            if (checkbox.checked) {
+                // Si "Todos" se marca, desmarcar todos los demás
+                otherCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                    // Remover del filtro activo
+                    const index = activeFilters[filterType].indexOf(cb.value);
+                    if (index > -1) {
+                        activeFilters[filterType].splice(index, 1);
+                    }
+                });
+
+                // Si es "Ninguna carrera", el filtro debe ocultar todas las carreras
+                // pero para los demás filtros, limpiar el filtro (mostrar todos)
+                activeFilters[filterType] = [];
+                updateFilterButton(filterType, [], 0);
+            } else {
+                // Si "Todos" se desmarca, no hacer nada especial
+                // El usuario puede seleccionar elementos individuales
+            }
+
+            filterAndSearchPATs();
+        }
+
+
+        function handleIndividualFilterChange(checkbox) {
+            const filterType = getFilterTypeFromCheckbox(checkbox.id);
+            const value = checkbox.value;
+            const selectAllCheckbox = document.querySelector(`[data-filter="${filterType}"][data-action="select-all"]`);
+
+            if (checkbox.checked) {
+                // Desmarcar "Todos" si se selecciona un elemento individual
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = false;
+                }
+
+                // Para el caso de carrera, deseleccionar todas las demás carreras
+                if (filterType === 'carrera') {
+                    const carreraCheckboxes = document.querySelectorAll(`input[type="checkbox"][id^="carrera_"]:not([data-action="select-all"])`);
+                    carreraCheckboxes.forEach(cb => {
+                        if (cb !== checkbox) {
+                            cb.checked = false;
+                            const cbValue = cb.value;
+                            const cbIndex = activeFilters[filterType].indexOf(cbValue);
+                            if (cbIndex > -1) {
+                                activeFilters[filterType].splice(cbIndex, 1);
+                            }
+                        }
+                    });
+                }
+
+                // Agregar al filtro activo
+                if (!activeFilters[filterType].includes(value)) {
+                    activeFilters[filterType].push(value);
+                }
+            } else {
+                // Remover del filtro activo
+                const index = activeFilters[filterType].indexOf(value);
+                if (index > -1) {
+                    activeFilters[filterType].splice(index, 1);
+                }
+
+                // Si no hay filtros individuales, marcar "Todos"
+                if (activeFilters[filterType].length === 0 && selectAllCheckbox) {
+                    selectAllCheckbox.checked = true;
+
+                    // Para el caso específico de carrera, siempre asegurar que "Ninguna carrera" esté seleccionado
+                    // cuando no hay otras carreras seleccionadas
+                    if (filterType === 'carrera') {
+                        document.getElementById('carrera_todos').checked = true;
+                    }
+                }
+            }
+
+            updateFilterButton(filterType, activeFilters[filterType], activeFilters[filterType].length);
+            filterAndSearchPATs();
+        }
+
+        // ====================================================
+        // FUNCIONES PRINCIPALES (MODIFICADAS)
+        // ====================================================
+
+        function filterAndSearchPATs(preserveSort = false) {
+            // Resetear a primera página cuando se cambian filtros
+            currentPage = 1;
+
+            // Resetear ordenamiento cuando se aplican filtros (a menos que se preserve explícitamente)
+            if (!preserveSort) {
+                resetSorting();
+            }
+
+            // Aplicar filtros según la vista actual
+            applyFiltersToCurrentView();
+
+            // Actualizar display de filtros activos
+            updateActiveFiltersDisplay();
+
+            // Guardar filtros en URL
+            saveFiltersToURL();
+
+
+
+            console.log(`Paginación: Página ${currentPage}/${totalPages}, Total filtrado: ${totalItems}, Por página: ${itemsPerPage}`);
+        }
+
+        // Función para resetear el ordenamiento
+        function resetSorting() {
+            currentSort = {
+                column: null,
+                direction: 'neutral'
+            };
+
+            // Resetear indicadores de tabla y headers
+            const allIndicators = document.querySelectorAll('.sort-indicator');
+            const allHeaders = document.querySelectorAll('.sortable-header');
+            allIndicators.forEach(ind => {
+                ind.className = 'sort-indicator neutral';
+            });
+            allHeaders.forEach(h => {
+                h.classList.remove('sorting');
+            });
+
+            // Resetear botones de cards
+            const allButtons = document.querySelectorAll('.sort-btn');
+            allButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.querySelector('.sort-icon').textContent = '⇅';
+            });
+        }
+
+        function updateResultsDisplay() {
+            // Mostrar mensaje de sin resultados si es necesario
+            const emptyState = document.getElementById('patNoResults');
+            if (emptyState) {
+                if (filteredItems.length === 0) {
+                    emptyState.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'none';
+                }
+            }
+
+            // Destacar texto de búsqueda solo en elementos visibles
+            if (currentSearch.trim() && currentSearch.length >= 2) {
+                highlightSearchText();
+            } else {
+                removeHighlight();
+            }
+        }
+
+        // ====================================================
+        // FUNCIONES AUXILIARES (SIN CAMBIOS MAYORES)
+        // ====================================================
+
+        function updatePaginationControls() {
+            const simplePagination = document.getElementById('simplePagination');
+            const paginationInfo = document.getElementById('paginationInfo');
+            const currentPageNum = document.getElementById('currentPageNum');
+            const totalPagesNum = document.getElementById('totalPagesNum');
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+
+            if (!simplePagination) return;
+
+            // Mostrar paginación solo si hay más de 30 elementos
+            if (totalItems > itemsPerPage) {
+                simplePagination.style.display = 'block';
+            } else {
+                simplePagination.style.display = 'none';
+                return;
+            }
+
+            // Actualizar información
+            const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+            if (paginationInfo) {
+                paginationInfo.textContent = `Mostrando ${startItem}-${endItem} de ${totalItems} elementos`;
+            }
+
+            if (currentPageNum) {
+                currentPageNum.textContent = currentPage;
+            }
+
+            if (totalPagesNum) {
+                totalPagesNum.textContent = totalPages;
+            }
+
+            // Actualizar estado de botones
+            if (prevBtn) {
+                prevBtn.disabled = currentPage === 1;
+            }
+
+            if (nextBtn) {
+                nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+            }
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            applyFiltersToCurrentView();
+            saveFiltersToURL();
+            // scrollToTop();
+        }
+
+        function scrollToTop() {
+            const container = document.getElementById('patTableContainer');
+            if (container) {
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // ====================================================
+        // FUNCIONES DEL MODAL (SIN CAMBIOS)
+        // ====================================================
+
+        function openDeleteModal(id, carrera, tutor, periodo, grupo, fecha, year, estado) {
+            document.getElementById('deleteForm').action = '@Url.Action("EliminarPAT")/' + id;
+            document.getElementById('deleteCarrera').textContent = carrera;
+            document.getElementById('deleteTutor').textContent = tutor;
+            document.getElementById('deletePeriodo').textContent = periodo + ' ' + year;
+            document.getElementById('deleteGrupo').textContent = grupo;
+            document.getElementById('deleteEstado').textContent = estado;
+            document.getElementById('deleteFecha').textContent = fecha;
+            document.getElementById('deleteModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // ====================================================
+        // FUNCIONES DEL MODAL CREAR PATs
+        // ====================================================
+
+        function openCrearPATsModal() {
+            document.getElementById('crearPATsModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            cargarTutoresSinPAT();
+        }
+
+        function closeCrearPATsModal() {
+            document.getElementById('crearPATsModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            // Limpiar contenido
+            document.getElementById('loading-tutores').style.display = 'block';
+            document.getElementById('tutores-container').style.display = 'none';
+            document.getElementById('modal-footer-tutores').style.display = 'none';
+            // Resetear filtro de carrera
+            $('#filtro-carrera-crear').val('').empty().append('<option value="">Todas las carreras</option>');
+            // Limpiar datos globales
+            window._tutoresSinPAT = null;
+        }
+
+        function cargarTutoresSinPAT() {
+            // Mostrar loading
+            document.getElementById('loading-tutores').style.display = 'block';
+            document.getElementById('tutores-container').style.display = 'none';
+
+            $.get('@Url.Action("ObtenerTutoresSinPAT", "AsignarAsesores")', function(response) {
+                document.getElementById('loading-tutores').style.display = 'none';
+                document.getElementById('tutores-container').style.display = 'block';
+
+                if (response.success) {
+                    // Mostrar información del período
+                    document.getElementById('info-periodo-texto').textContent =
+                        `Creando PATs para el período: ${response.periodoActual} ${response.añoActual}`;
+
+                    if (response.tutores && response.tutores.length > 0) {
+                        // Guardar tutores globalmente para filtrado
+                        window._tutoresSinPAT = response.tutores;
+
+                        // Poblar filtro de carreras
+                        poblarFiltroCarrerasCrear(response.tutores);
+
+                        // Mostrar lista de tutores
+                        mostrarListaTutoresFiltrados();
+                        document.getElementById('modal-footer-tutores').style.display = 'block';
+                    } else {
+                        // No hay tutores sin PAT
+                        document.getElementById('sin-tutores').style.display = 'block';
+                        document.getElementById('lista-tutores').style.display = 'none';
+                    }
+                } else {
+                    alert('Error al cargar tutores: ' + (response.message || 'Error desconocido'));
+                    closeCrearPATsModal();
+                }
+            }).fail(function() {
+                alert('Error de conexión al cargar tutores');
+                closeCrearPATsModal();
+            });
+        }
+
+        // Poblar filtro de carreras para crear PATs
+        function poblarFiltroCarrerasCrear(tutores) {
+            var carreras = [];
+            tutores.forEach(function(tutor) {
+                if (Array.isArray(tutor.Grupos)) {
+                    tutor.Grupos.forEach(function(grupo) {
+                        var nombreCarrera = grupo.NombreCarrera || (grupo.Carrera && grupo.Carrera.Nombre) || grupo.Carrera;
+                        if (nombreCarrera && carreras.indexOf(nombreCarrera) === -1) {
+                            carreras.push(nombreCarrera);
+                        }
+                    });
+                }
+            });
+
+            var select = $('#filtro-carrera-crear');
+            select.empty();
+            select.append('<option value="">Todas las carreras</option>');
+            carreras.sort().forEach(function(carrera) {
+                select.append('<option value="' + carrera + '">' + carrera + '</option>');
+            });
+
+            // Evento de filtro
+            select.off('change').on('change', function() {
+                mostrarListaTutoresFiltrados();
+            });
+        }
+
+        // Mostrar lista de tutores filtrada por carrera
+        function mostrarListaTutoresFiltrados() {
+            var tutores = window._tutoresSinPAT || [];
+            var filtroCarrera = $('#filtro-carrera-crear').val() || '';
+
+            var tutoresFiltrados = tutores;
+            if (filtroCarrera) {
+                tutoresFiltrados = tutores.filter(function(tutor) {
+                    return tutor.Grupos.some(function(grupo) {
+                        return grupo.NombreCarrera === filtroCarrera;
+                    });
+                });
+            }
+
+            mostrarListaTutores(tutoresFiltrados);
+        }
+
+        function mostrarListaTutores(tutores) {
+            const tutoresList = document.getElementById('tutores-list');
+            const filtroCarrera = $('#filtro-carrera-crear').val() || '';
+            let html = '';
+
+            tutores.forEach(function(tutor, index) {
+                // Filtrar grupos según carrera seleccionada
+                let gruposMostrar = tutor.Grupos;
+                if (filtroCarrera) {
+                    gruposMostrar = tutor.Grupos.filter(g => g.NombreCarrera === filtroCarrera);
+                }
+
+                const grupos = gruposMostrar.map(g => `${g.NombreGrupo} (${g.NombreCarrera})`).join(', ');
+
+                html += `
+                    <div class="tutor-item" style="padding: 12px; border-bottom: 1px solid #eee; ${index % 2 === 0 ? 'background: #f9f9f9;' : ''}">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" class="tutor-checkbox" value="${tutor.IdTutor}" id="tutor_${tutor.IdTutor}" style="margin: 0;">
+                            <label for="tutor_${tutor.IdTutor}" style="flex: 1; margin: 0; font-weight: normal; cursor: pointer;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 600; color: #333; margin-bottom: 4px;">
+                                            <span class="glyphicon glyphicon-user" style="margin-right: 6px; color: #1976d2;"></span>
+                                            ${tutor.NombreTutor}
+                                        </div>
+                                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">
+                                            <span class="glyphicon glyphicon-envelope" style="margin-right: 4px;"></span>
+                                            ${tutor.Email}
+                                        </div>
+                                        <div style="font-size: 12px; color: #888;">
+                                            <span class="glyphicon glyphicon-education" style="margin-right: 4px;"></span>
+                                            Grupos: ${grupos}
+                                        </div>
+                                    </div>
+                                    <div style="text-align: center; margin-left: 12px;">
+                                        <div style="background: #ff6b35; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">
+                                            ${filtroCarrera ? gruposMostrar.length : tutor.CantidadGrupos}
+                                        </div>
+                                        <div style="font-size: 10px; color: #666; margin-top: 2px;">PATs</div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+
+            tutoresList.innerHTML = html;
+
+            // Agregar evento para "Seleccionar todos"
+            document.getElementById('selectAllTutores').onchange = function() {
+                const checkboxes = document.querySelectorAll('.tutor-checkbox');
+                checkboxes.forEach(cb => cb.checked = this.checked);
+            };
+        }
+
+        function crearPATsSeleccionados() {
+            const checkboxes = document.querySelectorAll('.tutor-checkbox:checked');
+
+            if (checkboxes.length === 0) {
+                alert('Por favor, seleccione al menos un tutor para crear PATs.');
+                return;
+            }
+
+            const tutorIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            const btnCrear = document.getElementById('btnCrearPATs');
+
+            // Deshabilitar botón y mostrar loading
+            btnCrear.disabled = true;
+            btnCrear.innerHTML = '<span class="glyphicon glyphicon-refresh glyphicon-spin"></span> Creando...';
+
+            // Crear FormData
+            const formData = new FormData();
+            formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+            tutorIds.forEach(function(id, index) {
+                formData.append(`tutorIds[${index}]`, id);
+            });
+
+            $.ajax({
+                url: '@Url.Action("CrearPATsManuales", "AsignarAsesores")',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        alert(`¡Éxito! ${response.message}`);
+                        closeCrearPATsModal();
+                        // Recargar la página para mostrar los nuevos PATs
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (response.message || 'No se pudieron crear los PATs'));
+                    }
+                },
+                error: function() {
+                    alert('Error de conexión al crear PATs');
+                },
+                complete: function() {
+                    // Rehabilitar botón
+                    btnCrear.disabled = false;
+                    btnCrear.innerHTML = '<span class="glyphicon glyphicon-plus"></span> Crear PATs';
+                }
+            });
+        }
+
+        // ====================================================
+        // FUNCIONES DE DROPDOWNS Y FILTROS (MODIFICADAS)
+        // ====================================================
+
+        function toggleDropdown(filterId) {
+            const dropdown = document.getElementById('dropdown' + filterId);
+            const allDropdowns = document.querySelectorAll('.filter-content');
+
+            // Cerrar todos los otros dropdowns
+            allDropdowns.forEach(d => {
+                if (d !== dropdown) {
+                    d.style.display = 'none';
+                }
+            });
+
+            // Toggle del dropdown actual
+            if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function closeAllDropdowns() {
+            const allDropdowns = document.querySelectorAll('.filter-content');
+            allDropdowns.forEach(d => {
+                d.style.display = 'none';
+            });
+        }
+
+        function updateFilterButton(filterType, selectedValues, count) {
+            const button = document.getElementById('btn' + filterType.charAt(0).toUpperCase() + filterType.slice(1));
+            const countSpan = document.getElementById('count' + filterType.charAt(0).toUpperCase() + filterType.slice(1));
+
+            if (countSpan) {
+                if (count === 0) {
+                    // Si es filtro de carrera, mostrar "Ninguna", de lo contrario "Todos"
+                    countSpan.textContent = filterType === 'carrera' ? '(Seleccione carrera)' : '(Todos)';
+                } else if (count === 1) {
+                    countSpan.textContent = `(${selectedValues[0]})`;
+                } else {
+                    countSpan.textContent = `(${count} seleccionados)`;
+                }
+            }
+        }
+
+        function updateActiveFiltersDisplay() {
+            const activeFiltersContainer = document.getElementById('activeFiltersDisplay');
+            const activeFiltersList = document.getElementById('activeFiltersList');
+
+            if (!activeFiltersContainer || !activeFiltersList) return;
+
+            // Verificar si hay filtros activos (excluyendo valores vacíos)
+            const hasActiveFilters = activeFilters.carrera.length > 0 ||
+                activeFilters.grado.length > 0 ||
+                activeFilters.grupo.length > 0 ||
+                activeFilters.periodo.length > 0 ||
+                activeFilters.ano.length > 0 ||
+                activeFilters.turno.length > 0 ||
+                (activeFilters.estado.length > 0 && activeFilters.estado.length < 5);
+
+            if (!hasActiveFilters) {
+                activeFiltersContainer.style.display = 'none';
+                return;
+            }
+
+            activeFiltersContainer.style.display = 'block';
+            activeFiltersList.innerHTML = '';
+
+            const filterNames = {
+                'carrera': 'Carrera',
+                'grado': 'Grado',
+                'grupo': 'Grupo',
+                'periodo': 'Período',
+                'ano': 'Año',
+                'estado': 'Estado',
+                'turno': 'Turno'
+            };
+
+            Object.keys(activeFilters).forEach(filterType => {
+                // Solo mostrar si hay valores específicos y no están todos seleccionados
+                if (activeFilters[filterType].length > 0) {
+                    if (filterType === 'estado' && activeFilters[filterType].length === 5) {
+                        return; // No mostrar si están todos los estados seleccionados
+                    }
+
+                    // Filtrar valores vacíos antes de mostrar
+                    const validValues = activeFilters[filterType].filter(value => value && value.trim() !== '');
+
+                    if (validValues.length > 0) {
+                        const filterDiv = document.createElement('div');
+                        filterDiv.className = 'active-filter-item';
+                        filterDiv.innerHTML = `
+                    <strong>${filterNames[filterType]}:</strong>
+                    ${validValues.map(value =>
+                            `<span class="filter-value-tag">${value}
+                            <button type="button" onclick="removeFilterValue('${filterType}', '${value}')" class="remove-filter-btn">×</button>
+                        </span>`
+                        ).join(' ')}
+                `;
+                        activeFiltersList.appendChild(filterDiv);
+                    }
+                }
+            });
+        }
+
+        function removeFilterValue(filterType, value) {
+            const index = activeFilters[filterType].indexOf(value);
+            if (index > -1) {
+                activeFilters[filterType].splice(index, 1);
+            }
+
+            // Desmarcar checkbox correspondiente por value
+            const checkbox = document.querySelector(`input[type="checkbox"][value="${value}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+
+            // Si no quedan filtros, marcar "Todos"
+            if (activeFilters[filterType].length === 0) {
+                const selectAllCheckbox = document.querySelector(`[data-filter="${filterType}"][data-action="select-all"]`);
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = true;
+                }
+            }
+
+            updateFilterButton(filterType, activeFilters[filterType], activeFilters[filterType].length);
+            filterAndSearchPATs();
+        }
+
+        function getFilterTypeFromCheckbox(checkboxId) {
+            if (checkboxId.startsWith('carrera_')) return 'carrera';
+            if (checkboxId.startsWith('estado_')) return 'estado';
+            if (checkboxId.startsWith('grado_')) return 'grado';
+            if (checkboxId.startsWith('grupo_')) return 'grupo';
+            if (checkboxId.startsWith('periodo_')) return 'periodo';
+            if (checkboxId.startsWith('ano_')) return 'ano';
+            if (checkboxId.startsWith('turno_')) return 'turno';
+            return null;
+        }
+
+
+
+        // ====================================================
+        // FUNCIONES DE POBLACIÓN DE DROPDOWNS (MODIFICADAS)
+        // ====================================================
+
+        function getUniqueFilterValues(filter) {
+            const elements = document.querySelectorAll('.pat-row');
+            const values = new Set();
+
+            elements.forEach(element => {
+                const value = element.dataset[filter];
+                if (value && value.trim()) {
+                    if (filter === 'grado') {
+                        const gradoMatch = value.match(/\d+/);
+                        if (gradoMatch) {
+                            values.add(gradoMatch[0]);
+                        }
+                    } else {
+                        values.add(value.trim());
+                    }
+                }
+            });
+
+            let sortedValues = Array.from(values);
+
+            if (filter === 'grado') {
+                sortedValues.sort((a, b) => {
+                    const numA = parseInt(a) || 0;
+                    const numB = parseInt(b) || 0;
+                    return numA - numB;
+                });
+            } else if (filter === 'ano') {
+                sortedValues.sort((a, b) => {
+                    const numA = parseInt(a) || 0;
+                    const numB = parseInt(b) || 0;
+                    return numB - numA;
+                });
+            } else if (filter === 'grupo') {
+                sortedValues.sort((a, b) => {
+                    return obtenerClaveOrdenamientoGrupo(a).localeCompare(obtenerClaveOrdenamientoGrupo(b));
+                });
+            } else {
+                sortedValues.sort();
+            }
+
+            return sortedValues;
+        }
+
+        function obtenerClaveOrdenamientoGrupo(nombreGrupo) {
+            if (!nombreGrupo) return "999Z";
+
+            try {
+                const match = nombreGrupo.match(/(\d+)([A-Z]+)$/);
+                if (match) {
+                    const grado = parseInt(match[1]);
+                    const letra = match[2];
+                    return `${grado.toString().padStart(3, '0')}${letra}`;
+                }
+
+                const gradoMatch = nombreGrupo.match(/\d+/);
+                const letraMatch = nombreGrupo.match(/[A-Z]+/);
+                const gradoFallback = gradoMatch ? parseInt(gradoMatch[0]) : 999;
+                const letraFallback = letraMatch ? letraMatch[0] : "Z";
+                return `${gradoFallback.toString().padStart(3, '0')}${letraFallback}`;
+            } catch {
+                return "999Z";
+            }
+        }
+
+        function populateDropdowns() {
+            const filterTypes = [];
+            const btnCarrera = document.getElementById('btnCarrera');
+            if (btnCarrera) {
+                filterTypes.push('carrera');
+            }
+            filterTypes.push('grado', 'grupo', 'periodo', 'ano');
+
+            filterTypes.forEach(filterType => {
+                const dropdown = document.getElementById('dropdown' + filterType.charAt(0).toUpperCase() + filterType.slice(1));
+                if (dropdown) {
+                    const optionsContainer = dropdown.querySelector('.filter-options');
+                    const values = getUniqueFilterValues(filterType);
+
+                    // Buscar el separador y agregar opciones después de él
+                    const separator = optionsContainer.querySelector('.filter-separator');
+                    if (separator) {
+                        // Remover opciones existentes después del separador
+                        let nextElement = separator.nextElementSibling;
+                        while (nextElement) {
+                            const elementToRemove = nextElement;
+                            nextElement = nextElement.nextElementSibling;
+                            elementToRemove.remove();
+                        }
+
+                        // Agregar nuevas opciones
+                        values.forEach(value => {
+                            const optionDiv = document.createElement('div');
+                            optionDiv.className = 'checkbox-option';
+
+                            const checkboxId = `${filterType}_${value.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')}`;
+                            optionDiv.innerHTML = `
+                        <input type="checkbox" id="${checkboxId}" value="${value}">
+                        <label for="${checkboxId}">${value}</label>
+                    `;
+
+                            optionsContainer.appendChild(optionDiv);
+                        });
+                    }
+                }
+            });
+        }
+
+        // ====================================================
+        // FUNCIONES DE RESALTADO DE TEXTO (SIN CAMBIOS)
+        // ====================================================
+
+        function highlightSearchText() {
+            if (!currentSearch.trim() || currentSearch.length < 2) return;
+
+            const elements = document.querySelectorAll('.pat-row:not(.hidden)');
+
+            elements.forEach(element => {
+                const textElements = element.querySelectorAll('.tutor-cell, .career-cell, .group-cell, .period-cell');
+
+                textElements.forEach(el => {
+                    const originalText = el.getAttribute('data-original-text') || el.textContent;
+                    el.setAttribute('data-original-text', originalText);
+
+                    const regex = new RegExp(`(${escapeRegExp(currentSearch)})`, 'gi');
+                    if (regex.test(originalText)) {
+                        el.innerHTML = originalText.replace(regex, '<mark style="background-color: #fff3cd; padding: 2px 4px; border-radius: 3px; font-weight: bold;">$1</mark>');
+                    }
+                });
+            });
+        }
+
+        function removeHighlight() {
+            const elements = document.querySelectorAll('.pat-row');
+
+            elements.forEach(element => {
+                const textElements = element.querySelectorAll('.tutor-cell, .career-cell, .group-cell, .period-cell');
+
+                textElements.forEach(el => {
+                    const originalText = el.getAttribute('data-original-text');
+                    if (originalText) {
+                        el.textContent = originalText;
+                        el.removeAttribute('data-original-text');
+                    }
+                });
+            });
+        }
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+        // ====================================================
+        // INICIALIZACIÓN
+        // ====================================================
+    // Función para inicializar sistema de filtros
+    function inicializarSistemaFiltros() {
+            console.log('Inicializando sistema de filtros PAT mejorado...');
+
+            // Cargar filtros desde URL
+            loadFiltersFromURL();
+
+            // Ocultar PATs inactivos por defecto
+
+
+            // Popular dropdowns
+            populateDropdowns();
+
+            // Event listeners para selector de vista (solo tabla)
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        if (tableViewBtn) { // Solo agregar si el elemento existe
+            console.log('Configurando event listener para vista tabla');
+            tableViewBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                switchView('table');
+            });
+        }
+
+            // Event delegation for filter buttons
+            document.querySelectorAll('.filter-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    let filterKey = btn.id.replace('btn', '');
+                    filterKey = filterKey.charAt(0).toUpperCase() + filterKey.slice(1);
+                    toggleDropdown(filterKey);
+                });
+            });
+
+            // Event listeners para checkboxes
+            document.addEventListener('change', function (e) {
+                if (e.target.type === 'checkbox') {
+                    if (e.target.dataset.action === 'select-all') {
+                        // Manejar checkbox "Todos"
+                        handleSelectAllChange(e.target);
+                    } else {
+                        // Manejar checkbox individual
+                        handleIndividualFilterChange(e.target);
+                    }
+                }
+            });
+
+            // Event listener para búsqueda
+            const searchInput = document.getElementById('patSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    currentSearch = this.value.trim();
+                    const clearBtn = document.getElementById('clearSearchBtn');
+                    if (clearBtn) {
+                        clearBtn.style.display = this.value.trim() ? 'block' : 'none';
+                    }
+                    filterAndSearchPATs();
+                });
+            }
+
+            // Event listener para limpiar búsqueda
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', function () {
+                    searchInput.value = '';
+                    currentSearch = '';
+                    clearSearchBtn.style.display = 'none';
+                    filterAndSearchPATs();
+                });
+            }
+
+            // Event listener para limpiar filtros
+            const clearBtn = document.getElementById('clearFiltersBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', clearAllFilters);
+            }
+
+            // Event listeners para paginación
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+
+            if (prevPageBtn) {
+                prevPageBtn.addEventListener('click', () => goToPage(currentPage - 1));
+            }
+
+            if (nextPageBtn) {
+                nextPageBtn.addEventListener('click', () => goToPage(currentPage + 1));
+            }
+
+            // Cerrar dropdowns al hacer clic fuera
+            document.addEventListener('click', function (e) {
+                // Only close dropdowns if click is outside any filter dropdown or filter button
+                if (!e.target.closest('.filter-dropdown') && !e.target.classList.contains('filter-btn')) {
+                    closeAllDropdowns();
+                }
+            });
+
+            // Cerrar modal al hacer clic fuera
+            const deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                deleteModal.addEventListener('click', function (e) {
+                    if (e.target === this) {
+                        closeDeleteModal();
+                    }
+                });
+            }
+
+            // Aplicar filtros desde URL
+            applyFiltersFromURL();
+
+            // Marcar todos los checkboxes "Todos" apropiadamente al inicializar
+            const selectAllCheckboxes = document.querySelectorAll('input[data-action="select-all"]');
+            selectAllCheckboxes.forEach(checkbox => {
+                const filterType = checkbox.dataset.filter;
+                if (filterType === 'estado') {
+                    // Para estado, verificar si son los valores por defecto
+                    const isDefault = activeFilters.estado.length === 2 &&
+                        activeFilters.estado.includes('Aprobado') &&
+                        activeFilters.estado.includes('En progreso');
+                    checkbox.checked = false; // Por defecto no está "Todos" marcado para estado
+                } else if (filterType === 'carrera') {
+                    // Para carrera, "Ninguna carrera" está marcado si no hay carreras específicas seleccionadas
+                    checkbox.checked = activeFilters[filterType].length === 0;
+                    // Asegurar que siempre esté marcado cuando no hay carreras seleccionadas
+                    if (activeFilters[filterType].length === 0) {
+                        checkbox.checked = true;
+                    }
+                } else {
+                    // Para otros filtros, "Todos" está marcado si no hay filtros específicos
+                    checkbox.checked = activeFilters[filterType].length === 0;
+                }
+            });
+
+            // Debug inicial
+            console.log('Sistema inicializado. Vista actual:', currentView);
+            console.log('Contenedores encontrados:', {
+                cards: !!document.getElementById('patCardsContainer'),
+                table: !!document.getElementById('patTableContainer')
+            });
+
+            console.log('Sistema de filtros PAT mejorado inicializado correctamente');
+    }
+
+
+
+    // --- 1. NUEVA FUNCIÓN PARA APLICAR FILTROS POR DEFECTO ---
+    function applyDefaultFilters() {
+        var fechaHoy = new Date();
+        var anoActual = fechaHoy.getFullYear().toString();
+        var mesActual = fechaHoy.getMonth() + 1;
+        var periodoActual = "";
+
+        // Determinar nombre del periodo actual (Igual que en BD)
+        if (mesActual >= 1 && mesActual <= 4) periodoActual = "ENERO - ABRIL";
+        else if (mesActual >= 5 && mesActual <= 8) periodoActual = "MAYO - AGOSTO";
+        else periodoActual = "SEPTIEMBRE - DICIEMBRE";
+
+        // A. Resetear visualmente todos los checkboxes primero
+        $('input[type="checkbox"]').prop('checked', false);
+
+        // B. Marcar Año Actual
+        var checkAno = $('input[type="checkbox"][value="' + anoActual + '"]');
+        if (checkAno.length) checkAno.prop('checked', true);
+
+        // C. Marcar Periodo Actual
+        $('input[type="checkbox"][id^="periodo_"]').each(function () {
+            if ($(this).val().toUpperCase() === periodoActual) {
+                $(this).prop('checked', true);
+            }
+        });
+
+        // D. Marcar Estados Activos (Todos EXCEPTO Inactivo)
+        $('#estado_finalizado').prop('checked', true); // Aprobado
+        $('#estado_progreso').prop('checked', true);   // En progreso
+        $('#estado_revision').prop('checked', true);   // En revisión
+        $('#estado_rechazado').prop('checked', true);  // Rechazado
+
+        // Inactivo y "Todos" se quedan desmarcados
+        $('#estado_inactivo').prop('checked', false);
+        $('#estado_todos').prop('checked', false);
+
+        // E. Actualizar variable global de filtros
+        activeFilters = {
+            carrera: [],
+            grado: [],
+            grupo: [],
+            periodo: [periodoActual],
+            ano: [anoActual],
+            estado: ['Aprobado', 'En progreso', 'En revisión', 'Rechazado', 'Cerrado'], // <--- Agregado Cerrado
+            turno: []
+        };
+
+        // F. Actualizar textos de botones
+        updateFilterButton('estado', activeFilters.estado, 4);
+        updateFilterButton('ano', activeFilters.ano, 1);
+        updateFilterButton('periodo', activeFilters.periodo, 1);
+        updateFilterButton('carrera', [], 0);
+        updateFilterButton('grado', [], 0);
+        updateFilterButton('grupo', [], 0);
+        updateFilterButton('turno', [], 0);
+
+        // G. Ejecutar filtro
+        filterAndSearchPATs();
+    }
+
+    // --- 2. FUNCIÓN LIMPIAR CORREGIDA ---
+    function clearAllFilters() {
+        // 1. Limpiar búsqueda
+        const searchInput = document.getElementById('patSearchInput');
+        if (searchInput) {
+            searchInput.value = '';
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (clearBtn) clearBtn.style.display = 'none';
+        }
+        currentSearch = '';
+
+        // 2. Resetear ordenamiento
+        ordenActual = null;
+        $('#btnOrdenarAZ').removeClass('active btn-primary').addClass('btn-default');
+        $('#btnOrdenarZA').removeClass('active btn-primary').addClass('btn-default');
+
+        // 3. EN LUGAR DE BORRAR TODO, APLICAMOS LOS DEFAULTS
+        applyDefaultFilters();
+    }
+        // Botón ir arriba
+    // Función para inicializar botón ir-arriba y ordenamiento
+    function inicializarScrollYOrdenamiento() {
+            $('.ir-arriba').click(function () {
+                $('body, html').animate({
+                    scrollTop: '0px'
+                }, 300);
+            });
+
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 0) {
+                    $('.ir-arriba').slideDown(300);
+                } else {
+                    $('.ir-arriba').slideUp(300);
+                }
+            });
+
+            // Manejo de eventos para el modal de aprobación de PAT
+            // Cerrar modal al hacer clic en el overlay
+            $('#modal-aprobar-pat').click(function (e) {
+                if (e.target === this) {
+                    closeAprobarModal();
+                }
+            });
+
+            // Cerrar modal con tecla Escape
+            $(document).keydown(function (e) {
+                if (e.keyCode === 27 && $('#modal-aprobar-pat').is(':visible')) { // ESC key
+                    closeAprobarModal();
+                }
+            });
+
+            // Event listeners para botones de ordenamiento alfabético
+            $('#btnOrdenarAZ').click(function() {
+                ordenarPATsVistaPrincipal('asc');
+            });
+
+            $('#btnOrdenarZA').click(function() {
+                ordenarPATsVistaPrincipal('desc');
+            });
+
+            // Event listeners para botones de ordenamiento del modal
+            $('#btnOrdenarModalAZ').click(function() {
+                ordenarPATsModal('asc');
+            });
+
+            $('#btnOrdenarModalZA').click(function() {
+                ordenarPATsModal('desc');
+            });
+
+    }
+
+
+
+
+        // Función para restaurar orden original (solo tabla)
+        function restoreOriginalOrder() {
+            const tbody = document.querySelector('#patTableBody');
+            const rows = Array.from(tbody.querySelectorAll('.pat-row'));
+
+            // Ordenar por el ID original del PAT
+            rows.sort((a, b) => {
+                const getPatId = (row) => {
+                    const deleteButton = row.querySelector('button[onclick*="openDeleteModal"]');
+                    if (deleteButton) {
+                        const match = deleteButton.getAttribute('onclick').match(/openDeleteModal\((\d+)/);
+                        return match ? parseInt(match[1]) : 0;
+                    }
+                    return 0;
+                };
+
+                return getPatId(a) - getPatId(b);
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        // ====================================================
+        // FUNCIONES AUXILIARES PARA DEBUG (CONSERVADAS)
+        // ====================================================
+        function debugPATFilters() {
+            const elements = document.querySelectorAll('.pat-row');
+            const visible = document.querySelectorAll('.pat-row:not(.hidden)');
+
+            console.log('=== DEBUG PAT FILTERS ===');
+            console.log('Current view: table (único)');
+            console.log('Total elements:', elements.length);
+            console.log('Visible elements:', visible.length);
+            console.log('Current search:', currentSearch);
+            console.log('Active filters:', activeFilters);
+            console.log('Current page:', currentPage);
+            console.log('Total pages:', totalPages);
+        }
+
+        // Función para cargar turnos reales desde la base de datos
+        function cargarTurnosReales() {
+            console.log('Iniciando carga de turnos reales...');
+
+            // Obtener solo los PATs visibles en la vista (filtrados/paginados)
+            const elements = document.querySelectorAll('.pat-row:not(.hidden), .pat-card:not(.hidden)');
+            const patIds = [];
+
+            elements.forEach(element => {
+                const deleteButton = element.querySelector('button[onclick*="openDeleteModal"]');
+                if (deleteButton) {
+                    const onclickValue = deleteButton.getAttribute('onclick');
+                    const matches = onclickValue.match(/openDeleteModal\((\d+)/);
+                    if (matches && matches[1]) {
+                        patIds.push(matches[1]);
+                    }
+                }
+            });
+
+            // Limitar la cantidad de PATs procesados para reducir la carga
+            const maxPATs = 30;
+            const limitedPatIds = patIds.slice(0, maxPATs);
+            console.log(`Procesando ${limitedPatIds.length} PATs visibles para cargar turnos (máximo ${maxPATs}):`, limitedPatIds);
+
+            if (limitedPatIds.length === 0) {
+                console.log('No se encontraron PATs visibles para cargar turnos');
+                return;
+            }
+
+            // Hacer petición AJAX para obtener información de turnos solo de los visibles
+            $.ajax({
+                url: '@Url.Action("ObtenerTurnosPATs", "AsignarAsesores")',
+                type: 'POST',
+                data: {
+                    patIds: limitedPatIds,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    console.log('Respuesta del servidor recibida:', response);
+                    if (response && response.length > 0) {
+                        actualizarTurnosEnVista(response);
+                        console.log(`Turnos cargados exitosamente para ${response.length} PATs visibles`);
+                    } else {
+                        console.log('Respuesta vacía del servidor, usando detección inteligente');
+                        detectarTurnosInteligente();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error al cargar turnos desde BD:', {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        responseText: xhr.responseText,
+                        error: error
+                    });
+                    detectarTurnosInteligente();
+                }
+            });
+        }
+
+        // Función para actualizar los turnos en la vista con datos reales
+        function actualizarTurnosEnVista(turnosData) {
+            let actualizados = 0;
+            console.log('🔄 Actualizando turnos en vista con datos:', turnosData);
+
+            // Limitar la cantidad de grupos procesados para reducir la carga
+            const maxGrupos = 20;
+            const gruposProcesados = turnosData.slice(0, maxGrupos);
+            // Verificar si hay grupos que empiezan con "I" en los grupos procesados
+            const gruposI = gruposProcesados.filter(item => item.Grupo && item.Grupo.startsWith('I'));
+            if (gruposI.length > 0) {
+                console.log('🔵 Datos del servidor para grupos que empiezan con "I":', gruposI);
+            }
+
+            gruposProcesados.forEach(function(item) {
+                console.log(`📝 Procesando item: PATId=${item.PATId}, Grupo=${item.Grupo}, Turno=${item.Turno}`);
+                if (item.Grupo && item.Grupo.startsWith('I')) {
+                    console.log(`🎯 GRUPO CON "I": ${item.Grupo} -> Turno asignado: ${item.Turno}`);
+                }
+                // Actualizar solo rows visibles
+                const row = document.querySelector(`.pat-row[data-grupo="${item.Grupo}"]:not(.hidden)`);
+                if (row && row.cells && row.cells[1]) {
+                    console.log(`📊 Actualizando row: grupo=${item.Grupo}, turno anterior=${row.cells[1].textContent}, turno nuevo=${item.Turno}`);
+                    row.cells[1].textContent = item.Turno || 'Sin turno';
+                    row.dataset.turno = item.Turno || 'Sin turno';
+                    actualizados++;
+                } else {
+                    console.log(`❌ No se encontró row visible para grupo: ${item.Grupo}`);
+                }
+            });
+
+            console.log(`✅ Turnos actualizados en ${actualizados} elementos visibles`);
+        }
+
+        // Función de detección inteligente de turnos (backup)
+        function detectarTurnosInteligente() {
+            const elements = document.querySelectorAll('.pat-card, .pat-row');
+            let detectados = 0;
+
+            elements.forEach(function(element) {
+                const grupo = element.dataset.grupo || '';
+                let turnoDetectado = 'Sin turno';
+
+                // Lógica inteligente para detectar turno
+                if (grupo) {
+                    const grupoUpper = grupo.toUpperCase();
+
+                    // Patrones para Matutino
+                    if (grupoUpper.startsWith('M') ||
+                        grupoUpper.includes('MAT') ||
+                        grupoUpper.includes('MAÑANA')) {
+                        turnoDetectado = 'Matutino';
+                        detectados++;
+                    }
+                    // Patrones para Vespertino
+                    else if (grupoUpper.startsWith('I') ||
+                             grupoUpper.includes('VESP') ||
+                             grupoUpper.includes('TARDE')) {
+                        turnoDetectado = 'Vespertino';
+                        detectados++;
+                    }
+                    // Patrones para Despresurizado
+                    else if (grupoUpper.startsWith('D') ||
+                             grupoUpper.includes('DESP') ||
+                             grupoUpper.includes('NOCHE') ||
+                             grupoUpper.includes('NOCT')) {
+                        turnoDetectado = 'Despresurizado';
+                        detectados++;
+                    }
+                    // Intentar detectar por patrones numéricos
+                    else if (/^[A-Z]*[1-9]/.test(grupoUpper)) {
+                        // Si es un patrón típico como "ABC123", asumir Matutino por defecto
+                        turnoDetectado = 'Matutino';
+                        detectados++;
+                    }
+                }
+
+                // Actualizar elemento
+                if (element.classList.contains('pat-card')) {
+                    const turnoElement = element.querySelector('.turno-name');
+                    if (turnoElement) {
+                        turnoElement.textContent = turnoDetectado;
+                    }
+                } else if (element.classList.contains('pat-row') && element.cells && element.cells[1]) {
+                    element.cells[1].textContent = turnoDetectado;
+                }
+
+                element.dataset.turno = turnoDetectado;
+            });
+
+            if (detectados > 0) {
+                console.log(`Detección inteligente completada: ${detectados} turnos detectados`);
+            }
+        }
+
+        // Función para debug de turnos
+        window.debugTurnos = function() {
+            console.log('=== DEBUG TURNOS ===');
+
+            const elements = document.querySelectorAll('.pat-card, .pat-row');
+            const resultados = [];
+            const stats = {
+                'Matutino': 0,
+                'Vespertino': 0,
+                'Despresurizado': 0,
+                'Sin turno': 0
+            };
+
+            elements.forEach(function(element, index) {
+                const grupo = element.dataset.grupo || '';
+                const turnoActual = element.dataset.turno || 'Sin turno';
+                const primeraLetra = grupo.length > 0 ? grupo[0] : 'N/A';
+
+                // Determinar qué turno debería tener según la primera letra
+                let turnoEsperado = 'Sin turno';
+                if (primeraLetra === 'M') turnoEsperado = 'Matutino';
+                else if (primeraLetra === 'I') turnoEsperado = 'Vespertino';
+                else if (primeraLetra === 'D') turnoEsperado = 'Despresurizado';
+
+                resultados.push({
+                    elemento: index + 1,
+                    grupo: grupo,
+                    primeraLetra: primeraLetra,
+                    turnoActual: turnoActual,
+                    turnoEsperado: turnoEsperado,
+                    coincide: turnoActual === turnoEsperado,
+                    tipo: element.classList.contains('pat-card') ? 'Card' : 'Row'
+                });
+
+                stats[turnoActual] = (stats[turnoActual] || 0) + 1;
+            });
+
+            // Mostrar casos problemáticos
+            const problemáticos = resultados.filter(r => !r.coincide && r.primeraLetra !== 'N/A');
+            if (problemáticos.length > 0) {
+                console.log('🔴 CASOS PROBLEMÁTICOS (turno no coincide con primera letra):');
+                problemáticos.forEach(p => {
+                    console.log(`- Grupo: ${p.grupo}, Primera letra: ${p.primeraLetra}, Esperado: ${p.turnoEsperado}, Actual: ${p.turnoActual}`);
+                });
+            }
+
+            // Mostrar específicamente los grupos que empiezan con I
+            const gruposI = resultados.filter(r => r.primeraLetra === 'I');
+            if (gruposI.length > 0) {
+                console.log('🔵 GRUPOS QUE EMPIEZAN CON "I":');
+                gruposI.forEach(g => {
+                    console.log(`- Grupo: ${g.grupo}, Turno actual: ${g.turnoActual}, ¿Es Vespertino?: ${g.turnoActual === 'Vespertino'}`);
+                });
+            }
+
+            console.log('Elementos encontrados:', resultados);
+            console.log('Estadísticas:', stats);
+            console.log(`Total de elementos: ${resultados.length}`);
+
+            // Disparar recarga de turnos inmediatamente después del debug
+            console.log('Forzando recarga de turnos...');
+            cargarTurnosReales();
+
+            return {
+                elementos: resultados,
+                estadisticas: stats,
+                total: resultados.length,
+                problemáticos: problemáticos,
+                gruposI: gruposI
+            };
+        };
+
+        // Función para debug de PAT específico
+        window.debugPATTurno = function(grupo) {
+            console.log('=== DEBUG PAT TURNO ESPECÍFICO ===');
+            console.log('Grupo a buscar:', grupo);
+
+            if (!grupo || grupo.length === 0) {
+                console.log('Grupo vacío o nulo');
+                return;
+            }
+
+            const firstChar = grupo[0];
+            console.log('Primera letra:', firstChar);
+
+            let expectedTurno = '';
+            switch (firstChar) {
+                case 'M': expectedTurno = 'Matutino'; break;
+                case 'I': expectedTurno = 'Vespertino'; break;
+                case 'D': expectedTurno = 'Despresurizado'; break;
+                default: expectedTurno = 'Desconocido'; break;
+            }
+
+            console.log('Turno esperado:', expectedTurno);
+
+            // Buscar en cards
+            const card = document.querySelector(`.pat-card[data-grupo="${grupo}"]`);
+            if (card) {
+                console.log('Card encontrada:', {
+                    turnoAttr: card.dataset.turno,
+                    turnoDisplay: card.querySelector('.turno-name')?.textContent?.trim()
+                });
+            }
+
+            // Buscar en rows
+            const row = document.querySelector(`.pat-row[data-grupo="${grupo}"]`);
+            if (row) {
+                console.log('Row encontrada:', {
+                    turnoAttr: row.dataset.turno,
+                    turnoDisplay: row.cells[1]?.textContent?.trim()
+                });
+            }
+        };
+
+        // Hacer funciones disponibles globalmente
+        window.debugPATFilters = debugPATFilters;
+        window.clearAllFilters = clearAllFilters;
+        window.removeFilterValue = removeFilterValue;
+        window.goToPage = goToPage;
+        window.switchView = switchView;
+        window.openDeleteModal = openDeleteModal;
+        window.closeDeleteModal = closeDeleteModal;
+        window.sortTable = sortTable;
+
+        // Función de debug para el selector de vista (solo tabla)
+        window.debugViewSelector = function() {
+            console.log('=== DEBUG SELECTOR DE VISTA ===');
+            console.log('Vista actual: table (única)');
+            console.log('Elementos DOM:');
+            console.log('- Table container:', document.getElementById('patTableContainer'));
+
+            const tableContainer = document.getElementById('patTableContainer');
+            console.log('Estado de display de tabla:', tableContainer ? tableContainer.style.display : 'No encontrado');
+        };
+
+        // Función para forzar vista de tabla (debug) - simplificada
+        window.forceTableView = function() {
+            console.log('Forzando vista de tabla...');
+            const tableContainer = document.getElementById('patTableContainer');
+
+            if (tableContainer) {
+                tableContainer.style.display = 'block';
+                console.log('Tabla mostrada');
+            }
+
+            currentView = 'table';
+            console.log('Vista confirmada como tabla');
+        };
+
+
+
+        // Manejar el botón "Crear PATs" (solo para IdNivel 4)
+        @if (ViewBag.IdNivel == 4)
+        {
+        <text>
+        const crearPATsBtn = document.getElementById('crearPATsBtn');
+        if (crearPATsBtn) {
+            crearPATsBtn.addEventListener('click', function() {
+                openCrearPATsModal();
+            });
+        }
+        </text>
+        }
+
+
+
+
+
+        // Función para ver un PAT
+        function verPAT(patId) {
+            window.open('@Url.Action("PatDetalles", "AsignarAsesores")/' + patId, '_blank');
+        }
+
+        // Variable global para almacenar el ID del PAT a aprobar
+        var patIdAprobar = null;
+
+        // Función para abrir el modal de aprobación de PAT
+        function aprobarPAT(patId) {
+            patIdAprobar = patId;
+
+            // Buscar los datos del PAT en la tabla para mostrarlos en el modal
+            var row = $('tr[data-pat-id="' + patId + '"]');
+            if (row.length > 0) {
+                $('#pat-grupo-aprobar').text(row.find('.grupo-cell').text().trim() || '-');
+                $('#pat-carrera-aprobar').text(row.find('.carrera-cell').text().trim() || '-');
+                $('#pat-tutor-aprobar').text(row.find('.tutor-cell').text().trim() || '-');
+
+                // Para el período, vamos a usar el período actual por defecto
+                var ahora = new Date();
+                var mesActual = ahora.getMonth() + 1; // getMonth() devuelve 0-11
+                var añoActual = ahora.getFullYear();
+                var periodoTexto = '';
+
+                if (mesActual >= 1 && mesActual <= 4) {
+                    periodoTexto = 'Enero-Abril ' + añoActual;
+                } else if (mesActual >= 5 && mesActual <= 8) {
+                    periodoTexto = 'Mayo-Agosto ' + añoActual;
+                } else {
+                    periodoTexto = 'Septiembre-Diciembre ' + añoActual;
+                }
+
+                $('#pat-periodo-aprobar').text(periodoTexto);
+            } else {
+                // Valores por defecto si no se encuentra la fila
+                $('#pat-grupo-aprobar').text('Grupo no disponible');
+                $('#pat-carrera-aprobar').text('Carrera no disponible');
+                $('#pat-tutor-aprobar').text('Tutor no disponible');
+                $('#pat-periodo-aprobar').text('Período actual');
+            }
+
+            // Mostrar el modal
+            $('#modal-aprobar-pat').fadeIn(300);
+        }
+
+        // Función para cerrar el modal de aprobación
+        function closeAprobarModal() {
+            $('#modal-aprobar-pat').fadeOut(300);
+            patIdAprobar = null;
+        }
+
+        // Función para confirmar la aprobación del PAT
+        function confirmarAprobarPAT() {
+            if (patIdAprobar === null) {
+                mostrarMensaje('Error: No se ha seleccionado un PAT para aprobar', 'error');
+                return;
+            }
+
+            // Deshabilitar el botón durante la petición
+            var btnConfirm = $('.btn-confirm-approve');
+            var originalText = btnConfirm.html();
+            btnConfirm.prop('disabled', true).html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Aprobando...');
+
+            $.ajax({
+                url: '@Url.Action("AprobarPAT", "PATs")',
+                type: 'POST',
+                data: {
+                    id: patIdAprobar,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    btnConfirm.prop('disabled', false).html(originalText);
+
+                    if (response && response.success) {
+                        closeAprobarModal();
+                        mostrarMensaje('PAT aprobado correctamente', 'success');
+                        cargarPATsPendientesRevision(); // Recargar la lista
+                    } else {
+                        mostrarMensaje(response && response.message ? response.message : 'Error al aprobar el PAT', 'error');
+                    }
+                },
+                error: function() {
+                    btnConfirm.prop('disabled', false).html(originalText);
+                    mostrarMensaje('Error de conexión al aprobar el PAT', 'error');
+                }
+            });
+        }
+
+        // Variable global para almacenar el ID del PAT a rechazar
+        var patIdRechazar = null;
+
+        // Función para abrir el modal de rechazo de PAT
+        function rechazarPAT(patId) {
+            patIdRechazar = patId;
+
+            // Buscar los datos del PAT en la tabla para mostrarlos en el modal
+            var row = $('tr[data-pat-id="' + patId + '"]');
+            if (row.length > 0) {
+                $('#pat-grupo-rechazar').text(row.find('.grupo-cell').text().trim() || '-');
+                $('#pat-carrera-rechazar').text(row.find('.carrera-cell').text().trim() || '-');
+                $('#pat-tutor-rechazar').text(row.find('.tutor-cell').text().trim() || '-');
+
+                // Determinar el período actual
+                var añoActual = new Date().getFullYear();
+                var mesActual = new Date().getMonth() + 1;
+                var periodoTexto = '';
+                if (mesActual >= 1 && mesActual <= 4) {
+                    periodoTexto = 'Enero-Abril ' + añoActual;
+                } else if (mesActual >= 5 && mesActual <= 8) {
+                    periodoTexto = 'Mayo-Agosto ' + añoActual;
+                } else {
+                    periodoTexto = 'Septiembre-Diciembre ' + añoActual;
+                }
+
+                $('#pat-periodo-rechazar').text(periodoTexto);
+            } else {
+                // Valores por defecto si no se encuentra la fila
+                $('#pat-grupo-rechazar').text('Grupo no disponible');
+                $('#pat-carrera-rechazar').text('Carrera no disponible');
+                $('#pat-tutor-rechazar').text('Tutor no disponible');
+                $('#pat-periodo-rechazar').text('Período actual');
+            }
+
+            // Mostrar el modal
+            $('#modal-rechazar-pat').fadeIn(300);
+        }
+
+        // Función para cerrar el modal de rechazo
+        function closeRechazarModal() {
+            $('#modal-rechazar-pat').fadeOut(300);
+            patIdRechazar = null;
+        }
+
+        // Función para confirmar el rechazo del PAT
+        function confirmarRechazarPAT() {
+            if (patIdRechazar === null) {
+                mostrarMensaje('Error: No se ha seleccionado un PAT para rechazar', 'error');
+                return;
+            }
+
+            // Deshabilitar el botón durante la petición
+            var btnConfirm = $('.btn-confirm-reject');
+            var originalText = btnConfirm.html();
+            btnConfirm.prop('disabled', true).html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Rechazando...');
+
+            $.ajax({
+                url: '@Url.Action("RechazarPAT", "PATs")',
+                type: 'POST',
+                data: {
+                    id: patIdRechazar,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    btnConfirm.prop('disabled', false).html(originalText);
+
+                    if (response && response.success) {
+                        closeRechazarModal();
+                        mostrarMensaje('PAT rechazado correctamente', 'success');
+                        cargarPATsPendientesRevision(); // Recargar la lista
+                    } else {
+                        mostrarMensaje(response && response.message ? response.message : 'Error al rechazar el PAT', 'error');
+                    }
+                },
+                error: function() {
+                    btnConfirm.prop('disabled', false).html(originalText);
+                    mostrarMensaje('Error de conexión al rechazar el PAT', 'error');
+                }
+            });
+        }
+
+        // Función para mostrar mensajes
+        function mostrarMensaje(mensaje, tipo) {
+            var alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+            var notification = $('<div class="alert ' + alertClass + ' alert-dismissible" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">' +
+                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                mensaje +
+                '</div>');
+
+            $('body').append(notification);
+
+            setTimeout(function() {
+                notification.fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }, 5000);
+        }
+
+        // Función para abrir, cerrar y enviar nota
+var patIdComentario = null;
+function abrirModalComentarioPAT(patId, grupo) {
+    patIdComentario = patId;
+    $('#comentario-pat-id').val(patId);
+    $('#comentario-pat-grupo').text(grupo || '');
+    $('#comentario-pat-text').val('');
+    $('#modal-comentario-pat').modal('show');
+    setTimeout(function() {
+        $('#comentario-pat-text').focus();
+    }, 400); // Espera a que el modal esté visible
+}
+
+function cerrarModalComentarioPAT() {
+    $('#modal-comentario-pat').modal('hide');
+    patIdComentario = null;
+}
+
+<!-- Alerta de borrado exitoso -->
+// Función auxiliar para mostrar notificaciones modernas (copiada de PatDetalles.cshtml)
+function mostrarMensaje(mensaje, tipo) {
+    $('.alert-message').remove();
+    var alertClass = tipo === 'success' ? 'status-active' : 'status-inactive';
+    var iconClass = tipo === 'success' ? 'glyphicon-ok-circle' : 'glyphicon-exclamation-sign';
+    var alertHtml = '<div class="alert-message" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 16px 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); max-width: 400px; backdrop-filter: blur(10px);">';
+    alertHtml += '<div style="display: flex; align-items: center; gap: 12px;">';
+    alertHtml += '<i class="glyphicon ' + iconClass + '" style="font-size: 18px;"></i>';
+    alertHtml += '<span style="font-weight: 500;">' + mensaje + '</span>';
+    alertHtml += '</div>';
+    alertHtml += '</div>';
+    if (tipo === 'success') {
+        $(alertHtml).css({
+            'background': 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
+            'color': '#155724',
+            'border': '1px solid #28a745'
+        }).appendTo('body');
+    } else {
+        $(alertHtml).css({
+            'background': 'linear-gradient(135deg, #f8d7da 0%, #f1b6bb 100%)',
+            'color': '#721c24',
+            'border': '1px solid #dc3545'
+        }).appendTo('body');
+    }
+    setTimeout(function () {
+        $('.alert-message').fadeOut(300, function () {
+            $(this).remove();
+        });
+    }, 3000);
+}
+
+function handleDeletePAT(e) {
+    e.preventDefault();
+    var form = document.getElementById('deleteForm');
+    var url = form.action;
+    var token = form.querySelector('input[name=__RequestVerificationToken]').value;
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: { '__RequestVerificationToken': token },
+        success: function(response) {
+            if (response.success) {
+                closeDeleteModal();
+                mostrarMensaje('El PAT ha sido borrado exitosamente.', 'success');
+                // Opcional: recargar la lista de PATs si es necesario
+            } else {
+                mostrarMensaje('Error al borrar el PAT', 'error');
+            }
+        },
+        error: function() {
+            mostrarMensaje('Error de conexión al borrar el PAT', 'error');
+        }
+    });
+    return false;
+}
+
+        function enviarComentarioPAT() {
+            var nota = $('#comentario-pat-text').val().trim();
+            var patId = $('#comentario-pat-id').val();
+            if (!nota) {
+            mostrarMensaje('Por favor, escribe un comentario.', 'error');
+            return;
+        }
+        $.ajax({
+            url: '@Url.Action("AgregarNota", "PATsNota")',
+            type: 'POST',
+            data: {
+            idPat: patId,
+            nota: nota,
+            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function(response) {
+            if (response && response.success) {
+                mostrarMensaje('Comentario guardada correctamente.', 'success');
+                cerrarModalComentarioPAT();
+            } else {
+                mostrarMensaje(response && response.message ? response.message : 'Error al guardar el comentario.', 'error');
+            }
+        },
+        error: function() {
+            mostrarMensaje('Error de conexión al guardar el comentario.', 'error');
+            }
+        });
+        }
+
+        // Funciones para comentarios anteriores
+        function verComentariosAnteriores(patId, grupo) {
+            $('#comentarios-anteriores-pat-id').val(patId);
+            $('#comentarios-anteriores-grupo').text(grupo || '');
+            $('#comentarios-loading').show();
+            $('#comentarios-container').hide();
+            $('#modal-comentarios-anteriores').modal({
+                backdrop: 'static', // Evita que se cierre al hacer clic fuera
+                keyboard: false     // Evita que se cierre con ESC
+            }).modal('show');
+
+            cargarComentariosAnteriores(patId);
+        }
+
+        function cerrarModalComentariosAnteriores() {
+            $('#modal-comentarios-anteriores').modal('hide');
+        }
+
+        function cargarComentariosAnteriores(patId) {
+            $.ajax({
+                url: '@Url.Action("ObtenerNotas", "PATsNota")',
+                type: 'GET',
+                data: { idPat: patId },
+                success: function(response) {
+                    $('#comentarios-loading').hide();
+                    $('#comentarios-container').show();
+
+                    if (response && response.success && response.notas && response.notas.length > 0) {
+                        mostrarComentarios(response.notas);
+                        $('#comentarios-lista').show();
+                        $('#no-comentarios').hide();
+                    } else {
+                        $('#comentarios-lista').hide();
+                        $('#no-comentarios').show();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al cargar comentarios:', error);
+                    $('#comentarios-loading').hide();
+                    $('#comentarios-container').show();
+                    $('#comentarios-lista').html('<div class="alert alert-danger">Error al cargar los comentarios. Por favor, inténtelo nuevamente.</div>');
+                    $('#comentarios-lista').show();
+                    $('#no-comentarios').hide();
+                }
+            });
+        }
+
+        function mostrarComentarios(comentarios) {
+            var html = '';
+
+            comentarios.forEach(function(comentario, index) {
+                html += '<div class="panel panel-default" style="margin-bottom: 15px;">';
+                html += '<div class="panel-body">';
+                html += '<div style="margin-bottom: 10px;">';
+                html += '<strong style="color: #337ab7;"><i class="glyphicon glyphicon-user"></i> ' + (comentario.Usuario || 'Usuario desconocido') + '</strong>';
+                html += '<small style="float: right; color: #999;"><i class="glyphicon glyphicon-time"></i> ' + formatearFecha(comentario.FechaCreacion) + '</small>';
+                html += '</div>';
+                html += '<div style="clear: both; padding: 8px 0; border-left: 3px solid #5bc0de; padding-left: 12px; background-color: #f9f9f9;">';
+                html += '<p style="margin: 0; white-space: pre-wrap;">' + (comentario.Comentario || '') + '</p>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            });
+
+            $('#comentarios-lista').html(html);
+        }
+
+        function formatearFecha(fechaString) {
+            if (!fechaString) return 'Fecha no disponible';
+
+            try {
+                // Intentar parsear la fecha de diferentes formatos
+                var fecha = new Date(fechaString);
+
+                // Verificar si la fecha es válida
+                if (isNaN(fecha.getTime())) {
+                    // Intentar con formato específico si el parsing automático falló
+                    if (fechaString.includes('T')) {
+                        // Formato ISO
+                        fecha = new Date(fechaString);
+                    } else {
+                        // Otros formatos
+                        fecha = new Date(Date.parse(fechaString));
+                    }
+                }
+
+                // Verificar nuevamente si la fecha es válida
+                if (isNaN(fecha.getTime())) {
+                    console.error('Fecha inválida:', fechaString);
+                    return 'Fecha inválida';
+                }
+
+                var opciones = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'America/Mexico_City'
+                };
+                return fecha.toLocaleDateString('es-ES', opciones);
+            } catch (e) {
+                console.error('Error al formatear fecha:', e, fechaString);
+                return 'Error en fecha';
+            }
+        }
+
+        // ====================================================
+        // EXPORTACIÓN DE REPORTES CON FILTROS ACTIVOS
+        // ====================================================
+
+        // Mapa Nombre → IdCarrera inyectado desde el servidor (sólo disponible si la vista
+        // viene del action PAT()). Si no hay mapa, el filtro de carrera no se envía como Id.
+        window.CarrerasMap = @Html.Raw(System.Web.Helpers.Json.Encode(ViewBag.CarrerasMap ?? new System.Collections.Generic.Dictionary<string, int>()));
+
+        // Mapa nombre del período → IdPeriodo. Coincide con la convención del modelo.
+        var PERIODO_NOMBRE_A_ID = {
+            "ENERO - ABRIL": 1,
+            "MAYO - AGOSTO": 2,
+            "SEPTIEMBRE - DICIEMBRE": 3
+        };
+
+        // Init del modal "Generar reportes": prellena Año y Cuatris en base al estado actual
+        // del listado. Al cerrar el modal no persistimos selección (siempre se reinicia al
+        // cuatri actual + año actual por petición del usuario).
+        function inicializarScopeReportes() {
+            var anioActualReal = new Date().getFullYear();
+            var mesActualReal = new Date().getMonth() + 1;
+            var periodoActualReal = (mesActualReal <= 4) ? 1 : (mesActualReal <= 8) ? 2 : 3;
+
+            // 1) Construir lista de años candidatos:
+            //    - Los seleccionados en filtros si hay al menos uno marcado distinto de "todos"
+            //    - Si no, todos los años que existan en el listado renderizado
+            var aniosSeleccionados = (activeFilters && Array.isArray(activeFilters.ano)) ? activeFilters.ano.slice() : [];
+            var aniosCandidatos;
+            if (aniosSeleccionados.length > 0) {
+                aniosCandidatos = aniosSeleccionados.map(function (a) { return parseInt(a, 10); }).filter(function (a) { return !isNaN(a); });
+            } else {
+                var setAnios = new Set();
+                $('.pat-row').each(function () {
+                    var a = parseInt($(this).data('ano'), 10);
+                    if (!isNaN(a)) setAnios.add(a);
+                });
+                aniosCandidatos = Array.from(setAnios).sort(function (a, b) { return b - a; });
+                if (aniosCandidatos.length === 0) aniosCandidatos = [anioActualReal];
+            }
+
+            // 2) Poblar el dropdown de Año
+            var $sel = $('#reporte-anio');
+            $sel.empty();
+            aniosCandidatos.forEach(function (a) {
+                $sel.append('<option value="' + a + '">' + a + '</option>');
+            });
+
+            // 3) Si hay exactamente 1 año marcado, preseleccionar y deshabilitar el select.
+            //    Si hay 0 o >1, dejar habilitado, default = año actual si está disponible, si no
+            //    el más reciente de la lista.
+            if (aniosSeleccionados.length === 1) {
+                $sel.val(aniosSeleccionados[0]);
+                $sel.prop('disabled', true);
+                $('#reporte-anio-hint').text('(tomado del filtro activo)');
+            } else {
+                $sel.prop('disabled', false);
+                var defaultAnio = aniosCandidatos.indexOf(anioActualReal) >= 0 ? anioActualReal : aniosCandidatos[0];
+                $sel.val(defaultAnio);
+                if (aniosSeleccionados.length === 0) {
+                    $('#reporte-anio-hint').text('Filtro de año vacío. Selecciona un año.');
+                } else {
+                    $('#reporte-anio-hint').text('Tienes ' + aniosSeleccionados.length + ' años marcados en el filtro. Elige el año a exportar.');
+                }
+            }
+
+            // 4) Default de cuatris: SIEMPRE prellenar con el cuatri actual (no recordar
+            //    selección previa). Si el usuario quiere otro cuatri, lo marca antes de descargar.
+            $('.reporte-cuatri').prop('checked', false);
+            $('.reporte-cuatri[value="' + periodoActualReal + '"]').prop('checked', true);
+        }
+
+        // Construye el query string desde el modal + filtros activos del listado.
+        // Aplica regla: si NO hay cuatris marcados pero hay 1 año marcado, se envían los 3 cuatris.
+        function construirQueryReportes() {
+            var anio = parseInt($('#reporte-anio').val(), 10);
+            if (isNaN(anio)) return null;
+
+            var cuatris = $('.reporte-cuatri:checked').map(function () { return parseInt(this.value, 10); }).get();
+            if (cuatris.length === 0) cuatris = [1, 2, 3];
+
+            var params = { anio: anio, periodos: cuatris.join(',') };
+
+            if (activeFilters) {
+                // Carrera: tomar la primera marcada (el filtro permite sólo una) y mapear a Id.
+                if (Array.isArray(activeFilters.carrera) && activeFilters.carrera.length > 0) {
+                    var carreraNombre = activeFilters.carrera[0];
+                    if (window.CarrerasMap && window.CarrerasMap.hasOwnProperty(carreraNombre)) {
+                        params.carrera = window.CarrerasMap[carreraNombre];
+                    }
+                }
+                // Estado
+                if (Array.isArray(activeFilters.estado) && activeFilters.estado.length > 0) {
+                    params.estados = activeFilters.estado.join(',');
+                }
+                // Grado: viene como número en data-grado-match; IdGrado del servidor coincide con el número.
+                if (Array.isArray(activeFilters.grado) && activeFilters.grado.length > 0) {
+                    params.grados = activeFilters.grado.join(',');
+                }
+                // Grupo (nomenclatura "TI6C")
+                if (Array.isArray(activeFilters.grupo) && activeFilters.grupo.length > 0) {
+                    params.grupos = activeFilters.grupo.join(',');
+                }
+                // Turno
+                if (Array.isArray(activeFilters.turno) && activeFilters.turno.length > 0) {
+                    params.turnos = activeFilters.turno.join(',');
+                }
+            }
+            if (typeof currentSearch === 'string' && currentSearch.trim().length > 0) {
+                params.search = currentSearch.trim();
+            }
+            return params;
+        }
+
+        function disparardescargaReporte(actionUrl, msgLoading) {
+            var qs = construirQueryReportes();
+            if (!qs) {
+                alert('Selecciona un año para el reporte.');
+                return;
+            }
+            $('#excel-loading').show();
+            $('#excel-loading-text').text(msgLoading);
+            var url = actionUrl + '?' + $.param(qs);
+            window.location.href = url;
+            setTimeout(function () { $('#excel-loading').hide(); }, 2500);
+        }
+
+        function generarReporteActividades() {
+            disparardescargaReporte('@Url.Action("GenerarExcelActividades", "PATsExcel")', 'Generando reporte de actividades...');
+        }
+
+        function generarReporteGraficos() {
+            disparardescargaReporte('@Url.Action("GenerarExcelGraficos", "PATsExcel")', 'Generando reporte de estadísticas...');
+        }
+
+        function generarReporteVulnerables() {
+            disparardescargaReporte('@Url.Action("GenerarExcelVulnerables", "PATsExcel")', 'Generando reporte de alumnos vulnerables...');
+        }
+
+        function generarReporteNotasPAT() {
+            disparardescargaReporte('@Url.Action("GenerarExcelNotasPAT", "PATsExcel")', 'Generando reporte de notas de revisión...');
+        }
+
+        // Hook: cuando se abre el modal de reportes, inicializar Año + Cuatris.
+        $(document).on('show.bs.modal', '#modal-generar-excel', function () {
+            inicializarScopeReportes();
+        });
+
+    function inicializarPAT() {
+        console.log('Iniciando aplicación PAT...');
+        // Cargar turnos reales...
+        setTimeout(function () {
+            cargarTurnosReales();
+        }, 500);
+        // aplicarFiltros(); // <-- ELIMINA ESTA LÍNEA
+        console.log('Aplicación PAT inicializada correctamente');
+    }
+
+        // Ejecutar cuando la página esté lista
+    // Función para inicializar filtros y listeners
+    function inicializarFiltrosYListeners() {
+        console.log('Inicializando...');
+        // Inicializar variable global para paginación
+        filteredItems = $('.pat-row').toArray();
+
+        // --- CORRECCIÓN: Aplicar filtros por defecto al entrar ---
+        if (window.location.search === "") {
+            // Usamos un pequeño timeout para asegurar que los dropdowns (populateDropdowns)
+            // hayan terminado de leer el HTML antes de marcar los checkboxes.
+            setTimeout(applyDefaultFilters, 100);
+        } else {
+            loadFiltersFromURL();
+            applyFiltersFromURL();
+        }
+
+        // Configurar listeners
+        $('#generarExcelBtn').off('click').on('click', function () {
+            $('#modal-generar-excel').modal('show');
+        });
+
+        $('#porRevisarBtn').off('click').on('click', function () {
+            // Resetear ordenamiento del modal
+            ordenModalActual = null;
+            $('#btnOrdenarModalAZ').removeClass('active btn-primary').addClass('btn-default');
+            $('#btnOrdenarModalZA').removeClass('active btn-primary').addClass('btn-default');
+            $('#modal-revision-pats').modal('show');
+            cargarPATsPendientesRevision();
+        });
+
+        // Inicialización original
+        inicializarPAT();
+
+        // Ejecutar filtro inicial
+        filterAndSearchPATs();
+    }
+
+
+
+
+// --- LÓGICA PUNTO 1 Y 7 ---
+var currentUserLevel = @ViewBag.IdNivel;
+
+    // --- 3. FUNCIÓN CONTADOR CORREGIDA ---
+function verificarPendientesMasivo() {
+    var patIds = [];
+    $('.pat-row').each(function() { patIds.push($(this).data('pat-id')); });
+    if (patIds.length === 0) return;
+
+    $.ajax({
+        url: '@Url.Action("ObtenerIdsConPendientes", "PATs")',
+        type: 'POST',
+        data: { patIds: patIds },
+        success: function(response) {
+            if(response.ids) {
+                response.ids.forEach(function(id) {
+                    var $row = $('.pat-row[data-pat-id="' + id + '"]');
+                    $row.find('.clock-icon-placeholder').html(
+                        '<span class="glyphicon glyphicon-time" title="Evidencias pendientes de revisar" style="color: #ffc107; background: #fff3cd; padding: 4px; border-radius: 50%; margin-left: 5px; cursor:help;"></span>'
+                    );
+                });
+            }
+        }
+    });
+}
+
+
+// ============================================================================
+// ============================================================================
+// INICIALIZACIÓN DE BOTONES PRINCIPALES
+// ============================================================================
+
+    $(document).ready(function () {
+        // Inicializar sistema de filtros
+        inicializarSistemaFiltros();
+
+        // Inicializar funcionalidades adicionales
+        inicializarScrollYOrdenamiento();
+        inicializarFiltrosYListeners();
+
+        filteredItems = $('.pat-row').toArray();
+
+        verificarPendientesMasivo();
+    // Botón "Generar reportes"
+    $('#generarExcelBtn').off('click').on('click', function() {
+        console.log('Abriendo modal de generar reportes');
+        $('#modal-generar-excel').modal('show');
+    });
+
+    // Botón "Revisión de PATs"
+    $('#porRevisarBtn').off('click').on('click', function() {
+        console.log('Abriendo modal de revisión de PATs');
+        // Resetear ordenamiento del modal
+        ordenModalActual = null;
+        $('#btnOrdenarModalAZ').removeClass('active btn-primary').addClass('btn-default');
+        $('#btnOrdenarModalZA').removeClass('active btn-primary').addClass('btn-default');
+        $('#modal-revision-pats').modal('show');
+        cargarPATsPendientesRevision();
+    });
+
+    @if (ViewBag.IdNivel == 4)
+    {
+    <text>
+    const crearPATsBtn = document.getElementById('crearPATsBtn');
+    if (crearPATsBtn) {
+        crearPATsBtn.addEventListener('click', function() {
+            openCrearPATsModal();
+        });
+    }
+    </text>
+    }
+
+    inicializarPAT();
+    });
+
+function ordenarPATsVistaPrincipal(direccion) {
+    console.log('Ordenando PATs:', direccion);
+    ordenActual = direccion;
+
+    // Actualizar estilos de botones
+    $('#btnOrdenarAZ').removeClass('active btn-primary').addClass('btn-default');
+    $('#btnOrdenarZA').removeClass('active btn-primary').addClass('btn-default');
+
+    if (direccion === 'asc') {
+        $('#btnOrdenarAZ').removeClass('btn-default').addClass('btn-primary active');
+    } else if (direccion === 'desc') {
+        $('#btnOrdenarZA').removeClass('btn-default').addClass('btn-primary active');
+    }
+
+    // Obtener todas las filas visibles
+    const tbody = document.querySelector('#patTableBody');
+    if (!tbody) return;
+
+    const rows = Array.from(tbody.querySelectorAll('.pat-row'));
+
+    // Ordenar las filas por el nombre del tutor
+    rows.sort((a, b) => {
+        const tutorA = (a.dataset.tutor || '').toLowerCase();
+        const tutorB = (b.dataset.tutor || '').toLowerCase();
+
+        if (direccion === 'asc') {
+            return tutorA.localeCompare(tutorB, 'es');
+        } else {
+            return tutorB.localeCompare(tutorA, 'es');
+        }
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+
+    filterAndSearchPATs();
+}
+
+
+let ordenModalActual = null;
+
+function ordenarPATsModal(direccion) {
+    console.log('Ordenando PATs del modal:', direccion);
+    ordenModalActual = direccion;
+
+    // Actualizar estilos de botones
+    $('#btnOrdenarModalAZ').removeClass('active btn-primary').addClass('btn-default');
+    $('#btnOrdenarModalZA').removeClass('active btn-primary').addClass('btn-default');
+
+    if (direccion === 'asc') {
+        $('#btnOrdenarModalAZ').removeClass('btn-default').addClass('btn-primary active');
+    } else if (direccion === 'desc') {
+        $('#btnOrdenarModalZA').removeClass('btn-default').addClass('btn-primary active');
+    }
+
+    // Obtener las filas actuales de la tabla
+    const tbody = $('#revision-pats-tbody');
+    const rows = Array.from(tbody.find('tr').get());
+
+    // Si no hay filas para ordenar, salir
+    if (rows.length === 0) return;
+
+    // Ordenar las filas por el nombre del tutor
+    rows.sort((a, b) => {
+        const tutorA = ($(a).find('.tutor-cell').text() || '').toLowerCase().trim();
+        const tutorB = ($(b).find('.tutor-cell').text() || '').toLowerCase().trim();
+
+        if (direccion === 'asc') {
+            return tutorA.localeCompare(tutorB, 'es');
+        } else {
+            return tutorB.localeCompare(tutorA, 'es');
+        }
+    });
+
+    // Limpiar el tbody y agregar las filas ordenadas
+    tbody.empty();
+    rows.forEach(row => tbody.append(row));
+}
+
+function cargarPATsPendientesRevision() {
+    console.log('=== INICIO cargarPATsPendientesRevision ===');
+
+    $('#revision-pats-loading').show();
+    $('#revision-pats-content').hide();
+    $('#revision-pats-tbody').empty();
+
+    $.ajax({
+        url: '@Url.Action("ObtenerPATsPendientesRevision", "PATs")',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            console.log('Respuesta recibida:', response);
+            $('#revision-pats-loading').hide();
+
+            // Manejar errores en la respuesta
+            if (response.error) {
+                console.error('Error en respuesta:', response.error);
+                $('#revision-pats-tbody').html(
+                    '<tr><td colspan="4" class="text-center">' +
+                    '<div class="alert alert-danger">' +
+                    '<i class="glyphicon glyphicon-exclamation-sign"></i> ' +
+                    response.error +
+                    '</div>' +
+                    '</td></tr>'
+                );
+                $('#revision-pats-content').show();
+                return;
+            }
+
+            // La respuesta es un array directo de PATs
+            var pats = Array.isArray(response) ? response : [];
+            console.log('PATs pendientes encontrados:', pats.length);
+
+            if (pats.length === 0) {
+                $('#revision-pats-tbody').html(
+                    '<tr><td colspan="4" class="text-center" style="padding: 40px;">' +
+                    '<i class="glyphicon glyphicon-ok-circle" style="font-size: 48px; color: #4caf50; margin-bottom: 16px; display: block;"></i>' +
+                    '<h4 style="color: #4caf50; margin-bottom: 8px;">¡Excelente!</h4>' +
+                    '<p style="color: #666;">No hay PATs pendientes de revisión en este momento.</p>' +
+                    '</td></tr>'
+                );
+            } else {
+                var html = '';
+                pats.forEach(function(pat) {
+                    var patId = pat.Id || pat.id || 0;
+                    var grupo = pat.Grupo || 'Sin grupo';
+                    var carrera = pat.Carrera || 'Sin carrera';
+                    var tutor = pat.Tutor || 'Sin tutor';
+
+                    html += '<tr data-pat-id="' + patId + '">';
+                    html += '<td class="grupo-cell">' + grupo + '</td>';
+                    html += '<td class="carrera-cell">' + carrera + '</td>';
+                    html += '<td class="tutor-cell">' + tutor + '</td>';
+                    html += '<td class="actions-cell">';
+                    html += '<div class="btn-group btn-group-sm" role="group">';
+
+                    // Botón Ver
+                    html += '<button type="button" class="btn btn-info btn-action" onclick="verPATRevision(' + patId + ')" title="Ver PAT">';
+                    html += '<span class="glyphicon glyphicon-eye-open"></span> Ver';
+                    html += '</button>';
+
+                    @if (!esDirector) { <text>
+                    // Botón Aprobar
+                    html += '<button type="button" class="btn btn-info btn-action" onclick="aprobarPATRevision(' + patId + ')" title="Aprobar PAT">';
+                    html += '<span class="glyphicon glyphicon-ok"></span> Aprobar';
+                    html += '</button>';
+
+                    // Botón Rechazar
+                    html += '<button type="button" class="btn btn-danger btn-action" onclick="rechazarPATRevision(' + patId + ')" title="Rechazar PAT">';
+                    html += '<span class="glyphicon glyphicon-remove"></span> Rechazar';
+                    html += '</button>';
+
+                    // Botón Comentar
+                    html += '<button type="button" class="btn btn-warning btn-action" onclick="abrirModalComentarioPAT(' + patId + ', \'' + grupo.replace(/'/g, "\\'") + '\')" title="Agregar comentario">';
+                    html += '<span class="glyphicon glyphicon-comment"></span> Comentar';
+                    html += '</button>';
+                    </text> }
+
+                    // Botón Ver Comentarios
+                    html += '<button type="button" class="btn btn-info btn-action" onclick="verComentariosAnteriores(' + patId + ', \'' + grupo.replace(/'/g, "\\'") + '\')" title="Ver comentarios anteriores">';
+                    html += '<span class="glyphicon glyphicon-list-alt"></span> Comentarios';
+                    html += '</button>';
+
+                    html += '</div>';
+                    html += '</td>';
+                    html += '</tr>';
+                });
+                $('#revision-pats-tbody').html(html);
+            }
+
+            $('#revision-pats-content').show();
+            console.log('=== FIN cargarPATsPendientesRevision (éxito) ===');
+        },
+        error: function(xhr, status, error) {
+            console.error('=== ERROR en cargarPATsPendientesRevision ===');
+            console.error('Status:', status);
+            console.error('Error:', error);
+            console.error('Response:', xhr.responseText);
+
+            $('#revision-pats-loading').hide();
+            $('#revision-pats-tbody').html(
+                '<tr><td colspan="4" class="text-center">' +
+                '<div class="alert alert-danger">' +
+                '<i class="glyphicon glyphicon-exclamation-sign"></i> ' +
+                'Error al cargar PATs pendientes. Por favor, inténtelo de nuevo.' +
+                '</div>' +
+                '</td></tr>'
+            );
+            $('#revision-pats-content').show();
+        }
+    });
+}
+
+function verPATRevision(patId) {
+    console.log('Abriendo PAT:', patId);
+    var url = '@Url.Action("PatDetalles", "AsignarAsesores")/' + patId;
+    window.open(url, '_blank');
+}
+
+function aprobarPATRevision(patId) {
+    if (!confirm('¿Está seguro que desea aprobar este PAT?')) return;
+
+    var btn = $('tr[data-pat-id="' + patId + '"] .btn-success'); // Ajustar selector si es necesario
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> ...');
+
+    $.ajax({
+        url: '@Url.Action("AprobarPAT", "PATs")',
+        type: 'POST',
+        data: {
+            id: patId,
+            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function(response) {
+            if (response && response.success) {
+                mostrarMensaje('PAT aprobado correctamente', 'success');
+
+                // CORRECCIÓN PUNTO 3:
+                // 1. Eliminar la fila visualmente al instante
+                $('tr[data-pat-id="' + patId + '"]').fadeOut(300, function() {
+                    $(this).remove();
+                    // Verificar si quedan filas
+                    if($('#revision-pats-tbody tr').length === 0) {
+                        cargarPATsPendientesRevision(); // Recargar para mostrar mensaje "Excelente"
+                    }
+                });
+
+                // 2. Actualizar tabla principal de fondo sin recargar página
+                // Cambiamos el estado en la fila de la tabla principal si existe
+                var filaPrincipal = $('.pat-row[data-pat-id="' + patId + '"]');
+                if(filaPrincipal.length) {
+                    filaPrincipal.data('estado', 'Aprobado');
+                    filaPrincipal.find('.status-badge')
+                        .removeClass('status-review status-pending status-inactive')
+                        .addClass('status-active')
+                        .text('Aprobado');
+                }
+
+                // Opcional: Recargar filtro principal
+                // filterAndSearchPATs(true);
+
+            } else {
+                mostrarMensaje(response.message || 'Error al aprobar', 'error');
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        },
+        error: function() {
+            btn.prop('disabled', false).html(originalHtml);
+            mostrarMensaje('Error de conexión', 'error');
+        }
+    });
+}
+
+// Hacer lo mismo para rechazarPATRevision
+function rechazarPATRevision(patId) {
+    if (!confirm('¿Rechazar PAT? El tutor deberá corregirlo.')) return;
+
+    var btn = $('tr[data-pat-id="' + patId + '"] .btn-danger');
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> ...');
+
+    $.ajax({
+        url: '@Url.Action("RechazarPAT", "PATs")',
+        type: 'POST',
+        data: {
+            id: patId,
+            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function(response) {
+            if (response && response.success) {
+                mostrarMensaje('PAT rechazado', 'success');
+
+                // 1. Eliminar fila visualmente
+                $('tr[data-pat-id="' + patId + '"]').fadeOut(300, function() {
+                    $(this).remove();
+                    if($('#revision-pats-tbody tr').length === 0) {
+                        cargarPATsPendientesRevision();
+                    }
+                });
+
+                // 2. Actualizar tabla principal
+                var filaPrincipal = $('.pat-row[data-pat-id="' + patId + '"]');
+                if(filaPrincipal.length) {
+                    filaPrincipal.data('estado', 'Rechazado');
+                    filaPrincipal.find('.status-badge')
+                        .removeClass('status-review status-active status-pending')
+                        .addClass('status-inactive') // O el color que uses para rechazado
+                        .text('Rechazado');
+                }
+            } else {
+                mostrarMensaje(response.message || 'Error al rechazar', 'error');
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        },
+        error: function() {
+            btn.prop('disabled', false).html(originalHtml);
+            mostrarMensaje('Error de conexión', 'error');
+        }
+    });
+}
+
+</script>
+
+<style>
+    /* Mejorar visibilidad de botones de cerrar */
+    .modal-close {
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        font-size: 24px;
+        line-height: 1;
+        color: #999;
+        transition: color 0.2s;
+    }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+    .close-icon {
+        display: inline-block;
+        font-weight: bold;
+    }
+
+    /* Asegurar que los modales estén por encima de todo */
+    .modal-overlay {
+        z-index: 9999 !important;
+    }
+
+    .modal-overlay {
+        cursor: pointer;
+    }
+
+    .modal-container {
+        cursor: default;
+    }
+
+    /* Animación suave para cerrar */
+    .modal-overlay {
+        transition: opacity 0.3s ease;
+    }
+</style>

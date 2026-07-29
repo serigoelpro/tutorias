@@ -1,0 +1,33 @@
+﻿
+.titulo {
+    position:center;
+    font-size: 35px;
+    margin: 20px auto 10px;
+    background-color: #1ab192;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.imagen {
+    width: 50%;
+    height: 50%;
+    margin: 25px;
+    border: 8px solid #036666;
+    border-radius: 25%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    cursor: pointer;
+}
+
+    .imagen:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+    }
+
+.imagen:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}

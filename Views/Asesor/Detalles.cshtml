@@ -1,0 +1,2014 @@
+﻿@model Plataforma_Web.Models.EntrevistaInicial
+@using Plataforma_Web.Models.PrimeraEntrevista
+@{
+    // CORRECCIÓN CLAVE CONTRA EL NULLREFERENCE EXCEPTION:
+    // 1. Asignación del objeto 'datos'
+    Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales datos = ViewBag.datos as Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales;
+
+    // 2. Variable segura para el ID de persona
+    int idPersonaActual = 0;
+
+    // Solo si el objeto 'datos' se cargó correctamente, obtenemos el IdPersona
+    if (datos != null)
+    {
+        idPersonaActual = datos.IdPersona;
+    }
+    AspectosAcademicos academicos = ViewBag.academicos as AspectosAcademicos;
+    AspectosEconomicos economicos = ViewBag.economicos as AspectosEconomicos;
+    AspectosPersonales personales = ViewBag.personales as AspectosPersonales;
+    ViewBag.Title = "Editar Detalles";
+}
+
+<!-- SweetAlert CSS/JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+    .navegacion-entrevistas button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .navegacion-entrevistas button:not(:disabled):hover {
+        transform: scale(1.05);
+        transition: transform 0.2s;
+    }
+
+    .btn-navegando {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+    #btnAnterior, #btnSiguiente,
+    a.btn-primary[href*="Grupo"] {
+        background-color: #09a787 !important;
+        border-color: #09a787 !important;
+        color: white !important;
+    }
+
+        #btnAnterior:hover:not(:disabled),
+        #btnSiguiente:hover:not(:disabled),
+        a.btn-primary[href*="Grupo"]:hover {
+            background-color: #078c71 !important;
+            border-color: #078c71 !important;
+        }
+
+        #btnAnterior:focus, #btnSiguiente:focus,
+        a.btn-primary[href*="Grupo"]:focus {
+            background-color: #078c71 !important;
+            border-color: #078c71 !important;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(9, 167, 135, 0.5) !important;
+        }
+</style>
+
+@using (Html.BeginForm())
+
+{
+    @Html.AntiForgeryToken()
+
+    <h2>Editar Detalles</h2>
+    <br />
+    <div class="d-flex align-items-center mb-3">
+        <a class="btn btn-primary" role="button" href="@Url.Action("Grupo", "Entrevistas")">
+            <span class="glyphicon glyphicon-arrow-left"></span>
+            Regresar
+        </a>
+        <div class="btn-group navegacion-entrevistas" role="group" style="margin-left: 15px;">
+
+            <button type="button" id="btnAnterior" class="btn btn-info" disabled>
+                <span class="glyphicon glyphicon-chevron-left"></span>
+            </button>
+
+            <button type="button" id="posicionActual" class="btn btn-default" disabled
+                    title="Posición en el grupo">
+                Cargando...
+            </button>
+
+            <button type="button" id="btnSiguiente" class="btn btn-info" disabled>
+                <span class="glyphicon glyphicon-chevron-right"></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="container-fluid" style="margin-top:30px">
+        <section class="content">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    @if (datos.IdGrado == 1)
+                                    {
+                                        <h2>Entrevista Inicial</h2>
+                                    }
+                                    else
+                                    {
+                                        <h2>Entrevista de Seguimiento - @datos.Grado.Nombre &deg;</h2>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+                        <div class="row">
+                            <div class="col-md-12 col-md-push-1">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Matrícula</label>
+                                                    <br />
+                                                    @datos.Matricula
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Nombre completo</label>
+                                                    <br />
+                                                    @datos.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Edad</label>
+                                                    <br />
+                                                    @datos.Edad AÑOS
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Sexo</label>
+                                                    <br />
+                                                    @if (datos.Sexo != null)
+                                                    {
+                                                        @datos.Sexo
+                                                    }
+                                                    else
+                                                    {
+                                                        <label class="text-danger">Sin actualizar</label>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Grado</label>
+                                                    <br />
+                                                    @datos.Grado.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Grupo</label>
+                                                    <br />
+                                                    @datos.Grupo.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Carrera</label>
+                                                    <br />
+                                                    @if (datos.CarreraNom != null)
+                                                    {
+                                                        @datos.CarreraNom
+                                                    }
+                                                    else
+                                                    {
+                                                        @datos.Carrera.Nombre
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Área</label>
+                                                    <br />
+                                                    @if (datos.Especialidad != null)
+                                                    {
+                                                        if (datos.Especialidad == "")
+                                                        {
+                                                            <div>N/A</div>
+                                                        }
+                                                        else
+                                                        {
+                                                            @datos.Especialidad
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <label class="text-danger">Sin actualizar</label>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Turno</label>
+                                                    <br />
+                                                    @datos.Turno.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Teléfono celular</label>
+                                                    <br />
+                                                    @datos.Celular
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Teléfono de casa</label>
+                                                    <br />
+                                                    @datos.Telefono
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Teléfono de emergencia</label>
+                                                    <br />
+                                                    @datos.TelEmergencia
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Correo electrónico</label>
+                                                    <br />
+                                                    @datos.Email
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+
+                                                    @if (datos.Sexo == "HOMBRE")
+                                                    {
+                                                        <label>¿Está casado?</label>
+                                                    }
+                                                    else
+                                                    {
+                                                        <label>¿Está casada?</label>
+                                                    }
+
+                                                    <br />
+                                                    @personales.Respuesta4.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>¿Tiene hijos?</label>
+                                                    <br />
+                                                    @personales.Respuesta5.Nombre
+                                                </div>
+                                            </div>
+                                            @if (datos.Sexo == "MUJER")
+                                            {
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label>¿Está embarazada?</label>
+                                                        <br />
+                                                        @personales.Respuesta11.Nombre
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label>Fotografía</label>
+                                                    <br />
+                                                    @if (datos.Foto == "")
+                                                    {
+                                                        <p>Imagen Inexistente</p>
+                                                    }
+                                                    else
+                                                    {
+                                                        <img src="@datos.Foto" style="width:100%;height:100%;">
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aspectos Económicos -->
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h2>Aspectos Económicos</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+                        <div class="row">
+                            <div class="col-md-12 col-md-push-1">
+                                <div class="row">
+
+
+                                    @if (economicos.IdCiudad == 1)
+                                    {
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Reside en esta ciudad?</label>
+                                                <br />
+                                                @economicos.Respuesta1.Nombre
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Reside en esta ciudad?</label>
+                                                <br />
+                                                @economicos.Respuesta1.Nombre
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Especifique en qué ciudad reside</label>
+                                                <br />
+                                                @economicos.Ciudad
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (economicos.IdTipoFamiliar == 1)
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Con quién vive actualmente?</label>
+                                                <br />
+                                                @economicos.Respuesta16.Nombre
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Especifique con quién vive</label>
+                                                <br />
+                                                @economicos.Familiar
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Con quién vive actualmente?</label>
+                                                <br />
+                                                @economicos.Respuesta16.Nombre
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>¿Trabaja?</label>
+                                            <br />
+                                            @economicos.Respuesta2.Nombre
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>¿A qué se dedica el papá?</label>
+                                            <br />
+                                            @economicos.OcupacionPapa
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>¿A qué se dedica la mamá?</label>
+                                            <br />
+                                            @economicos.OcupacionMama
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Cantidad de hermanos</label>
+                                            <br />
+                                            @economicos.CantidadHermano
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>Ingreso mensual aproximado por miembro</label>
+                                                <br />
+                                                @economicos.Respuesta17.Nombre
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="row">
+                                    @if (datos.IdGrado != 1)
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Cuántas personas viven en casa? (Incluyéndole)</label>
+                                                <br />
+                                                @economicos.CantidadPersonas
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Cuántas personas trabajan? (Incluyéndole)</label>
+                                                <br />
+                                                @economicos.CantidadTrabajan
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Considera que necesita beca o algún tipo de apoyo?</label>
+                                                <br />
+                                                @economicos.Respuesta18.Nombre
+                                            </div>
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aspectos Académicos -->
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h2>Aspectos Académicos</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+                        <div class="row">
+                            <div class="col-md-12 col-md-push-1">
+                                @if (datos.IdGrado == 1)
+                                {
+                                    <div class="row">
+                                        @if (academicos.IdListaBachillerato == 1)
+                                        {
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>¿De qué bachillerato egresó?</label>
+                                                    <br />
+                                                    @academicos.Respuesta12.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Bachillerato específico</label>
+                                                    <br />
+                                                    @academicos.Bachillerato
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Especialidad en el bachillerato</label>
+                                                    <br />
+                                                    @academicos.Especialidad
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label>¿De qué bachillerato egresó?</label>
+                                                    <br />
+                                                    @academicos.Respuesta12.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>Especialidad en el bachillerato</label>
+                                                    <br />
+                                                    @academicos.Especialidad
+                                                </div>
+                                            </div>
+                                        }
+
+                                    </div>
+
+                                }
+                                <div class="row">
+                                    @if (datos.IdGrado == 1)
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Promedio general (Bachillerato)</label>
+                                                <br />
+                                                @academicos.Promedio
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>Promedio general (Universidad)</label>
+                                                <br />
+                                                @academicos.Promedio
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>¿Cuenta con equipo de cómputo para estudiar?</label>
+                                            <br />
+                                            @academicos.Respuesta13.Nombre
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Tipo de dispositivo específico</label>
+                                            <br />
+                                            @academicos.Respuesta14.Nombre
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>¿Cuenta con servicio de conexión a internet?</label>
+                                            <br />
+                                            @academicos.Respuesta15.Nombre
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    @if (datos.IdGrado != 1)
+                                    {
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label>¿Cómo es el rendimiento en clase?</label>
+                                                    <br />
+                                                    @academicos.RendimientoClase
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label>¿Cómo es la experiencia con los profesores?</label>
+                                                    <br />
+                                                    @academicos.ExperienciaProfe
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label>¿Qué materias reprobó el periodo anterior?</label>
+                                                    <br />
+                                                    @academicos.MateriasRepro
+                                                </div>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <div class="form-group">
+                                                    <label>¿Qué materia se le dificulta más actualmente?</label>
+                                                    <br />
+                                                    @academicos.MateriasDif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    }
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aspectos Personales -->
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h2>Aspectos Personales</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+                        <div class="row">
+                            <div class="col-md-12 col-md-push-1">
+                                @if (datos.IdGrado == 1)
+                                {
+                                    <div class="row">
+
+                                        @if (personales.IdEnfermedad == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Padece alguna enfermedad?</label>
+                                                    <br />
+                                                    @personales.Respuesta6.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Enfermedad o alergia específica</label>
+                                                    <br />
+                                                    @personales.Especifica
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Padece alguna enfermedad?</label>
+                                                    <br />
+                                                    @personales.Respuesta6.Nombre
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @if (personales.IdFuma == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Fuma?</label>
+                                                    <br />
+                                                    @personales.Respuesta7.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Cantidad y frecuencia</label>
+                                                    <br />
+                                                    @personales.CantidadFuma
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Fuma?</label>
+                                                    <br />
+                                                    @personales.Respuesta7.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (personales.IdBebida == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ingiere bebidas alcohólicas?</label>
+                                                    <br />
+                                                    @personales.Respuesta8.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Cantidad y frecuencia</label>
+                                                    <br />
+                                                    @personales.CantidadBedida
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ingiere bebidas alcohólicas?</label>
+                                                    <br />
+                                                    @personales.Respuesta8.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>En la familia ha observado que hay violencia</label>
+                                                <br />
+                                                @personales.Observacio.Nombre
+                                            </div>
+                                        </div>
+
+                                        @if (personales.IdVidaSinSentido == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ha pensado que la vida no tiene sentido?</label>
+                                                    <br />
+                                                    @personales.Respuesta9.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>¿Por qué?</label>
+                                                    <br />
+                                                    @personales.Porque
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ha pensado que la vida no tiene sentido?</label>
+                                                    <br />
+                                                    @personales.Respuesta9.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="row">
+
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Considera que el apoyo de la familia es el adecuado cuando tiene un problema?</label>
+                                                <br />
+                                                @personales.ApoyoFamiliaEnProblemas
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Por qué?</label>
+                                                <br />
+                                                @personales.ApoyoFamiliaEnProblemasPorque
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Los problemas económicos de la familia le desconcentran?</label>
+                                                <br />
+                                                @personales.ProblemasEconomicosFamilia
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Por qué?</label>
+                                                <br />
+                                                @personales.ProblemasEconomicosFamiliaPorque
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+
+                                        @if (personales.IdEnfermedad == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Padece alguna enfermedad?</label>
+                                                    <br />
+                                                    @personales.Respuesta6.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Enfermedad o alergia específica</label>
+                                                    <br />
+                                                    @personales.Especifica
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Padece alguna enfermedad?</label>
+                                                    <br />
+                                                    @personales.Respuesta6.Nombre
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @if (personales.IdFuma == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Fuma?</label>
+                                                    <br />
+                                                    @personales.Respuesta7.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Cantidad y frecuencia</label>
+                                                    <br />
+                                                    @personales.CantidadFuma
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Fuma?</label>
+                                                    <br />
+                                                    @personales.Respuesta7.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (personales.IdBebida == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ingiere bebidas alcohólicas?</label>
+                                                    <br />
+                                                    @personales.Respuesta8.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Cantidad y frecuencia</label>
+                                                    <br />
+                                                    @personales.CantidadBedida
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ingiere bebidas alcohólicas?</label>
+                                                    <br />
+                                                    @personales.Respuesta8.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿En la familia ha observado que hay violencia?</label>
+                                                <br />
+                                                @personales.Observacio.Nombre
+                                            </div>
+                                        </div>
+
+                                        @if (personales.IdVidaSinSentido == 1)
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ha pensado que la vida no tiene sentido?</label>
+                                                    <br />
+                                                    @personales.Respuesta9.Nombre
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>¿Por qué?</label>
+                                                    <br />
+                                                    @personales.Porque
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>¿Ha pensado que la vida no tiene sentido?</label>
+                                                    <br />
+                                                    @personales.Respuesta9.Nombre
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="row">
+
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Considera que el apoyo de la familia es el adecuado cuando tiene un problema?</label>
+                                                <br />
+                                                @personales.ApoyoFamiliaEnProblemas
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Por qué?</label>
+                                                <br />
+                                                @personales.ApoyoFamiliaEnProblemasPorque
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label>¿Los problemas económicos de la familia le desconcentran?</label>
+                                                <br />
+                                                @personales.ProblemasEconomicosFamilia
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label>¿Por qué?</label>
+                                                <br />
+                                                @personales.ProblemasEconomicosFamiliaPorque
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Qué hace en un día común?</label>
+                                                <br />
+                                                @personales.DiaComun
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Qué es lo que más le gusta de la escuela?</label>
+                                                <br />
+                                                @personales.GustoEscuela
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Cómo se lleva con los padres / hermanos?</label>
+                                                <br />
+                                                @personales.AmbienteFamiliar
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Tiene algún pasatiempo?</label>
+                                                <br />
+                                                @personales.Responsabilidades
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label>¿Cómo es su estado de salúd en general?</label>
+                                                <br />
+                                                @personales.SentidoUltimamente
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección del Tutor - Perfil Psicoemocional -->
+                    <div class="panel panel-default" style="background-color:white;">
+                        <div class="panel-heading" style="text-align:center;">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h2>Sección a ser llenada por el Tutor del Grupo</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body"></div>
+
+                        @if (datos.Grado.Nombre == "1")
+                        {
+
+                            <div class="row">
+                                <div class="col-md-12 col-md-push-1">
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <h3 style="text-align:center;">Perfil Psicoemocional y Cognitivo del Estudiante</h3>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <table class="table table-bordered" style="margin-top:20px;">
+                                                <thead>
+                                                    <tr style="background-color:#f5f5f5;">
+                                                        <th style="text-align:center; width:30%;">Área</th>
+                                                        <th style="text-align:center; width:50%;">Nivel de desempeño</th>
+                                                        <th style="text-align:center; width:20%;">Indicador</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td style="vertical-align:middle;">
+                                                            <strong>Autoestima</strong>
+                                                        </td>
+                                                        <td>
+                                                            @Html.DropDownListFor(model => model.IdNivelAutoestima,
+                                                                                                                   ViewBag.ListaAutoestima as SelectList,
+                                                                                                                   "Seleccione nivel de desempeño",
+                                                                                                                   new { @class = "form-control nivel-desempeno", data_area = "autoestima" })
+                                                        </td>
+                                                        <td style="text-align:center; vertical-align:middle;">
+                                                            <div id="semaforo-autoestima" class="semaforo-circle" style="width:40px; height:40px; border-radius:50%; margin:0 auto; border:2px solid #ccc;"></div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="vertical-align:middle;">
+                                                            <strong>Tamizaje</strong>
+                                                        </td>
+                                                        <td>
+                                                            @Html.DropDownListFor(model => model.IdNivelTamizaje,
+                                                                                                                   ViewBag.ListaTamizaje as SelectList,
+                                                                                                                   "Seleccione nivel de desempeño",
+                                                                                                                   new { @class = "form-control nivel-desempeno", data_area = "tamizaje" })
+                                                        </td>
+                                                        <td style="text-align:center; vertical-align:middle;">
+                                                            <div id="semaforo-tamizaje" class="semaforo-circle" style="width:40px; height:40px; border-radius:50%; margin:0 auto; border:2px solid #ccc;"></div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="vertical-align:middle;">
+                                                            <strong>Pensamiento Abstracto</strong>
+                                                        </td>
+                                                        <td>
+                                                            @Html.DropDownListFor(model => model.IdNivelPensamientoAbstracto,
+                                                                                                                   ViewBag.ListaPensamientoAbstracto as SelectList,
+                                                                                                                   "Seleccione nivel de desempeño",
+                                                                                                                   new { @class = "form-control nivel-desempeno", data_area = "pensamiento" })
+                                                        </td>
+                                                        <td style="text-align:center; vertical-align:middle;">
+                                                            <div id="semaforo-pensamiento" class="semaforo-circle" style="width:40px; height:40px; border-radius:50%; margin:0 auto; border:2px solid #ccc;"></div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    @*<h5>Resultado de la Evaluación Psicométrica</h5>*@
+                                                    @Html.EditorFor(model => model.EvaluacionPsicometrica, new { htmlAttributes = new { @class = "form-control", placeholder = "Resultados Psicométricos" } })
+                                                    @Html.ValidationMessageFor(model => model.EvaluacionPsicometrica, "", new { @class = "text-danger" })
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <hr />
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <h4>Clasificación de Vulnerabilidades</h4>
+
+                                            <div class="panel-group" id="accordion-vulnerabilidades-inicial" role="tablist" aria-multiselectable="true">
+
+                                                <!-- Vulnerabilidades Económicas -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingEconomicas">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-inicial"
+                                                               href="#collapseEconomicas" aria-expanded="false" aria-controls="collapseEconomicas">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Vulnerabilidades Económicas
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapseEconomicas" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingEconomicas">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>De 2 a 3 dependientes, con un salario mensual de $2,500 a $5,000, se considera vulnerable</li>
+                                                                <li>De 4 a 8 dependientes, con un ingreso de $6,000 a $8,000, se considera vulnerable</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Vulnerabilidades Académicas -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingAcademicas">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-inicial"
+                                                               href="#collapseAcademicas" aria-expanded="false" aria-controls="collapseAcademicas">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Vulnerabilidades Académicas
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapseAcademicas" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingAcademicas">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>Promedio del bachillerato menor de 7.0, se considera vulnerable</li>
+                                                                <li>Resultado de Pensamiento Abstracto Limítrofe o Promedio Bajo, se considera vulnerable</li>
+                                                                <li>Baja preparación escolar previa, se considera vulnerable</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Vulnerabilidades Personales -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingPersonales">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-inicial"
+                                                               href="#collapsePersonales" aria-expanded="false" aria-controls="collapsePersonales">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Vulnerabilidades Personales
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapsePersonales" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingPersonales">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>Resultado de Autoestima Baja, se considera vulnerable</li>
+                                                                <li>Resultado de Autoestima Media, se considera en observación</li>
+                                                                <li>Valoración pobre de sus capacidades, se considera vulnerable</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Vulnerabilidades de Riesgo de Adicciones -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingAdicciones">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-inicial"
+                                                               href="#collapseAdicciones" aria-expanded="false" aria-controls="collapseAdicciones">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Vulnerabilidades de Riesgo de Adicciones
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapseAdicciones" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingAdicciones">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>Tamizaje con Riesgo Alto, se considera vulnerable</li>
+                                                                <li>Tamizaje con Riesgo Moderado, se considera en observación</li>
+                                                                <li>Consumo frecuente con pérdida de control de actos, se considera vulnerable</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Indicadores de Alerta para Deserción (Rojo) -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingDesercion">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-inicial"
+                                                               href="#collapseDesercion" aria-expanded="false" aria-controls="collapseDesercion">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Indicadores de Alerta para Deserción (Rojo)
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapseDesercion" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingDesercion">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>Autoestima Baja combinada con Pensamiento Abstracto Limítrofe o Promedio Bajo, se considera en riesgo de deserción</li>
+                                                                <li>Riesgo Alto de adicciones combinado con vulnerabilidad económica, se considera en riesgo de deserción</li>
+                                                                <li>Autoestima Baja combinada con Riesgo Alto de adicciones, se considera en riesgo de deserción</li>
+                                                                <li>Promedio académico menor de 7.0 con Autoestima Baja, se considera en riesgo de deserción</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Indicadores de Observación (Naranja) -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingObservacion">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-inicial"
+                                                               href="#collapseObservacion" aria-expanded="false" aria-controls="collapseObservacion">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Indicadores de Observación (Naranja)
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapseObservacion" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingObservacion">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>Autoestima Media con cualquier otra vulnerabilidad, se considera en observación</li>
+                                                                <li>Riesgo Moderado de adicciones con Pensamiento Abstracto Promedio, se considera en observación</li>
+                                                                <li>Pensamiento Abstracto Promedio con vulnerabilidad económica, se considera en observación</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                            <div style="margin-top: 20px;">
+                                                <p>
+                                                    De acuerdo a la información obtenida en los aspectos anteriores, ¿Se considera al alumno vulnerable?
+                                                    @Html.DropDownList("IdVulnerable", null, "Elija una opción", htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    @Html.ValidationMessageFor(model => model.IdVulnerable, "", new { @class = "text-danger" })
+                                                </p>
+                                                <p>
+                                                    Seleccione el grupo en que se considera al alumno como vulnerable.
+                                                    @Html.DropDownList("IdEleccionVunerabilidad", null, "Elija una opción", htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    @Html.ValidationMessageFor(model => model.IdEleccionVunerabilidad, "", new { @class = "text-danger" })
+                                                </p>
+                                                <br />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        }
+                        else
+                        {
+
+                            <div class="row">
+                                <div class="col-md-12 col-md-push-1">
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <h3 style="text-align:center;">Indicadores de Vulnerabilidad</h3>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <table class="table table-bordered" style="margin-top:20px;">
+                                                <thead>
+                                                    <tr style="background-color:#f5f5f5;">
+                                                        <th style="text-align:center; width:30%;">Área</th>
+                                                        <th style="text-align:center; width:50%;">Nivel de desempeño</th>
+                                                        <th style="text-align:center; width:20%;">Indicador</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                    <tr>
+                                                        <td style="vertical-align:middle;">
+                                                            <strong>Económico</strong>
+                                                        </td>
+                                                        <td>
+                                                            @Html.DropDownListFor(model => model.IdAspectoEconomico,
+                                                                                                                             ViewBag.ListaEconomico as SelectList,
+                                                                                                                             "Seleccione nivel de desempeño",
+                                                                                                                             new { @class = "form-control nivel-desempeno", data_area = "economico" })
+                                                        </td>
+                                                        <td style="text-align:center; vertical-align:middle;">
+                                                            <div id="semaforo-economico" class="semaforo-circle" style="width:40px; height:40px; border-radius:50%; margin:0 auto; border:2px solid #ccc;"></div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="vertical-align:middle;">
+                                                            <strong>Académico</strong>
+                                                        </td>
+                                                        <td>
+                                                            @Html.DropDownListFor(model => model.IdAspectoAcademico,
+                                                                                                                             ViewBag.ListaAcademico as SelectList,
+                                                                                                                             "Seleccione nivel de desempeño",
+                                                                                                                             new { @class = "form-control nivel-desempeno", data_area = "academico" })
+                                                        </td>
+                                                        <td style="text-align:center; vertical-align:middle;">
+                                                            <div id="semaforo-academico" class="semaforo-circle" style="width:40px; height:40px; border-radius:50%; margin:0 auto; border:2px solid #ccc;"></div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="vertical-align:middle;">
+                                                            <strong>Personal</strong>
+                                                        </td>
+                                                        <td>
+                                                            @Html.DropDownListFor(model => model.IdAspectoPersonal,
+                                                                                                                             ViewBag.ListaPersonal as SelectList,
+                                                                                                                             "Seleccione nivel de desempeño",
+                                                                                                                             new { @class = "form-control nivel-desempeno", data_area = "personal" })
+                                                        </td>
+                                                        <td style="text-align:center; vertical-align:middle;">
+                                                            <div id="semaforo-personal" class="semaforo-circle" style="width:40px; height:40px; border-radius:50%; margin:0 auto; border:2px solid #ccc;"></div>
+                                                        </td>
+                                                    </tr>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <hr />
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-10">
+                                            <h4>Clasificación de Vulnerabilidades</h4>
+
+                                            <div class="panel-group" id="accordion-vulnerabilidades-seguimiento" role="tablist" aria-multiselectable="true">
+
+                                                <!-- Vulnerabilidades Personales -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingSeguimientoPersonales">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-seguimiento"
+                                                               href="#collapseSeguimientoPersonales" aria-expanded="false" aria-controls="collapseSeguimientoPersonales">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Vulnerabilidades Personales
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapseSeguimientoPersonales" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingSeguimientoPersonales">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>No presenta ningún problema o queja con respecto de su entorno.</li>
+                                                                <li>Hay molestia o inconformidad con respecto a su entorno, o su persona. (la molestia no afecta su estabilidad emocional).</li>
+                                                                <li>Los problemas personales le afectan de manera académica. (Afectando emocionalmente).</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Vulnerabilidades Académicas -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingSeguimientoAcademicas">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-seguimiento"
+                                                               href="#collapseSeguimientoAcademicas" aria-expanded="false" aria-controls="collapseSeguimientoAcademicas">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Vulnerabilidades Académicas
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapseSeguimientoAcademicas" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingSeguimientoAcademicas">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>No presenta dificultades académicas y se encuentra aprobando las materias.</li>
+                                                                <li>Presenta entre una y tres materias reprobadas en algún parcial.</li>
+                                                                <li>Presenta mas de tres materias reprobadas, en algún parcial.</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Vulnerabilidades Económicas -->
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading" role="tab" id="headingSeguimientoEconomicas">
+                                                        <h4 class="panel-title">
+                                                            <a role="button" data-toggle="collapse" data-parent="#accordion-vulnerabilidades-seguimiento"
+                                                               href="#collapseSeguimientoEconomicas" aria-expanded="false" aria-controls="collapseSeguimientoEconomicas">
+                                                                <span class="glyphicon glyphicon-chevron-down"></span> Vulnerabilidades Económicas
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="collapseSeguimientoEconomicas" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingSeguimientoEconomicas">
+                                                        <div class="panel-body">
+                                                            <ul style="list-style-type: disc; margin-left: 20px;">
+                                                                <li>El alumno refiere tener un ingreso mensual mayor a 4 salarios mínimos por cada miembro de la familia, es decir mas de $2,562.68.</li>
+                                                                <li>El alumno refiere tener alguna dificultad económica y presenta un ingreso mensual por cada miembro de la familia de al menos $2,562.68.</li>
+                                                                <li>El alumno refiere tener problemas económicos y presenta un ingreso mensual menor a 4 salarios mínimos por cada miembro de la familia es decir menos de $2,562.68.</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                            <div style="margin-top: 20px;">
+                                                <p>
+                                                    De acuerdo a la información obtenida en los aspectos anteriores, ¿Se considera al alumno vulnerable?
+                                                    @Html.DropDownList("IdVulnerable", null, "Elija una opción", htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    @Html.ValidationMessageFor(model => model.IdVulnerable, "", new { @class = "text-danger" })
+                                                </p>
+                                                <p>
+                                                    Seleccione el grupo en que se considera al alumno como vulnerable.
+                                                    @Html.DropDownList("IdEleccionVunerabilidad", null, "Elija una opción", htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    @Html.ValidationMessageFor(model => model.IdEleccionVunerabilidad, "", new { @class = "text-danger" })
+                                                </p>
+                                                <br />
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        }
+
+                        <div class="panel-footer">
+                            <div class="row">
+                                <div class="form-group">
+                                    <div class=" col-md-10">
+                                        <input type="submit" value="Guardar" class="btn btn-default" id="btnGuardar" />
+                                        @if (datos.Estado)
+                                        {
+                                            <button type="button" class="btn btn-warning" id="btnDesbloquear" style="margin-left: 10px;">Desbloquear edición</button>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-md-12">&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+}
+
+
+
+@if (!string.IsNullOrEmpty(ViewBag.Mensaje))
+{
+    <script type="text/javascript">
+        alert("@ViewBag.Mensaje");
+    </script>
+}
+
+<script src="~/ViewScripts/Entrevista/EntrevistaDetalles.js?v=3"></script>
+
+<!-- SCRIPTS CON SWEETALERT -->
+@if (!string.IsNullOrEmpty(TempData["Message"] as string))
+{
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var mensaje = "@Html.Raw(TempData["Message"])";
+
+            if (mensaje.indexOf("correctamente") > -1 || mensaje.indexOf("exitosamente") > -1) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Guardado exitoso!',
+                    text: mensaje,
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#28a745',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            } else if (mensaje.indexOf("Error") > -1 || mensaje.indexOf("error") > -1) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al guardar',
+                    text: mensaje,
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#dc3545'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Información',
+                    text: mensaje,
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#007bff'
+                });
+            }
+        });
+    </script>
+}
+
+@if (!string.IsNullOrEmpty(ViewBag.Mensaje))
+{
+    <script type="text/javascript">
+        Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: "@ViewBag.Mensaje",
+            confirmButtonText: 'Aceptar'
+        });
+    </script>
+}
+
+<!-- CONFIRMACIÓN ANTES DE GUARDAR -->
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('form').on('submit', function (e) {
+            var vulnerable = $('#IdVulnerable').val();
+            var eleccion = $('#IdEleccionVunerabilidad').val();
+
+            if (vulnerable && eleccion) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: '¿Confirmar guardado?',
+                    html: '<strong>Vulnerable:</strong> ' + $('#IdVulnerable option:selected').text() + '<br><strong>Tipo:</strong> ' + $('#IdEleccionVunerabilidad option:selected').text(),
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#007bff',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, guardar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#btnGuardar').prop('disabled', true).text('Guardando...');
+                        $('form')[0].submit();
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#btnDesbloquear').click(function () {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "El alumno podrá editar nuevamente su entrevista.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f0ad4e',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, desbloquear',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("Desbloquear", "Asesor")',
+                        type: 'POST',
+                        data: { id: @datos.IdPersona },
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    '¡Desbloqueado!',
+                                    response.message,
+                                    'success'
+                                ).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error',
+                                    response.message,
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function () {
+                             Swal.fire(
+                                'Error',
+                                'Hubo un problema al procesar la solicitud.',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            })
+        });
+    });
+</script>
+
+<!-- Script para manejar el semáforo -->
+<script type="text/javascript">
+    $(document).ready(function () {
+        // Define los colores del semáforo según el nivel de desempeño
+        var coloresSemaforo = {
+            // Autoestima
+            'Autoestima baja': '#dc3545',           // Rojo
+            'Autoestima media': '#ffc107',          // Naranja
+            'Autoestima elevada': '#28a745',        // Verde
+
+            // Tamizaje
+            'Sin riesgo': '#28a745',                    // Verde
+            'Riesgo moderado': '#ffc107',               // Naranja
+            'Riesgo alto': '#dc3545',                   // Rojo
+
+            // Pensamiento Abstracto
+            'Limítrofe / Promedio Bajo': '#dc3545',     // Rojo
+            'Promedio': '#ffc107',                      // Naranja
+            'Superior': '#28a745',                      // Verde
+
+
+            // Economico
+            'Ingreso suficiente': '#28a745',            // Verde
+            'Dificultad económica': '#ffc107',          // Naranja
+            'Problema económico': '#dc3545',            // Rojo
+
+            // Academico
+            'Sin materias': '#28a745',                  // Verde
+            '1-3 materias reprobadas': '#ffc107',       // Naranja
+            'Más de 3 materias reprobadas': '#dc3545',  // Rojo
+
+            // Personal
+            'Sin problemas': '#28a745',                 // Verde
+            'Incomodidad leve': '#ffc107',              // Naranja
+            'Afectación emocional': '#dc3545',          // Rojo
+        };
+
+        // Función para actualizar el color del semáforo
+        function actualizarSemaforo(dropdown) {
+            var textoSeleccionado = $(dropdown).find('option:selected').text();
+            var area = $(dropdown).data('area');
+            var semaforoId = '#semaforo-' + area;
+
+            if (textoSeleccionado && textoSeleccionado !== 'Seleccione nivel de desempeño') {
+                var color = coloresSemaforo[textoSeleccionado];
+                if (color) {
+                    $(semaforoId).css('background-color', color);
+                }
+            } else {
+                $(semaforoId).css('background-color', 'transparent');
+            }
+        }
+
+        // Aplicar cambio de color al cambiar la selección
+        $('.nivel-desempeno').change(function () {
+            actualizarSemaforo(this);
+        });
+
+        // Inicializar colores si ya hay valores seleccionados al cargar la página
+        $('.nivel-desempeno').each(function () {
+            actualizarSemaforo(this);
+        });
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        // VARIABLE CRÍTICA: ID de persona actual desde Razor
+        var currentIdPersona = @idPersonaActual;
+
+        // TOKEN ACTUAL desde la URL
+        var currentToken = '@Request.QueryString["token"]';
+
+        console.log('=== Inicializando navegación ===');
+        console.log('ID Persona:', currentIdPersona);
+        console.log('Token recibido:', currentToken ? '✓ Sí' : '✗ No');
+
+        // 1. Verificar ID válido
+        if (currentIdPersona <= 0) {
+            console.error('⚠️ ID de persona inválido');
+            $('#posicionActual').text('Error: ID inválido');
+            $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+            return;
+        }
+
+        // 2. Verificar token
+        if (!currentToken || currentToken === '') {
+            console.error('⚠️ Token no disponible');
+            $('#posicionActual').text('Error: Sin token');
+            $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+            return;
+        }
+
+        // 3. LLAMADA AJAX para obtener navegación
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("ObtenerNavegacionEntrevistas", "Asesor")',
+            data: {
+                idPersona: currentIdPersona,
+                token: currentToken
+            },
+            dataType: 'json',
+            beforeSend: function() {
+                $('#posicionActual').text('Cargando...');
+                console.log('→ Enviando petición AJAX...');
+            },
+            success: function (response) {
+                console.log('✓ Respuesta recibida:', response);
+
+                if (response.success) {
+                    // Actualizar posición
+                    $('#posicionActual').text(response.posicion + ' de ' + response.total);
+
+                    // --- Botón ANTERIOR ---
+                    if (response.idAnterior && response.tokenAnterior) {
+                        $('#btnAnterior')
+                            .data('id', response.idAnterior)
+                            .data('token', response.tokenAnterior)
+                            .prop('disabled', false);
+                        console.log('✓ Botón Anterior habilitado (ID:', response.idAnterior + ')');
+                    } else {
+                        $('#btnAnterior').prop('disabled', true);
+                        console.log('⊗ Botón Anterior deshabilitado (primer alumno)');
+                    }
+
+                    // --- Botón SIGUIENTE ---
+                    if (response.idSiguiente && response.tokenSiguiente) {
+                        $('#btnSiguiente')
+                            .data('id', response.idSiguiente)
+                            .data('token', response.tokenSiguiente)
+                            .prop('disabled', false);
+                        console.log('✓ Botón Siguiente habilitado (ID:', response.idSiguiente + ')');
+                    } else {
+                        $('#btnSiguiente').prop('disabled', true);
+                        console.log('⊗ Botón Siguiente deshabilitado (último alumno)');
+                    }
+
+                } else {
+                    console.error('✗ Error en respuesta:', response.message);
+                    $('#posicionActual').text('Error');
+                    $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+                    alert('Error al cargar navegación: ' + response.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('✗ Error AJAX:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                $('#posicionActual').text('Error de conexión');
+                $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+                alert('Error de conexión al cargar la navegación. Por favor recarga la página.');
+            }
+        });
+
+        // 4. EVENTOS CLICK de los botones
+        $('#btnAnterior').click(function (e) {
+            e.preventDefault();
+            var idAnterior = $(this).data('id');
+            var tokenAnterior = $(this).data('token');
+
+            console.log('→ Click Anterior - ID:', idAnterior);
+
+            if (idAnterior && tokenAnterior) {
+                // Deshabilitar botones para evitar clics múltiples
+                $('.navegacion-entrevistas button').addClass('btn-navegando');
+
+                var url = '@Url.Action("Detalles", "Asesor", new { id = (int?)null })' +
+                    '?id=' + idAnterior +
+                    '&token=' + encodeURIComponent(tokenAnterior);
+
+                console.log('→ Navegando a:', url);
+                window.location.href = url;
+            } else {
+                console.error('Datos de navegación anterior no disponibles');
+            }
+        });
+
+        $('#btnSiguiente').click(function (e) {
+            e.preventDefault();
+            var idSiguiente = $(this).data('id');
+            var tokenSiguiente = $(this).data('token');
+
+            console.log('→ Click Siguiente - ID:', idSiguiente);
+
+            if (idSiguiente && tokenSiguiente) {
+                // Deshabilitar botones para evitar clics múltiples
+                $('.navegacion-entrevistas button').addClass('btn-navegando');
+
+                var url = '@Url.Action("Detalles", "Asesor", new { id = (int?)null })' +
+                    '?id=' + idSiguiente +
+                    '&token=' + encodeURIComponent(tokenSiguiente);
+
+                console.log('→ Navegando a:', url);
+                window.location.href = url;
+            } else {
+                console.error('Datos de navegación siguiente no disponibles');
+            }
+        });
+
+        console.log('=== Navegación inicializada correctamente ===');
+    });
+</script>
+<script>
+    // Manejar navegación con flechas del historial del navegador
+    (function() {
+        var navigationRefreshed = false;
+        var currentIdPersona = @idPersonaActual;
+
+        function refreshNavigation() {
+            if (currentIdPersona <= 0) {
+                console.error('ID de persona inválido');
+                return;
+            }
+
+            console.log('=== Refrescando navegación ===');
+
+            // Remover la clase que bloquea los botones (si quedó del clic anterior)
+            $('.navegacion-entrevistas button').removeClass('btn-navegando');
+
+            // Mostrar estado de carga
+            $('#posicionActual').text('Actualizando...');
+            $('#btnAnterior, #btnSiguiente').prop('disabled', true);
+
+            // Solicitar nuevo token al servidor
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("RegenerarTokenNavegacion", "Asesor")',
+                data: { idPersona: currentIdPersona },
+                dataType: 'json',
+                success: function(tokenResponse) {
+                    if (tokenResponse.success) {
+                        console.log('✓ Token regenerado exitosamente');
+
+                        // Ahora obtener la navegación con el nuevo token
+                        $.ajax({
+                            type: 'POST',
+                            url: '@Url.Action("ObtenerNavegacionEntrevistas", "Asesor")',
+                            data: {
+                                idPersona: currentIdPersona,
+                                token: tokenResponse.token
+                            },
+                            dataType: 'json',
+                            success: function(navResponse) {
+                                if (navResponse.success) {
+                                    $('#posicionActual').text(navResponse.posicion + ' de ' + navResponse.total);
+
+                                    if (navResponse.idAnterior && navResponse.tokenAnterior) {
+                                        $('#btnAnterior')
+                                            .data('id', navResponse.idAnterior)
+                                            .data('token', navResponse.tokenAnterior)
+                                            .prop('disabled', false);
+                                    }
+
+                                    if (navResponse.idSiguiente && navResponse.tokenSiguiente) {
+                                        $('#btnSiguiente')
+                                            .data('id', navResponse.idSiguiente)
+                                            .data('token', navResponse.tokenSiguiente)
+                                            .prop('disabled', false);
+                                    }
+
+                                    console.log('✓ Navegación actualizada');
+                                } else {
+                                    console.error('Error al obtener navegación:', navResponse.message);
+                                    $('#posicionActual').text('Error');
+                                }
+                            },
+                            error: function() {
+                                console.error('Error de conexión al obtener navegación');
+                                $('#posicionActual').text('Error');
+                            }
+                        });
+                    } else {
+                        console.error('Error al regenerar token:', tokenResponse.message);
+                        $('#posicionActual').text('Error');
+                    }
+                },
+                error: function() {
+                    console.error('Error de conexión al regenerar token');
+                    $('#posicionActual').text('Error');
+                }
+            });
+        }
+
+        // Evento pageshow: se dispara cuando la página se muestra (incluido desde bfcache)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                console.log('Página restaurada desde bfcache');
+                refreshNavigation();
+            }
+        });
+
+        // Evento visibilitychange: se dispara cuando el usuario vuelve a la pestaña
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible' && navigationRefreshed) {
+                // Solo refrescar si ya se había inicializado antes
+                console.log('Pestaña visible de nuevo, refrescando navegación');
+                refreshNavigation();
+            }
+        });
+
+        // Marcar como inicializado después de un pequeño delay
+        setTimeout(function() {
+            navigationRefreshed = true;
+        }, 2000);
+    })();
+</script>
+<style>
+    /* Estilos para los acordeones de vulnerabilidades */
+    #accordion-vulnerabilidades-inicial .panel,
+    #accordion-vulnerabilidades-seguimiento .panel {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-bottom: 5px;
+        box-shadow: none;
+    }
+
+    #accordion-vulnerabilidades-inicial .panel-heading,
+    #accordion-vulnerabilidades-seguimiento .panel-heading {
+        background-color: #fff;
+        border-bottom: 1px solid #ccc;
+        padding: 0;
+        border-radius: 4px;
+    }
+
+    #accordion-vulnerabilidades-inicial .panel-title a,
+    #accordion-vulnerabilidades-seguimiento .panel-title a {
+        display: block;
+        padding: 10px 15px;
+        text-decoration: none;
+        color: #555;
+        font-weight: 500;
+        background-color: #fff;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+
+        #accordion-vulnerabilidades-inicial .panel-title a:hover,
+        #accordion-vulnerabilidades-seguimiento .panel-title a:hover {
+            background-color: #f5f5f5;
+            text-decoration: none;
+            color: #333;
+        }
+
+        #accordion-vulnerabilidades-inicial .panel-title a[aria-expanded="true"],
+        #accordion-vulnerabilidades-seguimiento .panel-title a[aria-expanded="true"] {
+            background-color: #e6e6e6;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        #accordion-vulnerabilidades-inicial .panel-title a .glyphicon,
+        #accordion-vulnerabilidades-seguimiento .panel-title a .glyphicon {
+            margin-right: 10px;
+            transition: transform 0.3s;
+            color: #555;
+        }
+
+        #accordion-vulnerabilidades-inicial .panel-title a[aria-expanded="true"] .glyphicon,
+        #accordion-vulnerabilidades-seguimiento .panel-title a[aria-expanded="true"] .glyphicon {
+            transform: rotate(180deg);
+        }
+
+    #accordion-vulnerabilidades-inicial .panel-body,
+    #accordion-vulnerabilidades-seguimiento .panel-body {
+        background-color: #fff;
+        border-top: 1px solid #e6e6e6;
+        padding: 15px;
+    }
+
+    #accordion-vulnerabilidades-inicial .panel-collapse,
+    #accordion-vulnerabilidades-seguimiento .panel-collapse {
+        border-top: none;
+    }
+
+    /* Ajustar el espaciado de las listas dentro de los acordeones */
+    #accordion-vulnerabilidades-inicial .panel-body ul,
+    #accordion-vulnerabilidades-seguimiento .panel-body ul {
+        margin-bottom: 0;
+    }
+
+        #accordion-vulnerabilidades-inicial .panel-body ul li,
+        #accordion-vulnerabilidades-seguimiento .panel-body ul li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+    /* Estilos adicionales para los botones de navegación */
+    .navegacion-entrevistas button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .navegacion-entrevistas button:not(:disabled):hover {
+        transform: scale(1.05);
+        transition: transform 0.2s;
+    }
+
+    .btn-navegando {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+</style>
+
+<!-- Script para manejar lógica de vulnerabilidad (Mostrar/Ocultar dropdowns) -->
+<script type="text/javascript">
+    $(document).ready(function () {
+        var $ddlVulnerable = $('#IdVulnerable');
+        var $ddlTipo = $('#IdEleccionVunerabilidad');
+
+        function toggleVulnerabilityOptions() {
+            // Asumimos que la opción "Sí" contiene "SI" en su texto (ignorando mayúsculas/espacios)
+            var textoSeleccionado = $ddlVulnerable.find('option:selected').text().toUpperCase().trim();
+            var isVulnerable = textoSeleccionado === 'SI' || textoSeleccionado === 'YES'; // Por si acaso
+            var $container = $ddlTipo.closest('p');
+
+            if (isVulnerable) {
+                // MOSTRAR: Si es vulnerable, mostramos las opciones
+                $container.show();
+                $ddlTipo.attr('required', 'required'); // Restaurar validación
+
+                // Filtrar opciones: Ocultar "NO VULNERABLE" si existe en la lista
+                // Esto es para cumplir con "arroje solo esas 3 opciones"
+                $ddlTipo.find('option').each(function () {
+                    var text = $(this).text().toUpperCase().trim();
+                    if (text === 'NO VULNERABLE') {
+                        $(this).hide();
+                    } else {
+                        $(this).show();
+                    }
+                });
+
+                // Si la selección actual estaba oculta (ej. era No Vulnerable), limpiamos o seleccionamos la primera visible
+                if ($ddlTipo.find('option:selected').css('display') === 'none') {
+                    $ddlTipo.val('');
+                }
+            } else {
+                // OCULTAR: Si no es vulnerable
+                $container.hide();
+                $ddlTipo.removeAttr('required'); // Quitar validación para permitir guardar
+                $ddlTipo.val(''); // Limpiar valor
+
+                // Intentar poner "No vulnerable" si existe, por consistencia visual
+                // El backend ya maneja null como "No vulnerable", así que enviar vacío está bien.
+                var $noVulnOption = $ddlTipo.find('option').filter(function () {
+                    return $(this).text().toUpperCase().trim() === 'NO VULNERABLE';
+                });
+                if ($noVulnOption.length > 0) $noVulnOption.prop('selected', true);
+            }
+        }
+
+        $ddlVulnerable.change(toggleVulnerabilityOptions);
+
+        // Ejecutar al cargar la página para establecer estado inicial
+        toggleVulnerabilityOptions();
+    });
+</script>

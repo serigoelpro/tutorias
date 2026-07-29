@@ -1,0 +1,550 @@
+﻿@* ✅ ELIMINAMOS "using System.Linq" PARA EVITAR ERRORES *@
+@using System.Collections.Generic
+@model PlataformaWeb.Controllers.Materias.ResultadoImportacion
+@{
+    bool esExitoso = Model.Exito;
+    bool tieneErrores = Model.AlumnosConErrores != null && Model.AlumnosConErrores.Count > 0;
+    bool tieneExitosos = Model.AlumnosProcesados != null && Model.AlumnosProcesados.Count > 0;
+    // Variables para manejo seguro
+    var alumnosProcesadosLimitados = Model.AlumnosProcesados ??
+new List<PlataformaWeb.Controllers.Materias.AlumnoImportado>();
+    var alumnosConErroresLimitados = Model.AlumnosConErrores ?? new List<PlataformaWeb.Controllers.Materias.AlumnoImportado>();
+
+    // --- ✅ NUEVA LÓGICA (SIN HASHSET) PARA CONSTRUIR TABLA TIPO EXCEL ---
+    // 1. Obtener todos los nombres de materias únicas como encabezados
+    var materiasUnicas = new List<string>();
+
+    foreach (var alumno in alumnosProcesadosLimitados)
+    {
+        if (alumno.Calificaciones != null)
+        {
+            foreach (var cal in alumno.Calificaciones)
+            {
+                if (cal.NombreMateria != null)
+                {
+                    // Usamos un bucle simple para verificar si ya existe
+                    bool yaExiste = false;
+                    foreach (var materiaExistente in materiasUnicas)
+                    {
+                        if (materiaExistente == cal.NombreMateria)
+                        {
+                            yaExiste = true;
+                            break;
+                        }
+                    }
+
+                    if (!yaExiste)
+                    {
+                        materiasUnicas.Add(cal.NombreMateria);
+                    }
+                }
+            }
+        }
+    }
+    materiasUnicas.Sort(); // Ordenar alfabéticamente
+}
+
+<div class="resultado-modal">
+
+    <div class="alert @(esExitoso ? "alert-success" : "alert-danger")" style="margin-bottom: 20px;">
+        <h4>
+            @if (esExitoso)
+            {
+                <span class="glyphicon glyphicon-ok-circle"></span> <strong>Importación Completada</strong>
+
+            }
+            else
+            {
+                <span class="glyphicon glyphicon-remove-circle"></span> <strong>Error en Importación</strong>
+            }
+        </h4>
+        <p style="margin-bottom: 10px; font-size: 16px;">@Model.MensajeGeneral</p>
+
+        @if (!string.IsNullOrEmpty(Model.NombreCarrera) || !string.IsNullOrEmpty(Model.NombreGrado))
+        {
+
+            <p class="text-muted" style="margin-bottom: 0; font-size: 14px;">
+                <strong>Grupo:</strong> @Model.NombreGrupo |
+                <strong>Carrera:</strong> @Model.NombreCarrera |
+                <strong>Grado:</strong> @Model.NombreGrado
+            </p>
+        }
+    </div>
+
+    @if (Model.TotalCalificacionesImportadas > 0 || tieneErrores)
+    {
+        <div class="panel panel-info" style="margin-bottom: 20px;">
+            <div class="panel-heading">
+                <h4 class="panel-title"><span class="glyphicon glyphicon-stats"></span> Resumen de Resultados</h4>
+
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-sm-3 text-center">
+                        <h3 class="text-success" style="margin: 0;">@Model.TotalCalificacionesImportadas</h3>
+
+                        <small><strong>Calificaciones<br />Procesadas</strong></small>
+                    </div>
+                    <div class="col-sm-3 text-center">
+                        <h3 class="text-success" style="margin: 0;">@(Model.AlumnosProcesados != null ? Model.AlumnosProcesados.Count : 0)</h3>
+
+                        <small><strong>Alumnos<br />Exitosos</strong></small>
+                    </div>
+                    <div class="col-sm-3 text-center">
+                        <h3 class="@(tieneErrores ?
+"text-warning" : "text-success")" style="margin: 0;">
+                            @(Model.AlumnosConErrores != null ? Model.AlumnosConErrores.Count : 0)
+                        </h3>
+                        <small><strong>Errores<br />Detectados</strong></small>
+                    </div>
+                    <div class="col-sm-3 text-center">
+
+                        <h3 class="text-info" style="margin: 0;">@((Model.AlumnosProcesados != null ? Model.AlumnosProcesados.Count : 0) + (Model.AlumnosConErrores != null ? Model.AlumnosConErrores.Count : 0))</h3>
+                        <small><strong>Total<br />Procesados</strong></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    }
+
+    @if (Model.DetallesImportacion != null && Model.DetallesImportacion.Count > 0)
+    {
+        <div class="panel panel-default" style="margin-bottom: 20px;">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a href="#detalles-procesamiento-modal" data-toggle="collapse">
+
+                        <span class="glyphicon glyphicon-list-alt"></span> Detalles del Procesamiento
+                        <span class="pull-right glyphicon glyphicon-chevron-down"></span>
+                    </a>
+                </h4>
+            </div>
+
+            <div id="detalles-procesamiento-modal" class="panel-collapse" style="display: none;">
+                <div class="panel-body">
+                    <div class="well well-sm" style="max-height: 200px;
+overflow-y: auto;">
+                        @foreach (var detalle in Model.DetallesImportacion)
+                        {
+                            <p class="@(detalle.StartsWith("❌") ? "text-danger" : detalle.StartsWith("✓") ? "text-success" : "text-info")" style="margin-bottom: 5px;
+font-size: 13px;">
+                                @detalle
+                            </p>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (tieneExitosos)
+    {
+        <div class="panel panel-success" style="margin-bottom: 20px;">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <span class="glyphicon glyphicon-ok-sign"></span>
+                    Calificaciones Importadas (@Model.AlumnosProcesados.Count alumnos)
+                </h4>
+            </div>
+            <div class="panel-body">
+                <div style="max-height: 400px; overflow: auto; border: 1px solid #ddd;">
+                    <table class="table table-bordered table-striped table-condensed" style="font-size: 12px; margin: 0;">
+                        <thead style="background-color: #f9f9f9;">
+                            <tr>
+                                <th style="min-width: 40px;">#</th>
+                                <th style="min-width: 90px;">Matrícula</th>
+                                <th style="min-width: 200px;">Nombre del Alumno</th>
+                                @foreach (var nombreMateria in materiasUnicas)
+                                {
+                                    <th class="text-center" style="min-width: 100px;">@nombreMateria</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int contador = 1;
+                                string indicadorExistente = "";
+                            }
+                            @foreach (var alumno in alumnosProcesadosLimitados)
+                            {
+                                <tr>
+                                    <td><strong>@(contador++)</strong></td>
+                                    <td>@alumno.Matricula</td>
+                                    <td>@alumno.NombreBD</td>
+
+                                    @foreach (var nombreMateria in materiasUnicas)
+                                    {
+                                        // --- ✅ BÚSQUEDA MANUAL (SIN TODICTIONARY) ---
+                                        PlataformaWeb.Controllers.Materias.CalificacionImportada calEncontrada = null;
+                                        if (alumno.Calificaciones != null)
+                                        {
+                                            foreach (var cal in alumno.Calificaciones)
+                                            {
+                                                if (cal.NombreMateria == nombreMateria)
+                                                {
+                                                    calEncontrada = cal;
+                                                    break; // <-- Encontramos la calificación, salimos del bucle
+                                                }
+                                            }
+                                        }
+                                        // --- FIN DE BÚSQUEDA MANUAL ---
+
+                                        if (calEncontrada != null)
+                                        {
+                                            // El alumno tiene calificación para esta materia
+                                            indicadorExistente = (calEncontrada.Mensaje != null && (calEncontrada.Mensaje.ToLower().Contains("actualizad") || calEncontrada.Mensaje.ToLower().Contains("existía")))
+                                                ? "<span class='badge badge-warning' title='Calificación actualizada (ya existía)'>!</span>"
+                                                : "";
+
+                                            <td class="text-center">
+                                                <span class="badge @(calEncontrada.Calificacion >= 7 ? "badge-success" : "badge-danger")" style="font-size: 12px;">
+                                                    @calEncontrada.Calificacion.ToString("0.0")
+                                                </span>
+                                                @Html.Raw(indicadorExistente)
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            // El alumno NO tiene calificación (celda vacía en Excel)
+                                            <td class="text-center"><span class="text-muted" style="font-size: 14px;">-</span></td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (Model.AlumnosProcesados.Count > 50)
+                {
+                    <div class="alert alert-info" style="margin-top: 10px; margin-bottom: 0;">
+                        <small>
+                            <strong>Nota:</strong> Se muestran los primeros 50 alumnos exitosos.
+                            Total: @Model.AlumnosProcesados.Count
+                        </small>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+
+    @if (tieneErrores)
+    {
+        <div class="panel panel-warning" style="margin-bottom: 20px;">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a href="#errores-detectados-modal" data-toggle="collapse">
+
+                        <span class="glyphicon glyphicon-warning-sign"></span>
+                        Errores Detectados (@Model.AlumnosConErrores.Count alumnos)
+                        <span class="pull-right glyphicon glyphicon-chevron-up"></span>
+                    </a>
+
+                </h4>
+            </div>
+            <div id="errores-detectados-modal" class="panel-collapse in" style="display: block;">
+                <div class="panel-body">
+                    <div class="alert alert-warning alert-sm">
+
+                        <strong>Nota:</strong> Los siguientes alumnos no pudieron ser procesados debido a errores.
+                    </div>
+
+                    <div style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-condensed table-striped">
+                            <thead>
+
+                                <tr>
+                                    <th>#</th>
+                                    <th>Matrícula</th>
+
+                                    <th>Nombre</th>
+                                    <th>Errores</th>
+                                </tr>
+
+                            </thead>
+                            <tbody>
+                                @{
+
+                                    int contadorError = 1;
+                                    int maxErroresAMostrar = Math.Min(10, alumnosConErroresLimitados.Count);
+                                }
+                                @for (int i = 0; i < maxErroresAMostrar; i++)
+                                {
+
+                                    var alumnoError = alumnosConErroresLimitados[i];
+                                    <tr>
+                                        <td><strong>@contadorError</strong></td>
+                                        <td>
+
+                                            <span class="label label-warning" style="font-size: 11px;">@alumnoError.Matricula</span>
+                                        </td>
+
+                                        <td style="font-size: 13px;">@alumnoError.NombreExcel</td>
+                                        <td>
+                                            @if (alumnoError.Errores != null && alumnoError.Errores.Count
+> 0)
+                                            {
+                                                <ul class="list-unstyled" style="margin-bottom: 0; font-size: 12px;">
+
+                                                    @{
+
+                                                        int maxErroresPorAlumno = Math.Min(3, alumnoError.Errores.Count);
+                                                    }
+                                                    @for (int j = 0; j < maxErroresPorAlumno; j++)
+
+                                                    {
+                                                        <li><span class="text-danger">• @alumnoError.Errores[j]</span></li>
+
+                                                    }
+                                                    @if (alumnoError.Errores.Count > 3)
+
+                                                    {
+                                                        <li><small class="text-muted">... y @(alumnoError.Errores.Count - 3) errores más</small></li>
+
+                                                    }
+                                                </ul>
+
+                                            }
+                                            else
+
+                                            {
+                                                <span class="text-muted" style="font-size: 12px;">Error no especificado</span>
+
+                                            }
+                                        </td>
+                                    </tr>
+
+                                    contadorError++;
+                                }
+                            </tbody>
+                        </table>
+
+                        @if (Model.AlumnosConErrores.Count > 10)
+
+                        {
+                            <div class="alert alert-warning" style="margin-top: 10px; margin-bottom: 0;">
+                                <small>
+                                    <strong>Nota:</strong> Se muestran los primeros 10 alumnos con errores.
+                                    Total: @Model.AlumnosConErrores.Count
+                                </small>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    console.log('=== Resultado Modal: Contenido cargado ===');
+
+    // Marcar que el contenido está listo
+    window.resultadoModalListo = true;
+
+    console.log('=== ResultadoParcial: Listo para inicialización manual ===');
+</script>
+
+<style>
+    .resultado-modal {
+        font-size: 14px;
+    }
+
+        .resultado-modal .panel {
+            margin-bottom: 15px;
+            border-radius: 6px;
+        }
+
+        .resultado-modal .panel-heading {
+            border-radius: 6px 6px 0 0;
+        }
+
+        .resultado-modal .panel-title a {
+            color: inherit;
+            text-decoration: none;
+            display: block;
+            padding: 0;
+        }
+
+            .resultado-modal .panel-title a:hover {
+                text-decoration: none;
+                color: inherit;
+            }
+
+        .resultado-modal .badge-success {
+            background-color: #5cb85c;
+        }
+
+        .resultado-modal .badge-warning {
+            background-color: #f0ad4e;
+        }
+
+        /* ✅ NUEVO: Badge de peligro para calificaciones reprobadas */
+        .resultado-modal .badge-danger {
+            background-color: #d9534f;
+        }
+
+        .resultado-modal .table-condensed > thead > tr > th,
+        .resultado-modal .table-condensed > tbody > tr > th,
+        .resultado-modal .table-condensed > tfoot > tr > th,
+        .resultado-modal .table-condensed > thead > tr > td,
+        .resultado-modal .table-condensed > tbody > tr > td,
+        .resultado-modal .table-condensed > tfoot > tr > td {
+            padding: 5px;
+            font-size: 13px;
+        }
+
+        /* ✅ NUEVO: Estilos para la tabla ancha */
+        .resultado-modal .table-bordered {
+            border: 1px solid #ddd;
+        }
+
+            .resultado-modal .table-bordered > thead > tr > th,
+            .resultado-modal .table-bordered > tbody > tr > td {
+                border: 1px solid #ddd;
+                vertical-align: middle;
+            }
+
+            .resultado-modal .table-bordered > thead > tr > th {
+                background-color: #f9f9f9;
+                font-size: 11px;
+                padding: 8px 5px;
+                vertical-align: bottom;
+            }
+
+
+        .resultado-modal .well-sm {
+            padding: 10px;
+            border-radius: 3px;
+        }
+
+        .resultado-modal .alert-sm {
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .resultado-modal .label {
+            font-size: 10px;
+            padding: 3px 6px;
+        }
+
+        .resultado-modal .badge {
+            font-size: 11px;
+            padding: 3px 6px;
+        }
+
+        .resultado-modal .btn-xs {
+            padding: 2px 6px;
+            font-size: 11px;
+        }
+
+        .resultado-modal .text-center h3 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .resultado-modal .text-center small {
+            font-size: 11px;
+            color: #777;
+            line-height: 1.2;
+        }
+
+        /* Colores específicos para los paneles */
+        .resultado-modal .panel-success > .panel-heading {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .resultado-modal .panel-warning > .panel-heading {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .resultado-modal .panel-info > .panel-heading {
+            background-color: #d6eaf8;
+            border-color: #aed6f1;
+            color: #0c5460;
+        }
+
+        .resultado-modal .panel-default > .panel-heading {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #495057;
+        }
+
+        /* Scrollbars personalizados para webkit */
+        .resultado-modal *::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .resultado-modal *::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .resultado-modal *::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+            .resultado-modal *::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+
+    /* Responsive para pantallas pequeñas */
+    @@media (max-width: 768px) {
+        .resultado-modal .col-sm-3 {
+            margin-bottom: 10px;
+        }
+
+        .resultado-modal .table-condensed {
+            font-size: 11px;
+        }
+
+        .resultado-modal .btn-xs {
+            padding: 1px 4px;
+            font-size: 10px;
+        }
+    }
+
+    /* ✅ SOLO TRANSICIONES SUAVES PARA ICONOS */
+    .resultado-modal .glyphicon-chevron-up,
+    .resultado-modal .glyphicon-chevron-down {
+        -webkit-transition: -webkit-transform 0.3s ease;
+        -o-transition: -o-transform 0.3s ease;
+        transition: transform 0.3s ease;
+    }
+
+    /* Hover effect en headers */
+    .resultado-modal .panel-heading {
+        cursor: pointer;
+        -webkit-transition: background-color 0.2s ease;
+        -o-transition: background-color 0.2s ease;
+        transition: background-color 0.2s ease;
+    }
+
+        .resultado-modal .panel-heading:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+    /* Estilos para links */
+    .resultado-modal .panel-title a {
+        display: block;
+        color: inherit;
+        text-decoration: none;
+    }
+
+        .resultado-modal .panel-title a:hover,
+        .resultado-modal .panel-title a:focus {
+            color: inherit;
+            text-decoration: none;
+        }
+</style>

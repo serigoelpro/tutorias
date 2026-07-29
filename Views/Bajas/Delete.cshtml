@@ -1,0 +1,154 @@
+﻿@using Plataforma_Web.Models.PrimeraEntrevista
+@model PlataformaWeb.Models.Baja
+
+@{
+    DatosPersonales Alumno = ViewBag.Alumno as DatosPersonales;
+    ViewBag.Title = "Eliminar";
+}
+
+<style>
+    .form-container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e1e5e9;
+    }
+
+    .header-row, .name-matricula-row, .inline-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .field-block {
+        flex: 1;
+    }
+
+        .field-block label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+    .field-value {
+        padding: 12px;
+        border: 2px solid #ced2d6;
+        border-radius: 6px;
+        background-color: #f7f7f7;
+        font-size: 14px;
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e1e5e9;
+    }
+
+    .btn-eliminar {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 10px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .btn-eliminar:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+        }
+
+    .btn-regresar {
+        margin-left: 15px;
+        background-color: #6c757d;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .form-horizontal h4,
+    .form-container,
+    .form-container label,
+    .form-container input,
+    .form-container select,
+    .form-container textarea,
+    .form-container option,
+    .btn-eliminar,
+    .btn-regresar,
+    .btn-crear {
+        text-transform: uppercase !important;
+    }
+</style>
+
+<h2>ELIMINAR SOLICITUD DE BAJA</h2>
+<p>¿ESTÁS SEGURO QUE DESEAS ELIMINAR LA BAJA DE <strong> @Model.Nombre</strong>?</p>
+
+<div class="form-container">
+    <div class="header-row">
+        <div class="field-block">
+            <label>Número de folio:</label>
+            <div class="field-value">@Model.Folio</div>
+        </div>
+        <div class="field-block">
+            <label>Fecha:</label>
+            <div class="field-value">@Model.Fecha.ToShortDateString()</div>
+        </div>
+    </div>
+
+    <div class="name-matricula-row">
+        <div class="field-block" style="flex: 2;">
+            <label>Nombre del Alumno:</label>
+            <div class="field-value">@Model.Nombre</div>
+        </div>
+        <div class="field-block">
+            <label>No. de matrícula:</label>
+            <div class="field-value">@Model.Matricula</div>
+        </div>
+    </div>
+
+    <div class="inline-row">
+        <div class="field-block">
+            <label>Grupo:</label>
+            <div class="field-value">@Model.Grupo</div>
+        </div>
+        <div class="field-block">
+            <label>Carrera:</label>
+            <div class="field-value">@Model.Carrera</div>
+        </div>
+        <div class="field-block">
+            <label>Área:</label>
+            <div class="field-value">@Model.Area</div>
+        </div>
+        <div class="field-block">
+            <label>Cuatrimestre:</label>
+            <div class="field-value">@Model.Cuatrimestre</div>
+        </div>
+        <div class="field-block">
+            <label>Turno:</label>
+            <div class="field-value">@Model.Turno</div>
+        </div>
+    </div>
+</div>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="button-container">
+        <input type="submit" value="Eliminar" class="btn-eliminar" />
+        <a href="@Url.Action("Index", new { id = Alumno?.IdPersona })" class="btn-regresar">Regresar</a>
+    </div>
+}

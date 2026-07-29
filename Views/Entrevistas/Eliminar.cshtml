@@ -1,0 +1,72 @@
+﻿@model Plataforma_Web.Models.PrimeraEntrevista.DatosPersonales
+
+@{
+    ViewBag.Title = "Eliminar";
+}
+
+<h2>Eliminar</h2>
+
+<h3>Estas seguro que deseas eliminar este registro?</h3>
+<h4>
+    <font color="red">
+        ABSOLUTAMENTE TODA LA INFORMACION DE ESTE ALUMNO SERA BORRADA DEL SISTEMA.
+    </font>
+</h4>
+<div>
+    <h4>Alumno</h4>
+    <hr />
+    <dl class="dl-horizontal">
+      
+             
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Matricula)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Matricula)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Nombre)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Nombre)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Grado.Nombre)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Grado.Nombre)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Grupo.Nombre)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Grupo.Nombre)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Turno.Nombre)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Turno.Nombre)
+        </dd>  
+        
+
+    </dl>
+
+    @using (Html.BeginForm()) {
+        @Html.AntiForgeryToken()
+
+        <div class="form-actions no-color">
+            <input type="submit" value="Eliminar" class="btn btn-default" /> |
+            @Html.ActionLink("Regresar", "Grupo")
+        </div>
+    }
+</div>

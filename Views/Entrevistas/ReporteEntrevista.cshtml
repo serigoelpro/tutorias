@@ -1,0 +1,41 @@
+﻿@{
+    ViewBag.Title = "Reporte Entrevista";
+}
+
+<h2>Reporte</h2>
+
+<style>
+    iframe {
+        width: 100%;
+        border: 1px solid #969696;
+    }
+</style>
+
+<div class="page-header">
+    <h4>Reporte de Entrevista Inicial por Alumno | F-PSE-DICA-08/R01</h4>
+</div>
+
+
+<hr />
+@using ReportViewerForMvc;
+
+@if (ViewBag.ReportViewer != null)
+{
+    <div class="alert alert-info" role="alert">
+        Por favor espere a que cargue completamente el reporte.
+        Para imprimir de clic en el icono de la impresora en el panel del reporte.
+    </div>
+    <div class="row">
+        <div class="col-md-1"> </div>
+        <div class="col-md-10">
+            @Html.ReportViewer(ViewBag.ReportViewer as Microsoft.Reporting.WebForms.ReportViewer)
+        </div>
+        <div class="col-md-1"> </div>
+    </div>
+}
+
+<a class="btn btn-primary" href="@Url.Action("Grupo", new { id = ViewBag.id })" role="button">
+    <span class="glyphicon glyphicon-arrow-left"></span>
+    Regresar
+
+</a>

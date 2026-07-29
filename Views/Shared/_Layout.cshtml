@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es-mx">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>@ViewBag.Title - Tutorías </title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    @RenderSection("Styles", required: false)
+    <link href="~/Content/layout.css?v=2" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="~/Imagenes/ImagenesPagina/holi (3).ico" />
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    @RenderSection("scripts", required: false)
+
+    @using Plataforma_Web.Models
+    @{
+        Usuario usuario = Session["Usuario"] as Usuario;
+        string fechaExpiracion = "";
+
+        if (usuario != null)
+        {
+            if (Session["HoraFinSesion"] == null)
+            {
+                Session["HoraFinSesion"] = DateTime.Now.AddHours(1);
+            }
+
+            DateTime fin = (DateTime)Session["HoraFinSesion"];
+            fechaExpiracion = fin.ToString("yyyy-MM-ddTHH:mm:ss");
+        }
+
+        string urlTimeout = ProyectoIntegracion.Functionalities.LinkGenerator.Create("login", "Home/Unauthorized") + "?type=timeout";
+    }
+
+    <style>
+        #sessionTimer {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #sessionTimer i {
+            color: #3498db;
+        }
+
+        #sessionTimer.warning {
+            background-color: #e67e22;
+        }
+
+        #sessionTimer.danger {
+            background-color: #c0392b;
+            animation: pulse 2s infinite;
+        }
+
+        @("@")keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top" style="font-family:Arial; font-size:15px;">
+        <div class="container">
+            <a class="navbar-brand" style="padding: 2px 5px 0 0; margin: 0 0 0 0;" href="@Url.Action("Index", "Home")">
+                <img alt="Brand" style="padding: 0 0 0 0; margin: 5px 5px 0 5px; height: 35px;"
+                     src="~/Imagenes/ImagenesPagina/OPCION4.jpg" />
+            </a>
+
+
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+            </div>
+            <div class="navbar-collapse collapse">
+                @if (usuario != null)
+                {
+
+                    if (usuario.IdNivel <= 4)
+                    {
+                        <ul class="nav navbar-nav">
+                            <li>
+                                <a href="@ProyectoIntegracion.Functionalities.LinkGenerator.Create("tutorias", "Home/ReturnHome")">
+                                    <i class="fa-solid fa-house"></i>
+                                    Inicio
+                                </a>
+                            </li>
+
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa-solid fa-list-alt"></i>
+                                    Formatos
+                                    <b class="caret"></b>
+                                </a>
+                                @if (usuario.IdNivel == 2)
+                                {
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a href="@Url.Action("Grupo", "Entrevistas")" class="link-entrevistas">
+                                                • Solicitud de Entrevistas | F-PSE-DICA-08/R01
+                                            </a>
+                                        </li>
+                                        <li>@Html.ActionLink("• Plan de Acción Tutoríal | F-PSE-DICA-14/R01", "Index", "PATs")</li>
+                                    </ul>
+
+                                }
+                                else if (usuario.IdNivel == 3 || usuario.IdNivel == 4)
+                                {
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a href="@Url.Action("Grupo", "Entrevistas")" class="link-entrevistas">
+                                                • Solicitud de Entrevistas | F-PSE-DICA-08/R01
+                                            </a>
+                                        </li>
+                                        <li>
+                                            @Html.ActionLink("• Plan de Acción Tutorial | F-PSE-DICA-14/R01", "PAT", "AsignarAsesores")
+                                        </li>
+                                        <li>@Html.ActionLink("• Reporte de Bajas | F-PSE-DICA-10/R01", "ReporteBajas", "Bajas")</li>
+                                    </ul>
+
+                                }
+                                else if (usuario.IdNivel == 1)
+                                {
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            @Html.ActionLink("• Solicitud de Entrevista | F-PSE-DICA-08/R01", "Index", "Entrevista")
+                                        </li>
+
+                                        <li>@Html.ActionLink("• Mis Materias", "Index", "MisMaterias")</li>
+
+                                        <li>@Html.ActionLink("• Pedir una cita al Psicopedagogo", "IndexE", "CanalizacionesE")</li>
+                                    </ul>
+                                }
+                            </li>
+
+                            @if (usuario != null && (usuario.IdNivel == 4 || usuario.IdNivel == 3))
+                            {
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fa-solid fa-gear"></i>
+                                        Estadísticas y Gestión
+                                        <b class="caret"></b>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li class="dropdown-header">
+                                            <i class="fa-solid fa-graduation-cap"></i> Gestión
+                                        </li>
+
+                                        @if (usuario.IdNivel == 4)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("Index", "UsuariosAlumnoMaster", new { area = "" })">
+                                                    • Vista Unificada de Usuarios
+                                                </a>
+                                            </li>
+                                        }
+
+                                        @if (usuario.IdNivel == 3 || usuario.IdNivel == 4)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("Index", "Alumnos")">
+                                                    • Alumnos
+                                                </a>
+                                            </li>
+                                        }
+
+                                        @if (usuario.IdNivel == 3 || usuario.IdNivel == 4)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("Index", "EstudiantesNew")">
+                                                    • Contraseña de Tutorías Anterior
+                                                </a>
+                                            </li>
+                                        }
+
+                                        @if (usuario.IdNivel == 3 || usuario.IdNivel == 4)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("Index", "UsuarioAlumnos")">
+                                                    • Gestión de Usuarios
+                                                </a>
+                                            </li>
+                                        }
+
+                                        @if (usuario.IdNivel >= 3)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("Index", "GruposGenerales")">
+                                                    • Grupos Asignados
+                                                </a>
+                                            </li>
+                                        }
+                                        <li>
+                                            <a href="@Url.Action("Index", "AsignarAsesoresMaster")">
+                                                • Gestionar Tutores
+                                            </a>
+                                        </li>
+
+                                        @if (usuario.IdNivel == 3 || usuario.IdNivel == 4)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("Index","SeguimientoTutores")">
+                                                    • Seguimiento de Tutores
+                                                </a>
+                                            </li>
+                                        }
+                                        @if (usuario.IdNivel == 4)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("Index", "AsignarCoordinadoresMaster")" class="nav-link">
+                                                    • Gestionar Coordinadores
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="@Url.Action("Especialidades", "SGA")">
+                                                    • Programas Educativos
+                                                </a>
+                                            </li>
+                                        }
+
+                                        <li class="divider"></li>
+                                        <li class="dropdown-header">
+                                            <i class="fa-solid fa-chart-line"></i> Reportes
+                                        </li>
+
+                                        @if (usuario.IdNivel == 3 || usuario.IdNivel == 4)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("SeguimientoEstadisticas", "NuevasEstadisticas")">
+                                                    • Estadísticas
+                                                </a>
+                                            </li>
+                                        }
+
+                                        @if (usuario.IdNivel >= 3)
+                                        {
+                                            <li>
+                                                <a href="@Url.Action("HistorialCanalizaciones", "Canalizaciones")">
+                                                    • Historial Canalizaciones
+                                                </a>
+                                            </li>
+                                        }
+
+                                    </ul>
+                                </li>
+                            }
+
+                            @if (usuario.IdNivel == 3 || usuario.IdNivel == 4)
+                            {
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fa-solid fa-folder-open"></i>
+                                        Control Académico
+                                        <b class="caret"></b>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li class="dropdown-header">
+                                            <i class="fa-solid fa-graduation-cap"></i>
+                                            Gestión Académica
+                                        </li>
+                                        <li>
+                                            <a href="@Url.Action("Index", "Materias")">
+                                                • Gestión de Materias
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href='@Url.Action("ArrastrePorCarrera", "ConsultaArrastreCoordinador", new { area = "" })'>
+                                                • Consulta de Arrastre
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                    }
+                }
+                <ul class="nav navbar-nav navbar-right">
+                    @if (Session["Usuario"] != null)
+                    {
+                        <li>
+                            <a href="@Url.Action("Logout", "Home")">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                                Cerrar Sesión
+                                <i class="fa-solid fa-user"></i>
+
+                            </a>
+                        </li>
+
+                    }
+                    else
+                    {
+                        <li>
+                            <a href="@ProyectoIntegracion.Functionalities.LinkGenerator.Create("tutorias", "Home/ReturnHome")">
+                                <i class="fa-solid fa-right-to-bracket"></i>
+                                Iniciar Sesión
+                            </a>
+
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Registrarse", "Home")">
+                                <i class="fa-solid fa-user-plus"></i>
+                                Registrarse
+                            </a>
+                        </li>
+                    }
+
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container body-content ">
+        @RenderBody()
+        <hr />
+    </div>
+
+    <footer class="page-footer font-small blue footer-style">
+        <div class="footer-copyright text-center py-3">
+            <p>
+                Innovación tecnológica impulsada por la Carrera de
+                <a href="https://login.uttn.app/Home/Creditos" style="color:white;">
+                    Tecnologías de la Información
+                </a> y el Departamento de Sistemas
+            </p>
+            <p>
+                DESARROLLO TECNOLÓGICO DE TUTORIAS INSTITUCIONALES.
+            </p>
+            <p>
+                @DateTime.Now.Year | Universidad Tecnológica de Tamaulipas Norte |
+                <a href="https://www.uttn.edu.mx/aviso-de-privacidad/" style="color:white;">
+                    Aviso de Privacidad
+                </a>
+            </p>
+            <p>&nbsp;</p>
+        </div>
+    </footer>
+
+    @if (usuario != null)
+    {
+        <div id="sessionTimer" title="Tiempo restante de sesión">
+            <i class="fa-regular fa-clock"></i>
+            <span>Sesión: </span>
+            <span id="timerDisplay" style="font-weight: bold;">--:--:--</span>
+        </div>
+    }
+
+    <script>
+            let CLAIMS = @Html.Raw(Json.Encode(System.Security.Claims.ClaimsPrincipal.Current.Claims.Select(x => new { x.Type, x.Value })));
+    </script>
+
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('a[href*="ReturnHome"]').on('click', function () {
+                sessionStorage.clear();
+                localStorage.clear();
+                console.log('SessionStorage y LocalStorage limpiados - saliendo a sistema principal');
+            });
+
+            $('a[href*="Logout"]').on('click', function () {
+                sessionStorage.clear();
+                localStorage.clear();
+                console.log('SessionStorage y LocalStorage limpiados - cerrando sesión');
+            });
+
+            $('.link-entrevistas').on('click', function (e) {
+                sessionStorage.clear();
+                Object.keys(localStorage).forEach(function (key) {
+                    if (key.toLowerCase().includes('entrevista') ||
+                        key.toLowerCase().includes('solicitud') ||
+                        key.toLowerCase().includes('grupo')) {
+                        localStorage.removeItem(key);
+                        console.log('LocalStorage - Dato eliminado:', key);
+                    }
+                });
+                console.log('Datos de entrevistas limpiados completamente');
+            });
+
+            if (window.location.href.includes('/Entrevistas/Grupo')) {
+                sessionStorage.clear();
+                console.log('SessionStorage limpiado al cargar página de Entrevistas');
+            }
+
+            var expirationString = "@fechaExpiracion";
+            if (expirationString && document.getElementById("sessionTimer")) {
+                var expirationDate = new Date(expirationString);
+
+                function updateTimer() {
+                    var now = new Date();
+                    var distance = expirationDate - now;
+                    var timerDiv = document.getElementById("sessionTimer");
+
+                    if (distance < 0) {
+                        document.getElementById("timerDisplay").innerHTML = "CERRANDO...";
+                        timerDiv.classList.add("danger");
+                        window.location.href = "@Html.Raw(urlTimeout)";
+                        return;
+                    }
+
+                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    var totalMinutes = (hours * 60) + minutes;
+
+                    var displayString =
+                        (hours < 10 ? "0" + hours : hours) + ":" +
+                        (minutes < 10 ? "0" + minutes : minutes) + ":" +
+                        (seconds < 10 ? "0" + seconds : seconds);
+
+                    document.getElementById("timerDisplay").innerHTML = displayString;
+
+                    if (totalMinutes < 10) {
+                        timerDiv.classList.add("danger");
+                        timerDiv.classList.remove("warning");
+                    } else if (totalMinutes >= 10 && totalMinutes < 30) {
+                        timerDiv.classList.add("warning");
+                        timerDiv.classList.remove("danger");
+                    } else {
+                        timerDiv.classList.remove("warning", "danger");
+                    }
+                }
+
+                setInterval(updateTimer, 1000);
+                updateTimer();
+            }
+        });
+    </script>
+</body>
+</html>

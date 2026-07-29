@@ -1,0 +1,904 @@
+﻿@model PlataformaWeb.Controllers.TutorConEstadisticas
+
+@{
+    ViewBag.Title = "Detalles del Tutor";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <style>
+
+        /* Tabla con celdas mas pequeñas */
+        .sga-scope table.dataTable tbody td {
+            padding: 10px 18px !important;
+        }
+
+        .detalle-header {
+            background: linear-gradient(135deg, #1ab192, #00e1b2);
+            color: #fff;
+            padding: 20px 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+            .detalle-header h2, .detalle-header p {
+                color: #fff;
+                margin: 0;
+            }
+
+            .detalle-header p {
+                opacity: .85;
+                font-size: .95rem;
+            }
+
+        .stat-badge {
+            display: inline-block;
+            background: rgba(255,255,255,.2);
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: .85rem;
+            margin-top: 6px;
+        }
+
+        .section-card {
+            border: 1px solid #cfe8e2;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+            .section-card .card-header {
+                background: #e9f8f4;
+                color: var(--primary, #1ab192);
+                font-weight: 600;
+                border-radius: 8px 8px 0 0;
+                padding: 10px 15px;
+            }
+
+            .section-card .card-body {
+                padding: 0;
+            }
+
+            .section-card table {
+                margin: 0;
+            }
+
+        /* Diseño para buscador */
+        .dataTables_filter {
+            padding: 15px;
+            float: none !important;
+            text-align: left !important;
+            border-bottom: 1px solid #eee;
+        }
+
+            .dataTables_filter label {
+                display: flex;
+                align-items: center;
+                font-weight: 500;
+                color: #555;
+                gap: 10px;
+            }
+
+            .dataTables_filter input {
+                border: 2px solid #e9f8f4 !important;
+                border-radius: 20px !important;
+                padding: 6px 15px !important;
+                transition: all 0.3s ease;
+                width: 250px !important;
+                outline: none;
+            }
+
+                .dataTables_filter input:focus {
+                    border-color: #1ab192 !important;
+                    box-shadow: 0 0 8px rgba(26, 177, 146, 0.2);
+                }
+
+        .dt-footer {
+            padding: 15px 20px;
+        }
+
+        /* Diseño para contadores */
+        .stat-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, .15);
+            color: #fff;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: .85rem;
+            margin-top: 8px;
+            margin-right: 5px;
+            transition: all 0.3s ease;
+            border: 1px solid black;
+        }
+
+            .stat-badge strong {
+                font-weight: 700;
+            }
+
+            .stat-badge.badge-informative {
+                background-color: #1ab192;
+                box-shadow: 0 4px 14px rgba(26, 177, 146, 0.2);
+            }
+
+            .stat-badge.badge-warning {
+                background: rgb(203, 163, 43);
+                border-color: rgba(255, 193, 7, 0.5);
+                box-shadow: 0 0 10px rgba(255, 193, 7, 0.2);
+            }
+
+            .stat-badge.badge-danger {
+                background: rgba(214, 64, 79, 0.99);
+                border-color: rgba(220, 53, 69, 0.5);
+                box-shadow: 0 0 10px rgba(220, 53, 69, 0.2);
+            }
+
+            .stat-badge.badge-primary {
+                background: rgba(13, 110, 253, 0.99);
+                border-color: rgba(13, 110, 253, 0.5);
+                box-shadow: 0 0 10px rgba(13, 110, 253, 0.2);
+            }
+
+        .btn-return {
+            margin: 20px 0 !important;
+        }
+
+        .number-data, 
+        .center-text {
+            text-align: center !important;
+        }
+
+        .export-excel-button,
+        .form-inline {
+            display: inline;
+            vertical-align: middle;
+        }
+
+        .table-responsive {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+                .table-responsive th {
+                    width: 10rem !important;
+                }
+
+            .long-text.name-data {
+                width: 25rem !important;
+            }
+
+            .long-text.area-data {
+                width: 30rem !important;
+            }
+
+            .short-text.number-data {
+                width: 20px !important;
+            }
+
+            .section-padding {
+                padding: 12px;
+            }
+
+            .bg-primary {
+                background-color: #0d6efd !important;
+                color: #fff !important;
+            }
+
+            .bg-info {
+                background-color: #0dcaf0 !important;
+                color: #000 !important;
+            }
+
+            .bg-secondary, btn-secondary {
+                background-color: #6c757d !important;
+                color: #fff !important;
+            }
+
+            .bg-warning {
+                background-color: #ffc107 !important;
+                color: #000 !important;
+            }
+
+            p.header-text {
+                font-size: 12px !important;
+            }
+
+            span.header-text {
+                font-size: 9px !important;
+            }
+
+            .sga-scope table.dataTable th,
+            .sga-scope table.dataTable td {
+                white-space: nowrap !important;
+            }
+
+                .sga-scope table.dataTable td.long-text,
+                .sga-scope table.dataTable th.long-text {
+                    white-space: nowrap !important;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 300px;
+                }
+
+        .toggle-right { 
+            text-align: right; 
+        }
+
+        .cursor-pointer { 
+            cursor: pointer; 
+        }
+
+        .btn-toggle-bajas {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            vertical-align: middle;
+            border: 1px solid rgba(255,255,255,.3);
+            border-radius: 20px;
+            padding: 5px 14px;
+            background: rgba(26, 177, 146, .85);
+            border-color: #1ab192;
+            color: #fff;
+            cursor: pointer;
+            font-size: .85rem;
+            transition: background .2s, border-color .2s;
+        }
+
+        .btn-toggle-bajas .toggle-track {
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+            border-radius: 9px;
+            background: rgba(255,255,255,.35);
+            position: relative;
+            transition: background .2s;
+            flex-shrink: 0;
+        }
+
+        .btn-toggle-bajas .toggle-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform .2s;
+        }
+
+            .btn-toggle-bajas.active .toggle-track {
+                background: rgba(92, 255, 0, 0.57);
+            }
+
+        .btn-toggle-bajas.active .toggle-thumb {
+            transform: translateX(14px);
+        }
+
+
+
+        /* Botones para mostrar o ocultar tablas */
+        .toggle-table-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0 4px;
+            transition: transform 0.3s ease;
+            float: right;
+            line-height: 1;
+        }
+
+        .toggle-table-btn:hover:not(:disabled) {
+            opacity: 0.7;
+        }
+
+        .toggle-table-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .toggle-table-btn.expanded {
+            transform: rotate(180deg);
+        }
+
+    </style>
+}
+
+@{
+    // Retorna la clase CSS del badge segun el progreso: completo=verde, <=50%=rojo, intermedio=amarillo.
+    string GetProgressClass(int completadas, int totales)
+    {
+        if (totales == 0 || completadas >= totales) return "badge-informative";
+
+        double porcentaje = (double)completadas / totales;
+
+        if (porcentaje <= 0.5) return "badge-danger";
+        return "badge-warning";
+    }
+}
+
+<div class="sga-scope">
+
+    @Html.ActionLink("← Volver", "Index", null, new { @class = "btn-return btn btn-utt-outline" })
+
+    <div class="detalle-header">
+        <h2>Tutor: @Model.NombreCompleto</h2>
+        <p class="header-text">
+            @Model.UserName &nbsp;|&nbsp; @Model.CorreoElectronico &nbsp;|&nbsp; @Model.NombreCarrera &nbsp;|&nbsp; @Model.TutorGrupo <!--&nbsp;|&nbsp; @(Model.Estado ? "Activo" : "Inactivo")-->
+        </p>
+        <span id="badgeTotalAlumnos" class="stat-badge badge-informative header-text">@Model.TotalAlumnosActivosOnly alumnos totales</span>
+        <span class="stat-badge @(Model.AlumnosEnBajasCount > 0 ? "badge-primary" : "badge-informative") header-text">
+            <!-- o usar badge-danger -->
+            <strong id="badgeBajas">@Model.AlumnosEnBajasCount</strong>
+            @(Model.AlumnosEnBajasCount == 1 ? "baja" : "bajas")
+        </span>
+        <span class="stat-badge @(Model.AlumnosEnArrastresCount > 0 ? "badge-primary" : "badge-informative") header-text">
+            <strong id="badgeArrastres">@Model.AlumnosEnArrastresCount</strong> en arrastre
+        </span>
+        <span class="stat-badge @(Model.AlumnosEnExtraordinarioCount > 0 ? "badge-primary" : "badge-informative") header-text">
+            <strong id="badgeExtraordinario">@Model.AlumnosEnExtraordinarioCount</strong> en extraordinario
+        </span>
+
+        <br />
+
+        <span id="badgeEntRev" class="stat-badge @GetProgressClass(Model.EntrevistasRevisadasActivosOnly, Model.TotalAlumnosActivosOnly)">
+            @Model.EntrevistasRevisadasActivosOnly / @Model.TotalAlumnosActivosOnly Entrevistas Revisadas
+        </span>
+        <span class="stat-badge @GetProgressClass(Model.EntrevistasRevisadasActivosOnly, Model.TotalAlumnosActivosOnly) header-text">
+            <strong id="badgeEntrevistasFaltantes">@(Model.TotalAlumnosActivosOnly - Model.EntrevistasRevisadasActivosOnly)</strong> Entrevistas Pendientes
+        </span>
+        <span class="stat-badge @GetProgressClass(Model.PATsAprobados, Model.PATsTotales)">@Model.PATsAprobados / @Model.PATsTotales @(Model.PATsTotales == 1 ? "PAT aceptado" : "PATs aceptados")</span>
+        <br />
+        <span class="stat-badge @(Model.SemanasCreadas <= 0 ? "badge-danger" : Model.SemanasCreadas != Model.TotalSemanas ? "badge-warning" : "badge-informative")">@Model.SemanasCreadas / @Model.TotalSemanas Semanas Creadas</span>
+        <span class="stat-badge @GetProgressClass(Model.SemanasIndividualesCompletadas, Model.SemanasCreadas)">
+            @Model.SemanasIndividualesCompletadas / @Model.SemanasCreadas Semanas Individuales Completadas
+        </span>
+        <span class="stat-badge @GetProgressClass(Model.SemanasGrupalesCompletadas, Model.SemanasCreadas)">
+            @Model.SemanasGrupalesCompletadas / @Model.SemanasCreadas Semanas Grupales Completadas
+        </span>
+
+        @* Toggle stats bajas. Alterna statsSinBajas/statsConBajas desde JS *@
+        <div class="toggle-right">
+            @if (Model.AlumnosEnBajasCount >= 1)
+            {
+                <button id="btnIncluirBajas" type="button" class="btn-toggle-bajas" title="Afecta a las estadísticas (Alumnos y entrevistas), y a las exportaciones.">
+                    <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                    </span>
+                    <span class="toggle-label">Incluir bajas</span>
+                </button>
+            }
+            else
+            {
+                <span style="font-size:0.85rem; margin-right:10px;"><i class="fa-solid fa-ban"></i> No hay bajas</span>
+            }
+            <form method="post" action="@Url.Action("ExportarReporteGeneral", "SeguimientoTutores")" class="form-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.IdUsuario" />
+                <input type="hidden" name="grupo" value="@Model.TutorGrupo" />
+                <input type="hidden" name="incluirBajas" value="false" class="incluir-bajas-hidden" />
+                <button type="submit" class="btn btn-sm btn-light" title="Descarga el reporte general del tutor en Excel">
+                    <i class="fa-solid fa-file-excel"></i> Descargar reporte general
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @* ── Alumnos totales ── *@
+    <div class="section-card">
+        <div id="cardHeaderAlumnos" class="card-header">
+            <i class="fa-solid fa-users"></i> Todos los alumnos del grupo
+            <button type="button" class="toggle-table-btn" data-target="#cardBodyAlumnos" title="Mostrar/Ocultar tabla" aria-label="Mostrar u ocultar tabla">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+        </div>
+        <div class="card-body table-responsive" id="cardBodyAlumnos" style="display:none;">
+            <table id="tblTotales" class="table table-striped table-sm">
+                <thead>
+                    <tr>
+                        <th>Matrícula</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Area</th>
+                        <th>Estado</th>
+                        <th>¿Entrevista Revisada?</th>
+                        <th>Arrastres</th>
+                        <th>Extraordinario</th>
+                        @*
+                            <th>Grado y grupo</th>
+                        *@
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.AlumnosTotalesList)
+                    {
+                        @* data-* inyectados desde AlumnoDetalle, antes usado para conteo client-side *@
+                        <tr data-tiene-baja="@a.TieneBaja.ToString().ToLower()" data-tiene-entrevista="@a.TieneEntrevista.ToString().ToLower()">
+                            <td>@a.Matricula</td>
+                            <td>@a.NombreCompleto</td>
+                            <td>@a.Email</td>
+                            <td>@a.Area</td>
+                            <td class="center-text">
+                                @if (a.TieneBaja)
+                                {
+                                    <span class="badge bg-secondary"><i class="fa-solid fa-user-minus"></i> Baja</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success"><i class="fa-solid fa-check"></i> Activo</span>
+                                }
+                            </td>
+                            <td class="center-text">
+                                @* 3-stat
+                                @if (a.TieneEntrevistaRevisada)
+                                {
+                                    <span class="badge bg-success"><i class="fa-solid fa-check"></i> Sí</span>
+                                }
+                                else if (a.TieneEntrevista)
+                                {
+                                    <span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> No</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="fa-solid fa-minus"></i> Sin entrevista</span>
+                                }
+                                *@
+                                @if (a.TieneEntrevista)
+                                {
+                                    <span class="badge bg-success"><i class="fa-solid fa-check"></i> Sí</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> No</span>
+                                }
+                            </td>
+                            <td class="center-text">
+                                @if (a.ArrastresCount > 0)
+                                {
+                                    <span>@a.ArrastresCount</span>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
+                            <td class="center-text">
+                                @if (a.ExtraordinariosCount > 0)
+                                {
+                                    <span>@a.ExtraordinariosCount</span>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
+                            @*
+                                <td class="number-data">@a.Nomenclatura@a.Grado@a.Grupo</td>
+                                <td>@(a.Estado ? "Activo" : "Inactivo")</td>
+                            *@
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @* ── PATs, semanas o similar ── *@
+    <div class="section-card">
+        <div class="card-header">
+            <span><i class="fa-solid fa-calendar-week"></i> PATs y Semanas</span>
+            <button type="button" class="toggle-table-btn" disabled data-target="#tutoriasSection" title="Mostrar/Ocultar tabla" aria-label="Mostrar u ocultar tabla">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <form method="post" action="@Url.Action("ExportarTutorias", "SeguimientoTutores")" class="export-excel-button">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="id" value="@Model.IdUsuario" />
+                <input type="hidden" name="grupo" value="@Model.TutorGrupo" />
+                <input type="hidden" name="incluirBajas" value="false" class="incluir-bajas-hidden" />
+
+                <button type="submit" class="btn btn-sm btn-success" title="Exporta las tutorías, actividades y PAT del tutor a Excel">
+                    <i class="fa-solid fa-file-excel"></i> Exportar
+                </button>
+            </form>
+            <br />
+            <span id="patEstado"></span>
+        </div>
+        <div class="card-body table-responsive" id="tutoriasSection">
+            <div class="text-muted section-padding" id="tutoriasLoading">Cargando...</div>
+        </div>
+    </div>
+
+    @* ── Bajas ── *@
+    <div class="section-card">
+        <div class="card-header">
+            <span><i class="fa-solid fa-user-minus"></i> Alumnos en baja</span>
+            <button type="button" class="toggle-table-btn" disabled data-target="#bajasSection" title="Mostrar/Ocultar tabla" aria-label="Mostrar u ocultar tabla">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <form method="post" action="@Url.Action("ExportarBajas", "SeguimientoTutores")" class="export-excel-button">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.IdUsuario" />
+                <input type="hidden" name="grupo" value="@Model.TutorGrupo" />
+                <button type="submit" class="btn btn-sm @(Model.AlumnosEnBajasCount > 0 ? "btn-success" : "btn-secondary")"
+                        @(Model.AlumnosEnBajasCount <= 0 ? "disabled" : "")
+                        title="Exporta el listado de alumnos dados de baja a Excel">
+                    <i class="fa-solid fa-file-excel"></i>
+                    @(Model.AlumnosEnBajasCount > 0
+                        ? "Exportar"
+                        : "Sin datos para exportar")
+                </button>
+            </form>
+        </div>
+        <div class="card-body table-responsive" id="bajasSection">
+            <div class="text-muted section-padding" id="bajasLoading">Cargando...</div>
+        </div>
+    </div>
+
+    @* ── Arrastres ── *@
+    <div class="section-card">
+        <div class="card-header">
+            <span><i class="fa-solid fa-triangle-exclamation"></i> Alumnos en arrastre (materia reprobada)</span>
+            <button type="button" class="toggle-table-btn" disabled data-target="#arrastresSection" title="Mostrar/Ocultar tabla" aria-label="Mostrar u ocultar tabla">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <form method="post" action="@Url.Action("ExportarArrastres", "SeguimientoTutores")" class="export-excel-button">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="id" value="@Model.IdUsuario" />
+                <input type="hidden" name="grupo" value="@Model.TutorGrupo" />
+                <input type="hidden" name="incluirBajas" value="false" class="incluir-bajas-hidden" />
+
+                <button type="submit" class="btn btn-sm @(Model.AlumnosEnArrastresCount > 0 ? "btn-success" : "btn-secondary")"
+                        @(Model.AlumnosEnArrastresCount <= 0 ? "disabled" : "")
+                        title="Exporta el listado de alumnos con materias en arrastre a Excel">
+                    <i class="fa-solid fa-file-excel"></i>
+                    @(Model.AlumnosEnArrastresCount > 0
+                        ? "Exportar"
+                        : "Sin datos para exportar")
+                </button>
+            </form>
+        </div>
+        <div class="card-body table-responsive" id="arrastresSection">
+            <div class="text-muted section-padding" id="arrastresLoading">Cargando...</div>
+        </div>
+    </div>
+
+    @* ── Extraordinario ── *@
+    <div class="section-card">
+        <div class="card-header">
+            <span><i class="fa-solid fa-star-half-stroke"></i> Alumnos en extraordinario</span>
+            <button type="button" class="toggle-table-btn" disabled data-target="#extraordinarioSection" title="Mostrar/Ocultar tabla" aria-label="Mostrar u ocultar tabla">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <form method="post" action="@Url.Action("ExportarExtraordinario", "SeguimientoTutores")" class="export-excel-button">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.IdUsuario" />
+                <input type="hidden" name="grupo" value="@Model.TutorGrupo" />
+                <input type="hidden" name="incluirBajas" value="false" class="incluir-bajas-hidden" />
+                <button type="submit" class="btn btn-sm @(Model.AlumnosEnExtraordinarioCount > 0 ? "btn-success" : "btn-secondary")"
+                        @(Model.AlumnosEnExtraordinarioCount <= 0 ? "disabled" : "")
+                        title="Exporta el listado de alumnos con materias en extraordinario a Excel">
+                    <i class="fa-solid fa-file-excel"></i>
+                    @(Model.AlumnosEnExtraordinarioCount > 0
+                        ? "Exportar"
+                        : "Sin datos para exportar")
+                </button>
+            </form>
+        </div>
+        <div class="card-body table-responsive" id="extraordinarioSection">
+            <div class="text-muted section-padding" id="extraordinarioLoading">Cargando...</div>
+        </div>
+    </div>
+
+    @Html.ActionLink("← Volver", "Index", null, new { @class = "btn-return btn btn-utt-outline" })
+
+</div>
+
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        console.log("Developed by ARC");
+        function parseDotNetDate(jsonDate) {
+            if (!jsonDate) return '—';
+            var match = /\/Date\((\d+)\)\//.exec(jsonDate);
+            if (match) {
+                var d = new Date(parseInt(match[1], 10));
+                return d.toLocaleDateString('es-MX');
+            }
+            return jsonDate;
+        }
+
+        $(function () {
+            var pageAlive = true;
+            $(window).on('beforeunload', function () { pageAlive = false; });
+
+            // Toggle table visibility
+            $(document).on('click', '.toggle-table-btn:not(:disabled)', function () {
+                var $target = $($(this).data('target'));
+                $target.slideToggle(300, function () {
+                    $target.find('table.dataTable').each(function () {
+                        $(this).DataTable().columns.adjust().draw();
+                    });
+                });
+                $(this).toggleClass('expanded');
+            });
+
+            var dtOpts = {
+                pageLength: 10,
+                dom: '<"top"f>rt<"dt-footer"ip><"clear">',
+                language: { url: "//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json" }
+            };
+            var tablaTotales = $('#tblTotales').DataTable(dtOpts);
+
+            // Stats precargadas desde el servidor. Se alternan via JS sin recargar.
+            var statsSinBajas = {
+                total: @Model.TotalAlumnosActivosOnly,
+                entRev: @Model.EntrevistasRevisadasActivosOnly
+            };
+            var statsConBajas = {
+                total: @Model.TotalAlumnosActivos,
+                entRev: @Model.EntrevistasRevisadas
+            };
+            var incluirBajas = false;
+
+            // Refresca los badges de total de alumnos, entrevistas revisadas y pendientes.
+            function updateBadgeStats(stats) {
+                var pendientes = stats.total - stats.entRev;
+                $('#badgeTotalAlumnos').text(stats.total + ' alumnos totales');
+                var pct = stats.total > 0 ? stats.entRev / stats.total : 1;
+                var cls = pct >= 1 ? 'badge-informative' : pct <= 0.5 ? 'badge-danger' : 'badge-warning';
+                $('#badgeEntRev').text(stats.entRev + ' / ' + stats.total + ' Entrevistas Revisadas')
+                    .removeClass('badge-informative badge-danger badge-warning').addClass(cls);
+                $('#badgeEntrevistasFaltantes').text(pendientes);
+                $('#badgeEntrevistasFaltantes').closest('.stat-badge')
+                    .removeClass('badge-informative badge-danger badge-warning').addClass(cls);
+            }
+
+            // Alterna entre estadisticas con y sin bajas (client-side, sin recargar).
+            $('#btnIncluirBajas').on('click', function () {
+                incluirBajas = !incluirBajas;
+                $('.incluir-bajas-hidden').val(incluirBajas ? 'true' : 'false');
+                updateBadgeStats(incluirBajas ? statsConBajas : statsSinBajas);
+                $(this).toggleClass('active');
+            });
+
+            // Carga via AJAX la seccion de PAT/semanas del tutor.
+            $.get('@Url.Action("ObtenerSeccionTutorias", "SeguimientoTutores")?id=@Model.IdUsuario&grupo=@Model.TutorGrupo', function (response) {
+                if (!pageAlive) return;
+
+                var section = $('#tutoriasSection');
+                section.empty();
+
+                if (response.success && response.data && response.data.length > 0) {
+
+                    var html = `<table id="tblTutorias" class="table table-striped table-sm"><thead><tr>
+                        <th class="short-text number-data">Semana</th>
+                        <th>Tipo de Actividad</th>
+                        <!--
+                        <th>Tipo de Actividad (Nomenclatura)</th>
+                        -->
+                        <th>¿Realizó actividad?</th>
+                        </tr></thead><tbody>`;
+
+                    var completadas = 0;
+
+                    for (var i = 0; i < response.data.length; i++) {
+
+                        var item = response.data[i];
+
+                        var realizado =
+                            item.Realizado === true ||
+                            item.Realizado === "true" ||
+                            item.Realizado === "True";
+
+                        var iconEstado = realizado
+                            ? '<span class="badge bg-success"><i class="fa-solid fa-check"></i> Sí</span>'
+                            : '<span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> No</span>';
+
+                        if (realizado) completadas++;
+
+                        var claseBadge = "bg-danger";
+
+                        if (item.TipoActividad === "Tutoria Grupal" || item.Nomenclatura === "TG") {
+                            claseBadge = "bg-primary";
+                        }
+                        else if (item.TipoActividad === "Tutoria Individual" || item.Nomenclatura === "TI") {
+                            // claseBadge = "bg-info";
+                            claseBadge = "bg-warning";
+                        }
+
+                        html += '<tr>' +
+                            // '<td>' + item.SemanaNombre + '</td>' +
+                            '<td class="number-data">' + item.IdSemana + '</td>' +
+                            '<td><span class="badge ' + claseBadge + '">' + item.TipoActividad + '</span></td>' +
+                            // '<td style="display:none"><span class="badge ' + claseBadge + '">' + item.Nomenclatura + '</span></td>' +
+                            '<td>' + iconEstado + '</td>' +
+                            '</tr>';
+                    }
+
+                    html += '</tbody></table>';
+                    section.html(html);
+
+                    // Badge segun estado de revision del PAT: 0=En Progreso, 1=En Revisión, 2=Aprobado, 3=Rechazado.
+                    var estadoRev = response.estadoRevision;
+                    var badgeHtml = '';
+                    if (estadoRev === 0)       badgeHtml = '<span class="badge bg-warning"><i class="fa-solid fa-clock"></i> En Progreso</span>';
+                    else if (estadoRev === 1)  badgeHtml = '<span class="badge bg-warning"><i class="fa-solid fa-clock"></i> En Revisión</span>';
+                    else if (estadoRev === 2)  badgeHtml = '<span class="badge bg-success"><i class="fa-solid fa-check"></i> Aprobado</span>';
+                    else if (estadoRev === 3)  badgeHtml = '<span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> Rechazado</span>';
+                    else                       badgeHtml = '<span class="badge bg-secondary">Sin PAT</span>';
+                    $('#patEstado').html(badgeHtml);
+
+                    $('#tblTutorias').DataTable(dtOpts);
+                    $('#badgeTutorias').text(completadas + '/' + response.data.length);
+                    $('#tutoriasSection').closest('.section-card').find('.toggle-table-btn').prop('disabled', false);
+                    $('#tutoriasSection').hide();
+
+                    $('#tutoriasLoading').hide();
+                }
+                else {
+                    // Badge segun estado de revision del PAT: 0=En Progreso, 1=En Revisión, 2=Aprobado, 3=Rechazado.
+                    var estadoRev = response.estadoRevision;
+                    var badgeHtml = '';
+                    if (estadoRev === 0)       badgeHtml = '<span class="badge bg-warning"><i class="fa-solid fa-clock"></i> En Progreso</span>';
+                    else if (estadoRev === 1)  badgeHtml = '<span class="badge bg-warning"><i class="fa-solid fa-clock"></i> En Revisión</span>';
+                    else if (estadoRev === 2)  badgeHtml = '<span class="badge bg-success"><i class="fa-solid fa-check"></i> Aprobado</span>';
+                    else if (estadoRev === 3)  badgeHtml = '<span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> Rechazado</span>';
+                    else                       badgeHtml = '<span class="badge bg-secondary">Sin PAT</span>';
+                    $('#patEstado').html(badgeHtml);
+
+                    section.html('<p class="text-muted section-padding">' + response.message + '</p>');
+                    $('#badgeTutorias').text(0);
+
+                    $('#tutoriasLoading').hide();
+                }
+            });
+
+            // Carga via AJAX la tabla de alumnos con materias reprobadas (arrastres).
+            $.get('@Url.Action("ObtenerSeccionArrastres", "SeguimientoTutores")?id=@Model.IdUsuario&grupo=@Model.TutorGrupo', function(data) {
+                if (!pageAlive) return;
+                var section = $('#arrastresSection');
+                section.empty();
+                if (data && data.length > 0) {
+                    var html = `<table id="tblArrastres" class="table table-striped table-sm"><thead><tr>
+                        <th>Matrícula</th>
+                        <th class="long-text name-data">Nombre</th>
+                        <th>Email</th>
+                        <th class="long-text area-data">Area</th>
+                        <!--
+                        <th class="number-data">Grado y Grupo</th>
+                        -->
+                        <th class="long-text area-data">Materia</th>
+                        <th>Cuatrimestre</th>
+                        <th>Fecha de registro</th><th>Inicio de arrastre</th>
+                        <th>Fecha de Actualización</th>
+                        </tr></thead><tbody>`;
+                    var unique = {};
+                    for (var i = 0; i < data.length; i++) {
+                        html += '<tr>' +
+                            '<td>' + (data[i].Matricula || '') + '</td>' +
+                            '<td>' + (data[i].NombreCompleto || '') + '</td>' +
+                            '<td>' + (data[i].Email || '') + '</td>' +
+                            '<td>' + (data[i].Area || '') + '</td>' +
+                            //'<td class="number-data">' + (data[i].Nomenclatura || '') + (data[i].Grado || '') + (data[i].Grupo || '') + '</td>' +
+                            '<td>' + (data[i].Materia || '') + '</td>' +
+                            '<td class="number-data">' + (data[i].CuatrimestreMateria != null ? data[i].CuatrimestreMateria : '') + '</td>' +
+                            '<td class="number-data">' + parseDotNetDate(data[i].FechaRegistro) + '</td>' +
+                            '<td class="number-data">' + parseDotNetDate(data[i].FechaInicioArrastre) + '</td>' +
+                            '<td class="number-data">' + parseDotNetDate(data[i].FechaActualizacion) + '</td>' +
+                            '</tr>';
+                        if (data[i].IdPersona) unique[data[i].IdPersona] = true;
+                    }
+                    html += '</tbody></table>';
+                    section.html(html);
+                    $('#tblArrastres').DataTable(dtOpts);
+                    $('#arrastresSection').closest('.section-card').find('.toggle-table-btn').prop('disabled', false);
+                    $('#arrastresSection').hide();
+                } else {
+                    section.html('<p class="text-muted section-padding">Sin alumnos en arrastre.</p>');
+                }
+                // Cuenta alumnos UNICOS (un alumno puede tener varias materias en arrastre).
+                var uniqueCount = 0;
+                if (data && data.length > 0) {
+                    var ids = {};
+                    for (var j = 0; j < data.length; j++) if (data[j].IdPersona) ids[data[j].IdPersona] = true;
+                    uniqueCount = Object.keys(ids).length;
+                }
+                $('#badgeArrastres').text(uniqueCount);
+            });
+
+            // Carga via AJAX la tabla de alumnos en extraordinario.
+            $.get('@Url.Action("ObtenerSeccionExtraordinario", "SeguimientoTutores")?id=@Model.IdUsuario&grupo=@Model.TutorGrupo', function(data) {
+                if (!pageAlive) return;
+                var section = $('#extraordinarioSection');
+                section.empty();
+                if (data && data.length > 0) {
+                    var html = `<table id="tblExtraordinario" class="table table-striped table-sm"><thead><tr>
+                        <th>Matrícula</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Area</th>
+                        <!--
+                        <th>Grado y grupo</th>
+                        -->
+                        <th>Materia</th>
+                        <th>Cuatrimestre</th>
+                        <th>Intentos Extraordinario</th>
+                        <th>Fecha Examen Extraodinario</th>
+                        </tr></thead><tbody>`;
+                    var unique = {};
+                    for (var i = 0; i < data.length; i++) {
+                        html += '<tr>' +
+                            '<td>' + (data[i].Matricula || '') + '</td>' +
+                            '<td class="long-text name-data">' + (data[i].NombreCompleto || '') + '</td>' +
+                            '<td>' + (data[i].Email || '') + '</td>' +
+                            '<td class="long-text area-data">' + (data[i].Area || '') + '</td>' +
+                            //'<td class="number-data">' + (data[i].Nomenclatura || '') + (data[i].Grado || '') + (data[i].Grupo || '') + '</td>' +
+                            '<td class="long-text area-data">' + (data[i].Materia || '') + '</td>' +
+                            '<td class="number-data">' + (data[i].CuatrimestreMateria != null ? data[i].CuatrimestreMateria : '') + '</td>' +
+                            '<td class="number-data">' + (data[i].IntentosExtraordinarios != null ? data[i].IntentosExtraordinarios : '') + '</td>' +
+                            '<td class="number-data">' + parseDotNetDate(data[i].FechaExamenExtraordinario) + '</td>' +
+                            '</tr>';
+                        if (data[i].IdPersona) unique[data[i].IdPersona] = true;
+                    }
+                    html += '</tbody></table>';
+                    section.html(html);
+                    $('#tblExtraordinario').DataTable(dtOpts);
+                    $('#extraordinarioSection').closest('.section-card').find('.toggle-table-btn').prop('disabled', false);
+                    $('#extraordinarioSection').hide();
+                } else {
+                    section.html('<p class="text-muted section-padding">Sin alumnos en extraordinario.</p>');
+                }
+                // Cuenta alumnos UNICOS (un alumno puede tener varias materias en extraordinario).
+                var uniqueCount = 0;
+                if (data && data.length > 0) {
+                    var ids = {};
+                    for (var j = 0; j < data.length; j++) if (data[j].IdPersona) ids[data[j].IdPersona] = true;
+                    uniqueCount = Object.keys(ids).length;
+                }
+                $('#badgeExtraordinario').text(uniqueCount);
+            });
+
+            // Carga via AJAX la tabla de alumnos dados de baja.
+            $.get('@Url.Action("ObtenerSeccionBajas", "SeguimientoTutores")?id=@Model.IdUsuario&grupo=@Model.TutorGrupo', function(data) {
+                if (!pageAlive) return;
+                var section = $('#bajasSection');
+                section.empty();
+                if (data && data.length > 0) {
+                    var html = `<table id="tblBajas" class="table table-striped table-sm"><thead><tr>
+                        <th>Matrícula</th>
+                        <th>Nombre</th>
+                        <th class="number-data">Fecha de baja</th>
+                        <th>Motivo</th>
+                        <!--
+                        <th>¿Entrevista?</th>
+                        -->
+                        </tr></thead><tbody>`;
+                    for (var i = 0; i < data.length; i++) {
+                        var iconEntrevista = data[i].TieneEntrevista
+                            ? '<span class="badge bg-success"><i class="fa-solid fa-check"></i> Sí</span>'
+                            : '<span class="badge bg-danger"><i class="fa-solid fa-xmark"></i> No</span>';
+                        html += '<tr>' +
+                            '<td>' + (data[i].Matricula || '') + '</td>' +
+                            '<td>' + (data[i].NombreCompleto || '') + '</td>' +
+                            '<td class="number-data">' + parseDotNetDate(data[i].FechaBaja) + '</td>' +
+                            '<td>' + (data[i].MotivoBaja || '') + '</td>' +
+                            //'<td class="center-text">' + iconEntrevista + '</td>' +
+                            '</tr>';
+                    }
+                    html += '</tbody></table>';
+                    section.html(html);
+                    $('#tblBajas').DataTable(dtOpts);
+                    $('#bajasSection').closest('.section-card').find('.toggle-table-btn').prop('disabled', false);
+                    $('#bajasSection').hide();
+                } else {
+                    section.html('<p class="text-muted section-padding">Sin alumnos dados de baja.</p>');
+                }
+            });
+
+        });
+    </script>
+}

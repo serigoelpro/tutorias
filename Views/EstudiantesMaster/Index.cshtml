@@ -1,0 +1,213 @@
+﻿@{
+<<<<<<< HEAD
+    Layout = "~/Views/Shared/_Layout.cshtml";
+=======
+    Layout = "~/Views/Shared/_SGALayout.cshtml";
+>>>>>>> ed6bc8305f16c485fc4f73afc4930f3d32ff181e
+}
+
+@model IEnumerable<Plataforma_Web.Models.Usuario>
+
+@{
+    ViewBag.Title = "Estudiantes";
+<<<<<<< HEAD
+    Layout = "~/Views/Shared/_Layout.cshtml";
+=======
+    Layout = "~/Views/Shared/_SGALayout.cshtml";
+>>>>>>> ed6bc8305f16c485fc4f73afc4930f3d32ff181e
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <style>
+        .search-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .filter-row input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .filter-row {
+            background-color: #e9ecef;
+        }
+
+        .clear-filters-btn {
+            margin-left: 10px;
+            padding: 8px 15px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            .clear-filters-btn:hover {
+                background-color: #5a6268;
+            }
+    </style>
+}
+
+<h2>Estudiantes</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+
+<!-- Barra de búsqueda general -->
+<div class="search-container">
+    <input type="text" id="globalSearch" class="search-input" placeholder="Buscar en todos los campos..." />
+    <button type="button" class="clear-filters-btn" onclick="clearAllFilters()">Limpiar Filtros</button>
+</div>
+
+<table class="table" id="studentsTable">
+    <thead>
+        <tr>
+            <!-- Solo mostrar las columnas requeridas -->
+            <th>
+                Nombre Completo
+            </th>
+            <th>
+                Usuario
+            </th>
+            <th>
+                Contraseña
+            </th>
+            <th>
+                Carrera
+            </th>
+            <th>
+                Correo Electrónico
+            </th>
+            <th></th>
+        </tr>
+        <!-- Filtros actualizados para las nuevas columnas -->
+        <tr class="filter-row">
+            <th><input type="text" id="filterNombre" placeholder="Filtrar nombre..." /></th>
+            <th><input type="text" id="filterUserName" placeholder="Filtrar usuario..." /></th>
+            <th><input type="text" id="filterPassword" placeholder="Filtrar contraseña..." /></th>
+            <th><input type="text" id="filterCarrera" placeholder="Filtrar carrera..." /></th>
+            <th><input type="text" id="filterCorreo" placeholder="Filtrar correo..." /></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NombreCompleto)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UserName)
+                </td>
+                <td>
+                    ********
+                </td>
+                <td>
+                    <!-- Mostrar nombre de carrera en lugar de ID -->
+                    @ViewBag.CarrerasNombres[item.IdUsuario]
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CorreoElectronico)
+                </td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.IdUsuario }) |
+                    @Html.ActionLink("Details", "Details", new { id = item.IdUsuario }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.IdUsuario })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const table = document.getElementById('studentsTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // Búsqueda global
+            document.getElementById('globalSearch').addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                filterTable();
+            });
+
+            const filters = [
+                'filterNombre', 'filterUserName', 'filterPassword', 'filterCarrera', 'filterCorreo'
+            ];
+
+            filters.forEach(function (filterId) {
+                document.getElementById(filterId).addEventListener('input', filterTable);
+            });
+
+            function filterTable() {
+                const globalSearch = document.getElementById('globalSearch').value.toLowerCase();
+                const columnFilters = filters.map(id => document.getElementById(id).value.toLowerCase());
+
+                rows.forEach(function (row) {
+                    const cells = row.querySelectorAll('td');
+                    let showRow = true;
+
+                    // Aplicar búsqueda global
+                    if (globalSearch) {
+                        const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+                        if (!rowText.includes(globalSearch)) {
+                            showRow = false;
+                        }
+                    }
+
+                    // Aplicar filtros por columna
+                    if (showRow) {
+                        columnFilters.forEach(function (filter, index) {
+                            if (filter && cells[index]) {
+                                const cellText = cells[index].textContent.toLowerCase();
+                                if (!cellText.includes(filter)) {
+                                    showRow = false;
+                                }
+                            }
+                        });
+                    }
+
+                    row.style.display = showRow ? '' : 'none';
+                });
+            }
+        });
+
+        function clearAllFilters() {
+            // Limpiar búsqueda global
+            document.getElementById('globalSearch').value = '';
+
+            const filters = [
+                'filterNombre', 'filterUserName', 'filterPassword', 'filterCarrera', 'filterCorreo'
+            ];
+
+            filters.forEach(function (filterId) {
+                document.getElementById(filterId).value = '';
+            });
+
+            // Mostrar todas las filas
+            const table = document.getElementById('studentsTable');
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(function (row) {
+                row.style.display = '';
+            });
+        }
+    </script>
+}

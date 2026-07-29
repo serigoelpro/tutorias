@@ -1,0 +1,733 @@
+﻿@using Plataforma_Web.Models.PrimeraEntrevista
+@using Plataforma_Web.Models
+@model PlataformaWeb.Models.Baja
+
+@{
+    DatosPersonales Alumno = ViewBag.Alumno as DatosPersonales;
+    ViewBag.Title = "Editar";
+
+    Usuario usuario = Session["Usuario"] as Usuario;
+    bool isMaster = (usuario != null && usuario.IdNivel == 4);
+
+    // Tutores (2), Coordinadores (3) y Masters (4) pueden editar campos de Deserción No Inscrito
+    bool puedeEditarDesercion = (usuario != null && usuario.IdNivel >= 2);
+
+    // Detectar si es Desercion No Inscrito - usando comparación flexible
+    string causaOtra = Model?.Otra ?? "";
+    bool esDesercionNoInscrito = causaOtra.ToLower().Contains("no inscrito");
+
+    // Campos Grupo, Carrera, Area, Cuatrimestre, Turno son editables para niveles 2,3,4 si es Desercion No Inscrito
+    bool camposEditables = puedeEditarDesercion && esDesercionNoInscrito;
+}
+
+
+<style>
+    /* Contenedor principal del formulario */
+    .form-container {
+        max-width: 1200px; /* Cambiado de 800px a 1200px para más ancho */
+        margin: 20px auto;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e1e5e9;
+    }
+
+    /* Fila superior - Folio y Fecha */
+    .header-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 50px;
+    }
+
+    .header-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+        /* Hacer el campo de folio más ancho y fecha más pequeña */
+        .header-field:first-child {
+            flex: 3; /* Folio ocupa más espacio */
+        }
+
+        .header-field:last-child {
+            flex: 1; /* Fecha ocupa menos espacio, queda más a la derecha */
+        }
+
+    /* Campo de nombre completo ancho */
+    .full-width-field {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+
+    /* Fila de nombre y matrícula */
+    .name-matricula-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .name-field {
+        flex: 6; /* Cambiado de 3 a 4 para hacer el nombre aún más ancho */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .matricula-field {
+        flex: 2;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Fila de campos inline (grupo, matrícula, carrera, cuatrimestre, turno) */
+    .inline-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 50px;
+        flex-wrap: wrap;
+    }
+
+    .inline-field {
+        flex: 1;
+        min-width: 180px;
+        /* Quitamos flex column para evitar problemas de altura en inputs */
+        display: block;
+    }
+
+        .inline-field select {
+            width: 100%;
+            height: 40px !important; /* Altura suficiente */
+            padding: 5px 10px;
+            line-height: normal !important;
+        }
+
+    /* Campos de preguntas - labels arriba, inputs largos */
+    .question-field {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+
+    /* Estilos generales para labels */
+    .form-container label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+        font-size: 14px;
+    }
+
+    /* Estilos generales para inputs */
+    .form-container input[type="text"],
+    .form-container input[type="date"],
+    .form-container input[type="number"],
+    .form-container select,
+    .form-container textarea {
+        padding: 10px 12px;
+        border: 2px solid #ced2d6;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        background-color: #fafbfc;
+    }
+
+    /* Inputs anchos para campos completos */
+    .full-width-field input {
+        width: 100%;
+        max-width: 600px; /* Limita el ancho máximo del campo nombre */
+    }
+
+    .name-field input {
+        width: 100%;
+        max-width: 800px; /* Ancho máximo específico para el campo nombre */
+    }
+
+    .question-field input,
+    .question-field select,
+    .question-field textarea {
+        width: 100%;
+        max-width: 1070px; /* Ancho máximo más largo para las preguntas */
+        padding: 15px 12px; /* Aumentado de 10px a 15px para más altura */
+        min-height: 55px; /* Altura mínima para los inputs */
+    }
+
+    /* Focus states */
+    .form-container input:focus,
+    .form-container select:focus,
+    .form-container textarea:focus {
+        outline: none;
+        border-color: #4a90e2;
+        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        background-color: #ffffff;
+    }
+
+    /* Textarea específico para observaciones */
+    .question-field textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .btn-crear {
+        background-color: #28a745; /* Verde */
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .btn-crear:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        .btn-crear:active {
+            background-color: #1e7e34;
+            transform: scale(0.98);
+        }
+
+    /* Contenedor del botón */
+    .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e1e5e9;
+    }
+
+    /* Estilo del botón Crear */
+    .btn-crear {
+        background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+        min-width: 120px;
+    }
+
+        .btn-crear:hover {
+            background: linear-gradient(135deg, #357abd 0%, #2a5d91 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        }
+
+        .btn-crear:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(74, 144, 226, 0.3);
+        }
+
+    .form-horizontal h4,
+    .form-container,
+    .form-container label,
+    .form-container input,
+    .form-container select,
+    .form-container textarea,
+    .form-container option,
+    .btn-crear {
+        text-transform: uppercase !important;
+    }
+</style>
+
+<h2>EDITAR SOLICITUD DE BAJA</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+
+        @* --- INICIO DEL BLOQUE AÑADIDO --- *@
+        @if (isMaster)
+        {
+            <div class="alert alert-danger" style="font-size: 1.1em; margin-top: 10px;">
+                <i class="fa fa-info-circle"></i> <strong>Nota Importante:</strong>
+                PARA CAMBIAR LA INFORMACIÓN DEL ALUMNO (NOMBRE, GRUPO, ETC.), DEBE MODIFICAR EL CAMPO <strong>"NO. DE MATRÍCULA"</strong> Y PRESIONAR "ENTER" O HACER CLIC AFUERA PARA CARGAR LOS NUEVOS DATOS.
+            </div>
+        }
+        @* --- FIN DEL BLOQUE AÑADIDO --- *@
+
+        <h4>Editar baja de @(ViewBag.Alumno != null ? ViewBag.Alumno.Nombre : "Alumno no encontrado")</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.IdBaja)
+        @Html.HiddenFor(model => model.IdPersona)
+        @Html.HiddenFor(model => model.IdEntrevistaInicial)
+        @Html.HiddenFor(model => model.Activo)
+
+        <div class="form-container">
+
+            <!-- Fila superior: Folio y Fecha -->
+            <div class="header-row">
+                <div class="header-field">
+                    @Html.LabelFor(model => model.Folio)
+                    @Html.TextBoxFor(model => model.Folio, isMaster
+    ? (object)new { @class = "form-control", id = "Folio" }
+    : (object)new { @class = "form-control", id = "Folio", @readonly = "readonly" })
+
+                    @Html.ValidationMessageFor(model => model.Folio, "", new { @class = "text-danger" })
+                </div>
+                <div class="header-field">
+                    @Html.LabelFor(model => model.Fecha)
+                    @Html.TextBoxFor(model => model.Fecha,
+     "{0:yyyy-MM-dd}",
+     isMaster
+        ? (object)new { @class = "form-control", @type = "date" }
+        : (object)new { @class = "form-control", @type = "date", @readonly = "readonly" })
+                </div>
+            </div>
+
+
+            <!-- Nombre del alumno y No. de matrícula -->
+            <div class="name-matricula-row">
+                <div class="name-field">
+                    @Html.LabelFor(model => model.Nombre, "Nombre del Alumno:")
+                    @Html.TextBoxFor(model => model.Nombre, new
+                    {
+    @class = "form-control",
+    @readonly = "readonly",
+    id = "Nombre"
+    })
+                </div>
+                <div class="matricula-field">
+                    @Html.LabelFor(model => model.Matricula)
+                    @Html.TextBoxFor(model => model.Matricula, isMaster
+    ? (object)new { @class = "form-control", id = "Matricula" }
+    : (object)new { @class = "form-control", id = "Matricula", @readonly = "readonly" })
+                </div>
+            </div>
+
+
+            <!-- Campos inline: Grupo, Carrera, Cuatrimestre, Turno, Area -->
+            @if (puedeEditarDesercion)
+            {
+                <div id="alertaDesercion" class="alert alert-info" style="font-size: 0.95em; @(esDesercionNoInscrito ? "" : "display:none;")">
+                    <i class="fa fa-edit"></i> <strong>Deserción No Inscrito:</strong>
+                    Los campos de Grupo, Carrera, Área, Cuatrimestre y Turno son editables directamente.
+                </div>
+            }
+            <div class="inline-row">
+                <div class="inline-field">
+                    @Html.LabelFor(model => model.Grupo, "Grupo:")
+                    @* Grupo: textbox que cambia de readonly a editable *@
+                    @Html.TextBoxFor(model => model.Grupo, esDesercionNoInscrito && puedeEditarDesercion
+                        ? (object)new { @class = "form-control", id = "txtGrupo" }
+                        : (object)new { @class = "form-control", @readonly = "readonly", id = "txtGrupo" })
+                </div>
+
+                <div class="inline-field">
+                    @Html.LabelFor(model => model.Carrera)
+                    @* Textbox: visible en modo normal, oculto en modo desercion *@
+                    @Html.TextBoxFor(model => model.Carrera, new { @class = "form-control", @readonly = "readonly", id = "txtCarrera", style = (esDesercionNoInscrito && puedeEditarDesercion) ? "display:none;" : "" })
+                    @* Dropdown: oculto en modo normal, visible en modo desercion *@
+                    @if (puedeEditarDesercion && ViewBag.Carreras != null)
+                    {
+                        @Html.DropDownList("IdCarrera", (IEnumerable<SelectListItem>)ViewBag.Carreras, new { @class = "form-control", id = "ddlCarrera", style = esDesercionNoInscrito ? "" : "display:none;" })
+                    }
+                </div>
+
+                <div class="inline-field">
+                    @Html.LabelFor(model => model.Area, "Área:")
+                    @Html.TextBoxFor(model => model.Area, new { @class = "form-control", @readonly = "readonly", id = "txtArea", style = (esDesercionNoInscrito && puedeEditarDesercion) ? "display:none;" : "" })
+                    @if (puedeEditarDesercion && ViewBag.Areas != null)
+                    {
+                        @Html.DropDownList("IdArea", (IEnumerable<SelectListItem>)ViewBag.Areas, new { @class = "form-control", id = "ddlArea", style = esDesercionNoInscrito ? "" : "display:none;" })
+                    }
+                </div>
+
+                <div class="inline-field">
+                    @Html.LabelFor(model => model.Cuatrimestre)
+                    @Html.TextBoxFor(model => model.Cuatrimestre, new { @class = "form-control", @readonly = "readonly", id = "txtCuatrimestre", style = (esDesercionNoInscrito && puedeEditarDesercion) ? "display:none;" : "" })
+                    @if (puedeEditarDesercion && ViewBag.Cuatrimestres != null)
+                    {
+                        @Html.DropDownList("IdGrado", (IEnumerable<SelectListItem>)ViewBag.Cuatrimestres, new { @class = "form-control", id = "ddlCuatrimestre", style = esDesercionNoInscrito ? "" : "display:none;" })
+                    }
+                </div>
+
+                <div class="inline-field">
+                    @Html.LabelFor(model => model.Turno)
+                    @Html.TextBoxFor(model => model.Turno, new { @class = "form-control", @readonly = "readonly", id = "txtTurno", style = (esDesercionNoInscrito && puedeEditarDesercion) ? "display:none;" : "" })
+                    @if (puedeEditarDesercion)
+                    {
+                        @* Turno dropdown con seleccion correcta basada en Model.Turno *@
+                        <select class="form-control" id="ddlTurno" name="IdTurno" style="@(esDesercionNoInscrito ? "" : "display:none;")">
+                            <option value="1" @(Model.Turno == "Matutino" ? "selected" : "")>Matutino</option>
+                            <option value="2" @(Model.Turno == "Vespertino" ? "selected" : "")>Vespertino</option>
+                            <option value="3" @(Model.Turno == "Despresurizado" ? "selected" : "")>Despresurizado</option>
+                        </select>
+                    }
+                </div>
+            </div>
+
+
+            <!-- Preguntas de vulnerabilidad - labels arriba, inputs largos -->
+            <div class="question-field">
+                @Html.LabelFor(m => m.Vulnerable, "¿El alumno pertenece a algún grupo altamente vulnerable?")
+                @Html.TextBoxFor(m => m.Vulnerable, new
+                {
+    @class = "form-control",
+    @readonly = "readonly",
+    tabindex = "-1",
+    aria_readonly = "true",
+    id = "Vulnerable"  // <-- AÑADE ESTE ID
+    })
+            </div>
+
+            <div class="question-field">
+                @Html.LabelFor(m => m.Vulnerabilidad, "En caso de pertenecer a un grupo de vulnerabilidad, escriba el tipo de vulnerabilidad")
+                @Html.TextBoxFor(m => m.Vulnerabilidad, new
+                {
+    @class = "form-control",
+    @readonly = "readonly",
+    tabindex = "-1",
+    aria_readonly = "true",
+    id = "Vulnerabilidad" // <-- AÑADE ESTE ID
+    })
+            </div>
+
+            <div class="question-field">
+                @Html.LabelFor(model => model.Causa, "Categoría de la baja del alumno:")
+                @Html.DropDownListFor(
+                    model => model.Causa,
+                    (IEnumerable<SelectListItem>)ViewBag.Categorias,
+                    "Seleccione una opción",
+                    new { @class = "form-control" }
+                )
+                @Html.ValidationMessageFor(model => model.Causa, "", new { @class = "text-danger" })
+            </div>
+
+
+            @{
+                var causas = new List<SelectListItem>
+{
+        new SelectListItem { Text = "Seleccione una opción", Value = "", Selected = string.IsNullOrEmpty(Model?.Causa) },
+
+        new SelectListItem { Text = "Académica: Bajo rendimiento académico.", Value = "Académica: Bajo rendimiento académico.", Selected = (Model?.Causa == "Académica: Bajo rendimiento académico.") },
+        new SelectListItem { Text = "Académica: Incumplimiento de expectativas.", Value = "Académica: Incumplimiento de expectativas.", Selected = (Model?.Causa == "Académica: Incumplimiento de expectativas.") },
+
+        new SelectListItem { Text = "Personal: Problemas de salud.", Value = "Personal: Problemas de salud.", Selected = (Model?.Causa == "Personal: Problemas de salud.") },
+        new SelectListItem { Text = "Personal: Problemas familiares.", Value = "Personal: Problemas familiares.", Selected = (Model?.Causa == "Personal: Problemas familiares.") },
+        new SelectListItem { Text = "Personal: Falta de documentos.", Value = "Personal: Falta de documentos.", Selected = (Model?.Causa == "Personal: Falta de documentos.") },
+
+        new SelectListItem { Text = "Económica: Bajo ingreso familiar.", Value = "Económica: Bajo ingreso familiar.", Selected = (Model?.Causa == "Económica: Bajo ingreso familiar.") },
+        new SelectListItem { Text = "Económica: Problemas de trabajo.", Value = "Económica: Problemas de trabajo.", Selected = (Model?.Causa == "Económica: Problemas de trabajo.") },
+        new SelectListItem { Text = "Económica: Deuda de colegiatura.", Value = "Económica: Deuda de colegiatura.", Selected = (Model?.Causa == "Económica: Deuda de colegiatura.") },
+        new SelectListItem { Text = "Económica: Distancia de la UT.", Value = "Económica: Distancia de la UT.", Selected = (Model?.Causa == "Económica: Distancia de la UT.") },
+
+        new SelectListItem { Text = "Reprobación: Ordinarios (+3 materias reprobadas).", Value = "Reprobación: Ordinarios (+3 materias reprobadas).", Selected = (Model?.Causa == "Reprobación: Ordinarios (+3 materias reprobadas).") },
+        new SelectListItem { Text = "Reprobación: Extraordinarios.", Value = "Reprobación: Extraordinarios.", Selected = (Model?.Causa == "Reprobación: Extraordinarios.") },
+
+        new SelectListItem { Text = "Deserción: Causa no conocida.", Value = "Deserción: Causa no conocida.", Selected = (Model?.Causa == "Deserción: Causa no conocida.") },
+        new SelectListItem { Text = "Deserción: No inscrito.", Value = "Deserción: No inscrito.", Selected = (Model?.Causa == "Deserción: No inscrito.") },
+
+        new SelectListItem { Text = "No aplica", Value = "No aplica", Selected = (Model?.Causa == "No aplica") }
+    };
+            }
+
+            <div class="question-field">
+                @Html.LabelFor(model => model.Otra, "Causa de la baja")
+                @Html.DropDownListFor(model => model.Otra, causas, new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.Otra, "", new { @class = "text-danger" })
+            </div>
+
+
+
+            <div class="question-field">
+                @Html.LabelFor(model => model.Observacion)
+                @Html.EditorFor(model => model.Observacion)
+                @Html.ValidationMessageFor(model => model.Observacion, "", new { @class = "text-danger" })
+            </div>
+
+        </div>
+
+        <div class="button-container">
+            <input type="submit" value="Guardar cambios" class="btn-crear" />
+        </div>
+
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Regresar", "Index", new { id = Model.IdPersona }, new { @class = "btn btn-primary btn-lg" })
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            // 1. Verificar si el usuario es Master (usando la variable de Razor)
+            var esMaster = @isMaster.ToString().ToLower();
+
+            // Si no es Master, no hacemos nada de esto.
+            if (!esMaster) {
+                return;
+            }
+
+            // 2. Crear un mensaje de 'cargando...'
+            // Añadimos un div de status debajo del campo de matrícula
+            $('#Matricula').after('<div id="matriculaStatus" style="font-size: 0.9em; margin-top: 5px;"></div>');
+            var $status = $('#matriculaStatus');
+
+            // --- NUEVO CÓDIGO para manejar el 'Enter' ---
+            $('#Matricula').on('keydown', function (e) {
+                // Si la tecla presionada es 'Enter'
+                if (e.key === 'Enter' || e.keyCode === 13) {
+
+                    // 1. Prevenimos que el formulario se envíe (¡Esta es la clave!)
+                    e.preventDefault();
+
+                    // 2. Forzamos que el campo pierda el foco (como si dieras clic afuera)
+                    // Esto disparará el evento 'change' de abajo y comenzará la búsqueda.
+                    $(this).blur();
+                }
+            });
+            // --- FIN DEL NUEVO CÓDIGO ---
+
+            // 3. Asignar el evento 'change' (cuando quita el foco o da Enter)
+            $('#Matricula').on('change', function () {
+                var matricula = $(this).val();
+
+                if (!matricula) {
+                    $status.text('');
+                    return;
+                }
+
+                $status.text('Buscando alumno...').css('color', '#555');
+
+                // 4. Llamada AJAX al controlador
+                $.ajax({
+                    url: '@Url.Action("GetDatosAlumno", "Bajas")', // Llama al método que creaste
+                    type: 'GET',
+                    data: { matricula: matricula },
+                    success: function (data) {
+                        if (data.Status === 'OK') {
+                            // 5. Rellenar el formulario con los datos nuevos
+                            $('#Nombre').val(data.Nombre);
+
+                            // Verificar si estamos en modo Desercion No Inscrito (dropdowns visibles)
+                            var modoDesercion = $('#ddlCarrera').is(':visible');
+
+                            // Siempre actualizar textboxes (son los que envia el form)
+                            $('#txtGrupo').val(data.Grupo);
+                            $('#txtCarrera').val(data.Carrera);
+                            $('#txtArea').val(data.Area);
+                            $('#txtCuatrimestre').val(data.Cuatrimestre);
+                            $('#txtTurno').val(data.Turno);
+
+                            // Si estamos en modo Desercion, tambien sincronizar dropdowns
+                            if (modoDesercion) {
+                                // Seleccionar opciones en dropdowns que coincidan con el texto
+                                $('#ddlCarrera option').filter(function() { return $(this).text() === data.Carrera; }).prop('selected', true);
+                                $('#ddlArea option').filter(function() { return $(this).text() === data.Area; }).prop('selected', true);
+                                $('#ddlCuatrimestre option').filter(function() { return $(this).text() === data.Cuatrimestre; }).prop('selected', true);
+                                $('#ddlTurno option').filter(function() { return $(this).text() === data.Turno; }).prop('selected', true);
+                            }
+
+                            $('#Vulnerable').val(data.Vulnerable);
+                            $('#Vulnerabilidad').val(data.Vulnerabilidad);
+
+                            // 6. MUY IMPORTANTE: Actualizar los IDs ocultos
+                            $('#IdPersona').val(data.IdPersona);
+                            $('#IdEntrevistaInicial').val(data.IdEntrevistaInicial);
+
+                            $status.text('Alumno actualizado: ' + data.Nombre).css('color', 'green');
+                        } else {
+                            // Si el SP devuelve error
+                            $status.text('Error: ' + data.Mensaje).css('color', 'red');
+                            // Limpiar campos
+                            $('#Nombre').val('Error: Alumno no encontrado');
+                            $('#txtGrupo').val('');
+                            $('#txtCarrera').val('');
+                            $('#txtArea').val('');
+                            $('#txtCuatrimestre').val('');
+                            $('#txtTurno').val('');
+                            $('#IdPersona').val(0);
+                            $('#IdEntrevistaInicial').val(0);
+                        }
+                    },
+                    error: function (xhr) {
+                        $status.text('✗ Error de conexión con el servidor.').css('color', 'red');
+                        console.error('Error AJAX:', xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script>
+        // --- Script para cambio dinámico de causa (Desercion No Inscrito) ---
+        $(document).ready(function () {
+
+            // Verificar si el usuario puede editar campos de Deserción (niveles 2, 3, 4)
+            var puedeEditarDesercion = @puedeEditarDesercion.ToString().ToLower();
+
+            if (!puedeEditarDesercion) {
+                return; // No hacer nada si no tiene permisos
+            }
+
+            // Guardar valores originales al cargar la página (los de la BD)
+            var valoresOriginales = {
+                Folio: '@Html.Raw(Model.Folio?.Replace("'", "\\'") ?? "")',
+                Grupo: '@Html.Raw(Model.Grupo?.Replace("'", "\\'") ?? "")',
+                Carrera: '@Html.Raw(Model.Carrera?.Replace("'", "\\'") ?? "")',
+                Area: '@Html.Raw(Model.Area?.Replace("'", "\\'") ?? "")',
+                Cuatrimestre: '@Html.Raw(Model.Cuatrimestre?.Replace("'", "\\'") ?? "")',
+                Turno: '@Html.Raw(Model.Turno?.Replace("'", "\\'") ?? "")'
+            };
+
+            // Función para verificar si es Deserción No Inscrito
+            function esDesercionNoInscrito() {
+                var causa = $('#Otra').val() || '';
+                return causa.toLowerCase().indexOf('no inscrito') !== -1;
+            }
+
+            // Función para activar modo DESERCION
+            function activarModoDesercion() {
+                $('#alertaDesercion').show();
+
+                // Folio cambia a "NA"
+                $('#Folio').val('NA');
+
+                // Grupo: hacer editable (quitar readonly)
+                $('#txtGrupo').prop('readonly', false);
+
+                // Ocultar textboxes de otros campos, mostrar dropdowns
+                $('#txtCarrera, #txtArea, #txtCuatrimestre, #txtTurno').hide();
+                $('#ddlCarrera, #ddlArea, #ddlCuatrimestre, #ddlTurno').show();
+
+                // Sincronizar valores actuales de textboxes a dropdowns
+                sincronizarDropdowns();
+            }
+
+            // Función para desactivar modo DESERCION (restaurar todo)
+            function desactivarModoDesercion() {
+                $('#alertaDesercion').hide();
+
+                // Calcular nuevo Folio usando logica de gaps (Ajax)
+                // Necesitamos el IdCarrera original
+                var idCarrera = $('#ddlCarrera option').filter(function() {
+                    return $(this).text().trim().toUpperCase() === valoresOriginales.Carrera.trim().toUpperCase();
+                }).val();
+
+                if (idCarrera) {
+                    $('#Folio').val("Calculando...");
+                    $.ajax({
+                        url: '@Url.Action("GetSiguienteFolioAjax", "Bajas")',
+                        type: 'POST',
+                        data: {
+                            idCarrera: idCarrera,
+                            idBaja: @Model.IdBaja
+                        },
+                        success: function(response) {
+                            if (response.Status === 'OK') {
+                                $('#Folio').val(response.Folio);
+                            } else {
+                                console.error("Error al calcular folio: " + response.Mensaje);
+                                $('#Folio').val(valoresOriginales.Folio); // Fallback
+                            }
+                        },
+                        error: function() {
+                            console.error("Error de conexión al calcular folio");
+                            $('#Folio').val(valoresOriginales.Folio); // Fallback
+                        }
+                    });
+                } else {
+                     $('#Folio').val(valoresOriginales.Folio); // Fallback si no encuentra carrera
+                }
+
+                // Grupo: hacer readonly y restaurar valor
+                $('#txtGrupo').prop('readonly', true).val(valoresOriginales.Grupo);
+
+                // Mostrar textboxes, ocultar dropdowns
+                $('#txtCarrera, #txtArea, #txtCuatrimestre, #txtTurno').show();
+                $('#ddlCarrera, #ddlArea, #ddlCuatrimestre, #ddlTurno').hide();
+
+                // Restaurar valores originales a los textboxes
+                $('#txtCarrera').val(valoresOriginales.Carrera);
+                $('#txtArea').val(valoresOriginales.Area);
+                $('#txtCuatrimestre').val(valoresOriginales.Cuatrimestre);
+                $('#txtTurno').val(valoresOriginales.Turno);
+            }
+
+            // Sincronizar valores de textboxes a dropdowns (seleccionar la opcion correcta)
+            // Usando comparacion case-insensitive como en Create.cshtml
+            function sincronizarDropdowns() {
+                // Carrera
+                var valCarrera = valoresOriginales.Carrera.trim().toUpperCase();
+                $('#ddlCarrera option').each(function() {
+                    if ($(this).text().trim().toUpperCase() === valCarrera) {
+                        $(this).prop('selected', true);
+                    }
+                });
+
+                // Area
+                var valArea = valoresOriginales.Area.trim().toUpperCase();
+                $('#ddlArea option').each(function() {
+                    if ($(this).text().trim().toUpperCase() === valArea) {
+                        $(this).prop('selected', true);
+                    }
+                });
+
+                // Cuatrimestre
+                var valCuatrimestre = valoresOriginales.Cuatrimestre.trim().toUpperCase();
+                $('#ddlCuatrimestre option').each(function() {
+                    if ($(this).text().trim().toUpperCase() === valCuatrimestre) {
+                        $(this).prop('selected', true);
+                    }
+                });
+
+                // Turno
+                var valTurno = valoresOriginales.Turno.trim().toUpperCase();
+                console.log('Sincronizando Turno. Valor original:', valoresOriginales.Turno, '| Buscando:', valTurno);
+                var turnoEncontrado = false;
+                $('#ddlTurno option').each(function() {
+                    var opcionText = $(this).text().trim().toUpperCase();
+                    console.log('  Opcion:', $(this).text(), '| Comparando:', opcionText);
+                    if (opcionText === valTurno) {
+                        $(this).prop('selected', true);
+                        turnoEncontrado = true;
+                        console.log('  -> Match encontrado!');
+                    }
+                });
+                if (!turnoEncontrado) {
+                    console.warn('No se encontro match para Turno:', valoresOriginales.Turno);
+                }
+            }
+
+            // Cuando cambia un dropdown, actualizar el textbox correspondiente (para que el Model Binding funcione)
+            $('#ddlCarrera').on('change', function() {
+                $('#txtCarrera').val($('#ddlCarrera option:selected').text());
+            });
+            $('#ddlArea').on('change', function() {
+                $('#txtArea').val($('#ddlArea option:selected').text());
+            });
+            $('#ddlCuatrimestre').on('change', function() {
+                $('#txtCuatrimestre').val($('#ddlCuatrimestre option:selected').text());
+            });
+            $('#ddlTurno').on('change', function() {
+                $('#txtTurno').val($('#ddlTurno option:selected').text());
+            });
+
+            // Evento change del dropdown Otra (Causa de la baja)
+            $('#Otra').on('change', function () {
+                if (esDesercionNoInscrito()) {
+                    activarModoDesercion();
+                } else {
+                    desactivarModoDesercion();
+                }
+            });
+
+            // Si al cargar la pagina YA es Desercion No Inscrito, activar modo
+            if (esDesercionNoInscrito()) {
+                activarModoDesercion();
+            }
+        });
+    </script>
+}

@@ -1,0 +1,127 @@
+@model PlataformaWeb.Models.AlumnoVulnerableViewModel
+
+@{
+    ViewBag.Title = "Editar Alumno Vulnerable";
+    Layout = "~/Views/Shared/_SGALayout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+
+<h2>Editar Información de Vulnerabilidad</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        @using (Html.BeginForm("Edit", "VulnerablesMaster", FormMethod.Post, new { @class = "form-horizontal" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(model => model.IdEntrevistaInicial)
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4>Información del Estudiante</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">Matrícula:</label>
+                        <div class="col-md-9">
+                            <p class="form-control-static">@Model.Matricula</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">Nombre:</label>
+                        <div class="col-md-9">
+                            <p class="form-control-static">@Model.Nombre</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">Carrera:</label>
+                        <div class="col-md-9">
+                            <p class="form-control-static">@Model.Carrera</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">Grupo:</label>
+                        <div class="col-md-9">
+                            <p class="form-control-static">@Model.Grupo</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">Cuatrimestre:</label>
+                        <div class="col-md-9">
+                            <p class="form-control-static">@Model.Cuatrimestre</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">Turno:</label>
+                        <div class="col-md-9">
+                            <p class="form-control-static">@Model.Turno</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-warning">
+                <div class="panel-heading">
+                    <h4>Información de Vulnerabilidad</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        @Html.LabelFor(model => model.IdVulnerable, "¿Es vulnerable?", new { @class = "col-md-3 control-label" })
+                        <div class="col-md-9">
+                            @Html.DropDownListFor(model => model.IdVulnerable, Model.OpcionesVulnerable, "Seleccione una opción", new { @class = "form-control", @id = "ddlVulnerable" })
+                            @Html.ValidationMessageFor(model => model.IdVulnerable, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="divTipoVulnerabilidad">
+                        @Html.LabelFor(model => model.IdEleccionVunerabilidad, "Tipo de vulnerabilidad", new { @class = "col-md-3 control-label" })
+                        <div class="col-md-9">
+                            @Html.DropDownListFor(model => model.IdEleccionVunerabilidad, Model.TiposVulnerabilidad, "Seleccione el tipo", new { @class = "form-control" })
+                            @Html.ValidationMessageFor(model => model.IdEleccionVunerabilidad, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-offset-3 col-md-9">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="glyphicon glyphicon-floppy-disk"></i> Guardar Cambios
+                    </button>
+                    @Html.ActionLink("Cancelar", "Index", null, new { @class = "btn btn-default" })
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Función para mostrar/ocultar el tipo de vulnerabilidad
+            function toggleTipoVulnerabilidad() {
+                var esVulnerable = $('#ddlVulnerable').val();
+                if (esVulnerable == '1') { // 1 = Sí es vulnerable
+                    $('#divTipoVulnerabilidad').show();
+                } else {
+                    $('#divTipoVulnerabilidad').hide();
+                }
+            }
+
+            // Ejecutar al cargar la página
+            toggleTipoVulnerabilidad();
+
+            // Ejecutar cuando cambie la selección
+            $('#ddlVulnerable').change(function () {
+                toggleTipoVulnerabilidad();
+            });
+        });
+    </script>
+}

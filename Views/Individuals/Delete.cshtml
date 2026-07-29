@@ -1,0 +1,72 @@
+﻿@using Plataforma_Web.Models.PrimeraEntrevista
+@model PlataformaWeb.Models.Individual
+
+@{
+    DatosPersonales Alumno = ViewBag.Alumno as DatosPersonales;
+    ViewBag.Title = "Delete";
+}
+
+<h2>Eliminar</h2>
+
+<h3>Estas seguro que deseas eliminar este registro?</h3>
+<h4>
+    <font color="red">
+        LOS SEGUIMIENTOS ASOCIADOS A ESTA HOJA DE SEGUIMIENTO TAMBIEN SERAN ELIMINADOS EN CASO DE EXISTIR
+    </font>
+</h4>
+<div>
+    <h4>Seguimiento individual de @ViewBag.Alumno.Nombre</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.Fecha)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Fecha)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Carrera)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Carrera)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Nombre)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Nombre)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Grupo)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Grupo)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Cuatrimestre)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Cuatrimestre)
+        </dd>
+
+    </dl>
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-actions no-color">
+            <input type="submit" value="Eliminar" class="btn btn-default" /> |
+            @Html.ActionLink("Regresar", "Index", new { id = Alumno.IdPersona })
+        </div>
+    }
+</div>

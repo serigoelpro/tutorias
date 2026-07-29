@@ -1,0 +1,93 @@
+﻿@using Plataforma_Web.Models.PrimeraEntrevista;
+
+
+@Styles.Render("~/ViewsStyles/Entrevista/css/Styles.css")
+
+@Styles.Render("~/ViewsStyles/Entrevista/css/Styles.css")
+
+@{
+    DatosPersonales Alumno = (DatosPersonales)ViewBag.ExisteAlumno;
+}
+
+<div id="page">
+    <header>
+        <div class="overlay"></div>
+        <div class="gtco-container">
+            <div class="row">
+                <div class="col-md-12 col-md-offset-0 text-left">
+
+
+                    <div class="row" style="margin-top: 2em; margin-bottom:3em;">
+
+                        <div class="col-md-6 col-md-push-3 animate-box" data-animate-effect="fadeInRight">
+                            <div class="form-wrap">
+                                <div class="tab">
+
+                                    <div class="tab-content">
+                                        <div class="tab-content-inner active" data-content="signup">
+                                            <hr />
+                                            <div style="text-align: center;">
+                                                <h1 class="titulo">Entrevista de Tutorías</h1>
+                                            </div>
+                                            <form action="#">
+                                                @if (Alumno == null)
+                                                {
+                                                    <div class=" row-" style="text-align: center;">
+                                                        <h1>De Inicio</h1>
+                                                    </div>
+                                                    <center>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-12">
+                                                                <label for="fullname">Para alumnos sin entrevista registrada
+                                                                    anteriormente</label>
+                                                                <div>
+                                                                    <a href="Entrevista/DatosPersonales"><img
+                                                                            src="/ViewsStyles/Entrevista/Images/EntrevistaInicial.png"
+                                                                            class="imagen" alt="Entrevista inicial" /></a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </center>
+                                                }
+                                                else
+                                                {
+                                                    <div class=" row-" style="text-align: center;">
+                                                        <h1>De Seguimiento</h1>
+                                                    </div>
+                                                    <center>
+                                                        <div class="row form-group">
+
+                                                            <div class="col-md-12">
+                                                                <label for="activities">Para alumnos con entrevista
+                                                                    registrada anteriormente</label>
+                                                                <div>
+                                                                    <a href="Entrevista/Buscar"><img
+                                                                            src="/ViewsStyles/Entrevista/Images/EntrevistaSeguimiento.png"
+                                                                            class="imagen"
+                                                                            alt="Entrevista actualizada" /></a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </center>
+                                                }
+
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    @if (!string.IsNullOrEmpty(ViewBag.Mensaje))
+    {
+        <script type="text/javascript">
+            alert("@ViewBag.Mensaje");
+        </script>
+    }
+
+
+</div>

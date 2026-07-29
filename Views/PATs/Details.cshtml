@@ -1,0 +1,2765 @@
+﻿@model Plataforma_Web.Models.PAT
+@Styles.Render("~/ViewsStyles/PAT/ListPAT.css")
+@using Plataforma_Web.Models
+
+@{
+    Layout = null;
+}
+
+@{
+    PAT pat = ViewBag.PAT as PAT;
+    ViewBag.Title = "Details";
+}
+
+@Html.AntiForgeryToken()
+
+
+<style>
+    .pat-table th,
+    .btn-action,
+    .modal-title,
+    .group-label,
+    .activity-filter-btn,
+    .diagnostico-header div,
+    .vulnerabilidades-header div,
+    .detail-label,
+    .filter-label {
+        text-transform: uppercase;
+    }
+</style>
+
+
+<style>
+    /* PUNTO 4: Mayúsculas excepto menú */
+    .pat-container * {
+        text-transform: uppercase;
+    }
+
+    .navbar *, .main-header *, .sidebar-menu * {
+        text-transform: none !important;
+    }
+
+    textarea.form-control, input.form-control {
+        text-transform: uppercase;
+    }
+</style>
+
+
+<div class="pat-container" style="margin-top:20px">
+    <section class="content">
+        <!-- Nueva estructura de dos columnas -->
+        <div class="pat-layout-wrapper">
+            <!-- Columna izquierda: Diagnóstico y Vulnerabilidades -->
+            <div class="pat-left-column">
+                <!-- Sección: Diagnóstico del Grupo -->
+                <div class="pat-card diagnostico-card" style="margin-bottom: 16px; background: #f8f9fa; box-shadow: 0 2px 4px rgba(26,177,146,0.08);">
+                    <div class="diagnostico-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="font-size: 18px; color: #2c3e50; font-weight: 700;">
+                            <i class="glyphicon glyphicon-stats" style="margin-right: 8px; color: #1ab192;"></i>
+                            Diagnóstico del Grupo
+                        </div>
+                        <span class="students-count" style="font-size: 1.2rem; font-weight: 700; color: #2c3e50;">
+                            @Html.DisplayFor(model => model.CantidadAlumno) alumnos
+                        </span>
+                    </div>
+
+                    <div class="diagnostico-details" style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                        <div class="detail-item">
+                            <span class="detail-label" style="font-size: 13px; color: #6c757d; font-weight: 600; text-transform: uppercase; display: block;">
+                                Período
+                            </span>
+                            <span class="detail-value" style="font-size: 15px; font-weight: 600; color: #2c3e50;">
+                                @Html.DisplayFor(model => model.Periodo.Nombre) @Model.Fecha.Year
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label" style="font-size: 13px; color: #6c757d; font-weight: 600; text-transform: uppercase; display: block;">
+                                Tutor
+                            </span>
+                            <span class="detail-value" style="font-size: 15px; font-weight: 600; color: #2c3e50;">
+                                @Html.DisplayFor(model => model.Tutor)
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <span class="detail-label" style="font-size: 13px; color: #6c757d; font-weight: 600; text-transform: uppercase; display: block;">
+                                Carrera
+                            </span>
+                            <span class="detail-value" style="font-size: 15px; font-weight: 600; color: #2c3e50;">
+                                @Html.DisplayFor(model => model.Carrera.Nombre)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Vulnerabilidades - MOVED INSIDE LEFT COLUMN -->
+                <div class="pat-card vulnerabilidades-card" style="margin-bottom: 16px; background: #f8f9fa; box-shadow: 0 2px 4px rgba(26,177,146,0.08);">
+                    <div class="vulnerabilidades-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="font-size: 18px; color: #2c3e50; font-weight: 700;">
+                            <i class="glyphicon glyphicon-warning-sign" style="margin-right: 8px; color: #ff9f43;"></i>
+                            Vulnerabilidades
+                        </div>
+                        <span style="font-size: 13px; font-weight: 600; color: #20c997; background: #e7faf5; padding: 4px 10px; border-radius: 16px; display: inline-block; letter-spacing: 0.5px; box-shadow: 0 2px 10px rgba(26,177,146,0.06);">
+                            Total: @(Model.VunerableEconomico + Model.VunerablePersonal + Model.VunerableAcademico + (ViewBag.NoVulnerablesCount ?? 0) + (ViewBag.CantidadBajas ?? 0))
+                        </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
+                        <!-- Económicos - SMALLER BUTTONS -->
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="economico" style="background: linear-gradient(135deg, #ff9f43 0%, #ff8c00 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; padding: 6px 4px; border-radius: 8px; min-height: 40px;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;">
+                                    <i class="glyphicon glyphicon-usd" style="font-size: 10px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; line-height: 1;">@Html.DisplayFor(model => model.VunerableEconomico)</div>
+                                    <div style="font-size: 8px; font-weight: 600; text-transform: uppercase; opacity: 0.9;">Económicos</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Personal -->
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="personal" style="background: linear-gradient(135deg, #ee5a52 0%, #dc3545 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; padding: 6px 4px; border-radius: 8px; min-height: 40px;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;">
+                                    <i class="glyphicon glyphicon-user" style="font-size: 10px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; line-height: 1;">@Html.DisplayFor(model => model.VunerablePersonal)</div>
+                                    <div style="font-size: 8px; font-weight: 600; text-transform: uppercase; opacity: 0.9;">Personal</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Académico -->
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="academico" style="background: linear-gradient(135deg, #3742fa 0%, #2d3cdf 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; padding: 6px 4px; border-radius: 8px; min-height: 40px;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;">
+                                    <i class="glyphicon glyphicon-folder-close" style="font-size: 10px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; line-height: 1;">@Html.DisplayFor(model => model.VunerableAcademico)</div>
+                                    <div style="font-size: 8px; font-weight: 600; text-transform: uppercase; opacity: 0.9;">Académico</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="no-vulnerable" style="background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; border: none; cursor: pointer; transition: all 0.3s ease; padding: 10px 6px; border-radius: 8px; min-height: 50px;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px;">
+                                    <i class="glyphicon glyphicon-thumbs-up" style="font-size: 12px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 14px; font-weight: 700; line-height: 1;">@ViewBag.NoVulnerablesCount</div>
+                                    <div style="font-size: 9px; font-weight: 600; text-transform: uppercase; opacity: 0.9;">No vulnerables</div>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button type="button" class="vulnerability-btn btn-action vuln-compact" data-target="bajas" style="background: #6c757d; color: white; cursor: pointer; min-height: 40px; padding: 6px 4px; border-radius: 8px;">
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                <div class="vuln-icon" style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 18px; height: 18px; display:flex; justify-content:center; align-items:center;">
+                                    <i class="glyphicon glyphicon-remove-circle" style="font-size: 10px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 13px; font-weight: 700; line-height: 1;">@ViewBag.CantidadBajas</div>
+                                    <div style="font-size: 8px; font-weight: 600; opacity: 0.9;">BAJAS</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+
+
+
+                    @if (Model.estado == true && (Model.EstadoRevision == 0 || Model.EstadoRevision == 3))
+                    {
+                        <a class="btn-action btn-view" href="@Url.Action("Edit", new { id = Model.IdEntrevistaInicial })" role="button" style="width: 100%; justify-content: center; padding: 8px; font-size: 12px;">
+                            <span class="action-icon glyphicon glyphicon-pencil"></span>
+                            Agregar comentario
+                        </a>
+                    }
+                </div>
+            </div>
+
+
+            <!-- Columna derecha: Plan de Acción y demás contenido -->
+            <div class="pat-right-column">
+                <!-- Sección: Plan de Acción -->
+                @if (ViewBag.Actividades != null)
+                {
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="pat-card">
+                                <!-- Header de acciones y filtros -->
+                                <div class="card-header-info">
+                                    <div class="group-section" style="display: flex; align-items: center; gap: 12px;">
+                                        <div class="group-label">Plan de Acción</div>
+                                        @{
+                                            var tiempo = DateTime.Now;
+                                            int periodoActual = (tiempo.Month >= 1 && tiempo.Month <= 4) ? 1 : (tiempo.Month >= 5 && tiempo.Month <= 8) ? 2 : 3;
+                                            string estadoPAT = "";
+                                            string claseEstado = "";
+                                            if (Model.IdPeriodo != periodoActual || Model.Fecha.Year != tiempo.Year)
+                                            {
+                                                estadoPAT = "Inactivo";
+                                                claseEstado = "status-inactive";
+                                            }
+                                            else if (Model.estado == true)
+                                            {
+                                                if (Model.EstadoRevision == 2) // Si está aprobado por el coordinador
+                                                {
+                                                    estadoPAT = "Aprobado";
+                                                    claseEstado = "status-active"; // Clase para color verde
+                                                }
+                                                else if (Model.EstadoRevision == 1)
+                                                {
+                                                    estadoPAT = "En Revisión";
+                                                    claseEstado = "status-review"; // <-- NUEVO: Azul
+                                                }
+                                                else
+                                                {
+                                                    estadoPAT = "Planeación en progreso";
+                                                    claseEstado = "status-pending"; // Amarillo
+                                                }
+                                            }
+                                            else // Estado es false (Cerrado)
+                                            {
+                                                estadoPAT = "PAT Cerrado"; // <-- Cambiado texto
+                                                claseEstado = "status-active"; // <-- VUELVE A VERDE
+                                            }
+                                        }
+                                        <span class="status-badge @claseEstado" style="font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                                            @if (estadoPAT == "Planeación aprobada y finalizada")
+                                            {<i class="glyphicon glyphicon-ok-circle" style="color: #28a745;"></i>}
+                                            @if (estadoPAT == "Planeación en progreso")
+                                            {<i class="glyphicon glyphicon-time" style="color: #ffc107;"></i>}
+                                            @if (estadoPAT == "Inactivo")
+                                            {<i class="glyphicon glyphicon-ban-circle" style="color: #dc3545;"></i>}
+                                            <span>@estadoPAT</span>
+                                        </span>
+                                    </div>
+                                    <div class="plan-actions" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                                        @if (Model.estado == true)
+                                        {
+                                            if (Model.EstadoRevision == 0 || Model.EstadoRevision == 3)
+                                            {
+                                                <button type="button" id="btn-editar-todas" class="btn-action btn-view">
+                                                    <span class="action-icon glyphicon glyphicon-pencil"></span>
+                                                    Editar PAT
+                                                </button>
+                                            }
+                                            <button type="button" id="btn-agregar-semana" class="btn-action btn-view" style="display: none;" onclick="openModalAgregarSemana()">
+                                                <span class="action-icon glyphicon glyphicon-plus"></span>
+                                                Agregar Semana
+                                            </button>
+                                            <button type="button" id="btn-eliminar-semana" class="btn-action btn-delete" style="display: none; margin-left: 8px;" onclick="openModalEliminarSemana()">
+                                                <span class="action-icon glyphicon glyphicon-trash"></span>
+                                                Eliminar semana
+                                            </button>
+                                            <button type="button" id="btn-guardar-todas" class="btn-action btn-report" style="display: none;">
+                                                <span class="action-icon glyphicon glyphicon-floppy-disk"></span>
+                                                Guardar
+                                            </button>
+                                            <button type="button" id="btn-cancelar-todas" class="btn-action" style="display: none; background: #6c757d; color: white;">
+                                                <span class="action-icon glyphicon glyphicon-remove"></span>
+                                                Cancelar
+                                            </button>
+
+                                            <!-- Botones de revisión y finalización -->
+                                            <!-- Botones de revisión y finalización -->
+                                            if (Model.EstadoRevision == 0)
+                                            {
+                                                <!-- PAT no enviado a revisión -->
+                                                <button type="button" id="btn-enviar-revision" class="btn-action btn-enviar-revision" style="background: #17a2b8; color: white;">
+                                                    <span class="action-icon glyphicon glyphicon-send"></span>
+                                                    Enviar a revisión
+                                                </button>
+                                            }
+                                            else if (Model.EstadoRevision == 1)
+                                            {
+                                                <!-- PAT enviado a revisión, esperando aprobación -->
+                                                <button type="button" class="btn-action" style="background: #ffc107; color: #212529; cursor: not-allowed; opacity: 0.65;" disabled>
+                                                    <span class="action-icon glyphicon glyphicon-time"></span>
+                                                    Enviado a revisión
+                                                </button>
+                                            }
+                                            else if (Model.EstadoRevision == 2)
+                                            {
+                                                <!-- PAT aprobado, puede finalizar -->
+                                                <button type="button" class="btn-action" style="background: #28a745; color: white; cursor: not-allowed; opacity: 0.65;" disabled>
+                                                    <span class="action-icon glyphicon glyphicon-ok"></span>
+                                                    Aprobado
+                                                </button>
+                                                <button type="button" id="btn-comentar-todas" class="btn-action btn-view">
+                                                    <span class="action-icon glyphicon glyphicon-comment"></span>
+                                                    Adjuntar evidencia
+                                                </button>
+                                                <button type="button" id="btn-guardar-comentarios-todas" class="btn-action btn-report" style="display: none;">
+                                                    <span class="action-icon glyphicon glyphicon-floppy-disk"></span>
+                                                    Guardar
+                                                </button>
+                                                <button type="button" id="btn-cancelar-final" class="btn-action" style="display: none; background: #6c757d; color: white;">
+                                                    <span class="action-icon glyphicon glyphicon-remove"></span>
+                                                    Cancelar
+                                                </button>
+
+                                            }
+                                            else if (Model.EstadoRevision == 3)
+                                            {
+                                                <!-- ✅ PAT RECHAZADO - MOSTRAR BOTÓN DE REENVIAR -->
+                                                <button type="button" id="btn-reenviar-revision" class="btn-action" style="background: #ff9800; color: white;">
+                                                    <span class="action-icon glyphicon glyphicon-repeat"></span>
+                                                    Reenviar a revisión
+                                                </button>
+                                            }
+
+                                            <!-- Botón para ver comentarios de revisión (disponible en todos los estados) -->
+                                            <button type="button" id="btn-ver-comentarios-revision" class="btn-action btn-view" onclick="verNotasRevision()">
+                                                <span class="action-icon glyphicon glyphicon-list-alt"></span>
+                                                Comentarios por revisar
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <!-- ✅ SECCIÓN PARA PAT FINALIZADO/APROBADO -->
+
+
+                                            <!-- Botón para ver comentarios de revisión -->
+                                            <button type="button" id="btn-ver-comentarios-revision" class="btn-action btn-view" onclick="verNotasRevision()">
+                                                <span class="action-icon glyphicon glyphicon-list-alt"></span>
+                                                Comentarios por revisar
+                                            </button>
+
+                                            <!-- Botón para ver reporte -->
+                                            <a class="btn-action btn-report" href="@Url.Action("Reporte", new { id = Model.IdEntrevistaInicial })" role="button">
+                                                <span class="action-icon glyphicon glyphicon-list-alt"></span>
+                                                Ver Reporte
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                                <!-- Filtros de actividades -->
+                                <!-- Modal Adjuntar Evidencia -->
+                                <div class="modal-overlay" id="modal-adjuntar-evidencia" style="display: none;">
+                                    <div class="modal-container" style="max-width: 700px;">
+                                        <div class="modal-header">
+                                            <h3 class="modal-title">
+                                                <span class="glyphicon glyphicon-paperclip" style="margin-right: 8px;"></span>
+                                                Adjuntar evidencia por semana
+                                            </h3>
+                                            <button type="button" class="modal-close" onclick="closeModal('modal-adjuntar-evidencia')">
+                                                <span class="close-icon">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div id="evidencias-semanas-list">
+                                                <!-- Aquí se cargan dinámicamente las semanas y formularios de evidencia -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="activity-filters-row" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px;">
+                                    <div style="display: flex; gap: 5px;">
+                                        <button type="button" id="filter-all" class="activity-filter-btn active" data-filter="all">
+                                            TODAS
+                                        </button>
+                                        <button type="button" id="filter-individual" class="activity-filter-btn" data-filter="individual">
+                                            INDIVIDUAL
+                                        </button>
+                                        <button type="button" id="filter-grupal" class="activity-filter-btn" data-filter="grupal">
+                                            GRUPAL
+                                        </button>
+                                    </div>
+
+                                    @if (Model.estado == false || Model.EstadoRevision == 2)
+                                    {
+                                        <div id="evidence-stats" style="font-size: 12px; display: flex; gap: 8px; align-items: center;">
+                                            <strong style="color: #666; text-transform: uppercase;">Evidencias:</strong>
+                                            <span class="label label-success" style="padding: 6px 10px; display: flex; align-items: center;">
+                                                <i class="glyphicon glyphicon-ok" style="margin-right: 4px;"></i>
+                                                Aprobadas: <span id="count-aprobadas" style="font-weight: bold; margin-left: 3px;">0</span>/<span id="count-total">0</span>
+                                            </span>
+                                            <span class="label label-danger" style="padding: 6px 10px; display: flex; align-items: center;">
+                                                <i class="glyphicon glyphicon-remove" style="margin-right: 4px;"></i>
+                                                Rechazadas: <span id="count-rechazadas" style="font-weight: bold; margin-left: 3px;">0</span>
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="pat-table-container">
+                                    <div class="table-responsive">
+                                        <table class="pat-table tabla-unificada">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 5%; padding-right: 4px; text-align: center;">Semana</th>
+                                                    <th style="width: 8%; padding-left: 4px; text-align: center;">Tipo</th>
+                                                    <th style="width: 20%; text-align: center;">Actividades</th>
+                                                    @if (Model.estado != true || Model.EstadoRevision == 2)
+                                                    {
+                                                        <th style="width: 8%; text-align: center;">Realizado</th>
+                                                        <th style="width: 10%; text-align: center;">Notas</th>
+                                                    }
+                                                    @if (Model.estado == false || Model.EstadoRevision == 2)
+                                                    {
+                                                        <th style="width: 15%; text-align: center;">Evidencia</th>
+                                                    }
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in (ViewBag.Actividades as IEnumerable<Plataforma_Web.Models.ClasesPAT.ActividadesSemanal>))
+                                                {
+                                                    string tipoClase = (item.Tipo != null && item.Tipo.Nombre == "Tutoria Individual") ? "individual" : "grupal";
+                                                    <tr class="activity-row @tipoClase" data-actividad-id="@item.IdActividad" data-tipo="@tipoClase" data-semana="@item.Semana.Nombre" data-realizado="@(item.RealizoActividad.ToString().ToLower())">
+                                                        <td class="group-cell" style="text-align: center;">
+                                                            <span class="semana-badge">@item.Semana.Nombre</span>
+                                                        </td>
+                                                        <td class="group-cell" style="text-align: center;">
+                                                            @if (item.Tipo != null && item.Tipo.Nombre == "Tutoria Individual")
+                                                            {
+                                                                <span class="status-badge-small status-individual">TI</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="status-badge-small status-grupal">TG</span>
+                                                            }
+                                                        </td>
+                                                        <td class="actividad-cell">
+                                                            <div class="actividad-display actividad-texto">@item.Actividad</div>
+                                                            <textarea class="form-control actividad-input" rows="2" style="display: none; border-radius: 8px; border: 2px solid #e9ecef; padding: 4px 8px; resize: vertical; min-height: 24px; max-height: 40px; font-size: 13px;" id="actividad-input-@item.IdActividad">@item.Actividad</textarea>
+                                                        </td>
+                                                        @if (Model.estado != true || Model.EstadoRevision == 2)
+                                                        {
+                                                            <td class="realizado-cell" style="text-align: center;">
+                                                                <span class="realizado-texto">
+                                                                    @if (item.RealizoActividad == true)
+                                                                    {
+                                                                        <span class="status-badge-small status-realizado">Sí</span>
+                                                                    }
+                                                                    else if (item.RealizoActividad == false)
+                                                                    {
+                                                                        <span class="status-badge-small status-no-realizado">No</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="status-badge-small status-sin-datos">Sin datos</span>
+                                                                    }
+                                                                </span>
+                                                                <span class="realizado-radio" style="display: none;">
+                                                                    <label style="margin-right: 8px;">
+                                                                        <input type="radio" name="realizado_@item.IdActividad" value="true" @(item.RealizoActividad == true ? "checked" : "") /> Sí
+                                                                    </label>
+                                                                    <label>
+                                                                        <input type="radio" name="realizado_@item.IdActividad" value="false" @(item.RealizoActividad == false ? "checked" : "") /> No
+                                                                    </label>
+                                                                </span>
+                                                            </td>
+                                                            <td class="comentarios-cell">
+                                                                <div class="comentarios-display">@(item.Comentarios ?? "")</div>
+                                                                <textarea class="form-control comentarios-input" rows="2" style="display: none; border-radius: 8px; border: 2px solid #e9ecef; padding: 8px 12px; resize: vertical; min-height: 38px; max-height: 60px;">@item.Comentarios</textarea>
+                                                                <button type="button" class="btn btn-success btn-xs btn-guardar-nota-individual" style="display:none; margin-top: 5px; width: 100%;">
+                                                                    <span class="glyphicon glyphicon-floppy-disk"></span> Guardar Nota
+                                                                </button>
+                                                            </td>
+                                                        }
+                                                        @if (Model.estado == false || Model.EstadoRevision == 2)
+                                                        {
+                                                            <td class="evidencia-cell" style="text-align: center;">
+                                                                @if (tipoClase == "grupal") // <-- 1. SOLO SE MUESTRA PARA GRUPAL
+                                                                {
+                                                                    <div id="evidencia-list-@item.IdActividad">
+                                                                    </div>
+
+                                                                    <input type="file" accept="application/pdf" style="display:none;" class="evidencia-input" id="file-evidencia-@item.IdActividad" />
+
+                                                                    <button type="button" class="btn btn-success btn-xs" id="btn-subir-evidencia-@item.IdActividad" style="display:none;">Subir PDF</button>
+                                                                    <span class="evidencia-upload-status" id="status-evidencia-@item.IdActividad" style="margin-left:6px; color:#888;"></span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span style="color: #999;"></span>
+                                                                }
+                                                            </td>
+                                                        }
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Botones de Acción Inferiores -->
+                <!-- Eliminado: ya no se muestran acciones abajo para PAT finalizado -->
+            </div>
+
+        </div>
+
+        <!-- Botón regresar arriba -->
+        <span class="ir-arriba icon-arrow-up2">
+            <span class="glyphicon glyphicon-chevron-up"></span>
+        </span>
+        <!-- Modal de Finalizar PAT -->
+        <div class="modal-overlay" id="modal-finalizar-pat" style="display: none;">
+            <div class="modal-container" style="width: 70%; max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="glyphicon glyphicon-ok-circle" style="margin-right: 8px; color: #28a745;"></i>
+                        Finalizar PAT
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-finalizar-pat')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Nueva advertencia de semanas faltantes -->
+                    <div id="advertencia-semanas" class="warning-message" style="display: none; color: #856404; background-color: #fff3cd; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+                        <div class="warning-icon">
+                            <i class="glyphicon glyphicon-exclamation-sign"></i>
+                        </div>
+                        <div class="warning-text">
+                            <p><strong>Por favor, complete todas las semanas 1 a 14 antes de finalizar el PAT.</strong></p>
+                            <p id="semanas-faltantes"></p> <!-- Aquí aparecerán las semanas faltantes -->
+                        </div>
+                    </div>
+
+                    <div class="warning-message">
+                        <div class="warning-icon" style="color: #856404;">
+                            <i class="glyphicon glyphicon-exclamation-sign"></i>
+                        </div>
+                        <div class="warning-text">
+                            <p><strong>Una vez que el PAT se marque como finalizado, no podrá seguir editando actividades y vulnerabilidades.</strong></p>
+                            <p class="warning-note">Solo habilite esta opción una vez que haya finalizado su planeación.</p>
+                        </div>
+                    </div>
+
+                    @using (Html.BeginForm("Guardar", "PATs", FormMethod.Post, new { id = "form-finalizar-pat" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.Hidden("id", Model.IdEntrevistaInicial)
+                        @Html.HiddenFor(model => model.estado)
+                        @Html.HiddenFor(model => model.Fecha)
+                        @Html.HiddenFor(model => model.IdPeriodo)
+                        @Html.HiddenFor(model => model.Periodo)
+                        @Html.HiddenFor(model => model.Periodos)
+                        @Html.HiddenFor(model => model.IdTutoriaGrupal)
+                        @Html.HiddenFor(model => model.TutoriaGrupal)
+                        @Html.HiddenFor(model => model.IdCarrera)
+                        @Html.HiddenFor(model => model.Carrera)
+                        @Html.HiddenFor(model => model.Carreras)
+                        @Html.HiddenFor(model => model.IdTutor)
+                        @Html.HiddenFor(model => model.Tutor)
+                        @Html.HiddenFor(model => model.CantidadAlumno)
+                        @Html.HiddenFor(model => model.VunerableEconomico)
+                        @Html.HiddenFor(model => model.DescripcionEconomico)
+                        @Html.HiddenFor(model => model.VunerablePersonal)
+                        @Html.HiddenFor(model => model.DescripcionPersonal)
+                        @Html.HiddenFor(model => model.VunerableAcademico)
+                        @Html.HiddenFor(model => model.DescripcionAcademico)
+                        @Html.HiddenFor(model => model.Cuatrimestre)
+                        @Html.HiddenFor(model => model.Grupo)
+                        @Html.HiddenFor(model => model.Semana1)
+                        @Html.HiddenFor(model => model.Semana2)
+                        @Html.HiddenFor(model => model.Semana3)
+                        @Html.HiddenFor(model => model.Semana4)
+                        @Html.HiddenFor(model => model.Semana5)
+                        @Html.HiddenFor(model => model.Semana6)
+                        @Html.HiddenFor(model => model.Semana7)
+                        @Html.HiddenFor(model => model.Semana8)
+                        @Html.HiddenFor(model => model.Semana9)
+                        @Html.HiddenFor(model => model.Semana10)
+                        @Html.HiddenFor(model => model.Semana11)
+                        @Html.HiddenFor(model => model.Semana12)
+                        @Html.HiddenFor(model => model.Semana13)
+                        @Html.HiddenFor(model => model.Semana14)
+                        @Html.HiddenFor(model => model.Semana15)
+                        @Html.HiddenFor(model => model.Semana16)
+                        @Html.HiddenFor(model => model.TipoTutoria1)
+                        @Html.HiddenFor(model => model.TipoTutoria2)
+                        @Html.HiddenFor(model => model.Actividad)
+                        @Html.HiddenFor(model => model.RealizoActividad)
+                        @Html.HiddenFor(model => model.Comentarios)
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="btn-finalizar-pat" class="btn-confirm-delete">
+                        <i class="glyphicon glyphicon-ok" style="margin-right: 6px;"></i>
+                        Finalizar PAT
+                    </button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-finalizar-pat')">
+                        <i class="glyphicon glyphicon-arrow-left" style="margin-right: 6px;"></i>
+                        Regresar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Modal de Deshacer Finalización PAT -->
+        <!-- Modal Deshacer Finalización eliminado -->
+        <!-- Modales de Vulnerabilidades -->
+        <div class="modal-overlay" id="modal-economico" style="display: none;">
+            <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <div class="vuln-icon economic" style="display: inline-flex; margin-right: 12px;">
+                            <i class="glyphicon glyphicon-usd"></i>
+                        </div>
+                        Vulnerables Económicos
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-economico')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="vulnerability-modal-content">
+                        <div class="detail-row">
+                            <span class="detail-label">Cantidad de casos:</span>
+                            <span class="detail-value" style="font-size: 18px; font-weight: 700; color: #ff9f43;">@Html.DisplayFor(model => model.VunerableEconomico)</span>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <h5 style="color: #495057; margin-bottom: 8px;">Problemática:</h5>
+                            <p style="color: #6c757d; line-height: 1.5; margin: 0;">@Html.DisplayFor(model => model.DescripcionEconomico)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay" id="modal-personal" style="display: none;">
+            <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <div class="vuln-icon personal" style="display: inline-flex; margin-right: 12px;">
+                            <i class="glyphicon glyphicon-user"></i>
+                        </div>
+                        Vulnerables Personal
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-personal')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="vulnerability-modal-content">
+                        <div class="detail-row">
+                            <span class="detail-label">Casos:</span>
+                            <span class="detail-value" style="font-size: 18px; font-weight: 700; color: #ee5a52;">@Html.DisplayFor(model => model.VunerablePersonal)</span>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <h5 style="color: #495057; margin-bottom: 8px;">Problemática:</h5>
+                            <p style="color: #6c757d; line-height: 1.5; margin: 0;">@Html.DisplayFor(model => model.DescripcionPersonal)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay" id="modal-academico" style="display: none;">
+            <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <div class="vuln-icon academic" style="display: inline-flex; margin-right: 12px;">
+                            <i class="glyphicon glyphicon-folder-close"></i>
+                        </div>
+                        Vulnerables Académico
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-academico')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="vulnerability-modal-content">
+                        <div class="detail-row">
+                            <span class="detail-label">Cantidad de casos:</span>
+                            <span class="detail-value" style="font-size: 18px; font-weight: 700; color: #3742fa;">@Html.DisplayFor(model => model.VunerableAcademico)</span>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <h5 style="color: #495057; margin-bottom: 8px;">Problemática:</h5>
+                            <p style="color: #6c757d; line-height: 1.5; margin: 0;">@Html.DisplayFor(model => model.DescripcionAcademico)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay" id="modal-no-vulnerable" style="display: none;">
+            <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <div class="vuln-icon" style="display: inline-flex; margin-right: 12px; background-color: #28a745; color: white; border-radius: 50%; width: 24px; height: 24px; align-items: center; justify-content: center;">
+                            <i class="glyphicon glyphicon-thumbs-up" style="font-size: 14px;"></i>
+                        </div>
+                        Alumnos Sin Vulnerabilidad
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-no-vulnerable')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="vulnerability-modal-content">
+                        <div class="detail-row">
+                            <span class="detail-label">Cantidad:</span>
+                            <span class="detail-value" style="font-size: 18px; font-weight: 700; color: #28a745;">@ViewBag.NoVulnerablesCount</span>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <h5 style="color: #495057; margin-bottom: 8px;">Descripcion:</h5>
+                            <p style="color: #6c757d; line-height: 1.5; margin: 0;">En esta seccion solamente estan los alumnos que no cuenten con algun tipo de vulnerabilidad.</p>
+                        </div>
+                        <div id="loading-alumnos-no-vulnerable" class="loading-indicator" style="display: none;">
+                            <i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Cargando alumnos...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-no-vulnerable')">Cerrar</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay" id="modal-bajas" style="display: none;">
+            <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <span class="vuln-icon" style="display: inline-flex; margin-right: 12px; background-color: #6c757d; color: white; border-radius: 50%; width: 24px; height: 24px; align-items: center; justify-content: center;">
+                            <i class="glyphicon glyphicon-remove-circle" style="font-size: 14px;"></i>
+                        </span>
+                        Alumnos Dados de Baja
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-bajas')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="vulnerability-modal-content">
+                        <div id="loading-alumnos-bajas" class="loading-indicator" style="display: none;">
+                            <i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Cargando alumnos...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-bajas')">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para editar vulnerabilidades -->
+        <div class="modal-overlay" id="modal-editar-vulnerabilidades" style="display: none;">
+            <div class="modal-container" style="max-width: 620px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="glyphicon glyphicon-pencil" style="margin-right: 8px;"></i>
+                        Editar vulnerabilidades
+                    </h3>
+                    <button type="button" class="modal-close" onclick="cerrarModalVulnerabilidades()">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @using (Html.BeginForm("Edit", "PATs", FormMethod.Post, new { id = "form-vulnerabilidades" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(model => model.IdEntrevistaInicial)
+                        @Html.HiddenFor(model => model.estado)
+                        @Html.HiddenFor(model => model.IdPeriodo)
+                        @Html.HiddenFor(model => model.IdTutoriaGrupal)
+                        @Html.HiddenFor(model => model.IdCarrera)
+                        @Html.HiddenFor(model => model.IdTutor)
+                        @Html.HiddenFor(model => model.Fecha)
+                        @Html.HiddenFor(model => model.CantidadAlumno)
+                        @Html.HiddenFor(model => model.VunerableAcademico)
+                        @Html.HiddenFor(model => model.VunerableEconomico)
+                        @Html.HiddenFor(model => model.VunerablePersonal)
+                        <input type="hidden" name="returnTo" value="PATsDetails" />
+
+                        <div class="form-group col-md-12">
+                            @Html.LabelFor(model => model.DescripcionEconomico, htmlAttributes: new { @class = "control-label" })
+                            <div>
+                                @Html.TextAreaFor(model => model.DescripcionEconomico, new { @class = "form-control", rows = 2 })
+                                @Html.ValidationMessageFor(model => model.DescripcionEconomico, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12">
+                            @Html.LabelFor(model => model.DescripcionPersonal, htmlAttributes: new { @class = "control-label" })
+                            <div>
+                                @Html.TextAreaFor(model => model.DescripcionPersonal, new { @class = "form-control", rows = 2 })
+                                @Html.ValidationMessageFor(model => model.DescripcionPersonal, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12">
+                            @Html.LabelFor(model => model.DescripcionAcademico, htmlAttributes: new { @class = "control-label" })
+                            <div>
+                                @Html.TextAreaFor(model => model.DescripcionAcademico, new { @class = "form-control", rows = 2 })
+                                @Html.ValidationMessageFor(model => model.DescripcionAcademico, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                        <div style="text-align: right; margin-top: 20px;">
+                            <button type="button" class="btn btn-secondary" onclick="cerrarModalVulnerabilidades()" style="margin-right: 10px;">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Guardar</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Agregar Semana -->
+        <div class="modal-overlay" id="modal-agregar-semana" style="display: none;">
+            <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="glyphicon glyphicon-plus"></i> Agregar Semana
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-agregar-semana')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Selección de Semana -->
+                    <div class="form-group">
+                        <span class="control-label" style="font-weight: 600;">Se agregará la siguiente semana:</span>
+                        <h4 id="proxima-semana-display" style="font-weight: 700; color: #1ab192;">Calculando...</h4>
+                        <input type="hidden" id="proxima-semana-hidden" value="" />
+                        <div class="text-danger" id="semana-error"></div>
+                    </div>
+
+                    <!-- Actividad Grupal -->
+                    <div class="form-group">
+                        <label for="actividad-grupal">Actividad Grupal:</label>
+                        <textarea id="actividad-grupal" class="form-control" rows="3" placeholder="Ingrese la actividad grupal"></textarea>
+                        <div class="text-danger" id="actividad-grupal-error"></div>
+                    </div>
+
+                    <!-- Actividad Individual -->
+                    <div class="form-group">
+                        <label for="actividad-individual">Actividad Individual:</label>
+                        <textarea id="actividad-individual" class="form-control" rows="3" placeholder="Ingrese la actividad individual"></textarea>
+                        <div class="text-danger" id="actividad-individual-error"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="agregarSemana()">Agregar Semana</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-agregar-semana')">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Eliminar Semana -->
+        <div class="modal-overlay" id="modal-eliminar-semana" style="display: none;">
+            <div class="modal-container" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="glyphicon glyphicon-trash"></i> Eliminar Semana
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-eliminar-semana')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="semana-eliminar-select">Seleccione la semana a eliminar:</label>
+                        <select id="semana-eliminar-select" class="form-control">
+                            <option value="">Seleccione una semana</option>
+                            <!-- Opciones llenadas por JS -->
+                        </select>
+                        <div class="text-danger" id="semana-eliminar-error"></div>
+                    </div>
+                    <div class="alert alert-warning" style="margin-top: 12px;">
+                        Al eliminar una semana, se eliminarán ambas actividades asociadas. Podrá volver a agregar la semana después.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="eliminarSemana()">Eliminar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-eliminar-semana')">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Modal para ver notas de revisión -->
+        <div class="modal fade" id="modal-notas-revision" tabindex="-1" role="dialog" aria-labelledby="modalNotasRevisionTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modalNotasRevisionTitle">
+                            <i class="glyphicon glyphicon-list-alt" style="margin-right: 8px; color: #337ab7;"></i>
+                            Comentarios de revisión
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div style="margin-bottom: 20px; padding: 12px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #337ab7;">
+                            <strong>PAT del grupo:</strong> <span id="grupo-notas-revision">@Model.TutoriaGrupal</span>
+                        </div>
+                        <div id="loading-notas-revision" style="text-align: center; padding: 40px; display: none;">
+                            <i class="glyphicon glyphicon-refresh glyphicon-spin" style="font-size: 24px; color: #337ab7;"></i>
+                            <p style="margin-top: 12px; color: #6c757d;">Cargando comentarios de revisión...</p>
+                        </div>
+                        <div id="notas-revision-lista">
+                            <!-- Aquí se cargarán los comentarios dinámicamente -->
+                        </div>
+                        <div id="sin-notas-revision" style="text-align: center; padding: 40px; color: #6c757d; display: none;">
+                            <i class="glyphicon glyphicon-info-sign" style="font-size: 32px; margin-bottom: 12px;"></i>
+                            <p><strong>No hay comentarios de revisión</strong></p>
+                            <p>Aún no se han agregado comentarios de revisión a este PAT.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="cerrarModalNotasRevision()">
+                            <i class="glyphicon glyphicon-remove" style="margin-right: 6px;"></i>
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Enviar a Revisión -->
+        <div class="modal-overlay" id="modal-enviar-revision" style="display: none;">
+            <div class="modal-container" style="width: 70%; max-width: 700px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="glyphicon glyphicon-send" style="margin-right: 8px; color: #17a2b8;"></i>
+                        Enviar PAT a revisión
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModal('modal-enviar-revision')">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="warning-message">
+                        <div class="warning-icon" style="color: #17a2b8;">
+                            <i class="glyphicon glyphicon-exclamation-sign"></i>
+                        </div>
+                        <div class="warning-text">
+                            <p><strong>¿Está seguro que desea enviar el PAT a revisión?</strong></p>
+                            <p class="warning-note">Una vez enviado se bloqueará la edición. Además, no podrá editar el PAT si este es aprobado, a menos que sea rechazado.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-confirmar-enviar-revision" class="btn-confirm-delete">
+                        <i class="glyphicon glyphicon-send" style="margin-right: 6px;"></i>
+                        Enviar a revisión
+                    </button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-enviar-revision')">
+                        <i class="glyphicon glyphicon-arrow-left" style="margin-right: 6px;"></i>
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para ver evidencia PDF -->
+        <div class="modal-overlay" id="modal-ver-evidencia-pdf" style="display: none; z-index: 9999;">
+            <div class="modal-container" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <span class="glyphicon glyphicon-file" style="margin-right: 8px;"></span>
+                        Evidencia
+                    </h3>
+                    <button type="button" class="modal-close" onclick="closeModalEvidenciaPDF()">
+                        <span class="close-icon">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="height: 600px;">
+                    <iframe src="" style="width:100%; height:100%; border:none;"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0,0,0,0.35);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal-container {
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+                margin: 0 auto;
+                position: relative;
+                padding: 0;
+                max-width: 600px;
+                width: 100%;
+                min-width: 320px;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .modal-header, .modal-footer {
+                padding: 18px 24px;
+            }
+
+            .modal-body {
+                padding: 18px 24px;
+            }
+
+            .modal-close {
+                position: absolute;
+                top: 18px;
+                right: 18px;
+                background: none;
+                border: none;
+                font-size: 22px;
+                cursor: pointer;
+            }
+        </style>
+
+        <script>
+    // =============================
+    // Evidencias por ACTIVIDAD (columna)
+    // =============================
+    var patEstado = @(pat.estado.ToString().ToLower());
+            var baseUrl = '@Url.Content("~/")';
+
+            // ✅ DEBE ESTAR FUERA DE $(document).ready()
+            // ✅ DEBE ESTAR FUERA DE $(document).ready()
+            function mostrarMensaje(mensaje, tipo) {
+                // Remover mensajes previos
+                $('.alert-message').remove();
+
+                // CORRECCIÓN: Añadido 'info' y 'glyphicon-info-sign'
+                var alertClass = tipo === 'success' ? 'status-active' : (tipo === 'info' ? 'status-info' : 'status-inactive');
+                var iconClass = tipo === 'success' ? 'glyphicon-ok-circle' : (tipo === 'info' ? 'glyphicon-info-sign' : 'glyphicon-exclamation-sign');
+
+                var alertHtml = '<div class="alert-message" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 16px 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); max-width: 400px; backdrop-filter: blur(10px);">';
+                alertHtml += '<div style="display: flex; align-items: center; gap: 12px;">';
+                alertHtml += '<i class="glyphicon ' + iconClass + '" style="font-size: 18px;"></i>';
+                alertHtml += '<span style="font-weight: 500;">' + mensaje + '</span>';
+                alertHtml += '</div>';
+                alertHtml += '</div>';
+
+                if (tipo === 'success') { // Verde
+                    $(alertHtml).css({
+                        'background': 'linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)',
+                        'color': '#155724',
+                        'border': '1px solid #28a745'
+                    }).appendTo('body');
+                } else if (tipo === 'info') { // <-- NUEVO BLOQUE AZUL
+                    $(alertHtml).css({
+                        'background': 'linear-gradient(135deg, #d1ecf1 0%, #b6dff1 100%)',
+                        'color': '#0c5460',
+                        'border': '1px solid #17a2b8'
+                    }).appendTo('body');
+                } else { // Rojo
+                    $(alertHtml).css({
+                        'background': 'linear-gradient(135deg, #f8d7da 0%, #f1b6bb 100%)',
+                        'color': '#721c24',
+                        'border': '1px solid #dc3545'
+                    }).appendTo('body');
+                }
+
+                setTimeout(function () {
+                    $('.alert-message').fadeOut(300, function () {
+                        $(this).remove();
+                    });
+                }, 3000);
+            }
+
+            function closeModal(modalId) {
+                $('#' + modalId).fadeOut(300);
+
+                // Limpiar campos al cerrar
+                if (modalId === 'modal-agregar-semana') {
+                    $('#actividad-grupal').val('');
+                    $('#actividad-individual').val('');
+                    $('#semana-error').text('');
+                    $('#actividad-grupal-error').text('');
+                    $('#actividad-individual-error').text('');
+                }
+            }
+
+            function openModalAgregarSemana() {
+                $('#semana-error').text('');
+                $('#actividad-grupal-error').text('');
+                $('#actividad-individual-error').text('');
+                $('#actividad-grupal').val('');
+                $('#actividad-individual').val('');
+
+                // ✅ NUEVA LÓGICA: Buscar el primer hueco en lugar de siguiente a la máxima
+                var semanasExistentes = [];
+
+                $('.activity-row').each(function () {
+                    try {
+                        var semanaBadge = $(this).find('.semana-badge').text().trim();
+                        if (semanaBadge) {
+                            var numeroSemana = parseInt(semanaBadge.replace('Semana', '').trim());
+                            if (!isNaN(numeroSemana) && semanasExistentes.indexOf(numeroSemana) === -1) {
+                                semanasExistentes.push(numeroSemana);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Error al parsear semana:", e);
+                    }
+                });
+
+                // Ordenar las semanas
+                semanasExistentes.sort(function (a, b) { return a - b; });
+
+                console.log("Semanas existentes:", semanasExistentes);
+
+                // Buscar el primer hueco del 1 al 16
+                var proximaSemana = null;
+                for (var i = 1; i <= 16; i++) {
+                    if (semanasExistentes.indexOf(i) === -1) {
+                        proximaSemana = i;
+                        break;
+                    }
+                }
+
+                if (proximaSemana === null) {
+                    mostrarMensaje('Ya se han agregado las 16 semanas.', 'error');
+                    return;
+                }
+
+                console.log("Próxima semana a agregar:", proximaSemana);
+
+                $('#proxima-semana-display').text("Semana " + proximaSemana);
+                $('#proxima-semana-hidden').val(proximaSemana);
+                $('#modal-agregar-semana').fadeIn(300);
+            }
+
+            function agregarSemana() {
+    var semanaSeleccionada = document.getElementById('proxima-semana-hidden').value;
+    var actividadGrupal = document.getElementById('actividad-grupal').value;
+    var actividadIndividual = document.getElementById('actividad-individual').value;
+
+    // Limpiar errores previos
+    document.getElementById('semana-error').textContent = '';
+    document.getElementById('actividad-grupal-error').textContent = '';
+    document.getElementById('actividad-individual-error').textContent = '';
+
+    // Validaciones
+    if (!semanaSeleccionada || parseInt(semanaSeleccionada) <= 0) {
+        document.getElementById('semana-error').textContent = "Error al determinar la semana. Recargue la página.";
+        return;
+    }
+    if (!actividadGrupal || actividadGrupal.trim() === '') {
+        document.getElementById('actividad-grupal-error').textContent = "Por favor, ingrese la actividad grupal.";
+        return;
+    }
+    if (!actividadIndividual || actividadIndividual.trim() === '') {
+        document.getElementById('actividad-individual-error').textContent = "Por favor, ingrese la actividad individual.";
+        return;
+    }
+
+    var idPat = @Model.IdEntrevistaInicial;
+
+    // ✅ Deshabilitar botón durante la petición
+    var btnAgregar = document.querySelector('#modal-agregar-semana .btn-primary');
+    if (btnAgregar) {
+        btnAgregar.disabled = true;
+        btnAgregar.innerHTML = '<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Agregando...';
+    }
+
+    $.ajax({
+        url: '@Url.Action("AsignarSemana", "PATs")',
+        method: 'POST',
+        data: {
+            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
+            idPat: idPat,
+            idSemana: parseInt(semanaSeleccionada),
+            actividadGrupal: actividadGrupal.trim(),
+            actividadIndividual: actividadIndividual.trim()
+        },
+        success: function(response) {
+            console.log('Respuesta del servidor:', response); // ✅ Debug
+
+            if (response.success) {
+                closeModal('modal-agregar-semana');
+                mostrarMensaje('Semana agregada exitosamente', 'success');
+
+                // --- PEGAR O ASEGURAR ESTO AQUÍ ---
+                setTimeout(function () { location.reload(); }, 1000);
+                // ----------------------------------
+            } else {
+                mostrarMensaje('Error al agregar la semana: ' + (response.message || 'Error desconocido'), 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX Error:", error);
+            console.error("Response:", xhr.responseText); // ✅ Debug
+            mostrarMensaje('Error de conexión al agregar la semana', 'error');
+        },
+        complete: function() {
+            // ✅ Rehabilitar botón
+            if (btnAgregar) {
+                btnAgregar.disabled = false;
+                btnAgregar.innerHTML = 'Agregar Semana';
+            }
+        }
+    });
+}
+
+                function openModalEliminarSemana() {
+    // Limpiar errores previos
+    document.getElementById('semana-eliminar-error').textContent = '';
+    // Llenar el select con semanas existentes
+    var actividades = @Html.Raw(Json.Encode(ViewBag.Actividades));
+    var semanaSelect = document.getElementById('semana-eliminar-select');
+    semanaSelect.innerHTML = '<option value="">Seleccione una semana</option>';
+    var semanasUnicas = [];
+    actividades.forEach(function(act) {
+        if (semanasUnicas.indexOf(act.IdSemana) === -1) {
+            semanasUnicas.push(act.IdSemana);
+            var option = document.createElement('option');
+            option.value = act.IdSemana;
+            option.text = 'Semana ' + act.IdSemana;
+            semanaSelect.appendChild(option);
+        }
+    });
+    var modal = document.getElementById('modal-eliminar-semana');
+    if (modal) modal.style.display = 'block';
+    if (window.$) $('#modal-eliminar-semana').fadeIn(300);
+            }
+
+            function eliminarSemana() {
+    var semanaId = document.getElementById('semana-eliminar-select').value;
+ var errorDiv = document.getElementById('semana-eliminar-error');
+    errorDiv.textContent = '';
+
+    if (!semanaId) {
+        errorDiv.textContent = 'Seleccione una semana a eliminar.';
+ return;
+    }
+
+    var patId = '@Model.IdEntrevistaInicial';
+    var token = $('input[name="__RequestVerificationToken"]').val();
+    var btn = document.querySelector('#modal-eliminar-semana .btn-danger');
+ if (btn) btn.disabled = true;
+
+    $.ajax({
+        url: baseUrl + 'PATs/EliminarSemana',
+        type: 'POST',
+        data: { idPat: patId, idSemana: semanaId, __RequestVerificationToken: token },
+        success: function (resp) {
+            if (resp.success) {
+                // --- INICIO DE LA CORRECCIÓN ---
+                closeModal('modal-eliminar-semana');
+                mostrarMensaje(resp.message || 'Semana eliminada correctamente', 'success');
+                setTimeout(function() { location.reload(); }, 1000);
+                // --- FIN DE LA CORRECCIÓN ---
+            } else {
+
+             errorDiv.textContent = resp.message || 'Error al eliminar la semana.';
+            }
+        },
+        error: function () {
+            errorDiv.textContent = 'Error de conexión al eliminar la semana.';
+        },
+        complete: function () {
+
+   if (btn) btn.disabled = false;
+        }
+    });
+ }
+
+            function verNotasRevision() {
+    var patId = @Model.IdEntrevistaInicial;
+    $('#modal-notas-revision').modal('show');
+    cargarNotasRevision(patId);
+}
+
+function cargarNotasRevision(patId) {
+    $('#loading-notas-revision').show();
+    $('#notas-revision-lista').empty();
+    $('#sin-notas-revision').hide();
+    $.ajax({
+        url: '@Url.Action("ObtenerNotas", "PATsNota")',
+        type: 'GET',
+        data: { idPat: patId },
+        success: function(response) {
+            $('#loading-notas-revision').hide();
+            if (response.success && response.notas && response.notas.length > 0) {
+                mostrarNotasRevision(response.notas);
+            } else {
+                $('#sin-notas-revision').show();
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#loading-notas-revision').hide();
+            $('#notas-revision-lista').html(
+                '<div class="alert alert-danger" style="margin: 20px 0;">' +
+                '<i class="glyphicon glyphicon-exclamation-sign"></i> ' +
+                'Error al cargar las notas de revisión. Por favor, inténtelo de nuevo.' +
+                '</div>'
+            );
+        }
+    });
+}
+
+function mostrarNotasRevision(notas) {
+    var html = '';
+    if (notas && notas.length > 0) {
+        notas.forEach(function(nota) {
+            var usuario = nota.Usuario || 'Usuario desconocido';
+            var fecha = formatearFechaRevision(nota.FechaCreacion);
+            var texto = nota.Comentario || '';
+            html += '<div class="panel panel-default" style="margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+            html += '<div class="panel-body" style="padding: 15px;">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">';
+            html += '<div style="font-weight: bold; color: #337ab7; display: flex; align-items: center;">';
+            html += '<i class="glyphicon glyphicon-user" style="margin-right: 6px;"></i>';
+            html += usuario;
+            html += '</div>';
+            html += '<div style="font-size: 12px; color: #999; display: flex; align-items: center;">';
+            html += '<i class="glyphicon glyphicon-time" style="margin-right: 4px;"></i>';
+            html += fecha;
+            html += '</div>';
+            html += '</div>';
+            html += '<div style="background-color: #f9f9f9; border-left: 3px solid #5bc0de; padding: 10px 12px; margin: 8px 0; border-radius: 0 4px 4px 0; white-space: pre-wrap; word-wrap: break-word;">';
+            html += texto;
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+        });
+    }
+    $('#notas-revision-lista').html(html);
+}
+
+function formatearFechaRevision(fechaString) {
+    try {
+        if (!fechaString) return 'Fecha no disponible';
+        var fecha;
+        if (fechaString.includes('/Date(')) {
+            var timestamp = parseInt(fechaString.replace(/\/Date\((\d+)\)\//, '$1'));
+            fecha = new Date(timestamp);
+        } else if (fechaString.includes('T')) {
+            fecha = new Date(fechaString);
+        } else {
+            fecha = new Date(fechaString);
+        }
+        if (isNaN(fecha.getTime())) {
+            return 'Fecha inválida';
+        }
+        var opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        return fecha.toLocaleDateString('es-ES', opciones);
+    } catch (error) {
+        return 'Error en fecha';
+    }
+}
+
+function cerrarModalNotasRevision() {
+    $('#modal-notas-revision').modal('hide');
+            }
+
+            // Función para ver evidencia en modal
+            function verEvidenciaModal(url) {
+                $('#modal-ver-evidencia-pdf iframe').attr('src', url);
+                $('#modal-ver-evidencia-pdf').fadeIn(300);
+            }
+
+            function closeModalEvidenciaPDF() {
+                $('#modal-ver-evidencia-pdf iframe').attr('src', '');
+                $('#modal-ver-evidencia-pdf').fadeOut(300);
+            }
+
+            // Función para eliminar evidencia
+            function eliminarEvidenciaActividad(evidenciaId, actividadId) {
+                if (!confirm('¿Seguro que deseas eliminar esta evidencia?')) return;
+
+                console.log('[eliminarEvidencia] Eliminando:', evidenciaId, 'de actividad:', actividadId);
+
+                $.post(baseUrl + 'PATsEvidences/Eliminar', { evidenciaId: evidenciaId }, function (resp) {
+                    if (resp.success) {
+                        console.log('[eliminarEvidencia] Evidencia eliminada exitosamente');
+                        // Recargar la lista de evidencias
+                        cargarEvidenciasPorActividadTabla();
+                        $('#status-evidencia-' + actividadId).text('Evidencia eliminada.');
+
+                        // Mostrar mensaje de éxito
+                        if (typeof mostrarMensaje === 'function') {
+                            mostrarMensaje('Evidencia eliminada correctamente', 'success');
+                        }
+                    } else {
+                        console.error('[eliminarEvidencia] Error al eliminar');
+                        alert('No se pudo eliminar la evidencia.');
+                    }
+                }).fail(function () {
+                    console.error('[eliminarEvidencia] Error de conexión');
+                    alert('Error de conexión al eliminar la evidencia.');
+                });
+            }
+
+            // Función para subir evidencia
+function subirEvidenciaActividad(actividadId, semana) {
+    var patId = @Model.IdEntrevistaInicial;
+    var tutorId = @Model.IdTutor;
+    var periodo = '@Model.Periodo?.Nombre';
+    var ano = '@Model.Fecha.Year';
+    var grupo = '@Model.TutoriaGrupal';
+    var fileInput = document.getElementById('file-evidencia-' + actividadId);
+    var status = $('#status-evidencia-' + actividadId);
+
+    // Detectar tipo de tutoria desde la fila
+    var tipoTutoria = 'grupal'; // Por defecto grupal, ya que solo se muestra en filas TG
+    var row = $(fileInput).closest('tr');
+    if (row.data('tipo') === 'individual') {
+        tipoTutoria = 'individual';
+    }
+
+    if (!fileInput || !fileInput.files.length) {
+        status.text('Seleccione un PDF.');
+        return;
+    }
+
+    var file = fileInput.files[0];
+    if (file.type !== 'application/pdf') {
+        status.text('Solo se permite PDF.');
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('patId', patId);
+    formData.append('ActividadId', actividadId);
+    formData.append('semana', semana);
+    formData.append('tutorId', tutorId);
+    formData.append('periodo', periodo);
+    formData.append('ano', ano);
+    formData.append('grupo', grupo);
+    formData.append('tipoTutoria', tipoTutoria);
+    formData.append('pdf', file);
+
+    status.text('Subiendo...');
+
+    $.ajax({
+        url: baseUrl + 'PATsEvidences/Subir',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (resp) {
+            if (resp.success) {
+                status.text('¡Subido!');
+
+                // Limpiar el input
+                fileInput.value = '';
+                $('#btn-subir-evidencia-' + actividadId).hide();
+
+                // Recargar evidencias
+                cargarEvidenciasPorActividadTabla();
+                hayCambiosSinGuardar = false; // <-- AÑADIR ESTA LÍNEA
+                window.patTieneCambiosSinGuardar = false; // <-- AÑADIR ESTA LÍNEA
+
+                // Mostrar mensaje de éxito
+                if (typeof mostrarMensaje === 'function') {
+                    mostrarMensaje('Evidencia subida correctamente', 'info');
+                }
+            } else {
+                status.text(resp.message || 'Error al subir.');
+            }
+        },
+        error: function () {
+            status.text('Error de conexión.');
+        }
+    });
+            }
+           // REEMPLAZA la función cargarEvidenciasPorActividadTabla() en Details.cshtml
+function cargarEvidenciasPorActividadTabla() {
+    var patId = @Model.IdEntrevistaInicial;
+    var actividades = @Html.Raw(Json.Encode(ViewBag.Actividades));
+
+    console.log('[cargarEvidencias] Iniciando carga para PAT (Tutor):', patId);
+    $.get(baseUrl + 'PATsEvidences/Listar', { patId: patId }, function (resp) {
+        // --- PEGAR ESTO AQUÍ ---
+        var evidencias = resp.evidencias || [];
+
+        // 1. Calcular total de semanas únicas en la tabla
+        var semanasUnicas = [];
+        $('.activity-row').each(function () {
+            var s = $(this).data('semana');
+            // Aseguramos que no se repitan y que no sean nulos
+            if (semanasUnicas.indexOf(s) === -1 && s) semanasUnicas.push(s);
+        });
+
+        // 2. Actualizar etiquetas
+        $('#count-total').text(semanasUnicas.length);
+        $('#count-aprobadas').text(evidencias.filter(function (e) { return e.estadoAprobacion == 1; }).length);
+        $('#count-rechazadas').text(evidencias.filter(function (e) { return e.estadoAprobacion == 2; }).length);
+        // -----------------------
+        console.log('[cargarEvidencias] Evidencias recibidas:', evidencias.length);
+
+        actividades.forEach(function (act) {
+            var div = $('#evidencia-list-' + act.IdActividad);
+            var input = $('#file-evidencia-' + act.IdActividad);
+            var btnSubir = $('#btn-subir-evidencia-' + act.IdActividad);
+            var status = $('#status-evidencia-' + act.IdActividad);
+
+            if (!div.length) {
+                return; // Es una actividad individual
+            }
+
+            div.html(''); // Limpiar "Cargando..."
+
+            var evidenciasActividad = evidencias.filter(function(ev) {
+                return ev.actividadId == act.IdActividad;
+            });
+
+            var html = '';
+            var tieneEvidencias = evidenciasActividad.length > 0;
+
+            if (tieneEvidencias) {
+                evidenciasActividad.forEach(function(evidencia, idx) {
+                    var estadoHtml = '';
+
+                    // --- INICIO: Lógica de Iconos (Solo Vista) ---
+                    if (evidencia.estadoAprobacion == 1) { // Aprobado
+                        estadoHtml = '<span class="evidencia-status status-active" title="APROBADO" style="position: absolute; top: -8px; right: -8px; background: #28a745; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">' +
+                                     '<i class="glyphicon glyphicon-ok" style="font-size: 11px;"></i></span>';
+                    } else if (evidencia.estadoAprobacion == 2) { // Rechazado
+                        estadoHtml = '<span class="evidencia-status status-inactive" title="RECHAZADO" style="position: absolute; top: -8px; right: -8px; background: #dc3545; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">' +
+                                     '<i class="glyphicon glyphicon-remove" style="font-size: 11px;"></i></span>';
+                    } else { // Pendiente (0)
+                        estadoHtml = '<span class="evidencia-status status-pending" title="PENDIENTE DE REVISIÓN" style="position: absolute; top: -8px; right: -8px; background: #ffc107; color: #333; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">' +
+                                     '<i class="glyphicon glyphicon-time" style="font-size: 11px;"></i></span>';
+                    }
+                    // --- FIN: Lógica de Iconos (Solo Vista) ---
+
+                    // Contenedor para cada evidencia
+                    html += '<div style="position: relative; display: inline-block; padding: 8px; background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; margin-right: 10px; margin-bottom: 5px; text-align: left;">';
+                    html += estadoHtml; // Icono de estado
+
+                    // Botón VER
+                    html += '<button type="button" class="btn btn-success btn-xs" style="margin-right:4px;"onclick = "verEvidenciaModal(\'' + evidencia.url + '\')" > ';
+                    html += '<span class="glyphicon glyphicon-eye-open"></span> VER';
+                    html += '</button>';
+
+                    // --- Botón Descargar ELIMINADO ---
+
+                    // Botón ELIMINAR (El tutor puede eliminar si NO está aprobada)
+                    if (evidencia.estadoAprobacion != 1) {
+                        html += '<button type="button" class="btn btn-danger btn-xs" onclick="eliminarEvidenciaActividad(\'' + evidencia.id + '\',' + act.IdActividad + ')" title="ELIMINAR">';
+                        html += '<span class="glyphicon glyphicon-trash"></span>';
+                        html += '</button>';
+                    }
+
+                    html += '</div>'; // Fin del div contenedor
+                });
+
+                div.html(html);
+                if (input.length) input.hide();
+                if (btnSubir.length) btnSubir.hide();
+                if (status.length) status.text('');
+
+            } else {
+                // NO hay evidencias
+                div.html('<span style="font-weight:600; color:#999; text-transform: uppercase;">SIN EVIDENCIA</span>');
+
+                // Mostrar input y botón solo si estamos en modo edición de comentarios
+                var enModoEdicionComentarios = $('#btn-guardar-comentarios-todas').is(':visible');
+                if (enModoEdicionComentarios) {
+                    if (input.length) input.show();
+                    if (btnSubir.length) btnSubir.hide();
+                } else {
+                    if (input.length) input.hide();
+                    if (btnSubir.length) btnSubir.hide();
+                }
+                if (status.length) status.text('');
+            }
+        });
+
+        // Asignar eventos a los botones y inputs (esto es para el tutor)
+        actividades.forEach(function (act) {
+            var input = $('#file-evidencia-' + act.IdActividad);
+            var btnSubir = $('#btn-subir-evidencia-' + act.IdActividad);
+
+            input.on('change', function () {
+                if (this.files && this.files.length > 0) {
+                    btnSubir.show();
+                    hayCambiosSinGuardar = true; // <-- AÑADIR ESTA LÍNEA
+                    window.patTieneCambiosSinGuardar = true; // <-- AÑADIR ESTA LÍNEA
+                } else {
+                    btnSubir.hide();
+                }
+            });
+
+            btnSubir.off('click').on('click', function () {
+                var semanaNum = act.IdSemana || (act.Semana && act.Semana.Nombre ? parseInt(act.Semana.Nombre.replace('Semana ', '')) : 1);
+                subirEvidenciaActividad(act.IdActividad, semanaNum);
+            });
+         });
+
+        console.log('[cargarEvidencias] Carga (Tutor) completada');
+    }).fail(function(xhr, status, error) {
+        console.error('[cargarEvidencias] Error al cargar:', error);
+        $('.evidencia-cell [id^="evidencia-list-"]').html('<span style="color:red;">Error al cargar</span>');
+    });
+}
+    // ====================================================
+    // Funciones principales de edición
+    // ====================================================
+        $(document).ready(function () {
+        var modoEdicion = false;
+        var modoEdicionActividades = false;
+        var modoEdicionComentarios = false;
+        var datosOriginales = {};
+            var hayCambiosSinGuardar = false;
+            window.patTieneCambiosSinGuardar = false; // Variable global para la página principal
+
+
+        cargarEvidenciasPorActividadTabla();
+
+
+
+    // ... resto del código
+
+
+
+        // Validación de semanas antes de enviar a revisión
+        $('#btn-enviar-revision').on('click', function (e) {
+            var actividades = @Html.Raw(Json.Encode(ViewBag.Actividades));
+            var semanasCompletas = actividades.map(function(a){ return a.IdSemana; });
+            var faltantes = [];
+            for (var i = 1; i <= 13; i++) {
+                if (semanasCompletas.indexOf(i) === -1) {
+                    faltantes.push(i);
+                }
+            }
+            if (faltantes.length > 0) {
+                e.preventDefault();
+                mostrarMensaje('No se puede enviar a revisión. Faltan las semanas: ' + faltantes.join(', '), 'error');
+                return false;
+            }
+        });
+
+            // REEMPLAZA la función cargarEvidenciasPorActividadTabla() en AMBOS archivos:
+// - Details.cshtml (vista del tutor)
+// - PatDetalles.cshtml (vista del coordinador)
+
+
+
+
+            // 1. Advertencia al cerrar la pestaña/navegador
+            $(window).on('beforeunload', function () {
+                if (hayCambiosSinGuardar) {
+                    // Mensaje estándar que mostrará el navegador
+                    return 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+                }
+            });
+
+            // 2. Advertencia al hacer clic en otros enlaces (ej. "Regresar" o menús)
+            // Usar delegación de eventos para capturar enlaces dinámicos también
+            $(document).on('click', 'a', function (e) {
+                // Solo prevenir si el enlace saca de la página actual y no es un #
+                var href = $(this).attr('href');
+                if (hayCambiosSinGuardar && href && href !== '#' && !href.startsWith('#')) {
+                    // Prevenir que el enlace funcione inmediatamente
+                    e.preventDefault();
+
+                    // Preguntar al usuario
+                    if (confirm('Tienes cambios sin guardar. ¿Estás seguro de que quieres salir y descartar los cambios?')) {
+                        // Si el usuario confirma, anular la bandera y permitir la salida
+                        hayCambiosSinGuardar = false;
+                        window.location.href = href; // Redirigir manualmente
+                    } else {
+                        // Si el usuario cancela, no hacer nada (permanece en la página)
+                        return false;
+                    }
+                }
+            });
+
+
+
+
+
+
+
+
+    function obtenerPreviewEvidencia(semana) {
+        var patId = @Model.IdEntrevistaInicial;
+        var previewDiv = $('#evidencia-preview-' + semana);
+        previewDiv.html('Cargando...');
+        $.get(baseUrl + 'PATsEvidences/Preview', { patId: patId, semana: semana }, function (resp) {
+            if (resp.success && resp.url) {
+                previewDiv.html('<a href="' + resp.url + '" target="_blank" style="color:#1ab192;font-weight:600;"><span class="glyphicon glyphicon-file"></span> Ver PDF</a>');
+            } else {
+                previewDiv.html('<span style="color:#d9534f;font-weight:600;"><span class="glyphicon glyphicon-exclamation-sign"></span> No existe evidencia para esta semana.</span>');
+            }
+        });
+    }
+
+    console.log('PAT estado:', patEstado);
+    console.log('Base URL:', baseUrl);
+
+    // =============================
+    // Filtros de actividades (TI/TG)
+    // =============================
+    $('.activity-filter-btn').on('click', function () {
+        var filtro = $(this).data('filter');
+        $('.activity-filter-btn').removeClass('active');
+        $(this).addClass('active');
+
+        if (filtro === 'all') {
+            $('.activity-row').show();
+        } else {
+            $('.activity-row').each(function () {
+                var tipo = $(this).data('tipo');
+                if (tipo === filtro) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+    });
+// ====================================================
+function openModal(modalId, tipoVulnerabilidad) {
+        $('#' + modalId).fadeIn(300);
+        if (tipoVulnerabilidad && tipoVulnerabilidad !== 'modal-finalizar-pat' /* Agrega otras excepciones si es necesario */) {
+            console.log('Cargando alumnos para tipo:', tipoVulnerabilidad);
+
+            var tipoVulnId = null;
+            var actionUrl = '';
+            var necesitaTipoId = false;
+
+            // --- INICIO CORRECCIÓN URLS ---
+            if (tipoVulnerabilidad === 'economico') {
+    tipoVulnId = 1;
+    actionUrl = '@Url.Action("ObtenerAlumnosVulnerables", "PATs")';
+    necesitaTipoId = true;
+} else if (tipoVulnerabilidad === 'academico') {
+    tipoVulnId = 2;
+    actionUrl = '@Url.Action("ObtenerAlumnosVulnerables", "PATs")';
+    necesitaTipoId = true;
+} else if (tipoVulnerabilidad === 'personal') {
+    tipoVulnId = 3;
+    actionUrl = '@Url.Action("ObtenerAlumnosVulnerables", "PATs")';
+    necesitaTipoId = true;
+} else if (tipoVulnerabilidad === 'no-vulnerable') {
+    actionUrl = '@Url.Action("ObtenerAlumnosNoVulnerables", "PATs")';
+    necesitaTipoId = false;
+} else if (tipoVulnerabilidad === 'bajas') {
+    // --- ESTA ES LA PARTE QUE FALTABA PARA QUE EL BOTÓN FUNCIONE ---
+    actionUrl = '@Url.Action("ObtenerAlumnosBajas", "PATs")';
+    necesitaTipoId = false;
+} else {
+    console.error('Tipo desconocido:', tipoVulnerabilidad);
+    return;
+}
+            // --- FIN CORRECCIÓN URLS ---
+
+            var patId = @Model.IdEntrevistaInicial;
+            var modalBody = $('#' + modalId + ' .modal-body');
+            var loaderId = 'loading-alumnos-' + tipoVulnerabilidad;
+
+            // Limpiar y mostrar loader... (el resto de la función es igual)
+            modalBody.find('.alumnos-vulnerables-list').remove();
+            modalBody.find('.alert').remove();
+            modalBody.find('.error-message').remove();
+            if ($('#' + loaderId).length === 0) {
+                 modalBody.find('.vulnerability-modal-content').append(
+                    '<div id="' + loaderId + '" class="loading-indicator" style="display: none;">' +
+                    '<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Cargando alumnos...' +
+                    '</div>'
+                 );
+            }
+             $('#' + loaderId).show();
+
+            var ajaxData = { patId: patId };
+            if (necesitaTipoId) {
+                ajaxData.tipoVulnerabilidad = tipoVulnId;
+            }
+
+            $.ajax({
+                url: actionUrl,
+                type: 'GET',
+                data: ajaxData,
+                success: function (data) {
+                    $('#' + loaderId).hide();
+                    if (data && data.success) {
+                        actualizarModalConAlumnos(modalId, data);
+                    } else {
+                        var errorMsg = data && data.message ? data.message : 'Error al cargar los alumnos';
+                        modalBody.find('.vulnerability-modal-content').append(
+                             '<div class="error-message" style="color: #dc3545; margin-top: 10px;">' +
+                             '<i class="glyphicon glyphicon-exclamation-sign"></i> ' + errorMsg +
+                             '</div>'
+                         );
+                    }
+                },
+                error: function (xhr, status, error) {
+                     $('#' + loaderId).hide();
+                     console.error('Error al cargar alumnos:', error);
+                     modalBody.find('.vulnerability-modal-content').append(
+                         '<div class="error-message" style="color: #dc3545; margin-top: 10px;">' +
+                         '<i class="glyphicon glyphicon-exclamation-sign"></i> Error de conexión. Por favor, inténtelo de nuevo.' +
+                         '</div>'
+                     );
+                }
+            });
+        }
+    }
+
+
+
+
+    // --- INICIO DEL NUEVO CÓDIGO ---
+// Acción para el nuevo botón "Guardar Nota" individual
+$(document).on('click', '.btn-guardar-nota-individual', function() {
+    var $thisButton = $(this);
+    var $row = $thisButton.closest('tr');
+    var actividadId = $row.data('actividad-id');
+    var $radioChecked = $row.find('input[name="realizado_' + actividadId + '"]:checked');
+    var realizado = $radioChecked.val() === 'true';
+    var comentarios = $row.find('.comentarios-input').val().trim();
+    var token = $('input[name="__RequestVerificationToken"]').val();
+
+    // Validar que el radio esté seleccionado
+    if ($radioChecked.length === 0) {
+        mostrarMensaje('Debe seleccionar "Sí" o "No" para esta actividad.', 'error');
+        return;
+    }
+
+    $thisButton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-spin"></span> Guardando...');
+
+    $.ajax({
+        url: '@Url.Action("GuardarNotaActividad", "PATs")',
+        type: 'POST',
+        data: {
+            __RequestVerificationToken: token,
+            IdActividad: actividadId,
+            Comentarios: comentarios,
+            RealizoActividad: realizado
+        },
+        success: function(response) {
+            if (response.success) {
+                mostrarMensaje('Nota guardada', 'success');
+                $thisButton.hide(); // Ocultar el botón después de guardar
+
+                // Actualizar el texto estático (display) para que coincida con lo guardado
+                $row.find('.comentarios-display').text(comentarios);
+                $row.find('.realizado-texto').html(realizado ? '<span class="status-badge-small status-realizado">Sí</span>' : '<span class="status-badge-small status-no-realizado">No</span>');
+
+                // Actualizar el data-realizado en la fila
+                $row.attr('data-realizado', realizado.toString());
+            } else {
+                mostrarMensaje(response.message || 'Error al guardar', 'error');
+            }
+        },
+        error: function() {
+            mostrarMensaje('Error de conexión al guardar la nota.', 'error');
+        },
+        complete: function() {
+            $thisButton.prop('disabled', false).html('<span class="glyphicon glyphicon-floppy-disk"></span> Guardar Nota');
+        }
+    });
+});
+// --- FIN DEL NUEVO CÓDIGO ---
+
+    // Función para abrir el modal de "Deshacer Semana"
+    // Función openModalDeshacerSemana eliminada
+
+    // Función para cerrar los modales
+
+
+            function actualizarModalConAlumnos(modalId, data) {
+                console.log('Actualizando modal con datos:', data);
+
+                var modalBody = $('#' + modalId + ' .modal-body');
+                modalBody.find('.alumnos-vulnerables-list').remove();
+                modalBody.find('.alert-info').remove();
+                modalBody.find('.error-message').remove();
+
+                var listHTML = '';
+
+                if (data && data.alumnos && Array.isArray(data.alumnos) && data.alumnos.length > 0) {
+                    console.log('Construyendo lista con', data.alumnos.length, 'alumnos');
+
+                    listHTML = '<div class="alumnos-vulnerables-list">';
+                    listHTML += '<h6 class="alumnos-list-title">';
+                    var tituloLista = (modalId === 'modal-no-vulnerable')
+                        ? 'Lista de Alumnos No Vulnerables'
+                        : 'Lista de Alumnos Vulnerables';
+
+                    listHTML += '<i class="glyphicon glyphicon-list"></i> ' + tituloLista + ' (' + data.alumnos.length + '):</h6>';
+                    listHTML += '<div class="alumnos-list-container">';
+
+                    data.alumnos.forEach(function (alumno, index) {
+                        var nombre = alumno.nombre || 'Nombre no disponible';
+                        var matricula = alumno.matricula || 'N/A';
+                        var email = alumno.email || '';
+                        var fotoBase64 = alumno.foto || '';
+                        var idPersona = alumno.idPersona || 0; // Agregado: Obtener IdPersona
+                        var alternateClass = index % 2 === 0 ? 'alumno-item-even' : 'alumno-item-odd';
+
+                        // Modificado: Crear como botón clickeable
+                        listHTML += '<div class="alumno-item ' + alternateClass + '">';
+
+                        // Crear URL para redirección
+                        var urlAsesor = baseUrl + 'Asesor/Detalles/' + idPersona;
+
+                        // Botón que envuelve todo el contenido del alumno
+                        listHTML += '<button type="button" class="alumno-btn" onclick="redirigirADetalleAlumno(' + idPersona + ')">';
+                        listHTML += '<div class="alumno-content">';
+
+                        // Imagen del alumno (mismo código que antes)
+                        if (fotoBase64 && fotoBase64.trim() !== '' && fotoBase64 !== 'null') {
+                            listHTML += '<div class="alumno-photo-container">';
+                            listHTML += '<img id="img-' + index + '" src="data:image/jpeg;base64,' + fotoBase64 + '" ';
+                            listHTML += 'class="alumno-photo" ';
+                            listHTML += 'onerror="mostrarInicialAlumno(' + index + ', \'' + nombre.charAt(0).toUpperCase() + '\')" />';
+                            listHTML += '<div id="inicial-' + index + '" class="alumno-initial hidden">';
+                            listHTML += nombre.charAt(0).toUpperCase();
+                            listHTML += '</div>';
+                            listHTML += '</div>';
+                        } else {
+                            listHTML += '<div class="alumno-initial-only">';
+                            listHTML += nombre.charAt(0).toUpperCase();
+                            listHTML += '</div>';
+                        }
+
+                        // Información del alumno (mismo código que antes)
+                        listHTML += '<div class="alumno-info">';
+                        listHTML += '<div class="alumno-name">';
+                        listHTML += '<i class="glyphicon glyphicon-user"></i>';
+                        listHTML += nombre + '</div>';
+                        listHTML += '<div class="alumno-details">';
+                        listHTML += '<span class="alumno-matricula"><i class="glyphicon glyphicon-credit-card"></i>Matrícula: ' + matricula + '</span>';
+                        if (email) {
+                            listHTML += '<br><span class="alumno-email"><i class="glyphicon glyphicon-envelope"></i>' + email + '</span>';
+                        }
+                        listHTML += '</div>';
+                        listHTML += '</div>';
+
+                        listHTML += '</div>'; // fin alumno-content
+                        listHTML += '</button>'; // fin alumno-btn
+                        listHTML += '</div>'; // fin alumno-item
+                    });
+
+                    listHTML += '</div>'; // fin alumnos-list-container
+                    listHTML += '</div>'; // fin alumnos-vulnerables-list
+                } else {
+                    // Limpiar mensajes previos
+                    modalBody.find('.no-alumnos-message').remove();
+                    modalBody.find('.alumnos-vulnerables-list').remove();
+
+                    listHTML = '<div class="no-alumnos-message">';
+                    listHTML += '<div class="no-alumnos-content">';
+                    listHTML += '<i class="glyphicon glyphicon-info-sign"></i>';
+                    var msg = (modalId === 'modal-no-vulnerable')
+                        ? '<div><strong>Sin registros:</strong> No hay alumnos en esta categoría.</div>'
+                        : '<div><strong>Sin registros:</strong> No hay alumnos registrados como vulnerables en esta categoría.</div>';
+                    listHTML += msg;
+                    listHTML += '</div>';
+                    listHTML += '</div>';
+                }
+
+                modalBody.find('.vulnerability-modal-content').append(listHTML);
+            }
+
+            // Nueva función: Manejar redirección a detalles del alumno
+            function redirigirADetalleAlumno(idPersona) {
+                try {
+                    console.log('Redirigiendo a detalles del alumno con ID:', idPersona);
+
+                    if (!idPersona || idPersona === 0) {
+                        console.error('ID de persona inválido:', idPersona);
+                        mostrarMensaje('Error: No se pudo obtener la información del alumno', 'error');
+                        return;
+                    }
+
+                    // Construir URL de redirección
+                    var urlDestino = baseUrl + 'Asesor/Detalles/' + idPersona;
+
+                    console.log('Redirigiendo a:', urlDestino);
+
+                    // Cerrar el modal antes de redirigir
+                    $('.modal-overlay').fadeOut(200, function () {
+                        // Redirigir después de que el modal se cierre
+                        window.location.href = urlDestino;
+                    });
+
+                } catch (error) {
+                    console.error('Error en redirigirADetalleAlumno:', error);
+                    mostrarMensaje('Error al redirigir a los detalles del alumno', 'error');
+                }
+            }
+
+
+// Función global para manejar errores de imagen
+function mostrarInicialAlumno(index, inicial) {
+    var img = document.getElementById('img-' + index);
+    var inicialDiv = document.getElementById('inicial-' + index);
+
+    if (img && inicialDiv) {
+        img.classList.add('hidden');
+        inicialDiv.classList.remove('hidden');
+        inicialDiv.classList.add('show');
+    }
+}
+
+
+    // Función deshacerSemana eliminada
+
+    // Agregar función para recargar el PAT actual
+function recargarPATActual() {
+    var patId = @Model.IdEntrevistaInicial;
+
+    $.ajax({
+        url: baseUrl + 'PATs/Details/' + patId + '?ajax=true',
+        type: 'GET',
+        success: function (response) {
+            // Actualizar solo el contenido del PAT sin cambiar la selección
+            $('#patDetailsContent').html(response);
+            console.log('PAT recargado exitosamente');
+        },
+        error: function () {
+            console.error('Error al recargar el PAT');
+            mostrarMensaje('Error al actualizar la información', 'error');
+        }
+    });
+}
+
+
+
+
+
+        // Función para guardar datos originales
+        function guardarDatosOriginales() {
+            datosOriginales = {};
+            $('[data-actividad-id]').each(function () {
+                var actividadId = $(this).data('actividad-id');
+                var $this = $(this);
+
+                datosOriginales[actividadId] = {
+                    actividad: $this.find('.actividad-texto').text() || '',
+                    realizado: false,
+                    comentarios: $this.find('.comentarios-display').text() || ''
+                };
+
+                var $radioChecked = $this.find('input[name="realizado_' + actividadId + '"]:checked');
+                if ($radioChecked.length > 0) {
+                    datosOriginales[actividadId].realizado = $radioChecked.val() === 'true';
+                }
+            });
+        }
+
+            $('.ir-arriba').click(function () {
+                $('body, html').animate({
+                    scrollTop: '0px'
+                }, 300);
+            });
+
+            $(window).scroll(function () {
+                if ($(this).scrollTop() > 0) {
+                    $('.ir-arriba').slideDown(300);
+                } else {
+                    $('.ir-arriba').slideUp(300);
+                }
+            });
+
+            // Abrir modal desde botón "Editar vulnerabilidades"
+            $('.btn-view[href*="Edit"]').click(function (e) {
+                e.preventDefault();
+                $('#modal-editar-vulnerabilidades').fadeIn(250);
+                // Opcional: puedes hacer un AJAX para cargar datos si quieres que se recargue el modal dinámicamente.
+            });
+
+            // Cerrar modal con función
+            window.cerrarModalVulnerabilidades = function () {
+                $('#modal-editar-vulnerabilidades').fadeOut(250);
+            };
+
+            // Submit del formulario en el modal
+            $('#form-vulnerabilidades').submit(function (e) {
+                e.preventDefault();
+                var $form = $(this);
+                var data = $form.serialize();
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: $form.attr('method'),
+                    data: data,
+                    success: function (response) {
+                        // Aquí solo mostramos mensaje y cerramos modal
+                        // mostrarMensaje('Vulnerabilidades actualizadas correctamente', 'success');
+                        cerrarModalVulnerabilidades();
+                        // Puedes actualizar datos del Details si quieres
+// NO recargar automáticamente
+                    },
+                    error: function () {
+                        mostrarMensaje('Ocurrió un error al guardar los cambios', 'error');
+                    }
+                });
+            });
+
+        function restaurarDatosOriginales() {
+            $('[data-actividad-id]').each(function () {
+                var actividadId = $(this).data('actividad-id');
+                var datos = datosOriginales[actividadId];
+                var $this = $(this);
+
+                if (datos) {
+                    // Restaurar actividad
+                    var $actividadTexto = $this.find('.actividad-texto');
+                    var $actividadInput = $this.find('.actividad-input');
+                    if ($actividadTexto.length > 0 && datos.actividad) {
+                        $actividadTexto.text(datos.actividad);
+                    }
+                    if ($actividadInput.length >  0 && datos.actividad) {
+                        $actividadInput.val(datos.actividad);
+                    }
+
+                    // Restaurar notas
+                    var $comentariosTexto = $this.find('.comentarios-display');
+                    var $comentariosInput = $this.find('.comentarios-input');
+                    if ($comentariosTexto.length > 0) {
+                        $comentariosTexto.text(datos.comentarios || '');
+                    }
+                    if ($comentariosInput.length > 0) {
+                        $comentariosInput.val(datos.comentarios || '');
+                    }
+
+                    // Restaurar realizado
+                    var $realizadoTexto = $this.find('.realizado-texto');
+                    if ($realizadoTexto.length > 0) {
+                        $realizadoTexto.text(datos.realizado ? 'Si' : 'No');
+                    }
+
+                    var $radioButtons = $this.find('input[name="realizado_' + actividadId + '"]');
+                    if ($radioButtons.length > 0) {
+                        $radioButtons.prop('checked', false);
+                        $this.find('input[name="realizado_' + actividadId + '"][value="' + datos.realizado + '"]').prop('checked', true);
+                    }
+                }
+            });
+        }
+
+        $('#btn-confirmar-deshacer-finalizacion').off('click').on('click', function (e) {
+            e.preventDefault();
+            var $form = $('#form-deshacer-finalizacion-pat');
+            var $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Reactivando...');
+
+            var formData = $form.serialize();
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        closeModal('modal-deshacer-finalizacion-pat');
+                        mostrarMensaje(response.message, 'success');
+                        setTimeout(function () {
+                            // En lugar de location.reload(), recargar solo el contenido del PAT
+                            recargarPATActual();
+                        }, 800);
+                    } else {
+                        mostrarMensaje(response.message, 'error');
+                    }
+                },
+                error: function () {
+                    mostrarMensaje('Error de conexión al intentar reactivar el PAT.', 'error');
+                },
+                complete: function () {
+                    $btn.prop('disabled', false).html('<span class="action-icon glyphicon glyphicon-repeat"></span> Sí, reactivar PAT');
+                }
+            });
+        });
+
+
+        // ==========================================
+        // Botones para PAT activo (estado = true)
+        // ==========================================
+            $('#btn-editar-todas').click(function () {
+                modoEdicion = true;
+                hayCambiosSinGuardar = true;
+                window.patTieneCambiosSinGuardar = true; // <-- AÑADIR ESTA LÍNEA
+                guardarDatosOriginales();
+            // ...resto de la función...
+
+                $('.actividad-texto').hide();
+                $('.actividad-input').show();
+
+                // Mostrar y rellenar los comentarios en los textareas
+                $('.comentarios-cell').each(function () {
+                    var $cell = $(this);
+                    var $display = $cell.find('.comentarios-display');
+                    var $input = $cell.find('.comentarios-input');
+                    var texto = $display.text();
+                    $display.hide();
+                    $input.val(texto.trim()).show();
+                });
+
+                $('#btn-agregar-semana').show();
+                $('#btn-eliminar-semana').show();
+                $('.actividad-input').each(function () {
+                    var $input = $(this);
+                    var texto = $input.closest('.actividad-cell').find('.actividad-texto').text();
+                    $input.val(texto.trim());
+                });
+
+                $('#btn-editar-todas').hide();
+                $('#btn-guardar-todas, #btn-cancelar-todas').show();
+            });
+
+            $('#btn-cancelar-todas').click(function () {
+                modoEdicion = false;
+                hayCambiosSinGuardar = false;
+                window.patTieneCambiosSinGuardar = false; // <-- AÑADIR ESTA LÍNEA
+                restaurarDatosOriginales();
+            // ...
+
+                $('.actividad-input').hide();
+                $('.actividad-texto').show();
+
+                // Ocultar textarea y mostrar display de comentarios
+                $('.comentarios-cell').each(function () {
+                    var $cell = $(this);
+                    var $display = $cell.find('.comentarios-display');
+                    var $input = $cell.find('.comentarios-input');
+                    $input.hide();
+                    $display.show();
+                });
+
+                $('#btn-agregar-semana').hide();
+
+                $('.actividad-input').each(function () {
+                    var $input = $(this);
+                    var texto = $input.closest('.actividad-cell').find('.actividad-texto').text();
+                    $input.val(texto.trim());
+                });
+
+                $('#btn-guardar-todas, #btn-cancelar-todas').hide();
+                $('#btn-editar-todas').show();
+            });
+
+        $('#btn-guardar-todas').click(function () {
+            guardarActividades();
+        });
+
+
+
+        // ==========================================
+        // BOTONES PARA PAT FINALIZADO (estado = false)
+        // ==========================================
+
+        // Botón para editar SOLO ACTIVIDADES en PAT finalizado
+        $('#btn-editar-actividades-final').click(function () {
+            modoEdicionActividades = true;
+            guardarDatosOriginales();
+
+            $('.actividad-texto').hide();
+            $('.actividad-input').show();
+            $('.actividad-input').each(function () {
+                var $input = $(this);
+                var texto = $input.closest('.actividad-cell').find('.actividad-texto').text();
+                $input.val(texto.trim());
+            });
+
+            $('#btn-editar-actividades-final, #btn-comentar-todas').hide();
+            $('#btn-guardar-actividades-final, #btn-cancelar-final').show();
+        });
+
+        // Botón para editar SOLO COMENTARIOS en PAT finalizado
+        // DENTRO de $(document).ready en Details.cshtml
+        // Modificar el evento click de btn-comentar-todas:
+
+            $('#btn-comentar-todas').click(function () {
+                modoEdicionComentarios = true;
+                hayCambiosSinGuardar = true;
+                window.patTieneCambiosSinGuardar = true; // <-- AÑADIR ESTA LÍNEA
+                guardarDatosOriginales();
+            // ...resto de la función...
+
+            $('.realizado-texto').hide();
+            $('.realizado-radio').show();
+            $('.comentarios-display').hide();
+            $('.comentarios-input').each(function () {
+                var $input = $(this);
+                var texto = $input.closest('.comentarios-cell').find('.comentarios-display').text();
+                $input.val(texto.trim()).show();
+            });
+
+            // ✅ MOSTRAR inputs de evidencia SOLO para actividades SIN evidencia
+            $('.evidencia-cell').each(function () {
+                var actividadId = $(this).closest('tr').data('actividad-id');
+                var divEvidencias = $(this).find('[id^="evidencia-list-"]');
+
+                // Solo mostrar input si NO hay botones de VER evidencia
+                if (divEvidencias.find('.btn-success').length === 0) { // <-- CORREGIDO
+                    $(this).find('input[type="file"]').show();
+                }
+            });
+
+            $('#btn-editar-actividades-final, #btn-comentar-todas').hide();
+                $('#btn-guardar-comentarios-todas, #btn-cancelar-final').show();
+
+                // --- INICIO DEL NUEVO CÓDIGO --- (PEGAR AQUÍ)
+                // Hacer que aparezca el botón "Guardar Nota" individual al cambiar
+                $('.comentarios-input, .realizado-radio input').off('input change').on('input change', function () {
+                    $(this).closest('tr').find('.btn-guardar-nota-individual').show();
+                    hayCambiosSinGuardar = true; // Mantener la advertencia general
+                });
+                // --- FIN DEL NUEVO CÓDIGO ---
+        });
+
+        // Botón GUARDAR ACTIVIDADES para PAT finalizado
+        $('#btn-guardar-actividades-final').click(function () {
+            guardarActividades();
+        });
+
+        // Botón GUARDAR COMENTARIOS para PAT finalizado
+        $('#btn-guardar-comentarios-todas').click(function () {
+            guardarComentarios();
+        });
+
+        // Botón CANCELAR para PAT finalizado
+            $('#btn-cancelar-final').click(function () {
+                modoEdicionActividades = false;
+                modoEdicionComentarios = false;
+                hayCambiosSinGuardar = false;
+                window.patTieneCambiosSinGuardar = false; // <-- AÑADIR ESTA LÍNEA
+                restaurarDatosOriginales();
+            // ...
+
+            // Restaurar valores originales de comentarios
+            $('[data-actividad-id]').each(function () {
+                var actividadId = $(this).data('actividad-id');
+                var datos = datosOriginales[actividadId];
+                if (datos) {
+                    var $comentariosDisplay = $(this).find('.comentarios-display');
+                    var $comentariosInput = $(this).find('.comentarios-input');
+                    $comentariosDisplay.text(datos.comentarios || '');
+                    $comentariosInput.val(datos.comentarios || '');
+                }
+            });
+
+            // Ocultar todos los inputs
+            $('.actividad-input').hide();
+            $('.actividad-texto').show();
+            $('.realizado-radio').hide();
+            $('.realizado-texto').show();
+            $('.comentarios-input').hide();
+                $('.comentarios-display').show();
+                $('.btn-guardar-nota-individual').hide();
+                $('.evidencia-cell input[type="file"]').hide(); // <-- AÑADIR ESTA LÍNEA
+
+            // Mostrar botones originales
+            $('#btn-guardar-actividades-final, #btn-guardar-comentarios-todas, #btn-cancelar-final').hide();
+                $('#btn-editar-actividades-final, #btn-comentar-todas').show();
+
+                // ... (código existente para mostrar inputs) ...
+
+
+        });
+
+        // ==========================================
+        // FUNCIONES DE GUARDADO
+        // ==========================================
+
+            function guardarActividades() {
+                var actividades = [];
+                var hayErrores = false;
+
+                $('[data-actividad-id]').each(function () {
+                    var actividadId = $(this).data('actividad-id');
+                    var $actividadInput = $(this).find('.actividad-input');
+
+                    if ($actividadInput.length === 0) {
+
+                        return true;
+                    }
+
+                    var actividad = $actividadInput.val();
+                    if (!actividad || actividad.trim() === '') {
+                        mostrarMensaje('Todas las actividades deben tener contenido',
+                            'error');
+                        hayErrores = true;
+                        return false;
+                    }
+
+                    actividades.push({
+
+                        IdActividad: actividadId,
+                        Actividad: actividad.trim()
+                    });
+                });
+                if (hayErrores) return;
+                if (actividades.length === 0) {
+                    mostrarMensaje('No se encontraron actividades para actualizar', 'error');
+                    return;
+                }
+
+                // Preparar datos para envío
+                var dataToSend = {};
+                dataToSend['__RequestVerificationToken'] = $('input[name="__RequestVerificationToken"]').val();
+
+                for (var i = 0; i < actividades.length; i++) {
+                    dataToSend['actividades[' + i + '].IdActividad'] = actividades[i].IdActividad;
+                    dataToSend['actividades[' + i + '].Actividad'] = actividades[i].Actividad;
+                }
+
+                $.ajax({
+                    url: baseUrl + 'PATs/EditarVariasActividades',
+                    type: 'POST',
+                    data: dataToSend,
+
+                    success: function (response) {
+                        if (response.success) {
+                            hayCambiosSinGuardar = false;
+                            window.patTieneCambiosSinGuardar = false; // <-- AÑADIR ESTA LÍNEA
+                            mostrarMensaje('Actividades actualizadas correctamente', 'success');
+                    // ...
+                            // Recargar la página después de 1 seg para ver los cambios
+                            setTimeout(function () { location.reload(); }, 1000);
+                            // --- FIN DE LA CORRECCIÓN ---
+
+                        } else {
+                            mostrarMensaje('Error al guardar: ' + (response.message || 'Error desconocido'), 'error');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        mostrarMensaje('Error de conexión al guardar las actividades', 'error');
+                    }
+                });
+            }
+
+            function guardarComentarios() {
+                var comentarios = [];
+                var hayErrores = false;
+
+                $('[data-actividad-id]').each(function () {
+                    var actividadId = $(this).data('actividad-id');
+                    var $radioRealizado = $(this).find('input[name="realizado_' + actividadId + '"]:checked');
+                    var $comentarioInput = $(this).find('.comentarios-input');
+
+                    if
+                        ($radioRealizado.length === 0) {
+                        mostrarMensaje('Debe seleccionar Sí/No para todas las actividades', 'error');
+                        hayErrores = true;
+                        return false;
+
+                    }
+
+                    var realizado = $radioRealizado.val();
+                    var comentario = '';
+
+                    if ($comentarioInput.length > 0) {
+                        comentario
+                            = $comentarioInput.val() || '';
+                        comentario = comentario.trim();
+                    }
+
+                    comentarios.push({
+                        IdActividad: actividadId,
+
+                        RealizoActividad: realizado === 'true',
+                        Comentarios: comentario
+                    });
+                });
+
+                if (hayErrores) return;
+
+                // Preparar datos para envío
+                var dataToSend = {};
+                dataToSend['__RequestVerificationToken'] = $('input[name="__RequestVerificationToken"]').val();
+
+                for (var i = 0; i < comentarios.length; i++) {
+                    dataToSend['comentarios[' + i + '].IdActividad'] = comentarios[i].IdActividad;
+                    dataToSend['comentarios[' + i + '].RealizoActividad'] = comentarios[i].RealizoActividad;
+                    dataToSend['comentarios[' + i + '].Comentarios'] = comentarios[i].Comentarios;
+                }
+
+                $.ajax({
+                    url: baseUrl + 'PATs/EditarVariosComentarios',
+                    type: 'POST',
+                    data: dataToSend,
+
+                    success: function (response) {
+                        if (response.success) {
+                            hayCambiosSinGuardar = false;
+                            window.patTieneCambiosSinGuardar = false; // <-- AÑADIR ESTA LÍNEA
+                            mostrarMensaje('Comentarios actualizados correctamente', 'success');
+                    // ...
+
+                            // --- INICIO DE LA CORRECCIÓN ---
+                            // Recargar la página después de 1 seg para ver los cambios
+                            setTimeout(function () { location.reload(); }, 1000);
+                            // --- FIN DE LA CORRECCIÓN ---
+
+                        } else {
+                            mostrarMensaje('Error al guardar comentarios: ' + (response.message
+                                || 'Error desconocido'), 'error');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        mostrarMensaje('Error de conexión al guardar los comentarios', 'error');
+                    }
+                });
+            }
+
+
+
+        // Función para ver notas de revisión
+
+
+
+        // ==========================================
+        // FILTROS DE ACTIVIDADES
+        // ==========================================
+
+        // Función para filtrar actividades por tipo
+        function agruparColumnaSemana() {
+            // 1. Para cada semana, obtiene las filas visibles, toma la .group-cell y la pone en la primera visible
+            let semanas = {};
+
+            // Recolecta todas las filas visibles agrupadas por semana
+            $('.pat-table tbody tr:visible').each(function () {
+                let semana = $(this).data('semana');
+                if (!semanas[semana]) semanas[semana] = [];
+                semanas[semana].push($(this));
+            });
+
+            // Para cada semana
+            Object.keys(semanas).forEach(function (semana) {
+                let filas = semanas[semana];
+                if (filas.length === 0) return;
+
+                // Busca la celda de semana en cualquier fila de esa semana (puede estar oculta)
+                let $celdaSemana = null;
+                $('.pat-table tbody tr[data-semana="' + semana + '"]').each(function () {
+                    let $cell = $(this).find('.group-cell');
+                    if ($cell.length) {
+                        $celdaSemana = $cell;
+                        return false; // rompe el each
+                    }
+                });
+
+                // Elimina cualquier .group-cell visible en las filas
+                filas.forEach(function ($fila) {
+                    $fila.find('.group-cell').remove();
+                });
+
+                // Si existe una celda de semana...
+                if ($celdaSemana) {
+                    // Ajusta el rowspan y la pone como primera celda de la primera fila visible
+                    $celdaSemana.attr('rowspan', filas.length);
+                    filas[0].prepend($celdaSemana.show());
+                }
+            });
+        }
+
+
+
+
+
+
+        // Filtros de actividades (TI/TG) - Unificado con PatDetalles.cshtml
+        $('.activity-filter-btn').click(function () {
+            $('.activity-filter-btn').removeClass('active');
+            $(this).addClass('active');
+            var filter = $(this).data('filter');
+            if (filter === 'all') {
+                $('.activity-row').show();
+            } else {
+                $('.activity-row').hide();
+                $('.activity-row.' + filter).show();
+            }
+        });
+
+        // ==========================================
+        // EVENT HANDLERS PARA MODALES Y UI
+        // ==========================================
+
+        // Manejar clicks en botones de vulnerabilidad
+        $('.vulnerability-btn').click(function () {
+            var target = $(this).data('target');
+            if (target) {
+                openModal('modal-' + target, target);
+            }
+        });
+
+        // Cerrar modal al hacer click en el overlay
+        $('.modal-overlay').click(function (e) {
+            if (e.target === this) {
+                $(this).fadeOut(300);
+            }
+        });
+
+        // Cerrar con tecla Escape
+        $(document).keydown(function (e) {
+            if (e.keyCode === 27) { // ESC key
+                $('.modal-overlay').fadeOut(300);
+            }
+        });
+
+        $('#btn-finalizar-pat').off('click').on('click', function () {
+    // Obtener las actividades existentes
+    var semanasExistentes = @Html.Raw(Json.Encode(ViewBag.Actividades));
+    var semanasPresentes = [];
+    var semanasFaltantes = [];
+
+    // Obtener las semanas que están presentes
+    semanasExistentes.forEach(function(actividad) {
+        if (semanasPresentes.indexOf(actividad.IdSemana) === -1) {
+            semanasPresentes.push(actividad.IdSemana);
+        }
+    });
+
+    // Verificar qué semanas faltan del 1 al 14
+    for (var i = 1; i <= 14; i++) {
+        if (semanasPresentes.indexOf(i) === -1) {
+            semanasFaltantes.push(i);
+        }
+    }
+
+    // Si faltan semanas del 1 al 14
+    if (semanasFaltantes.length > 0) {
+        $('#advertencia-semanas').show();
+        $('#semanas-faltantes').text('Semanas faltantes: ' + semanasFaltantes.join(', '));
+        return;
+    }
+
+    // Ocultar advertencia si todas las semanas están completas
+    $('#advertencia-semanas').hide();
+
+    // Si todas las semanas 1-14 están completas, proceder con la finalización
+    var $form = $('#form-finalizar-pat');
+    var data = $form.serialize();
+
+    $('#btn-finalizar-pat').prop('disabled', true).html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Finalizando...');
+            $.ajax({
+                url: $form.attr('action'),
+                type: $form.attr('method'),
+                data: data,
+                success: function (response) {
+                    if (response && response.success) {
+                        closeModal('modal-finalizar-pat');
+                        mostrarMensaje('PAT finalizado correctamente', 'success');
+                        setTimeout(function () {
+                            // En lugar de location.reload(), recargar solo el contenido del PAT
+                            recargarPATActual();
+                        }, 1000);
+                    } else {
+                        mostrarMensaje(response && response.message ? response.message : 'Error al finalizar el PAT.', 'error');
+                    }
+                },
+                error: function () {
+                    mostrarMensaje('Error de conexión al finalizar el PAT.', 'error');
+                },
+                complete: function () {
+                    $('#btn-finalizar-pat').prop('disabled', false).html('<i class="glyphicon glyphicon-ok" style="margin-right: 6px;"></i> Finalizar PAT');
+                }
+            });
+        });
+
+        // Manejar el botón "Enviar a revisión" usando delegación de eventos y clase
+        $(document).on('click', '#btn-enviar-revision, #btn-reenviar-revision', function (e) {
+            e.preventDefault();
+            $('#modal-enviar-revision').fadeIn(300);
+        });
+
+        $(document).on('click', '#btn-confirmar-enviar-revision', function () {
+            $(this).prop('disabled', true);
+            // Obtener el PAT ID desde el campo hidden para asegurar el contexto correcto
+            var patId = $('input[name="id"]').val() || @Model.IdEntrevistaInicial;
+            $.ajax({
+                url: baseUrl + 'PATs/EnviarRevision',
+                type: 'POST',
+                data: { id: patId, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (resp) {
+                    if (resp.success) {
+                        location.reload();
+                    } else {
+                        alert(resp.message || 'Ocurrió un error al enviar a revisión.');
+                        $('#modal-enviar-revision').fadeOut(200);
+                    }
+                },
+                error: function () {
+                    alert('Ocurrió un error al enviar a revisión.');
+                    $('#modal-enviar-revision').fadeOut(200);
+                },
+                complete: function () {
+                    $('#btn-confirmar-enviar-revision').prop('disabled', false);
+                }
+            });
+        });
+        });
+        // Botón ir arriba
+
+
+
+        // ==========================================
+        // DEBUG Y VERIFICACIÓN
+        // ==========================================
+        console.log('=== INICIALIZACIÓN COMPLETADA ===');
+        console.log('jQuery cargado:', typeof $ !== 'undefined');
+        console.log('Base URL construida:', baseUrl);
+        console.log('PAT Estado:', patEstado);
+        console.log('PAT ID desde modelo:', @Model.IdEntrevistaInicial);
+
+        console.log('Botones encontrados:');
+        console.log('- btn-editar-todas:', $('#btn-editar-todas').length > 0);
+        console.log('- btn-editar-actividades-final:', $('#btn-editar-actividades-final').length > 0);
+        console.log('- btn-comentar-todas:', $('#btn-comentar-todas').length > 0);
+        console.log('- vulnerability-btn:', $('.vulnerability-btn').length);
+
+        console.log('Elementos de actividades:');
+        console.log('- Filas de actividades:', $('[data-actividad-id]').length);
+        console.log('- Inputs de actividad:', $('.actividad-input').length);
+        console.log('- Textos de actividad:', $('.actividad-texto').length);
+        console.log('- Inputs de notas:', $('.comentarios-input').length);
+        console.log('- Radio buttons:', $('input[type="radio"]').length);
+
+        // Verificar estructura HTML específica
+        if ($('#btn-editar-todas').length === 0 && $('#btn-editar-actividades-final').length === 0 && $('#btn-comentar-todas').length === 0) {
+            console.error('ADVERTENCIA: No se encontraron botones de edición');
+        }
+
+        if ($('[data-actividad-id]').length === 0) {
+            console.error('ADVERTENCIA: No se encontraron filas de actividades');
+        }
+
+        console.log('=== FIN INICIALIZACIÓN ===');
+
+
+
+
+
+
+
+        </script>
+
+        <style>
+            /* Cambia el color del texto de la semana en el modal */
+            #proxima-semana-display {
+                color: #1ab192 !important; /* <-- Verde. El !important asegura que sobreescriba el estilo en línea */
+            }
+
+            /* Opcional: Si quieres cambiar también el color del badge de semana en la tabla */
+            /* .semana-badge {
+                color: #28a745;
+            } */
+            /* Botones deshabilitados con semi-transparencia */
+            .btn-action[disabled] {
+                opacity: 0.65 !important;
+                cursor: not-allowed !important;
+                pointer-events: none;
+            }
+
+                /* Mantener colores de fondo en botones deshabilitados */
+                .btn-action[disabled][style*="background: #28a745"] {
+                    background: #28a745 !important;
+                    color: white !important;
+                }
+
+                .btn-action[disabled][style*="background: #ffc107"] {
+                    background: #ffc107 !important;
+                    color: #212529 !important;
+                }
+
+                .btn-action[disabled][style*="background: #dc3545"] {
+                    background: #dc3545 !important;
+                    color: white !important;
+                }
+        </style>

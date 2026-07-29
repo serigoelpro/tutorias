@@ -1,0 +1,213 @@
+@model List<PlataformaWeb.BecasTransporte.Models.Especialidad>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Gestión de Programas Educativos";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css" rel="stylesheet" />
+    <style>
+        .sga-scope .table td .btn + .btn {
+            margin-left: 5px;
+        }
+    </style>
+}
+<div class="sga-scope">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h2 class="card-title">
+                            Programas Educativos
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        @if (TempData["Success"] != null)
+                        {
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="fas fa-check-circle"></i>
+                                @TempData["Success"]
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        }
+
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                @TempData["Error"]
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        }
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="info-box bg-info">
+                                    <div class="info-box-content">
+                                        <i class="fas fa-list"></i>
+                                        <span class="info-box-text">Total de Programas: </span>
+                                        <span class="info-box-number">@Model.Count</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="alert alert-secondary" role="alert">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Nota:</strong> La columna “Sistema Nuevo” señala si el sistema educativo pertenece al esquema Nuevo; en ese caso, cuando el estudiante concluye el TSU, el conteo de los cuatrimestres de Ingeniería se reinicia en uno.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-tools">
+                            @Html.ActionLink("Nuevo Programa", "CreateEspecialidad", null, new { @class = "btn btn-info btn-sm" })
+                        </div>
+
+                        <div class="row" style="margin-top: 15px; margin-bottom: 15px;">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="buscarEspecialidades" class="control-label">Buscar:</label>
+                                    <input id="buscarEspecialidades" type="text" class="form-control" placeholder="Escribe un programa o carrera..." />
+                                </div>
+                            </div>
+                        </div>
+
+
+                        @if (Model.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped" id="especialidadesTable">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre del Programa</th>
+                                            <th>Carrera</th>
+                                            <th>Sistema Nuevo</th>
+                                            <th width="200">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model)
+                                        {
+                                            <tr>
+                                                <td>@item.Id</td>
+                                                <td>@item.Nombre</td>
+                                                <td>
+                                                    @{
+                                                        var carreras = ViewBag.CarrerasDict as Dictionary<int, string>;
+                                                    }
+
+                                                    @if (carreras != null && carreras.ContainsKey(item.IdCarrera))
+                                                    {
+                                                        <span class="badge badge-info">@carreras[item.IdCarrera]</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge badge-secondary">Sin carrera</span>
+                                                    }
+                                                </td>
+                                                <td>@(item.SistemaNuevo ?? false ? "Sí" : "No")</td>
+                                                <td>
+                                                    <div>
+                                                        <a href="@Url.Action("EditEspecialidad", new { id = item.Id })" class="btn btn-warning btn-sm" title="Editar">
+                                                            <i class="fas fa-pencil-alt"></i> Editar
+                                                        </a>
+                                                        <a href="@Url.Action("DeleteEspecialidad", new { id = item.Id })" class="btn btn-danger btn-sm delete-btn" title="Eliminar">
+                                                            <i class="fas fa-trash-alt"></i> Eliminar
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <h5>No hay programas educativos registrados</h5>
+                                <p>Comience creando su primer programa educativo.</p>
+                                @Html.ActionLink("Crear Programa Educativo", "CreateEspecialidad", null, new { @class = "btn btn-info" })
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">
+                    <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar el programa educativo?</p>
+                <strong><span id="programaNombreModal"></span></strong>
+                <p class="text-muted" style="margin-top: 10px;"><small>Esta acción no se puede deshacer.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal" style="border: 1px solid #ddd;">&times; Cancelar</button>
+                <a id="btnConfirmDelete" class="btn btn-danger" href="#">Sí, Eliminar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const tablaEspecialidades = $('#especialidadesTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+                },
+                "pageLength": 25,
+                "responsive": true,
+                "columnDefs": [
+                    { "orderable": false, "targets": 4 }
+                ],
+
+                "dom": 'lrtip'
+            });
+
+            $('#buscarEspecialidades').on('keyup', function () {
+                tablaEspecialidades.search(this.value).draw();
+            });
+
+
+            $(document).on('click', '.delete-btn', function (e) {
+                e.preventDefault();
+
+                var url = $(this).attr('href');
+                var nombre = $(this).closest('tr').find('td:nth-child(2)').text().trim(); // Usamos .trim() para quitar espacios
+
+                $('#programaNombreModal').text(nombre);
+
+                $('#btnConfirmDelete').attr('href', url);
+
+                $('#deleteConfirmModal').modal('show');
+            });
+
+            $('[title]').tooltip();
+        });
+    </script>
+}

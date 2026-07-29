@@ -1,0 +1,452 @@
+﻿/* Reset básico y estilos generales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #e6f0e6;
+    color: #2a3b2a;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Header */
+header {
+    width: 100%;
+    max-width: 1024px;
+    background-color: #1ab192;
+    color: #e9f0e9;
+    padding: 25px 40px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(26, 177, 146, 0.7);
+    margin-bottom: 40px;
+    user-select: none;
+}
+
+/* Main contenedor */
+main {
+    width: 100%;
+    max-width: 1024px;
+    display: flex;
+    flex-direction: column;
+    gap: 55px;
+}
+
+/* Secciones */
+section {
+    background: #fff;
+    padding: 35px 40px;
+    border-radius: 15px;
+    box-shadow: 0 5px 18px rgba(26, 177, 146, 0.25);
+    transition: box-shadow 0.3s ease;
+}
+
+    section:hover {
+        box-shadow: 0 10px 35px rgba(26, 177, 146, 0.4);
+    }
+
+/* Títulos */
+h2 {
+    color: #1ab192;
+    font-weight: 700;
+    margin-bottom: 28px;
+    border-left: 10px solid #1ab192;
+    padding-left: 18px;
+    font-size: 2rem;
+}
+
+h3 {
+    color: #1ab192;
+    margin-bottom: 20px;
+    font-weight: 700;
+    border-bottom: 2px solid #1ab192;
+    padding-bottom: 8px;
+}
+
+/* Listas de grupos, alumnos, cuatrimestres */
+#lista-grupos, #lista-alumnos, #lista-cuatri {
+    list-style: none;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+    #lista-grupos li, #lista-alumnos li, #lista-cuatri li {
+        background-color: #f7fbf7;
+        border: 2px solid #1ab192;
+        border-radius: 12px;
+        padding: 16px 22px;
+        margin-bottom: 16px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: #1ab192;
+        box-shadow: 0 3px 7px rgba(26, 177, 146, 0.2);
+        transition: background-color 0.25s ease, box-shadow 0.25s ease;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        user-select: none;
+    }
+
+        #lista-grupos li:hover, #lista-alumnos li:hover, #lista-cuatri li:hover {
+            background-color: #c4f0e3;
+            box-shadow: 0 6px 15px rgba(26, 177, 146, 0.4);
+        }
+
+        #lista-grupos li i, #lista-alumnos li i, #lista-cuatri li i {
+            color: #1ab192;
+            font-size: 1.5rem;
+        }
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #2a3b2a;
+    margin-top: 10px;
+}
+
+thead th {
+    text-align: left;
+    padding: 18px 22px;
+    background-color: #b1e1d6;
+    color: #0f7f68;
+    font-weight: 700;
+    border-radius: 15px 15px 0 0;
+    user-select: none;
+}
+
+tbody tr {
+    background: #e6f0e6;
+    transition: background-color 0.3s ease;
+    cursor: default;
+}
+
+    tbody tr:hover {
+        background-color: #d1e5d1;
+    }
+
+tbody td {
+    padding: 15px 22px;
+    vertical-align: middle;
+    border-left: 6px solid transparent;
+    border-radius: 0 15px 15px 0;
+}
+
+/* Inputs y select */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    padding: 7px 12px;
+    font-size: 1.1rem;
+    border-radius: 9px;
+    border: 1.8px solid #9bd4c3;
+    cursor: pointer;
+    font-weight: 600;
+    color: #1ab192;
+    width: 100%;
+    max-width: 600px;
+    box-sizing: border-box;
+}
+
+    input[type="number"]:disabled {
+        background-color: #d1d1d1;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+input[type="checkbox"] {
+    transform: scale(1.35);
+    cursor: pointer;
+}
+
+/* Estado (span) para alertas y estados */
+.estado {
+    font-weight: 700;
+    padding: 8px 22px;
+    border-radius: 30px;
+    color: white;
+    display: inline-block;
+    min-width: 100px;
+    text-align: center;
+    font-size: 1rem;
+    user-select: none;
+}
+
+    .estado.aprobada {
+        background-color: #1ab192;
+    }
+
+    .estado.reprobada {
+        background-color: #b12525;
+    }
+
+    .estado.pendiente {
+        background-color: #9da799;
+        color: #444;
+    }
+
+/* Alertas */
+.alert {
+    font-weight: 800;
+    padding: 14px 32px;
+    border-radius: 35px;
+    color: white;
+    background-color: #7a0000;
+    text-align: center;
+    font-size: 1.3rem;
+    box-shadow: 0 0 18px #7a0000cc;
+    user-select: none;
+    margin-bottom: 30px;
+}
+
+/* Botones Generales */
+.btn-guardar {
+    margin-top: 25px;
+    background-color: #179c82;
+    color: white;
+    border: none;
+    padding: 16px 38px;
+    font-size: 1.3rem;
+    border-radius: 40px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 7px 18px rgba(23, 156, 130, 0.8);
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+
+    .btn-guardar:hover {
+        background-color: #1dc4a0;
+        box-shadow: 0 9px 25px rgba(29, 196, 160, 0.9);
+    }
+
+.btn-volver {
+    background: #17b09a;
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 40px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 35px;
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+
+    .btn-volver:hover {
+        background: #12a885;
+    }
+
+/* Botones de generación de reportes */
+#btn-generate-pdf,
+#btn-generate-excel {
+    background-color: #1ab192;
+    color: #e9f0e9;
+    border: none;
+    padding: 14px 32px;
+    font-size: 1.2rem;
+    border-radius: 35px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(26, 177, 146, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+
+    #btn-generate-pdf:hover,
+    #btn-generate-excel:hover {
+        background-color: #149a7a;
+        box-shadow: 0 8px 22px rgba(20, 154, 122, 0.7);
+    }
+
+/* Reporte resultados */
+#reporte-resultados {
+    background: #d6eadf;
+    padding: 28px 32px;
+    border-radius: 18px;
+    font-weight: 700;
+    color: #145018;
+    box-shadow: inset 0 0 18px #1b4d2880;
+    flex-grow: 1;
+    min-height: 90px;
+    user-select: none;
+    margin-top: 15px;
+}
+
+/* Layout específico para el formulario agregar materia */
+#form-agregar-materia {
+    max-width: 600px;
+    margin-bottom: 30px;
+}
+
+    #form-agregar-materia label {
+        font-weight: 700;
+        color: #1ab192;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    #form-agregar-materia input,
+    #form-agregar-materia select {
+        width: 100%;
+        margin-bottom: 12px;
+    }
+
+    #form-agregar-materia > div {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 12px;
+    }
+
+        #form-agregar-materia > div > div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+            #form-agregar-materia > div > div:last-child {
+                flex: 2;
+            }
+
+/* Tabla Materias Agregadas */
+#tabla-materias-agregadas {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #2a3b2a;
+    margin-top: 10px;
+}
+
+    #tabla-materias-agregadas thead th {
+        background-color: #b1e1d6;
+        color: #0f7f68;
+        font-weight: 700;
+        padding: 10px;
+        user-select: none;
+        border-radius: 15px 15px 0 0;
+    }
+
+    #tabla-materias-agregadas tbody tr {
+        background: #e6f0e6;
+        cursor: default;
+    }
+
+        #tabla-materias-agregadas tbody tr:hover {
+            background-color: #d1e5d1;
+        }
+
+    #tabla-materias-agregadas tbody td {
+        padding: 10px;
+        vertical-align: middle;
+        border-left: 6px solid transparent;
+    }
+
+/* Responsive */
+@media (max-width: 720px) {
+    body {
+        padding: 14px 10px;
+    }
+
+    main {
+        gap: 30px;
+    }
+
+    section {
+        padding: 25px 20px;
+    }
+
+    #lista-grupos,
+    #lista-alumnos,
+    #lista-cuatri {
+        max-width: 100%;
+    }
+
+        #lista-grupos li,
+        #lista-alumnos li,
+        #lista-cuatri li {
+            font-size: 1rem;
+            padding: 12px 18px;
+        }
+
+    table,
+    thead,
+    tbody,
+    th,
+    td,
+    tr {
+        display: block;
+    }
+
+        thead tr {
+            display: none;
+        }
+
+        tbody tr {
+            margin-bottom: 20px;
+            background: #f0f9f0;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(26, 177, 146, 0.15);
+        }
+
+        tbody td {
+            text-align: right;
+            padding-left: 55%;
+            position: relative;
+        }
+
+            tbody td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 18px;
+                font-weight: 700;
+                color: #1ab192;
+                text-transform: uppercase;
+                font-size: 0.95rem;
+            }
+
+    input[type="number"],
+    select,
+    input[type="date"] {
+        width: 100%;
+        max-width: none;
+    }
+
+    #btn-generate-pdf,
+    #btn-generate-excel {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+#btn-mostrar-agregar-materia {
+    display: block; /* que ocupe toda la línea */ /* empuja el botón hacia la derecha */
+    margin-bottom: 30px;
+    /
+}

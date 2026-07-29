@@ -1,0 +1,158 @@
+﻿<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(dibujarGraficaBecas);
+
+    function dibujarGraficaBecas() {
+        var data = google.visualization.arrayToDataTable(@Html.Action("GraficoBecaPorEspecialidad", "EstudiantesMaster"));
+        var options = {
+            title: 'Alumnos Con Beca Por Especialidad.',
+            colors: ['#5cb85c', '#999999']
+        };
+        var chart = new google.visualization.PieChart(document.getElementById('GraficaBecas'));
+        chart.draw(data, options);
+    }
+</script>
+
+@{
+    List<SelectListItem> becas = Session["ListaBecas"] as List<SelectListItem>;
+    List<SelectListItem> cantidadAlumnos = Session["ListaCantidadAlumnos"] as List<SelectListItem>;
+    List<SelectListItem> Montos = Session["ListaMontoBecas"] as List<SelectListItem>;
+    List<SelectListItem> ListaAlumnos = Session["ListaAlumnos"] as List<SelectListItem>;
+}
+
+@if (Session["Especialidad"] != null)
+{
+    var Especialidad = Session["Especialidad"] as string;
+    var CarreraDetalle = Session["CarreraDetalles"] as string;
+    var TotalAlumnosPorEspecialidad = (int)Session["TotalAlumnos"];
+    var CantidadAlumnosConBeca = (int)Session["AlumnosConBeca"];
+    var AlumnosSinBeca = (int)Session["AlumnosSinBeca"];
+    var monTotalCuatrimestrePorEspecialidad = (string)Session["MontoTotalPorCuatrimestrePorEspecialidad"];
+
+    <h2 class="text-center">@Especialidad</h2>
+
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="text-center">Gráfica</h2>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <div id="GraficaBecas" style="width: 100%; height: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                <h3>Cantidad Por Grado: <strong>@monTotalCuatrimestrePorEspecialidad</strong></h3>
+            </div>
+
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6 text-center">
+                        <h4>Carrera: <span class="label label-default">@CarreraDetalle</span></h4>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <h4>Alumnos Por Especialidad: <span class="label label-default">@TotalAlumnosPorEspecialidad</span></h4>
+                        <h4>Alumnos Con Beca: <span class="label label-success">@CantidadAlumnosConBeca</span></h4>
+                        <h4>Alumnos Sin Beca: <span class="label label-default">@AlumnosSinBeca</span></h4>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="collapse container" id="collapseExample">
+                        <div class="well">
+                            <div class="text-center">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center">BECA</th>
+                                                <th class="text-center">CANTIDAD DE ALUMNOS</th>
+                                                <th class="text-center">MONTO</th>
+                                                <th class="text-center">DETALLES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in becas)
+                                            {
+                                                var cant = cantidadAlumnos?.FirstOrDefault(x => x.Value == item.Value);
+                                                var mon = Montos?.FirstOrDefault(x => x.Value == item.Value);
+                                                var lista = ListaAlumnos?.FirstOrDefault(x => x.Value == item.Value);
+                                                var modalId = $"mdl_{item.Value}";
+
+                                                <tr>
+                                                    <td class="text-center">@item.Text</td>
+                                                    <td class="text-center">@((cant?.Text) ?? "0")</td>
+                                                    <td class="text-center">@((mon?.Text) ?? "$0")</td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#@modalId">
+                                                            Detalles
+                                                        </button>
+
+                                                        <div class="modal fade" id="@modalId" tabindex="-1" role="dialog" aria-labelledby="lbl_@modalId" aria-hidden="true">
+                                                            <div class="modal-dialog" role="document">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                                                                        <h4 class="modal-title" id="lbl_@modalId">Alumnos con beca @item.Text</h4>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        @{
+                                                                            var texto = lista?.Text;
+                                                                            if (!string.IsNullOrEmpty(texto) && texto != "NULL")
+                                                                            {
+                                                                                foreach (var nombre in texto.Split('*'))
+                                                                                {
+                                                                                    if (!string.IsNullOrWhiteSpace(nombre))
+                                                                                    {
+                                                                                        <p>@nombre</p>
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <em>Sin alumnos registrados</em>
+                                                                            }
+                                                                        }
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr />
+            </div>
+        </div>
+    </div>
+
+    { Session["Especialidad"] = null; }
+}
+else
+{
+    <div class="col-md-12 text-center">
+        <div class="alert alert-info">Por favor seleccione una especialidad disponible.</div>
+    </div>
+}

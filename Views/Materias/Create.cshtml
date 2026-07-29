@@ -1,0 +1,560 @@
+﻿@model PlataformaWeb.Models.Materia
+
+@{
+    ViewBag.Title = "Agregar Nueva Materia";
+}
+
+<h2>
+    <span class="glyphicon glyphicon-plus"></span> Agregar Nueva Materia
+</h2>
+
+@if (!string.IsNullOrEmpty(ViewBag.Error as string))
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @ViewBag.Error
+    </div>
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <hr />
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-edit"></span> Asignatura *
+            </label>
+            <div class="col-md-10">
+                <input name="Nombre" type="text" class="form-control" value="@(Model != null ? Model.Nombre : "")" required
+                       placeholder="Ingrese el nombre de la asignatura" />
+                <small class="text-muted">Nombre completo de la asignatura que se impartirá</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-education"></span> Programa Educativo *
+            </label>
+            <div class="col-md-10">
+                @Html.DropDownList("IdCarrera", null, "-- Seleccionar Carrera --",
+                    new { @class = "form-control", @id = "carreraSelect", @required = "required" })
+                <small class="text-muted">Seleccione el programa educativo al que pertenece esta asignatura</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-cog"></span> Área *
+            </label>
+            <div class="col-md-10">
+                <select id="especialidadSelect" name="IdEspecialidad" class="form-control" required disabled>
+                    <option value="">-- Primero seleccione un programa educativo --</option>
+                </select>
+                <small class="text-muted">Las áreas disponibles dependen del programa educativo seleccionado</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-signal"></span> Cuatrimestre *
+            </label>
+            <div class="col-md-10">
+                @Html.DropDownList("IdGrado", null, "-- Seleccionar Grado --",
+                    new { @class = "form-control", @required = "required" })
+                <small class="text-muted">Cuatrimestre académico en que se imparte la asignatura</small>
+            </div>
+        </div>
+
+        <!-- PLAN DE ESTUDIO -->
+        <div class="form-group">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-calendar"></span> Plan de Estudio *
+            </label>
+            <div class="col-md-10">
+                @Html.DropDownList("IdPlanEstudio", null, "-- Seleccionar Plan de Estudio --",
+                    new { @class = "form-control", @id = "planEstudioSelect", @required = "required" })
+                <small class="text-muted">Seleccione el plan de estudio que determinará las reglas de calificación</small>
+            </div>
+        </div>
+
+        <!-- INFORMACIÓN DEL PLAN SELECCIONADO -->
+        <div id="infoPlanEstudio" class="form-group" style="display: none;">
+            <label class="control-label col-md-2">
+                <span class="glyphicon glyphicon-info-sign"></span> Información del Plan
+            </label>
+            <div class="col-md-10">
+                <div class="alert alert-info plan-info-alert">
+                    <div id="detallesPlan">
+                        <!-- Información del plan se cargará aquí via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campo oculto para Activo, siempre true por defecto -->
+        <input name="Activo" type="hidden" value="true" />
+
+        <div class="alert alert-info">
+            <span class="glyphicon glyphicon-info-sign"></span>
+            <strong>Nota:</strong> Las asignaturas nuevas se crean como "Activas" por defecto.
+            Puede cambiar este estado posteriormente desde la lista de asignaturas o editando la materia.
+        </div>
+
+        <hr />
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <button type="submit" class="btn btn-success">
+                    <span class="glyphicon glyphicon-floppy-disk"></span> Crear Asignatura
+                </button>
+                @Html.ActionLink("Cancelar", "Index", null, new { @class = "btn btn-default" })
+            </div>
+        </div>
+    </div>
+}
+
+<!-- INFORMACIÓN DETALLADA SOBRE PLANES DE ESTUDIO -->
+<div class="row" style="margin-top: 30px;">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#collapsePlanes" role="button" aria-expanded="false" aria-controls="collapsePlanes">
+                        <span class="glyphicon glyphicon-question-sign"></span> ¿Qué significan los planes de estudio?
+                        <span class="pull-right">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </span>
+                    </a>
+                </h4>
+            </div>
+            <div class="collapse" id="collapsePlanes">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><span class="label label-warning">Plan 2020</span> - Plan Tradicional</h5>
+                            <ul class="plan-features-list">
+                                <li><strong>Calificación mínima:</strong> 8.0 puntos para aprobar</li>
+                                <li><strong>Tipo de calificación:</strong> Solo números enteros (redondea automáticamente)</li>
+                                <li><strong>Ejemplo:</strong> Si un alumno obtiene 7.8, se redondea a 8 y aprueba</li>
+                                <li><strong>Orientación:</strong> Sistema más exigente y tradicional</li>
+                                <li><strong>Uso recomendado:</strong> Materias que requieren mayor rigor académico</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><span class="label label-success">Plan 2024</span> - Plan Moderno</h5>
+                            <ul class="plan-features-list">
+                                <li><strong>Calificación mínima:</strong> 7.0 puntos para aprobar</li>
+                                <li><strong>Tipo de calificación:</strong> Permite decimales (evaluación más precisa)</li>
+                                <li><strong>Ejemplo:</strong> Un alumno puede obtener 7.5, 8.3, 9.7, etc.</li>
+                                <li><strong>Orientación:</strong> Sistema más flexible y detallado</li>
+                                <li><strong>Uso recomendado:</strong> Materias nuevas y evaluaciones modernas</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" style="margin-top: 20px;">
+                        <h5><span class="glyphicon glyphicon-exclamation-sign"></span> Consideraciones importantes:</h5>
+                        <ul class="considerations-list">
+                            <li><strong>Consistencia:</strong> Mantenga el mismo plan para todas las materias de un programa educativo cuando sea posible</li>
+                            <li><strong>Migración:</strong> Puede cambiar materias del Plan 2020 al Plan 2024, pero tenga cuidado con las calificaciones existentes</li>
+                            <li><strong>Reportes:</strong> El sistema generará automáticamente reportes diferenciados según el plan</li>
+                            <li><strong>Validaciones:</strong> El sistema aplicará automáticamente las reglas correspondientes a cada plan</li>
+                        </ul>
+                    </div>
+
+                    <div class="comparison-table" style="margin-top: 20px;">
+                        <h5>Comparación rápida:</h5>
+                        <table class="table table-bordered table-condensed">
+                            <thead>
+                                <tr style="background-color: #f5f5f5;">
+                                    <th>Característica</th>
+                                    <th class="text-center"><span class="label label-warning">Plan 2020</span></th>
+                                    <th class="text-center"><span class="label label-success">Plan 2024</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Calificación mínima</strong></td>
+                                    <td class="text-center">8.0</td>
+                                    <td class="text-center">7.0</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Decimales</strong></td>
+                                    <td class="text-center"><span class="text-danger">No permite</span></td>
+                                    <td class="text-center"><span class="text-success">Sí permite</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Redondeo</strong></td>
+                                    <td class="text-center">Automático</td>
+                                    <td class="text-center">No aplica</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Flexibilidad</strong></td>
+                                    <td class="text-center">Menor</td>
+                                    <td class="text-center">Mayor</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Precisión</strong></td>
+                                    <td class="text-center">Enteros</td>
+                                    <td class="text-center">Decimales</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="well well-sm">
+    <h4><span class="glyphicon glyphicon-question-sign"></span> Ayuda</h4>
+    <p><strong>¿Cómo agregar una asignatura?</strong></p>
+    <ol>
+        <li>Ingrese el nombre completo de la asignatura</li>
+        <li>Seleccione el programa educativo correspondiente</li>
+        <li>Elija el área (se cargarán automáticamente según el programa educativo)</li>
+        <li>Seleccione el cuatrimestre académico</li>
+        <li><strong>NUEVO:</strong> Seleccione el plan de estudio apropiado</li>
+        <li>Haga clic en "Crear Asignatura"</li>
+    </ol>
+    <p><small><em>Todos los campos marcados con (*) son obligatorios.</em></small></p>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Cargar especialidades cuando cambia la carrera
+    $('#carreraSelect').change(function() {
+        var carreraId = $(this).val();
+        $('#especialidadSelect').prop('disabled', true);
+
+        if (carreraId) {
+            // Mostrar indicador de carga
+            $('#especialidadSelect').empty();
+            $('#especialidadSelect').append('<option value="">-- Cargando especialidades... --</option>');
+
+            $.ajax({
+                url: '@Url.Action("GetEspecialidades", "Materias")',
+                type: 'GET',
+                data: { carreraId: carreraId },
+                success: function(data) {
+                    $('#especialidadSelect').empty();
+                    $('#especialidadSelect').append('<option value="">-- Seleccionar Especialidad --</option>');
+
+                    if (data && data.length > 0) {
+                        $.each(data, function(i, especialidad) {
+                            $('#especialidadSelect').append('<option value="' + especialidad.Id + '">' + especialidad.Nombre + '</option>');
+                        });
+                        $('#especialidadSelect').prop('disabled', false);
+                    } else {
+                        $('#especialidadSelect').append('<option value="">-- No hay especialidades disponibles --</option>');
+                    }
+                },
+                error: function() {
+                    $('#especialidadSelect').empty();
+                    $('#especialidadSelect').append('<option value="">-- Error al cargar especialidades --</option>');
+                }
+            });
+        } else {
+            $('#especialidadSelect').empty();
+            $('#especialidadSelect').append('<option value="">-- Primero seleccione una carrera --</option>');
+            $('#especialidadSelect').prop('disabled', true);
+        }
+    });
+
+    // Mostrar información del plan de estudio seleccionado
+    $('#planEstudioSelect').change(function() {
+        var planId = $(this).val();
+
+        if (planId) {
+            $.ajax({
+                url: '@Url.Action("GetPlanEstudioInfo", "Materias")',
+                type: 'GET',
+                data: { planEstudioId: planId },
+                success: function(result) {
+                    if (result.success) {
+                        var plan = result.plan;
+                        var html = '';
+
+                        html += '<div class="row">';
+                        html += '<div class="col-md-6">';
+                        html += '<h5><span class="label ' + (plan.labelClass || 'label-default') + '">' + plan.nombre + '</span></h5>';
+                        html += '<p><strong>Año:</strong> ' + plan.año + '</p>';
+                        html += '<p><strong>Calificación mínima:</strong> ' + plan.calificacionMinima + ' puntos</p>';
+                        html += '</div>';
+                        html += '<div class="col-md-6">';
+                        html += '<p><strong>Tipo de calificación:</strong> ' + (plan.tipoCalificacion || 'N/A') + '</p>';
+                        html += '<p><strong>Requisito:</strong> ' + (plan.requisitoAprobacion || 'N/A') + '</p>';
+                        if (plan.descripcion) {
+                            html += '<p><strong>Descripción:</strong><br/><small>' + plan.descripcion + '</small></p>';
+                        }
+                        html += '</div>';
+                        html += '</div>';
+
+                        // Agregar ejemplo práctico
+                        html += '<div class="alert alert-info" style="margin-top: 10px;">';
+                        html += '<h6><span class="glyphicon glyphicon-lightbulb"></span> Ejemplo práctico:</h6>';
+                        if (plan.permiteDecimales) {
+                            html += '<p>Un alumno puede obtener calificaciones como: <strong>7.0, 7.5, 8.3, 9.7</strong>, etc.</p>';
+                            html += '<p>Aprueba con <strong>' + plan.calificacionMinima + ' o más</strong>.</p>';
+                        } else {
+                            html += '<p>Las calificaciones se redondean automáticamente: <strong>7.8 → 8, 8.4 → 8, 8.6 → 9</strong></p>';
+                            html += '<p>Aprueba con <strong>' + plan.calificacionMinima + ' o más</strong>.</p>';
+                        }
+                        html += '</div>';
+
+                        $('#detallesPlan').html(html);
+                        $('#infoPlanEstudio').show();
+                    } else {
+                        $('#infoPlanEstudio').hide();
+                    }
+                },
+                error: function() {
+                    $('#infoPlanEstudio').hide();
+                }
+            });
+        } else {
+            $('#infoPlanEstudio').hide();
+        }
+    });
+
+    // Validar formulario antes de enviar
+    $('form').submit(function(e) {
+        var nombre = $('input[name="Nombre"]').val().trim();
+        var carrera = $('#carreraSelect').val();
+        var especialidad = $('#especialidadSelect').val();
+        var grado = $('select[name="IdGrado"]').val();
+        var planEstudio = $('#planEstudioSelect').val();
+
+        if (!nombre) {
+            alert('Por favor ingrese el nombre de la materia');
+            $('input[name="Nombre"]').focus();
+            e.preventDefault();
+            return false;
+        }
+        if (!carrera) {
+            alert('Por favor seleccione una carrera');
+            $('#carreraSelect').focus();
+            e.preventDefault();
+            return false;
+        }
+        if (!especialidad) {
+            alert('Por favor seleccione una especialidad');
+            $('#especialidadSelect').focus();
+            e.preventDefault();
+            return false;
+        }
+        if (!grado) {
+            alert('Por favor seleccione un grado');
+            $('select[name="IdGrado"]').focus();
+            e.preventDefault();
+            return false;
+        }
+        if (!planEstudio) {
+            alert('Por favor seleccione un plan de estudio');
+            $('#planEstudioSelect').focus();
+            e.preventDefault();
+            return false;
+        }
+
+        // Mostrar indicador de carga
+        $('button[type="submit"]').prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Creando Materia...');
+        return true;
+    });
+
+    // Focus automático en el nombre al cargar la página
+    $('input[name="Nombre"]').focus();
+
+    // Toggle del panel de información de planes
+    $('[data-toggle="collapse"]').click(function() {
+        var $icon = $(this).find('.glyphicon-chevron-down, .glyphicon-chevron-up');
+        setTimeout(function() {
+            if ($('#collapsePlanes').hasClass('in')) {
+                $icon.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+            } else {
+                $icon.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+            }
+        }, 350);
+    });
+});
+</script>
+
+<style>
+    .glyphicon-refresh-animate {
+        -animation: spin .7s infinite linear;
+        -webkit-animation: spin2 .7s infinite linear;
+    }
+
+    @@-webkit-keyframes spin2 {
+        from {
+            -webkit-transform: rotate(0deg);
+        }
+
+        to {
+            -webkit-transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes spin {
+        from {
+            transform: scale(1) rotate(0deg);
+        }
+
+        to {
+            transform: scale(1) rotate(360deg);
+        }
+    }
+
+    .well {
+        margin-top: 20px;
+    }
+
+    .form-group small {
+        display: block;
+        margin-top: 5px;
+    }
+
+    /* Para información de planes de estudio */
+    .plan-info-alert {
+        margin-bottom: 0;
+        border-left: 4px solid #1ab192;
+    }
+
+    .plan-features-list {
+        list-style-type: none;
+        padding-left: 0;
+    }
+
+        .plan-features-list li {
+            padding: 4px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+
+            .plan-features-list li:last-child {
+                border-bottom: none;
+            }
+
+    .considerations-list {
+        margin-bottom: 0;
+    }
+
+        .considerations-list li {
+            margin-bottom: 8px;
+        }
+
+    .comparison-table {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 4px;
+        border: 1px solid #e1e1e8;
+    }
+
+        .comparison-table .table {
+            margin-bottom: 0;
+            background-color: white;
+        }
+
+            .comparison-table .table th,
+            .comparison-table .table td {
+                padding: 8px 12px;
+                vertical-align: middle;
+            }
+
+    /* Estilo para el panel colapsable */
+    .panel-title a {
+        text-decoration: none;
+        color: #333;
+    }
+
+        .panel-title a:hover {
+            text-decoration: none;
+            color: #1ab192;
+        }
+
+    .panel-title .glyphicon-chevron-down,
+    .panel-title .glyphicon-chevron-up {
+        transition: transform 0.3s ease;
+    }
+
+    /* Mejorar la presentación de etiquetas */
+    .label {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .label-warning {
+        background-color: #f0ad4e;
+    }
+
+    .label-success {
+        background-color: #5cb85c;
+    }
+
+    /* Estilos responsivos */
+    @@media (max-width: 768px) {
+        .comparison-table .table-responsive {
+            border: none;
+        }
+
+        .plan-features-list,
+        .considerations-list {
+            font-size: 14px;
+        }
+
+        .col-md-6 {
+            margin-bottom: 20px;
+        }
+
+        .form-group .control-label {
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        .form-horizontal .control-label {
+            padding-top: 7px;
+        }
+    }
+
+    /* Mejoras visuales */
+    .alert-info h6 {
+        margin-top: 0;
+        color: #31708f;
+    }
+
+    .alert-warning h5 {
+        margin-top: 0;
+        color: #8a6d3b;
+    }
+
+    /* Animaciones sutiles */
+    .plan-info-alert {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Focus states para accesibilidad */
+    .form-control:focus {
+        border-color: #1ab192;
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 0 3px rgba(26, 177, 146, 0.1);
+    }
+
+    /* Estilo para selects deshabilitados */
+    .form-control:disabled {
+        background-color: #f5f5f5;
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+</style>

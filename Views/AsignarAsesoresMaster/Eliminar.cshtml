@@ -1,0 +1,83 @@
+@model Plataforma_Web.Models.TutoriaGrupal
+
+@{
+    ViewBag.Title = "Eliminar";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <style>
+        .borrar {
+            color: var(--danger);
+        }
+    </style>
+}
+<div class="sga-scope">
+    <h2>Eliminar</h2>
+
+    <h3>¿Está seguro que deseas eliminar este registro?</h3>
+
+    <h4>
+        <font class="borrar">
+            EL PAT ASOCIADO A ESTE GRUPO ASESORADO TAMBIEN SERÁ ELIMINADO EN CASO DE EXISTIR
+        </font>
+    </h4>
+    <div>
+        <h4>Grupo asesorado</h4>
+        <dl class="dl-horizontal">
+            <dt>
+                @Html.DisplayNameFor(model => model.Grado)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Grado.Nombre)
+            </dd>
+
+
+            <dt>
+                @Html.DisplayNameFor(model => model.Grupo)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Grupo.Nombre)
+            </dd>
+
+            <dt>
+                @Html.DisplayNameFor(model => model.Carrera)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Carrera.Nombre)
+            </dd>
+
+            <dt>
+                @Html.DisplayNameFor(model => model.Turno)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Turno.Nombre)
+            </dd>
+
+        </dl>
+
+        @using (Html.BeginForm())
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="form-actions no-color">
+                @Html.ActionLink(
+                    "Cancelar",
+                    "Asesorados",
+                    new { id = Model.IdUsuario },
+                    new { @class = "btn btn-warning" }
+                )
+
+                <input type="submit" value="Eliminar" class="btn btn-danger" />
+            </div>
+        }
+    </div>
+</div>
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+}

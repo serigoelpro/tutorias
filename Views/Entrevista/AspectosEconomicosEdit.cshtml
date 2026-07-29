@@ -1,0 +1,589 @@
+﻿@model Plataforma_Web.Models.PrimeraEntrevista.AspectosEconomicos
+@using Plataforma_Web.Models.PrimeraEntrevista
+@{
+    /**/
+
+    AspectosEconomicos economicos = ViewBag.Aspectos as AspectosEconomicos;
+    DatosPersonales datos = ViewBag.Datos as DatosPersonales;
+    // Asegurar que no sean null para evitar errores masivos, aunque lo ideal es manejarlo en el controlador
+    if (datos == null) { datos = new DatosPersonales(); }
+    if (economicos == null) { economicos = new AspectosEconomicos(); }
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <link rel="icon" type="image/png" href="~/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Aspectos Economicos</title>
+    <!-- custom style sheet -->
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/animate.css">
+    <!-- Icomoon Icon Fonts-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/icomoon.css">
+    <!-- Themify Icons-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/themify-icons.css">
+    <!-- Bootstrap  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/magnific-popup.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap-datepicker.min.css">
+
+    <!-- Owl Carousel  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.theme.default.min.css">
+
+    <!-- Theme style  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/style.css">
+
+    <!-- Modernizr JS -->
+    <script src="~/EstilosEntrevista/js/modernizr-2.6.2.min.js"></script>
+
+</head>
+<body>
+
+
+    <div id="page">
+        <header id="gtco-header" role="banner" style="background-image: url(../../EstilosEntrevista/images/img_bg_1.jpg)" data-stellar-background-ratio="0.8">
+            <div class="overlay"></div>
+            <div class="gtco-container">
+                <div class="row">
+                    <div class="col-md-12 col-md-offset-0 text-left">
+
+
+                        <section class="content">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel panel-default" style="background-color:white;">
+                                        <div class="panel-heading" style="text-align:center;">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    @if (datos?.Grado?.Nombre != "1")
+                                                    {
+                                                        <h2 style="color: black;">Entrevista de Seguimiento</h2>
+                                                    }
+                                                    else
+                                                    {
+                                                        <h2 style="color: black;">Entrevista Inicial</h2>
+
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="panel-body"></div>
+                                        <div class="row">
+                                            <div class="col-md-12 col-md-push-1">
+                                                <div class="row">
+
+                                                    @if (economicos.IdCiudad == 2)
+                                                    {
+                                                        <div class="col-md-2">
+                                                            <div class="form-group">
+                                                                <label>¿Resides en esta ciudad?</label>
+                                                                <br />
+                                                                @(economicos?.Respuesta1?.Nombre ?? "Sin especificar")
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <div class="form-group">
+                                                                <label>Especifica en qué ciudad resides</label>
+                                                                <br />
+                                                                @(economicos?.Ciudad ?? "")
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="col-md-3">
+                                                            <div class="form-group">
+                                                                <label>¿Resides en esta ciudad?</label>
+                                                                <br />
+                                                                @(economicos?.Respuesta1?.Nombre ?? "Sin especificar")
+
+                                                            </div>
+                                                        </div>
+                                                    }
+
+                                                    @if (economicos.IdTipoFamiliar == 1)
+                                                    {
+                                                        <div class="col-md-4">
+                                                            <div class="form-group">
+                                                                <label>¿Con quién vives actualmente?</label>
+                                                                <br />
+                                                                @(economicos?.Familiar ?? "")
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="col-md-4">
+                                                            <div class="form-group">
+                                                                <label>¿Con quién vives actualmente?</label>
+                                                                <br />
+                                                                @(economicos?.Respuesta16?.Nombre ?? "Sin especificar")
+                                                            </div>
+                                                        </div>
+                                                    }
+
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿Trabajas?</label>
+                                                            <br />
+                                                            @(economicos?.Respuesta2?.Nombre ?? "Sin especificar")
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿A qué se dedica tu papá?</label>
+                                                            <br />
+                                                            @(economicos?.OcupacionPapa ?? "")
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>¿A qué se dedica tu mamá?</label>
+                                                            <br />
+                                                            @(economicos?.OcupacionMama ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="form-group">
+                                                            <label>Si tienes hermanos, ¿cuántos son?</label>
+                                                            <br />
+                                                            @(economicos?.CantidadHermano ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>Ingreso mensual aproximado por miembro</label>
+                                                            <br />
+                                                            @(economicos?.Respuesta17?.Nombre ?? "Sin especificar")
+
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                                <div class="row">
+
+                                                    <div class="col-md-3  seguimiento">
+                                                        <div class="form-group">
+                                                            <label>¿Cuántas personas viven en tú casa? (Incluyéndote)</label>
+                                                            <br />
+                                                            @(economicos?.CantidadPersonas ?? "")
+
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2  seguimiento">
+                                                        <div class="form-group">
+                                                            <label>¿Cuántas trabajan? (Incluyéndote)</label>
+                                                            <br />
+                                                            @(economicos?.CantidadTrabajan ?? "")
+
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-3 seguimiento">
+                                                        <div class="form-group">
+                                                            <label>¿Consideras que necesitas beca o algún tipo de apoyo?</label>
+                                                            <br />
+                                                            @(economicos?.Respuesta18?.Nombre ?? "Sin especificar")
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!--div.row>div.col-md-12-->
+                                        <div class="panel-footer">
+                                            <div class="row">
+                                                <div class="form-group">
+                                                    <div class=" col-md-10">
+                                                        <a class="btn btn-primary"
+                                                           role="button" id="11" onclick="Mostrar()">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Editar
+
+                                                        </a>
+                                                        <a class="btn btn-primary hidden"
+                                                           role="button" id="22" style="background-color:#be0e0e; border: #be0e0e !important;" onclick="Ocultar()">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Cancelar
+
+                                                        </a>
+                                                        <a class="btn btn-primary" id="33" href="@Url.Action("AspectosPersonalesEdit", new { id= ViewBag.Id} )"
+                                                           role="button">
+                                                            <span class="glyphicon glyphicon-arrow-left"></span>
+                                                            Siguiente
+
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">&nbsp;</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        @using (Html.BeginForm())
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(model => model.IdPersona)
+                            @Html.HiddenFor(model => model.IdEconomicos)
+
+
+                            <div class="row hidden" id="Editar" style="margin-top: 2em;">
+
+                                <div class="col-md-10 col-md-push-1 animate-box" data-animate-effect="fadeInRight">
+                                    <div class="form-wrap">
+                                        <div class="tab">
+
+                                            <div class="tab-content">
+                                                <div class="tab-content-inner active" data-content="signup">
+                                                    <h3>Aspectos Económicos</h3>
+
+                                                    <form action="#">
+                                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                                                        <div class="row form-group">
+                                                            <div class="col-md-6">
+                                                                <label for="fullname">¿Resides en esta ciudad?</label>
+                                                                @Html.DropDownList("IdCiudad", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta1" })
+                                                                @Html.ValidationMessageFor(model => model.IdCiudad, "", new { @class = "text-danger" })
+
+                                                            </div>
+
+                                                            <div class="col-md-6 hidden" id="1">
+                                                                <label for="activities">Especifica en qué ciudad resides</label>
+                                                                @Html.EditorFor(model => model.Ciudad, new { htmlAttributes = new { @class = "form-control", @id = "Ciudad", placeholder = "Ciudad en la que vives", @Value = (Model.Ciudad != null ? Model.Ciudad.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.Ciudad, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="activities">¿Con quién vives actualmente?</label>
+                                                                @Html.DropDownList("IdTipoFamiliar", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta2" })
+                                                                @Html.ValidationMessageFor(model => model.IdTipoFamiliar, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6 hidden" id="2">
+                                                                <label for="activities">Especifica con quién vives actualmente</label>
+                                                                @Html.EditorFor(model => model.Familiar, new { htmlAttributes = new { @class = "form-control", @id = "Familiar", placeholder = "Amigos, familia, conocidos, solo, etc.", @Value = (Model.Familiar != null ? Model.Familiar.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.Familiar, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">¿Trabajas?</label>
+                                                                @Html.DropDownList("IdTrabajo", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta3" })
+                                                                @Html.ValidationMessageFor(model => model.IdTrabajo, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">¿A qué se dedica tu papá?</label>
+                                                                @Html.EditorFor(model => model.OcupacionPapa, new { htmlAttributes = new { @class = "form-control", @id = "OcupacionPapa", placeholder = "Ocupación de tu padre", @Value = (Model.OcupacionPapa != null ? Model.OcupacionPapa.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.OcupacionPapa, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">¿A qué se dedica tu mamá?</label>
+                                                                @Html.EditorFor(model => model.OcupacionMama, new { htmlAttributes = new { @class = "form-control", @id = "OcupacionMama", placeholder = "Ocupación de tu madre", @Value = (Model.OcupacionMama != null ? Model.OcupacionMama.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.OcupacionMama, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Si tienes hermanos, ¿cuántos son?</label>
+                                                                @Html.EditorFor(model => model.CantidadHermano, new { htmlAttributes = new { @class = "form-control", @id = "CantidadHermano", placeholder = "Número de hermanos(as)", @Value = (Model.CantidadHermano != null ? Model.CantidadHermano.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.CantidadHermano, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                            <div class="col-md-6">
+                                                                <label for="lastfullname">Ingreso familiar mensual aproximado por miembro</label>
+                                                                @Html.DropDownList("IdIngresoMes", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                @Html.ValidationMessageFor(model => model.IdIngresoMes, "", new { @class = "text-danger" })
+                                                            </div>
+                                                            <div class="col-md-6 seguimiento">
+                                                                <label for="lastfullname">¿Cuántas personas viven en tú casa? (Incluyéndote)</label>
+                                                                @Html.EditorFor(model => model.CantidadPersonas, new { htmlAttributes = new { @class = "form-control", @id = "CantidadPersonas", placeholder = "Número de personas que viven contigo", @Value = (Model.CantidadPersonas != null ? Model.CantidadPersonas.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.CantidadPersonas, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                            <div class="col-md-6 seguimiento">
+                                                                <label for="activities">¿Cuántas trabajan? (Incluyéndote)</label>
+                                                                @Html.EditorFor(model => model.CantidadTrabajan, new { htmlAttributes = new { @class = "form-control", @id = "CantidadTrabajan", placeholder = "Número de personas que trabajan", @Value = (Model.CantidadTrabajan != null ? Model.CantidadTrabajan.ToUpper() : ""), style = "text-transform:uppercase" } })
+                                                                @Html.ValidationMessageFor(model => model.CantidadTrabajan, "", new { @class = "text-danger" })
+
+                                                            </div>
+                                                            <div class="col-md-6 seguimiento">
+
+                                                                <label for="lastfullname">¿Consideras que necesitas beca o algún tipo de apoyo?</label>
+                                                                @Html.DropDownList("IdSolicitarBeca", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                @Html.ValidationMessageFor(model => model.IdSolicitarBeca, "", new { @class = "text-danger" })
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-12">
+                                                                <input type="submit" class="btn btn-primary btn-block" value="Siguiente">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        }
+                    </div>
+                </div>
+            </div>
+        </header>
+
+    </div>
+
+    @Html.Partial("~/ViewsStyles/Entrevista/views/ModalCamposFaltantes.cshtml")
+
+    <!-- jQuery -->
+    <script src="~/EstilosEntrevista/js/jquery.min.js"></script>
+    <!-- jQuery Easing -->
+    <script src="~/EstilosEntrevista/js/jquery.easing.1.3.js"></script>
+    <!-- Bootstrap -->
+    <script src="~/EstilosEntrevista/js/bootstrap.min.js"></script>
+    <!-- Waypoints -->
+    <script src="~/EstilosEntrevista/js/jquery.waypoints.min.js"></script>
+    <!-- Carousel -->
+    <script src="~/EstilosEntrevista/js/owl.carousel.min.js"></script>
+    <!-- countTo -->
+    <script src="~/EstilosEntrevista/js/jquery.countTo.js"></script>
+
+    <!-- Stellar Parallax -->
+    <script src="~/EstilosEntrevista/js/jquery.stellar.min.js"></script>
+
+    <!-- Magnific Popup -->
+    <script src="~/EstilosEntrevista/js/jquery.magnific-popup.min.js"></script>
+    <script src="~/EstilosEntrevista/js/magnific-popup-options.js"></script>
+
+    <!-- Datepicker -->
+    <script src="~/EstilosEntrevista/js/bootstrap-datepicker.min.js"></script>
+
+    <!-- Validacion de Campos -->
+    <script src="~/ViewsStyles/Entrevista/js/ValidacionCampos.js"></script>
+
+    <!-- Main -->
+    <script src="~/EstilosEntrevista/js/main.js"></script>
+
+    <!-- Script para mostrar/ocultar campos condicionales -->
+    <script>
+        $(document).ready(function () {
+            // Pregunta 1: ¿Reside en esta ciudad?
+            if ($('#Pregunta1').val() == 2) {
+                $("#1").removeClass("hidden");
+            }
+
+            $("#Pregunta1").change(function (e) {
+                if ($('#Pregunta1').val() == 2) {
+                    $("#1").removeClass("hidden");
+                } else {
+                    $("#1").addClass("hidden");
+                }
+            });
+
+            // Pregunta 2: ¿Trabajas?
+            if ($('#Pregunta2').val() == 1) {
+                $("#2").removeClass("hidden");
+            }
+
+            $("#Pregunta2").change(function (e) {
+                if ($('#Pregunta2').val() == 1) {
+                    $("#2").removeClass("hidden");
+                } else {
+                    $("#2").addClass("hidden");
+                }
+            });
+
+            // Pregunta 3: ¿Tienes dependientes?
+            if ($('#Pregunta3').val() == 1) {
+                $("#3").removeClass("hidden");
+            }
+
+            $("#Pregunta3").change(function (e) {
+                if ($('#Pregunta3').val() == 1) {
+                    $("#3").removeClass("hidden");
+                } else {
+                    $("#3").addClass("hidden");
+                }
+            });
+        });
+
+        $(document).ready(function () {
+            const solicitabeca = '@(economicos?.SolicitadoBeca?.Replace("'", "\\'") ?? "N/A")';
+
+            if ($('#CuentaConApoyo').val() == 1) {
+                $("#CuentaConApoyoInput").removeClass("hidden");
+                if (solicitabeca == 'N/A') {
+                    $('#CuentaConApoyoInput input').val('');
+                } else {
+                    $('#CuentaConApoyoInput input').val(solicitabeca);
+                }
+            }
+
+            $("#CuentaConApoyo").change(function (e) {
+                if ($('#CuentaConApoyo').val() == 1) {
+                    $("#CuentaConApoyoInput").removeClass("hidden");
+                    if (solicitabeca == 'N/A') {
+                        $('#CuentaConApoyoInput input').val('');
+                    } else {
+                        $('#CuentaConApoyoInput input').val(solicitabeca);
+                    }
+                } else {
+                    $("#CuentaConApoyoInput").addClass("hidden");
+                    $('#CuentaConApoyoInput input').val('N/A');
+                }
+            });
+
+            const idGrado = @(datos?.IdGrado ?? 0);
+            if (idGrado == 1) {
+                $(".seguimiento").addClass("hidden");
+            }
+        });
+    </script>
+
+    <!-- Script para botones Editar/Cancelar -->
+    <script>
+        function Mostrar() {
+            $("#Editar").removeClass("hidden");
+            $("#11").addClass("hidden");
+            $("#33").addClass("hidden");
+            $("#22").removeClass("hidden");
+        }
+
+        function Ocultar() {
+            $("#Editar").addClass("hidden");
+            $("#11").removeClass("hidden");
+            $("#33").removeClass("hidden");
+            $("#22").addClass("hidden");
+        }
+    </script>
+
+    <!-- NUEVO: Script de validación del formulario -->
+    <script>
+        $(document).ready(function () {
+            $('form').submit(function (e) {
+                var isValid = true;
+                var errorMessages = [];
+
+                if (!$('#OcupacionPapa').val() || $('#OcupacionPapa').val().trim() === '') {
+                    errorMessages.push('• Debes especificar la ocupación de tu papá');
+                    isValid = false;
+                }
+
+                if (!$('#OcupacionMama').val() || $('#OcupacionMama').val().trim() === '') {
+                    errorMessages.push('• Debes especificar la ocupación de tu mamá');
+                    isValid = false;
+                }
+
+                if (!$('#CantidadHermano').val() || $('#CantidadHermano').val().trim() === '') {
+                    errorMessages.push('• Debes especificar la cantidad de hermanos');
+                    isValid = false;
+                }
+
+                // Validar campos condicionales
+                if ($('#Pregunta1').val() == 2) {
+                    if (!$('#Ciudad').val() || $('#Ciudad').val().trim() === '') {
+                        errorMessages.push('• Debes especificar en qué ciudad resides');
+                        isValid = false;
+                    }
+                } else {
+                    $('#Ciudad').val('N/A');
+                }
+
+                if ($('#Pregunta2').val() == 1) {
+                    if (!$('#Familiar').val() || $('#Familiar').val().trim() === '') {
+                        errorMessages.push('• Debes especificar con quien vive');
+                        isValid = false;
+                    }
+                } else {
+                    $('#Familiar').val('N/A');
+                }
+
+                // Validar campos de seguimiento solo si están visibles
+                const idGrado = @(datos?.IdGrado ?? 0);
+                if (idGrado != 1) {
+                    if ($('#CuentaConApoyo').val() == 1) {
+                        var becaVal = $('#SolicitadoBeca').val();
+                        if (!becaVal || becaVal.trim() === '' || becaVal === 'N/A') {
+                            errorMessages.push('• Debes especificar qué beca o apoyo has solicitado');
+                            isValid = false;
+                        }
+                    } else {
+                        $('#SolicitadoBeca').val('N/A');
+                    }
+
+                } else {
+                    // Primer cuatrimestre - establecer valores por defecto
+                    $('#SolicitadoBeca').val('N/A');
+                    $('#AfectacionEco').val('N/A');
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Por favor completa los siguientes campos:\n\n' + errorMessages.join('\n'));
+                    return false;
+                }
+
+                return true;
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            function removeEmojisAndUppercase(input) {
+                input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+            }
+
+            var camposTexto = [
+                'input[name="Ciudad"]',
+                'input[name="Familiar"]',
+                'input[name="OcupacionPapa"]',
+                'input[name="OcupacionMama"]',
+                'input[name="CantidadHermano"]',
+                'input[name="CantidadPersonas"]',
+                'input[name="CantidadTrabajan"]'
+            ];
+
+            camposTexto.forEach(function (selector) {
+                var campo = $(selector);
+
+                campo.on('input', function () {
+                    removeEmojisAndUppercase(this);
+                });
+
+                campo.on('paste', function (e) {
+                    e.preventDefault();
+                    var pastedText = (e.originalEvent || e).clipboardData.getData('text/plain');
+                    pastedText = pastedText.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+
+                    var start = this.selectionStart;
+                    var end = this.selectionEnd;
+                    var value = this.value;
+                    this.value = value.substring(0, start) + pastedText + value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + pastedText.length;
+
+                    $(this).trigger('input');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

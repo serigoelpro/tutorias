@@ -1,0 +1,521 @@
+﻿@model Plataforma_Web.Controllers.CanalizacionesController.VulnerabilidadViewModel
+@{
+    ViewBag.Title = "Vulnerabilidades del Alumno";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/Canalizaciones.css" />
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/CanalizacionesFix.css" />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .swal2-popup .pdf-preview-container {
+            border: 1px solid #ccc;
+            font-family: Arial, sans-serif;
+            color: black;
+            font-size: 9pt;
+            text-align: left;
+        }
+
+            .swal2-popup .pdf-preview-container div {
+                box-sizing: border-box;
+            }
+    </style>
+</head>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+}
+
+
+<div class="student-info-card">
+    <h2>Vulnerabilidades del alumno</h2>
+    <div class="student-details-grid">
+        <div class="detail-item">
+            <span class="detail-label">Nombre:</span>
+            <span class="detail-value">@Model.Nombre</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Matrícula:</span>
+            <span class="detail-value">@Model.Matricula</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Grupo:</span>
+            <span class="detail-value">@Model.Grupo</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Carrera:</span>
+            <span class="detail-value">@Model.Carrera</span>
+        </div>
+        <div class="detail-item photo-container">
+            <img src="@Url.Action("ObtenerFoto", "Canalizaciones", new { id = Model.IdPersona })"
+                 class="student-photo" alt="Foto del estudiante">
+        </div>
+    </div>
+</div>
+
+
+<div class="history-card">
+    <div class="card-header">
+        <h3>Historial de vulnerabilidades</h3>
+    </div>
+    <div class="card-body">
+        @if (Model.Historial != null && Model.Historial.Any())
+        {
+            <div class="history-table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Vulnerabilidades</th>
+                            <th>Tutor</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Historial)
+                        {
+                            <tr>
+                                <td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.Tipo</td>
+                                <td>@item.MotivoCanalizacion</td>
+                                <td>@item.CorreoTutor</td>
+                                <td>
+                                    <button type="button" class="btn-print-historial btn-preview"
+                                            title="Generar PDF de esta canalización"
+                                            data-carrera="@Model.Carrera"
+                                            data-especialidad="@Model.Especialidad"
+                                            data-nombre="@Model.Nombre"
+                                            data-matricula="@Model.Matricula"
+                                            data-grupo="@Model.Grupo"
+                                            data-turno="@Model.Turno"
+                                            data-email="@Model.Email"
+                                            data-celular="@Model.Celular"
+                                            data-tutor-fullname="@item.TutorFullName"
+                                            data-tutor-username="@item.CorreoTutor"
+                                            data-tipo-canalizacion="@item.Tipo"
+                                            data-notas="@item.MotivoCanalizacion"
+                                            data-fecha-registro="@item.Fecha.ToString("dd/MM/yyyy HH:mm")">
+                                        <i class="fas fa-print"></i> Imprimir PDF
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="no-records">
+                No hay registros de vulnerabilidades para este estudiante.
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            function decodeHtml(html) {
+                const txt = document.createElement("textarea");
+                txt.innerHTML = html;
+                return txt.value;
+            }
+
+            $('.history-table').on('click', '.btn-preview', function () {
+                const button = $(this);
+
+                const canalizacionData = {
+                    carrera: decodeHtml(button.data('carrera') || 'No disponible'),
+                    nombre: decodeHtml(button.data('nombre') || 'No disponible'),
+                    matricula: decodeHtml(button.data('matricula') || 'No disponible'),
+                    grupo: decodeHtml(button.data('grupo') || 'No disponible'),
+                    turno: decodeHtml(button.data('turno') || 'No disponible'),
+                    email: decodeHtml(button.data('email') || 'No disponible'),
+                    celular: decodeHtml(button.data('celular') || 'No disponible'),
+                    tutorFullName: decodeHtml(button.data('tutor-fullname') || 'No disponible'),
+                    tutorUsername: decodeHtml(button.data('tutor-username') || 'No disponible'),
+                    tipoCanalizacion: decodeHtml(button.data('tipo-canalizacion') || 'No seleccionado'),
+                    motivoCanalizacion: decodeHtml(button.data('notas') || 'Sin motivo especificado.'),
+                    fechaRegistro: decodeHtml(button.data('fecha-registro') || 'Fecha no disponible')
+                };
+
+                generatePreview(canalizacionData);
+            });
+
+            function generatePreview(modelData) {
+                try {
+
+                    const check = (type) => modelData.tipoCanalizacion === type ? '☒' : '☐';
+                    const borderStyle = '0.5pt solid black';
+                    const labelBg = '#F0F0F0';
+
+                    const previewHTML = `
+                                <div class="pdf-preview-container" style="padding: 12.7mm 19mm; background: white;">
+                                    <div style="width: 177.9mm;">
+                                        <div style="display: flex; height: 16mm; margin-bottom: 5mm;">
+                                            <div style="width: 50mm; border: ${borderStyle}; display: flex; align-items: center; justify-content: center;">
+                                                <img src="/Imagenes/ImagenesPagina/UT-Bis.png" style="width: 45mm; height: 14mm;" alt="Logo"/>
+                                            </div>
+                                            <div style="flex-grow: 1; border: ${borderStyle}; border-left: none; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 13pt; text-align: center;">
+                                                <span>FORMATO DE CANALIZACIÓN A LOS SERVICIOS</span>
+                                                <span>PSICOPEDAGÓGICOS</span>
+                                            </div>
+                                        </div>
+
+                                        <div style="display: flex; height: 8mm;">
+                                            <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Programa Educativo:</div>
+                                            <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.carrera}</div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+
+                                        <div style="display: flex; height: 8mm;">
+                                            <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Nombre del alumno:</div>
+                                            <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.nombre}</div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+
+                                        <div style="display: flex; height: 8mm;">
+                                            <div style="width: 25mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Matrícula:</div>
+                                            <div style="width: 35mm; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.matricula}</div>
+                                            <div style="width: 30mm; background: ${labelBg}; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Grado y grupo:</div>
+                                            <div style="width: 35mm; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.grupo}</div>
+                                            <div style="width: 18mm; background: ${labelBg}; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Turno:</div>
+                                            <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.turno}</div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+
+                                        <div style="display: flex; height: 8mm;">
+                                            <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Correo institucional:</div>
+                                            <div style="width: 53mm; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.email}</div>
+                                            <div style="width: 40mm; background: ${labelBg}; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Número de celular:</div>
+                                            <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.celular}</div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+
+                                        <div style="display: flex; height: 8mm;">
+                                            <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Nombre del tutor:</div>
+                                            <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.tutorFullName}</div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+                                        <div style="display: flex; height: 8mm;">
+                                            <div style="width: 45mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Correo institucional:</div>
+                                            <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.tutorUsername}</div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+
+                                        <div style="display: flex; height: 22mm;">
+                                            <div style="width: 38mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center; justify-content: center; text-align: center;">Canalización por identificación de vulnerabilidad:</div>
+                                            <div style="flex-grow: 1; display: flex; font-size: 9pt;">
+                                                <div style="flex: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; display: flex; align-items: center; justify-content: center;">${check('Personal')} Personal</div>
+                                                <div style="flex: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; display: flex; align-items: center; justify-content: center;">${check('Académica')} Académica</div>
+                                                <div style="flex: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; display: flex; align-items: center; justify-content: center;">${check('Socioeconómica')} Socioeconómica</div>
+                                                <div style="flex: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; line-height: 1.2;">
+                                                    <div>${check('Iniciativa propia')} Ninguna,</div>
+                                                    <div>iniciativa propia.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+
+                                        <div>
+                                            <div style="background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center; min-height: 12mm;">Explique las características que consideró en base a la entrevista inicial realizada al alumno canalizado para asignar el tipo de vulnerabilidad:</div>
+                                            <div style="border-left: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; min-height: 25mm; white-space: pre-wrap; word-wrap: break-word;">${modelData.motivoCanalizacion}</div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+
+                                        <div style="display: flex; height: 8mm;">
+                                              <div style="width: 60mm; background: ${labelBg}; border: ${borderStyle}; padding: 2mm; font-weight: bold; display: flex; align-items: center;">Fecha y hora de la primera cita:</div>
+                                              <div style="flex-grow: 1; border-top: ${borderStyle}; border-right: ${borderStyle}; border-bottom: ${borderStyle}; padding: 2mm; display: flex; align-items: center;">${modelData.fechaRegistro}</div>
+                                        </div>
+                                        <div style="height: 15mm;"></div>
+
+                                        <div style="display: flex; justify-content: space-between; text-align: center;">
+                                            <div style="width: 57.5mm;">
+                                                <div style="background: ${labelBg}; border: ${borderStyle}; height: 12mm; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                                    <div style="font-weight: bold; font-size: 10pt;">TUTOR:</div>
+                                                    <div style="font-style: italic; font-size: 7.5pt; margin-top: 2mm;">Nombre y firma autógrafa</div>
+                                                </div>
+                                                <div style="height: 10mm; border-bottom: 0.2mm solid black; margin-top: 10mm;"></div>
+                                            </div>
+                                            <div style="width: 57.5mm;">
+                                                <div style="background: ${labelBg}; border: ${borderStyle}; height: 12mm; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                                    <div style="font-weight: bold; font-size: 10pt;">ALUMNO:</div>
+                                                    <div style="font-style: italic; font-size: 7.5pt; margin-top: 2mm;">Nombre y firma autógrafa</div>
+                                                </div>
+                                                <div style="height: 10mm; border-bottom: 0.2mm solid black; margin-top: 10mm;"></div>
+                                            </div>
+                                            <div style="width: 57.5mm;">
+                                                <div style="background: ${labelBg}; border: ${borderStyle}; height: 12mm; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                                    <div style="font-weight: bold; font-size: 10pt;">PSICÓLOGO:</div>
+                                                    <div style="font-style: italic; font-size: 7.5pt; margin-top: 2mm;">Nombre y firma autógrafa</div>
+                                                </div>
+                                                <div style="height: 10mm; border-bottom: 0.2mm solid black; margin-top: 10mm;"></div>
+                                            </div>
+                                        </div>
+                                        <div style="height: 5mm;"></div>
+
+                                        <div style="text-align: right; font-size: 11pt;">F-PSE-DICA-12/R02</div>
+                                    </div>
+                                </div>
+                            `;
+
+                    Swal.fire({
+                        title: 'Vista previa del documento',
+                        html: previewHTML,
+                        width: '850px',
+                        showCancelButton: true,
+                        confirmButtonText: 'Generar PDF',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#007bff',
+                        cancelButtonColor: '#6c757d'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            generatePDF(modelData);
+                        }
+                    });
+
+                } catch (error) {
+                    console.error('Error al generar la vista previa:', error);
+                    Swal.fire('Error', 'Ocurrió un error al generar la vista previa.', 'error');
+                }
+            }
+
+            function generatePDF(data) {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'letter'
+                    });
+
+                    const leftMargin = 19;
+                    const topMargin = 12.7;
+                    const usableWidth = 215.9 - (leftMargin * 2);
+                    let y = topMargin;
+
+                    // --- ENCABEZADO ---
+                    const headerHeight = 16;
+                    const logoBoxWidth = 50;
+                    const titleFontSize = 13;
+
+                    doc.rect(leftMargin, y, logoBoxWidth, headerHeight);
+
+                    const imageWidth = 35;
+                    const imageHeight = 14;
+                    const imageX = leftMargin + (logoBoxWidth - imageWidth) / 2;
+                    const imageY = y + (headerHeight - imageHeight) / 2;
+                    doc.addImage('/Imagenes/ImagenesPagina/UT-Bis.png', 'PNG', imageX, imageY, imageWidth, imageHeight);
+
+                    doc.setFontSize(titleFontSize);
+                    doc.setFont('helvetica', 'bold');
+
+                    const titleX = leftMargin + logoBoxWidth;
+                    const titleWidth = usableWidth - logoBoxWidth;
+                    doc.rect(titleX, y, titleWidth, headerHeight);
+
+                    const titleLine1 = 'FORMATO DE CANALIZACIÓN A LOS SERVICIOS';
+                    const titleLine2 = 'PSICOPEDAGÓGICOS';
+                    doc.text(titleLine1, titleX + (titleWidth / 2), y + 7, { align: 'center' });
+                    doc.text(titleLine2, titleX + (titleWidth / 2), y + 12, { align: 'center' });
+                    y += headerHeight + 5;
+
+                    // --- Helper para dibujar filas de datos ---
+                    const drawRow = (label, value, labelWidth, valueWidth, rowHeight = 8) => {
+                        doc.setFillColor(240, 240, 240);
+                        doc.rect(leftMargin, y, labelWidth, rowHeight, 'F');
+                        doc.rect(leftMargin, y, labelWidth, rowHeight);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.text(label, leftMargin + 2, y + 5.5);
+                        doc.rect(leftMargin + labelWidth, y, valueWidth, rowHeight);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(9);
+                        doc.text(value, leftMargin + labelWidth + 2, y + 5.5, { maxWidth: valueWidth - 4 });
+                        y += rowHeight;
+                    };
+
+                    // --- Datos del Alumno y Tutor ---
+                    drawRow('Programa Educativo:', data.carrera, 45, usableWidth - 45);
+                    y += 5;
+                    drawRow('Nombre del alumno:', data.nombre, 45, usableWidth - 45);
+                    y += 5;
+
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin, y, 25, 8, 'F'); doc.rect(leftMargin, y, 25, 8);
+                    doc.setFont('helvetica', 'bold'); doc.text('Matrícula:', leftMargin + 2, y + 5.5);
+                    doc.rect(leftMargin + 25, y, 35, 8); doc.setFont('helvetica', 'normal'); doc.text(data.matricula, leftMargin + 27, y + 5.5);
+
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin + 60, y, 30, 8, 'F'); doc.rect(leftMargin + 60, y, 30, 8);
+                    doc.setFont('helvetica', 'bold'); doc.text('Grado y grupo:', leftMargin + 62, y + 5.5);
+                    doc.rect(leftMargin + 90, y, 35, 8); doc.setFont('helvetica', 'normal'); doc.text(data.grupo, leftMargin + 92, y + 5.5);
+
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin + 125, y, 18, 8, 'F'); doc.rect(leftMargin + 125, y, 18, 8);
+                    doc.setFont('helvetica', 'bold'); doc.text('Turno:', leftMargin + 127, y + 5.5);
+                    doc.rect(leftMargin + 143, y, usableWidth - 143, 8); doc.setFont('helvetica', 'normal'); doc.text(data.turno, leftMargin + 145, y + 5.5);
+                    y += 8;
+
+                    y += 5;
+
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin, y, 45, 8, 'F'); doc.rect(leftMargin, y, 45, 8);
+                    doc.setFont('helvetica', 'bold'); doc.text('Correo institucional:', leftMargin + 2, y + 5.5);
+                    doc.rect(leftMargin + 45, y, 53, 8); doc.setFont('helvetica', 'normal'); doc.text(data.email, leftMargin + 47, y + 5.5, { maxWidth: 51 });
+
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin + 98, y, 40, 8, 'F'); doc.rect(leftMargin + 98, y, 40, 8);
+                    doc.setFont('helvetica', 'bold'); doc.text('Número de celular:', leftMargin + 100, y + 5.5);
+                    doc.rect(leftMargin + 138, y, usableWidth - 138, 8); doc.setFont('helvetica', 'normal'); doc.text(data.celular, leftMargin + 140, y + 5.5);
+                    y += 8 + 5;
+
+                    drawRow('Nombre del tutor:', data.tutorFullName, 45, usableWidth - 45);
+                    y += 5;
+                    drawRow('Correo institucional:', data.tutorUsername, 45, usableWidth - 45);
+                    y += 5;
+
+                    // --- SECCIÓN DE VULNERABILIDAD ---
+                    const vulnHeight = 22;
+                    const labelColWidth = 38;
+                    const options = [
+                        { key: 'Personal', text: 'Personal' },
+                        { key: 'Académica', text: 'Académica' },
+                        { key: 'Socioeconómica', text: 'Socioeconómica' },
+                        { key: 'Iniciativa propia', text: 'Ninguna, iniciativa propia.' }
+                    ];
+                    const optionColWidth = (usableWidth - labelColWidth) / options.length;
+
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(leftMargin, y, labelColWidth, vulnHeight, 'F');
+                    doc.rect(leftMargin, y, labelColWidth, vulnHeight);
+                    doc.setFont('helvetica', 'bold');
+
+                    const labelText = 'Canalización por identificación de vulnerabilidad:';
+                    const labelLines = doc.splitTextToSize(labelText, labelColWidth - 4);
+                    const labelBlockHeight = labelLines.length * 4;
+                    const labelY = y + (vulnHeight / 2) - (labelBlockHeight / 2) + 3;
+                    doc.text(labelLines, leftMargin + 2, labelY);
+
+                    let currentX = leftMargin + labelColWidth;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+
+                    options.forEach(option => {
+                        const isSelected = data.tipoCanalizacion.trim() === option.key;
+
+                        doc.rect(currentX, y, optionColWidth, vulnHeight);
+
+                        const checkboxSize = 3;
+                        const checkboxX = currentX + 3;
+                        const checkboxY = y + (vulnHeight / 2) - (checkboxSize / 2);
+                        doc.rect(checkboxX, checkboxY, checkboxSize, checkboxSize);
+
+                        if (isSelected) {
+                            doc.line(checkboxX, checkboxY, checkboxX + checkboxSize, checkboxY + checkboxSize);
+                            doc.line(checkboxX, checkboxY + checkboxSize, checkboxX + checkboxSize, checkboxY);
+                        }
+
+                        const textX = checkboxX + checkboxSize + 1.5;
+                        const textMaxWidth = optionColWidth - (textX - currentX) - 2;
+                        const textLines = doc.splitTextToSize(option.text, textMaxWidth);
+
+                        const textBlockHeight = textLines.length * 3.5;
+                        const textY = y + (vulnHeight / 2) - (textBlockHeight / 2) + 2.5;
+
+                        doc.text(textLines, textX, textY);
+
+                        currentX += optionColWidth;
+                    });
+                    y += vulnHeight + 5;
+
+                    // --- Sección de Motivo ---
+                    doc.setFillColor(240, 240, 240); doc.rect(leftMargin, y, usableWidth, 12, 'F');
+                    doc.rect(leftMargin, y, usableWidth, 12);
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+                    doc.text('Explique las características que consideró en base a la entrevista inicial realizada al alumno canalizado para asignar el tipo de vulnerabilidad:', leftMargin + 2, y + 5, { maxWidth: usableWidth - 4 });
+                    y += 12;
+
+                    const motiveLines = doc.splitTextToSize(data.motivoCanalizacion, usableWidth - 4);
+                    const motiveHeight = 25;
+                    doc.rect(leftMargin, y, usableWidth, motiveHeight);
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+                    doc.text(motiveLines, leftMargin + 2, y + 5);
+                    y += motiveHeight + 5;
+
+                    // --- Sección de Fecha ---
+                    drawRow('Fecha y hora de la primera cita:', data.fechaRegistro, 60, usableWidth - 60);
+                    y += 15;
+
+                    // --- SECCIÓN DE FIRMAS ---
+                    const sigY = y;
+                    const sigWidth = 57.5;
+                    const sigHeight = 12;
+                    const sigGap = (usableWidth - (sigWidth * 3)) / 2;
+
+                    const drawSignatureBox = (x, y_pos, label) => {
+                        doc.setFillColor(240, 240, 240);
+                        doc.rect(x, y_pos, sigWidth, sigHeight, 'F');
+                        doc.rect(x, y_pos, sigWidth, sigHeight);
+
+                        const centerY = y_pos + sigHeight / 2;
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.text(label, x + sigWidth / 2, centerY - 1.5, { align: 'center' });
+
+                        doc.setFont('helvetica', 'italic');
+                        doc.setFontSize(7.5);
+                        doc.text('Nombre y firma autógrafa', x + sigWidth / 2, centerY + 3.5, { align: 'center' });
+                    };
+
+                    const firstBoxX = leftMargin;
+                    const secondBoxX = leftMargin + sigWidth + sigGap;
+                    const thirdBoxX = leftMargin + sigWidth * 2 + sigGap * 2;
+
+                    drawSignatureBox(firstBoxX, sigY, 'TUTOR:');
+                    drawSignatureBox(secondBoxX, sigY, 'ALUMNO:');
+                    drawSignatureBox(thirdBoxX, sigY, 'PSICÓLOGO:');
+
+                    const lineY = sigY + sigHeight + 20;
+                    doc.setLineWidth(0.2);
+                    doc.line(firstBoxX, lineY, firstBoxX + sigWidth, lineY);
+                    doc.line(secondBoxX, lineY, secondBoxX + sigWidth, lineY);
+                    doc.line(thirdBoxX, lineY, thirdBoxX + sigWidth, lineY);
+
+                    y = lineY + 5;
+
+                    // --- Footer ---
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const bottomMargin = 12.7;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(11);
+                    doc.text('F-PSE-DICA-12/R02', leftMargin + usableWidth, pageHeight - bottomMargin, { align: 'right' });
+
+                    // --- Guardar PDF ---
+                    const safeNombre = data.nombre.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    doc.save(`Canalizacion_${safeNombre}.pdf`);
+
+                } catch (error) {
+                    console.error('Error al generar el PDF:', error);
+                    Swal.fire('Error', 'Ocurrió un error al generar el PDF.', 'error');
+                }
+            }
+        });
+    </script>
+}

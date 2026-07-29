@@ -1,0 +1,122 @@
+﻿@model IEnumerable<Plataforma_Web.Models.Usuario>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Usuarios</h2>
+
+<script>
+    //JQuery es una estructura o sintaxis
+    //Este script se ejecuta cuando la pagina termina de cargar
+    $(document).ready(function () {
+        //Inicializamos la tabla como un DataTable
+        $('#Usuario').DataTable({
+            "lengthChange": false,
+            // Traducción al español
+            "oLanguage": {
+                "sProcessing": "Procesando...",
+                "sLengthMenu": "Mostrar _MENU_ registros",
+                "sZeroRecords": "No se encontraron resultados",
+                "sEmptyTable": "Ningún dato disponible en esta tabla",
+                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+                //"sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sSearch": "Buscar:",
+                "sUrl": "",
+                "sInfoThousands": ",",
+                "sLoadingRecords": "Cargando...",
+                "oPaginate": {
+                    "sFirst": "Primero",
+                    "sLast": "Último",
+                    "sNext": "Siguiente",
+                    "sPrevious": "Anterior"
+                },
+                "oAria": {
+                    "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                    "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+                }
+            }
+        });
+    });
+</script>
+
+<p>
+    <a class="btn btn-primary" href="@Url.Action("Create")"
+       role="button">
+        <span class="glyphicon glyphicon-plus"></span>
+        Crear
+        <span class="glyphicon glyphicon-user"></span>
+    </a>
+</p>
+<table id="Usuario" class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Nivel.Descripcion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NombreCompleto)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Password)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Estado)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Nivel.Descripcion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NombreCompleto)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Password)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Estado)
+            </td>
+            <td>
+
+                <a class="btn btn-primary" href="@Url.Action("Edit", new { id = item.IdUsuario })"
+                   role="button">
+                    <span class="glyphicon glyphicon-pencil"></span>
+                    @*Editar*@
+
+                </a>
+                <a class="btn btn-primary" href="@Url.Action("Details", new { id = item.IdUsuario })"
+                   role="button" style=" background-color:#434b52; border-color: #434b52;">
+                    <span class="glyphicon glyphicon-eye-open"></span>
+                    @*Ver*@
+
+                </a>
+
+                <a class="btn btn-primary" href="@Url.Action("Delete", new { id = item.IdUsuario })"
+                   role="button" style=" background-color:  #c51e1e; border-color: #c51e1e;">
+                    <span class="glyphicon glyphicon-trash"></span>
+                    @*Eliminar*@
+
+                </a>
+
+                @*@Html.ActionLink("Editar", "Edit", new { id = item.IdUsuario }) |
+            @Html.ActionLink("Detalles", "Details", new { id = item.IdUsuario }) |
+            @Html.ActionLink("Eliminar", "Delete", new { id = item.IdUsuario })*@
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>

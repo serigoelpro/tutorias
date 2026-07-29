@@ -1,0 +1,4312 @@
+@model List<PlataformaWeb.Models.Materias.MateriaAlumno>
+@using System.Collections.Generic
+@using System.Web.Script.Serialization
+@using PlataformaWeb.Models.Materias
+@{
+    ViewBag.Title = "Materias del Alumno";
+
+    string nombreAlumno = ViewBag.AlumnoNombre as string ?? "Alumno";
+    string matricula = ViewBag.Matricula as string ?? "";
+    string carrera = ViewBag.Carrera as string ?? "";
+    int idPersona = ViewBag.IdPersona != null ? (int)ViewBag.IdPersona : 0;
+
+    // OBTENER EL GRADO ACTUAL DEL ALUMNO DESDE VIEWBAG
+    int gradoActualAlumno = ViewBag.IdGrado != null ? (int)ViewBag.IdGrado : 0;
+
+    // ESTADO ACTUAL DEL ALUMNO - LÍMITES CORREGIDOS 3/4
+    int totalReprobadas = ViewBag.TotalReprobadas != null ? (int)ViewBag.TotalReprobadas : 0;
+    int totalExtraordinarios = ViewBag.TotalExtraordinarios != null ? (int)ViewBag.TotalExtraordinarios : 0;
+
+    // LÍMITES CORREGIDOS: >=4 arrastre O >=4 extraordinario = BAJA
+    bool dadoDeBajaPorArrastre = totalReprobadas >= 4;
+    bool dadoDeBajaPorExtraordinarios = totalExtraordinarios >= 4;
+    bool alumnoReprobado = dadoDeBajaPorArrastre || dadoDeBajaPorExtraordinarios;
+
+    // Determinar motivo de reprobación
+    string motivoReprobacion = "";
+    if (dadoDeBajaPorArrastre && dadoDeBajaPorExtraordinarios)
+    {
+        motivoReprobacion = "Excedió límite de materias en arrastre (≥4) y extraordinario (≥4)";
+    }
+    else if (dadoDeBajaPorArrastre)
+    {
+        motivoReprobacion = "Excedió límite de materias en arrastre (≥4)";
+    }
+    else if (dadoDeBajaPorExtraordinarios)
+    {
+        motivoReprobacion = "Excedió límite de materias en extraordinario (≥4)";
+    }
+
+    // INDICADORES DE LÍMITE CORREGIDOS
+    bool enElLimiteArrastre = totalReprobadas == 2;
+    bool enElLimiteExtraordinarios = totalExtraordinarios == 3;
+    bool cercaDelLimite = enElLimiteArrastre || enElLimiteExtraordinarios;
+
+    // Precalcular estados y separar materias por estado
+    var materiasReprobadas = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+    var materiasExtraordinario = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+    var materiasAcreditadas = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+    var materiasPendientes = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+
+
+    // Lista de materias no acreditadas para mostrar en la tabla de unidades
+    var materiasNoAcreditadas = new List<PlataformaWeb.Models.Materias.MateriaAlumno>();
+
+
+
+    decimal suma = 0;
+    int contador = 0;
+    bool hayReprobadaEnPromedio = false;
+    bool tieneReprobadas = false;
+    bool tieneExtraordinario = false;
+    decimal promedioFinal = 0;
+
+    // Contadores para determinar plan predominante
+    int materiasPlan2020 = 0;
+    int materiasPlan2024 = 0;
+
+    // DECLARAR CALIFICACIÓN MÍNIMA DEL PLAN
+    decimal calificacionMinimaDelPlan = 7.0m;
+
+    if (Model != null)
+    {
+        foreach (var item in Model)
+        {
+
+            // Contar materias por plan de estudio Y CALCULAR PROMEDIO
+            if (item.IdGrado == gradoActualAlumno)
+            {
+                string nombrePlan = item.NombrePlan ??
+"";
+                if (nombrePlan.Contains("2020"))
+                {
+                    materiasPlan2020++;
+                }
+                else if (nombrePlan.Contains("2024"))
+                {
+                    materiasPlan2024++;
+                }
+
+                // SUMAR CALIFICACIONES PARA EL PROMEDIO (LÓGICA CORREGIDA)
+                // Solo sumar si la materia es del cuatrimestre actual
+                if (item.Calificacion.HasValue && item.Estado != null && item.Estado.ToLower() != "pendiente")
+                {
+                    decimal calificacionParaSuma = item.Calificacion.Value;
+
+                    if (nombrePlan.Contains("2020"))
+                    {
+                        // 1. Detectar si falló alguna unidad (Usamos Exists para evitar error de LINQ)
+                        bool tieneUnidadReprobada = false;
+                        if (item.CalificacionesUnidades != null && item.CalificacionesUnidades.Count > 0)
+                        {
+                            tieneUnidadReprobada = item.CalificacionesUnidades.Exists(u => u.Calificacion.HasValue && u.Calificacion.Value < 8.0m);
+                        }
+
+                        // 2. Ajustar calificación individual
+                        // NOTA: En Razor es OBLIGATORIO usar llaves { } en los if/else
+                        // Castigar sólo cuando la calificación realmente NO alcanzó el mínimo.
+                        // Si Estado="Extraordinario" pero la calificación es >= 8 (pasó el extraordinario
+                        // aunque Estado no se actualizó a "Acreditada"), NO aplicar castigo.
+                        bool extraordinarioSinAcreditar = item.Estado == "Extraordinario" &&
+                            (!item.Calificacion.HasValue || item.Calificacion.Value < 8.0m);
+
+                        // El resultado del EXTRAORDINARIO o de un registro ya ACREDITADO con >= 8
+                        // PREVALECE sobre las calificaciones originales de las unidades.
+                        // Si la materia se acreditó (por extraordinario o por curso) con >=8, las
+                        // unidades reprobadas originales NO deben castigar el promedio general.
+                        bool acreditadaPorExtraordinarioOCurso =
+                            item.Calificacion.HasValue && item.Calificacion.Value >= 8.0m &&
+                            (item.Estado == "Extraordinario" || item.Estado == "Acreditada");
+                        if (acreditadaPorExtraordinarioOCurso)
+                        {
+                            tieneUnidadReprobada = false;
+                        }
+
+                        if (tieneUnidadReprobada || extraordinarioSinAcreditar || item.Estado == "Reprobada")
+                        {
+                            // Castigo: Si tiene >= 8 pero reprobó unidad, baja a 7
+                            if (calificacionParaSuma >= 8.0m)
+                            {
+                                calificacionParaSuma = 7.0m;
+                            }
+                            else
+                            {
+                                calificacionParaSuma = Math.Floor(calificacionParaSuma);
+                            }
+                        }
+                        else
+                        {
+                            // Aprobada limpia
+                            if (calificacionParaSuma >= 8.0m)
+                            {
+                                calificacionParaSuma = Math.Round(calificacionParaSuma, 0);
+                            }
+                            else
+                            {
+                                calificacionParaSuma = Math.Floor(calificacionParaSuma);
+                            }
+                        }
+
+                        // 3. BANDERA GLOBAL: Si esta materia quedo reprobada (< 8), marcamos para castigar el promedio final
+                        if (calificacionParaSuma < 8.0m)
+                        {
+                            hayReprobadaEnPromedio = true;
+                        }
+                    }
+
+                    suma += calificacionParaSuma;
+                    contador++;
+
+                }
+            }
+
+
+            // Separar materias por estado (para las listas de arrastre, etc.)
+            var estado = item.Estado != null ?
+    item.Estado.ToLower() : null;
+            switch (estado)
+            {
+                case "reprobada":
+                    materiasReprobadas.Add(item);
+                    tieneReprobadas = true;
+                    break;
+                case "extraordinario":
+                    materiasExtraordinario.Add(item);
+                    tieneExtraordinario = true;
+                    break;
+                case "acreditada":
+                    materiasAcreditadas.Add(item);
+                    break;
+                default:
+                    materiasPendientes.Add(item);
+                    break;
+            }
+
+            // Solo agregar materias que NO estén acreditadas
+            if (estado != "acreditada")
+            {
+                materiasNoAcreditadas.Add(item);
+            }
+        }
+
+        // Determinar plan predominante
+        bool usarPlan2020 = materiasPlan2020 > materiasPlan2024;
+        bool usarPlan2024 = materiasPlan2024 >= materiasPlan2020;
+
+        string planPredominante = usarPlan2020 ? "Plan 2020" : "Plan 2024";
+
+        // Determinar calificación mínima según plan predominante
+        calificacionMinimaDelPlan = usarPlan2020 ? 8.0m : 7.0m;
+
+        // Lógica del promedio según plan predominante
+        if (contador > 0)
+        {
+            decimal promedioBase = suma / contador;
+
+            if (usarPlan2020)
+            {
+                // PLAN 2020: Lógica Estricta
+
+                // VALIDACION MAESTRA:
+                // Si hay AL MENOS UNA materia reprobada (<8) en el promedio,
+                // el promedio general NO puede ser aprobatorio (>=8), aunque la matemática diga lo contrario.
+                if (hayReprobadaEnPromedio && promedioBase >= 8.0m)
+                {
+                    promedioFinal = 7.0m; // Castigo: Tope máximo reprobatorio
+                }
+                else if (promedioBase < 8.0m)
+                {
+                    // Si ya era reprobatorio, aplicamos Floor (ej: 7.9 -> 7)
+                    promedioFinal = Math.Floor(promedioBase);
+                }
+                else
+                {
+                    // Si no hay reprobadas y el promedio es bueno, redondeo normal (ej: 9.5 -> 10)
+                    promedioFinal = Math.Round(promedioBase, 0);
+                }
+            }
+            else
+            {
+                // PLAN 2024: Mantener decimales
+                promedioFinal = Math.Round(promedioBase, 2);
+            }
+        }
+        else
+        {
+            promedioFinal = 0;
+        }
+    }
+
+    bool tieneMaterias = Model != null && Model.Count > 0;
+
+    int usuarioNivel = ViewBag.UsuarioNivel ?? 0;
+    bool esMaster = usuarioNivel == 4;
+}
+
+<div class="sga-scope">
+    <h2>
+        Materias de @nombreAlumno
+        @if (!string.IsNullOrEmpty(matricula))
+        {
+            <small class="text-muted">(@matricula - @carrera)</small>
+        }
+    </h2>
+
+    @if (!string.IsNullOrEmpty(ViewBag.Error as string))
+    {
+        <div class="alert alert-danger">
+            <strong>Error:</strong> @ViewBag.Error
+        </div>
+    }
+
+    <!-- ALERTA CRÍTICA DE BAJA ACADÉMICA -->
+    @if (alumnoReprobado)
+    {
+        <div class="alert alert-danger alert-dismissible" style="border: 3px solid #d9534f; animation: pulse-critical 2s infinite;">
+            <h3><span class="glyphicon glyphicon-ban-circle"></span> <strong> LÍMITES ACADÉMICOS EXCEDIDOS</strong></h3>
+            <h4>@motivoReprobacion</h4>
+            <p><strong>El sistema detectó automáticamente que se excedieron los límites permitidos.</strong></p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><strong>Límites Excedidos:</strong></h5>
+                    <ul style="font-size: 14px;">
+                        @if (dadoDeBajaPorArrastre)
+                        {
+                            <li style="color: #d9534f;"><strong>✗ Materias en Arrastre:</strong> @totalReprobadas/3 </li>
+                        }
+                        @if (dadoDeBajaPorExtraordinarios)
+                        {
+                            <li style="color: #d9534f;"><strong>✗ Materias en Extraordinario:</strong> @totalExtraordinarios/3</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- PANEL DE ESTADO ACADÉMICO -->
+    <div class="panel @(alumnoReprobado ? "panel-danger" : (cercaDelLimite ? "panel-warning" : "panel-info"))">
+        <div class="panel-heading">
+            <h4>
+                <span class="glyphicon @(alumnoReprobado ? "glyphicon-exclamation-sign" : "glyphicon-info-sign")"></span>
+                Estado Académico
+            </h4>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5><strong>Materias en Arrastre</strong></h5>
+                    <span class="badge @(totalReprobadas >= 4 ? "badge-danger" : (totalReprobadas == 3 ? "badge-warning" : "badge-success"))" style="font-size: 18px;">
+                        @totalReprobadas / 3
+                    </span>
+                    @if (totalReprobadas >= 4)
+                    {
+                        <br /><small class="text-danger"><strong><span class="glyphicon glyphicon-ban-circle"></span> LÍMITE EXCEDIDO</strong></small>
+                    }
+                    else if (totalReprobadas >= 3)
+                    {
+                        <br /><small class="text-warning"><strong><span class="glyphicon glyphicon-warning-sign"></span> EN EL LÍMITE</strong></small>
+                    }
+                    else
+                    {
+                        <br /><small class="text-success"><strong><span class="glyphicon glyphicon-ok-circle"></span> Dentro del límite</strong></small>
+                    }
+                </div>
+
+                <div class="col-md-4">
+                    <h5><strong>Materias en Extraordinario</strong></h5>
+                    <span class="badge @(totalExtraordinarios >= 4 ? "badge-danger" : (totalExtraordinarios == 3 ? "badge-warning" : "badge-success"))" style="font-size: 18px;">
+                        @totalExtraordinarios / 3
+                    </span>
+                    @if (totalExtraordinarios >= 4)
+                    {
+                        <br /><small class="text-danger"><strong><span class="glyphicon glyphicon-ban-circle"></span> LÍMITE EXCEDIDO</strong></small>
+                    }
+                    else if (totalExtraordinarios == 3)
+                    {
+                        <br /><small class="text-warning"><strong><span class="glyphicon glyphicon-warning-sign"></span> EN EL LÍMITE</strong></small>
+                    }
+                    else
+                    {
+                        <br /><small class="text-success"><strong><span class="glyphicon glyphicon-ok-circle"></span> Dentro del límite</strong></small>
+                    }
+                </div>
+
+                <div class="col-md-4">
+                    <h5><strong>Estado del Sistema</strong></h5>
+                    <span class="badge @(alumnoReprobado ? "badge-danger" : "badge-success")" style="font-size: 18px;">
+                        @(alumnoReprobado ? "REPROBADO" : "ACTIVO")
+                    </span>
+                    @if (cercaDelLimite && !alumnoReprobado)
+                    {
+                        <br /><small class="text-warning"><strong><span class="glyphicon glyphicon-warning-sign"></span> EN RIESGO CRÍTICO</strong></small>
+                    }
+                    else if (!alumnoReprobado)
+                    {
+                        <br /><small class="text-success"><strong><span class="glyphicon glyphicon-ok-circle"></span> Permite agregar materias</strong></small>
+                    }
+                </div>
+            </div>
+
+            <div class="alert @(alumnoReprobado ? "alert-danger" : "alert-info")" style="margin-top: 15px; margin-bottom: 0;">
+                @if (alumnoReprobado)
+                {
+                    <strong><span class="glyphicon glyphicon-ban-circle"></span> SISTEMA ACTIVADO:</strong> <text>Se detectó exceso de límites.</text>
+                }
+                else
+                {
+                    if (cercaDelLimite)
+                    {
+                        <br /><strong>ALERTA:</strong> <text>El alumno está cerca del límite.</text>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.TieneMateriasDesactivadas == true)
+    {
+        <div class="alert alert-warning alert-dismissible" style="border-left: 5px solid #f0ad4e; margin-top: 15px;">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <h4><span class="glyphicon glyphicon-warning-sign"></span> <strong>Materias Desactivadas Detectadas</strong></h4>
+            <p>
+                <strong>Este alumno tiene @ViewBag.MateriasDesactivadas materia(s) desactivada(s) en su historial académico.</strong>
+            </p>
+            <div class="row">
+                <div class="col-md-8">
+                    <ul style="margin-bottom: 10px;">
+                        <li><strong>Las materias desactivadas mantienen su estado académico</strong> (reprobada, extraordinario, etc.)</li>
+                        <li><strong>Siguen contando para los límites</strong> de arrastre y extraordinario</li>
+                        <li><strong>Su historial se conserva completamente</strong> para efectos de control académico</li>
+                        <li><strong>Se muestran con indicador visual</strong>  para fácil identificación</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <div style="background-color: #fcf8e3; padding: 10px; border-radius: 5px; border: 1px solid #f0ad4e;">
+                        <strong>Estadísticas:</strong><br>
+                        Materias Activas: <strong>@ViewBag.MateriasActivas</strong><br>
+                        Materias Desactivadas: <strong>@ViewBag.MateriasDesactivadas</strong><br>
+                        Total: <strong>@ViewBag.TotalMaterias</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- CALIFICACION POR UNIDADES -->
+    <h4><span class="glyphicon glyphicon-list-alt text-success"></span> Calificación por Unidades</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered" id="tabla-unidades">
+            <thead style="background-color: #5cb85c; color: white;">
+                <tr>
+                    <th>Materia</th>
+                    <th>Plan</th>
+                    <th>Unidades</th>
+                    <th>Calificación Final</th>
+                    <th>Estado Actual</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!tieneMaterias)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            <span class="glyphicon glyphicon-info-sign"></span>
+                            Sin materias para calificar por unidades
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var materia in materiasNoAcreditadas)
+                    {
+                        var idMateria = materia.IdMateria;
+                        var personaId = materia.IdPersona;
+                        var numeroUnidades = materia.NumeroUnidades;
+
+                        int unidadesCalificadas = 0;
+                        if (materia.CalificacionesUnidades != null)
+                        {
+                            foreach (var u in materia.CalificacionesUnidades)
+                            {
+                                if (u.Calificacion.HasValue)
+                                {
+                                    unidadesCalificadas++;
+                                }
+                            }
+                        }
+
+                        bool todasCalificadas = unidadesCalificadas == numeroUnidades;
+                        decimal porcentajeAvance = numeroUnidades > 0 ? Math.Round((decimal)unidadesCalificadas / numeroUnidades * 100, 1) : 0;
+
+                        <tr data-materia="@idMateria" class="fila-materia-unidades">
+                            <td>
+                                <strong>@materia.NombreMateria</strong>
+                                <br><small class="text-muted">@numeroUnidades unidad(es)</small>
+                            </td>
+                            <td class="text-center">
+                                <span class="label @materia.LabelPlan">
+                                    @materia.NombrePlan
+                                </span>
+
+                            </td>
+                            <td>
+                                <div class="unidades-container" data-materia-id="@idMateria" data-persona-id="@personaId">
+                                    @for (int i = 1; i <= numeroUnidades; i++)
+                                    {
+                                        CalificacionUnidad unidadEncontrada = null;
+                                        if (materia.CalificacionesUnidades != null)
+                                        {
+                                            foreach (var u in materia.CalificacionesUnidades)
+                                            {
+                                                if (u.NumeroUnidad == i)
+                                                {
+                                                    unidadEncontrada = u;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        var calificacion = unidadEncontrada?.Calificacion;
+
+                                        <div class="unidad-item" data-unidad="@i">
+                                            <label>U@(i):</label>
+                                            <input type="number"
+                                                   class="form-control input-sm unidad-input"
+                                                   data-materia-id="@idMateria"
+                                                   data-persona-id="@personaId"
+                                                   data-unidad="@i"
+                                                   data-plan-minima="@materia.CalificacionMinimaPlan"
+                                                   data-plan-decimales="@materia.PermiteDecimales.ToString().ToLower()"
+                                                   min="0" max="10"
+                                                   step="@(materia.PermiteDecimales ? "0.01" : "1")"
+                                                   value="@(calificacion.HasValue ? calificacion.Value.ToString("0.00") : "")"
+                                                   placeholder="0.00"
+                                                   onchange="guardarCalificacionUnidadSinRecargar(this)" />
+                                        </div>
+                                    }
+                                </div>
+                                <small class="text-muted calificadas-info-@idMateria" style="display: block; margin-top: 5px;">
+                                    @unidadesCalificadas de @numeroUnidades calificadas (@porcentajeAvance%)
+                                </small>
+
+                                <!-- BOTON PARA CONFIRMAR MATERIA -->
+                                @{
+                                    bool materiaYaCalificada = materia.Estado == "Acreditada" || materia.Estado == "Extraordinario" || materia.Estado == "Reprobada";
+                                    bool botonDesactivado = !todasCalificadas || materiaYaCalificada;
+                                }
+                                <div style="margin-top: 10px; text-align: center;">
+                                    <button type="button"
+                                            class="btn btn-success btn-sm btn-confirmar-materia"
+                                            data-materia-id="@idMateria"
+                                            data-persona-id="@personaId"
+                                            onclick="confirmarCalificacionesMateria(@idMateria, @personaId)"
+                                            @(botonDesactivado ? "disabled" : "")
+                                            style="@(botonDesactivado ? "opacity: 0.5;" : "")">
+                                        <span class="glyphicon glyphicon-ok-sign"></span>
+                                        @(materiaYaCalificada ? "YA CALIFICADA" : "CONFIRMAR MATERIA")
+                                    </button>
+                                    <br>
+                                    <small class="text-muted mensaje-confirmar-@idMateria">
+                                        @if (materiaYaCalificada)
+                                        {
+                                            <span class="text-info">✓ Calificada</span>
+                                        }
+                                        else if (!todasCalificadas)
+                                        {
+                                            <span class="text-warning">Faltan unidades</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">✓ Listo</span>
+                                        }
+                                    </small>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-info calificacion-final-preview-@idMateria" style="font-size: 16px;">
+                                    @(materia.Calificacion?.ToString("0.00") ?? "---")
+                                </span>
+
+                            </td>
+                            <td class="text-center">
+                                @if (materia.Estado == "Acreditada")
+                                {
+                                    <span class="label label-success">
+                                        <span class="glyphicon glyphicon-ok-circle"></span> Acreditada
+                                    </span>
+                                }
+                                else if (materia.Estado == "Extraordinario")
+                                {
+                                    <span class="label label-warning">
+                                        <span class="glyphicon glyphicon-time"></span> Extraordinario
+                                    </span>
+                                }
+                                else if (materia.Estado == "Reprobada")
+                                {
+                                    <span class="label label-danger">
+                                        <span class="glyphicon glyphicon-remove-circle"></span> Reprobada
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="label label-default estado-preview-@idMateria">
+                                        @(todasCalificadas ? "Listo para confirmar" : "Pendiente")
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <h4>
+                <span class="glyphicon glyphicon-list-alt"></span>
+                Estado de Materias
+            </h4>
+        </div>
+        <div class="panel-body">
+            @if (Model != null && Model.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-condensed" id="tablaEstadoMaterias">
+                        <thead>
+                            <tr style="background-color: #337ab7; color: white;">
+                                <th style="text-align: center; width: 5%;">#</th>
+                                <th style="text-align: center; width: 25%;">Materia</th>
+                                <th style="text-align: center; width: 10%;">Plan</th>
+                                <th style="text-align: center; width: 15%;">Estado Final</th>
+                                <th style="text-align: center; width: 20%;">Forma de Aprobación</th>
+                                <th style="text-align: center; width: 25%;">Historial</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int numeroFila = 1;
+                            }
+                            @foreach (var materia in Model)
+                            {
+                                string claseFilaEstado = "";
+                                if (materia.Estado == "Acreditada")
+                                {
+                                    claseFilaEstado = "success";
+                                }
+                                else if (materia.Estado == "Extraordinario")
+                                {
+                                    claseFilaEstado = "warning";
+                                }
+                                else if (materia.Estado == "Reprobada")
+                                {
+                                    claseFilaEstado = "danger";
+                                }
+
+                                <tr class="@claseFilaEstado fila-materia"
+                                    data-id-materia="@materia.IdMateria"
+                                    data-id-persona="@idPersona">
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <strong>@numeroFila</strong>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <strong>@materia.NombreMateria</strong>
+                                        @if (!materia.MateriaActiva)
+                                        {
+                                            <br />
+                                            <small>
+                                                <span class="label label-warning">
+                                                    <span class="glyphicon glyphicon-ban-circle"></span> DESACTIVADA
+                                                </span>
+                                            </small>
+                                        }
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <span class="label @materia.LabelPlan" title="@materia.InfoCompletaPlan">
+                                            @materia.NombrePlan
+                                        </span>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <span class="label @materia.EstadoLabel" style="font-size: 13px; padding: 6px 10px;">
+                                            @materia.EstadoTexto
+                                        </span>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <div class="forma-aprobacion-@materia.IdMateria">
+                                            @if (materia.Estado == "Pendiente")
+                                            {
+                                                <span class="text-muted">
+                                                    <em>Sin intentos aún</em>
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>
+                                                <em>Cargando...</em>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <div class="historial-intentos-@materia.IdMateria">
+                                            @if (materia.Estado == "Pendiente")
+                                            {
+                                                <span class="text-muted">
+                                                    <em>Sin intentos registrados</em>
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-info btn-sm btn-ver-historial"
+                                                        data-id-materia="@materia.IdMateria"
+                                                        data-id-persona="@idPersona"
+                                                        data-nombre-materia="@materia.NombreMateria"
+                                                        style="min-width: 140px;">
+                                                    <span class="glyphicon glyphicon-list-alt"></span>
+                                                    VER HISTORIAL
+                                                </button>
+                                                <div class="historial-detalle-@materia.IdMateria" style="margin-top: 10px; display: none;">
+
+                                                </div>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                                numeroFila++;
+                            }
+                        </tbody>
+                        @if (contador > 0)
+                        {
+                            <tfoot>
+                                <tr style="background-color: #f8f9fa; border-top: 3px solid #337ab7; font-weight: bold;">
+                                    <td colspan="2" style="text-align: right; vertical-align: middle; padding: 15px;">
+                                        <span class="glyphicon glyphicon-stats"></span>
+                                        <strong style="font-size: 15px;">PROMEDIO GENERAL:</strong>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <span class="label @(materiasPlan2020 > materiasPlan2024 ? "label-warning" : "label-success")" title="Plan predominante: @(materiasPlan2020 > materiasPlan2024 ? "2020" : "2024")">
+                                            @(materiasPlan2020 > materiasPlan2024 ? "Plan 2020" : "Plan 2024")
+                                        </span>
+                                        <br />
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <span class="label @(promedioFinal >= calificacionMinimaDelPlan ? "label-success" : "label-danger")"
+                                              style="font-size: 16px; padding: 10px 15px;">
+                                            @(promedioFinal >= calificacionMinimaDelPlan ? "APROBADO" : "REPROBADO")
+                                        </span>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <div style="background-color: @(promedioFinal >= calificacionMinimaDelPlan ? "#d4edda" : "#f8d7da");
+                                                padding: 10px;
+                                                border-radius: 6px;
+                                                border: 2px solid @(promedioFinal >= calificacionMinimaDelPlan ? "#28a745" : "#dc3545");">
+                                            <strong style="font-size: 24px; color: @(promedioFinal >= calificacionMinimaDelPlan ? "#155724" : "#721c24");">
+                                                @(materiasPlan2020 > materiasPlan2024 ? promedioFinal.ToString("0") : promedioFinal.ToString("0.00"))
+                                            </strong>
+                                            <br />
+                                            <small class="text-muted">
+                                                (@contador materias)
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle;">
+                                        <em class="text-muted">Promedio calculado</em>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <span class="glyphicon glyphicon-info-sign"></span>
+                    No hay materias registradas para este alumno.
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL PARA MOSTRAR HISTORIAL DETALLADO -->
+    <!-- ============================================================ -->
+    <div class="modal fade" id="modalHistorialMateria" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #337ab7; color: white;">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true" style="color: white;">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-list-alt"></span>
+                        Historial Completo de Intentos
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <h5 id="nombreMateriaHistorial" style="margin-top: 0;"></h5>
+                    <div id="contenidoHistorial">
+                        <!-- Se llenará dinámicamente con JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- MATERIAS EN EXTRAORDINARIO -->
+    <h4>
+        <span class="glyphicon glyphicon-time text-warning"></span> Materias en Extraordinario
+    </h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="materias-extraordinario">
+            <thead style="background-color: #f0ad4e; color: white;">
+                <tr>
+                    <th>Materia</th>
+                    <th>Cuatrimestre</th>
+                    <th>Plan de Estudio</th>
+                    <th>Intento Actual</th>
+                    <th>Calificación</th>
+                    <th>Estado</th>
+                    <th>Observaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (materiasExtraordinario.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            <span class="glyphicon glyphicon-ok-circle text-success"></span>
+                            Sin materias en extraordinario.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in materiasExtraordinario)
+                    {
+                        <tr data-materia="@item.IdMateria" data-persona="@item.IdPersona"
+                            data-plan-id="@item.IdPlanEstudio"
+                            data-plan-minima="@item.CalificacionMinimaPlan"
+                            data-plan-decimales="@item.PermiteDecimales.ToString().ToLower()"
+                            data-plan-nombre="@item.NombrePlan"
+                            data-calificacion-guardada="@(item.Calificacion.HasValue ? item.Calificacion.Value.ToString("0.00") : "")"
+                            class="materia-extraordinario @(totalExtraordinarios >= 4 ? "danger" : (totalExtraordinarios == 3 ? "warning" : ""))">
+
+                            <td>
+                                <strong>@item.NombreMateria</strong>
+                                @if (!item.MateriaActiva)
+                                {
+                                    <br><small class="text-warning">Materia desactivada</small>
+                                }
+                            </td>
+
+                            <td class="text-center">
+                                @{
+                                    var esActualExtra = item.IdGrado == gradoActualAlumno;
+                                    var labelExtra = esActualExtra ? "label-primary" : "label-danger";
+                                }
+                                <span class="label @labelExtra" style="font-size: 11px;">
+                                    @item.IdGrado Cuatri
+                                </span>
+                                @if (!esActualExtra)
+                                {
+                                    <br><small class="text-danger" style="font-size: 9px;"><strong>Arrastrada</strong></small>
+                                }
+                            </td>
+
+                            <!-- INFORMACIÓN DEL PLAN -->
+                            <td class="text-center">
+                                <span class="label @item.LabelPlan plan-info-badge"
+                                      title="@item.InfoCompletaPlan">
+                                    @item.NombrePlan
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                <span class="badge badge-warning" style="font-size: 12px;">
+                                    1º intento (ÚNICO)
+                                </span>
+                                <input type="hidden" class="intentos-value" value="1" />
+                            </td>
+
+                            <!-- INPUT DE CALIFICACIÓN -->
+                            <td>
+                                <input type="number"
+                                       class="form-control input-sm calificacion-extra"
+                                       data-materia-id="@item.IdMateria"
+                                       data-persona-id="@item.IdPersona"
+                                       data-plan-minima="@item.CalificacionMinimaPlan"
+                                       data-plan-decimales="@item.PermiteDecimales.ToString().ToLower()"
+                                       data-plan-nombre="@item.NombrePlan"
+                                       min="0" max="10"
+                                       step="@(item.PermiteDecimales ? "0.01" : "1")"
+                                       placeholder="0.00"
+                                       value=""
+                                       onchange="actualizarEstadoExtraordinarioConPlan(this)" />
+
+                                <div style="margin-top: 10px; text-align: center; white-space: nowrap;">
+                                    <button type="button" class="btn btn-sm btn-success" onclick="guardarExtraordinarioConPlan(@item.IdMateria, @item.IdPersona)">
+                                        <span class="glyphicon glyphicon-floppy-disk"></span> GUARDAR
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            style="margin-left: 6px;"
+                                            title="Eliminar este registro"
+                                            onclick="confirmarEliminarMateriaIndex(
+                                                @item.IdMateria, @item.IdPersona,
+                                                '@Html.Raw((item.NombreMateria ?? "").Replace("'", "\\'"))',
+                                                '@(item.IdGrado)°', '@(item.Estado ?? "")')">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                    </button>
+                                    @if (item.IntentosExtraordinarios >= 4)
+                                    {
+                                        <br /><small class="text-warning"><strong>ULTIMO INTENTO</strong></small>
+                                    }
+                                </div>
+                            </td>
+
+                            <td style="text-align: center;">
+                                <span class="estado-extraordinario label label-warning">No acreditado</span>
+                            </td>
+
+                            <td>
+                                <textarea class="form-control input-sm observaciones-extra"
+                                          rows="2" placeholder="OBSERVACIONES"
+                                          style="resize: vertical;">@item.Observaciones</textarea>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MATERIAS EN ARRASTRE -->
+    <h4>
+        <span class="glyphicon glyphicon-exclamation-sign text-danger"></span> Materias en Arrastre
+    </h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="materias-arrastradas">
+            <thead style="background-color: #d9534f; color: white;">
+                <tr>
+                    <th>Materia</th>
+                    <th>Cuatrimestre</th>
+                    <th>Plan de Estudio</th>
+                    <th>Intento</th>
+                    <th>Fecha Inicio Arrastre</th>
+                    <th>Período Límite</th>
+                    <th>Estado Materia</th>
+                    <th>Calificación</th>
+                    <th>Observaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (materiasReprobadas.Count == 0)
+                {
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">
+                            <span class="glyphicon glyphicon-ok-circle text-success"></span>
+                            Sin materias reprobadas asignadas.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in materiasReprobadas)
+                    {
+                        var fechaInicio = item.FechaInicioArrastre ??
+DateTime.Now;
+                        var fechaLimiteItem = fechaInicio.AddMonths(8);
+
+                        var diasRestantes = (fechaLimiteItem.Date - DateTime.Today).Days;
+
+                        var esReprobadaDefinitiva = item.IntentosExtraordinarios >= 3;
+
+                        var estadoMateriaTexto = esReprobadaDefinitiva ? "REPROBADA DEFINITIVA" : "EN ARRASTRE";
+                        var estadoMateriaLabel = esReprobadaDefinitiva ? "label-danger" : "label-warning";
+                        var estadoMateriaIcon = esReprobadaDefinitiva ? "glyphicon-ban-circle" : "glyphicon-time";
+
+                        <tr data-materia="@item.IdMateria" data-persona="@item.IdPersona"
+                            data-plan-id="@item.IdPlanEstudio"
+                            data-plan-minima="@item.CalificacionMinimaPlan"
+                            data-plan-decimales="@item.PermiteDecimales.ToString().ToLower()"
+                            data-plan-nombre="@item.NombrePlan"
+                            data-intentos-originales="@item.IntentosExtraordinarios"
+                            class="materia-reprobada @(totalReprobadas >= 4 ? "danger" : (totalReprobadas == 3 ? "warning" : "")) @(esReprobadaDefinitiva ? "reprobada-definitiva" : "")">
+                            <td>
+                                <strong>@item.NombreMateria</strong>
+                                @if (!item.MateriaActiva)
+                                {
+                                    <br><small class="text-warning">Materia desactivada</small>
+                                }
+                            </td>
+
+                            <!-- CUATRIMESTRE -->
+                            <td class="text-center">
+                                @{
+                                    var esActualArr = item.IdGrado == gradoActualAlumno;
+                                    var labelArr = esActualArr ? "label-primary" : "label-danger";
+                                    var iconoArr = esActualArr ? "glyphicon-ok-circle" : "glyphicon-arrow-up";
+                                }
+                                <span class="label @labelArr" style="font-size: 11px;">
+                                    <span class="glyphicon @iconoArr" style="font-size: 10px;"></span>
+                                    @item.IdGrado Cuatri
+                                </span>
+                                @if (!esActualArr)
+                                {
+                                    <br><small class="text-danger" style="font-size: 9px;">
+                                        <strong>De cuatrimestre anterior</strong>
+                                    </small>
+                                }
+                            </td>
+
+                            <!-- INFORMACIÓN DEL PLAN -->
+                            <td class="text-center">
+                                <span class="label @item.LabelPlan plan-info-badge"
+                                      title="@item.InfoCompletaPlan">
+                                    @item.NombrePlan
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                @{
+                                    // Logica de intentos en arrastre
+                                    // IntentosExtraordinarios cuenta el numero de intento DENTRO de arrastre:
+                                    // = 1 → Primer intento de arrastre (tiene 1 mas disponible)
+                                    // = 2 → Segundo y ultimo intento de arrastre
+                                    // >= 3 → Agoto ambos intentos de arrastre (bloqueado)
+
+                                    string intentoTexto = "";
+                                    string mensajeAdicional = "";
+                                    string badgeClass = "badge-warning";
+
+                                    if (item.IntentosExtraordinarios == 1)
+                                    {
+                                        // Recien entro a arrastre desde extraordinario, primer intento disponible
+                                        intentoTexto = "Intento 1";
+                                        mensajeAdicional = "1 intento restante";
+                                        badgeClass = "badge-warning";
+                                    }
+                                    else if (item.IntentosExtraordinarios == 2)
+                                    {
+                                        // Ya fue calificada en arrastre al menos una vez, ultimo intento
+                                        intentoTexto = "Intento 2";
+                                        mensajeAdicional = "ULTIMO INTENTO";
+                                        badgeClass = "badge-danger";
+                                    }
+                                    else if (item.IntentosExtraordinarios >= 3)
+                                    {
+                                        // Intentos agotados
+                                        intentoTexto = "Se agotaron los intentos";
+                                        mensajeAdicional = "INTENTOS AGOTADOS";
+                                        badgeClass = "badge-danger";
+                                    }
+                                    else
+                                    {
+                                        // IntentosExtraordinarios = 0 en arrastre, dato inconsistente
+                                        intentoTexto = "Intento 1";
+                                        mensajeAdicional = "1 intento restante";
+                                        badgeClass = "badge-warning";
+                                    }
+                                }
+
+                                <span class="badge @badgeClass" style="font-size: 12px;">
+                                    @intentoTexto
+                                </span>
+
+                                @if (!string.IsNullOrEmpty(mensajeAdicional))
+                                {
+                                    <br /><small class="@(item.IntentosExtraordinarios >= 3 ? "text-danger" : "text-warning")" style="font-weight: bold;">
+                                        @mensajeAdicional
+                                    </small>
+                                }
+                            </td>
+
+                            <td>
+                                <input type="date"
+                                       class="form-control input-sm fecha-inicio-arrastre"
+                                       value="@(item.FechaInicioArrastre?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))"
+                                       data-materia-id="@item.IdMateria"
+                                       data-persona-id="@item.IdPersona"
+                                       @(esMaster ? "" : "readonly")
+                                       @(esMaster ? "" : "style=background-color:#f9f9f9;")
+                                       @(esMaster ? $"onchange=guardarFechaArrastre(this,{item.IdMateria},{item.IdPersona})" : "") />
+                            </td>
+
+                            <!-- PERÍODO LÍMITE CON DÍAS RESTANTES -->
+                            <td class="text-center">
+                                <strong class="fecha-limite-display" id="limite-display-@item.IdMateria">@fechaLimiteItem.ToString("dd/MM/yyyy")</strong>
+                                <br>
+                                <div id="dias-restantes-@item.IdMateria">
+                                    @if (esReprobadaDefinitiva)
+                                    {
+                                        <span class="label label-danger" style="font-size: 10px;">
+                                            <span class="glyphicon glyphicon-ban-circle"></span> SIN TIEMPO
+                                        </span>
+                                    }
+                                    else if (diasRestantes <= 0)
+                                    {
+                                        <span class="label label-danger" style="font-size: 10px;">
+                                            <span class="glyphicon glyphicon-remove"></span> VENCIDO (@Math.Abs(diasRestantes) días)
+                                        </span>
+                                    }
+                                    else if (diasRestantes <= 30)
+                                    {
+                                        <span class="label label-danger" style="font-size: 10px;">
+                                            <span class="glyphicon glyphicon-fire"></span> CRÍTICO: @diasRestantes días
+                                        </span>
+                                    }
+                                    else if (diasRestantes <= 60)
+                                    {
+                                        <span class="label label-warning" style="font-size: 10px;">
+                                            <span class="glyphicon glyphicon-warning-sign"></span> ALERTA: @diasRestantes días
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="label label-info" style="font-size: 10px;">
+                                            <span class="glyphicon glyphicon-time"></span> @diasRestantes días restantes
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+
+                            <!-- ESTADO DE LA MATERIA -->
+                            <td class="text-center">
+                                <span class="label @estadoMateriaLabel" style="font-size: 11px;">
+                                    <span class="glyphicon @estadoMateriaIcon"></span>
+                                    @estadoMateriaTexto
+                                </span>
+
+                                @if (esReprobadaDefinitiva)
+                                {
+                                    <br><small class="text-danger" style="font-size: 9px;">
+                                        <strong>Ya no puede acreditar</strong>
+                                    </small>
+                                }
+                                else if (diasRestantes <= 0)
+                                {
+                                    <br><small class="text-danger" style="font-size: 9px;">
+                                        <strong>Fuera de tiempo límite</strong>
+                                    </small>
+                                }
+                                else
+                                {
+                                    <br><small class="text-info" style="font-size: 9px;">
+                                        <strong>Puede acreditar</strong>
+                                    </small>
+                                }
+                            </td>
+
+                            <!-- CALIFICACIÓN -->
+                            <td>
+                                <input type="number"
+                                       class="form-control input-sm calificacion-arrastre"
+                                       data-materia-id="@item.IdMateria"
+                                       data-persona-id="@item.IdPersona"
+                                       data-plan-minima="@item.CalificacionMinimaPlan"
+                                       data-plan-decimales="@item.PermiteDecimales.ToString().ToLower()"
+                                       data-plan-nombre="@item.NombrePlan"
+                                       min="0" max="10"
+                                       step="@(item.PermiteDecimales ? "0.01" : "1")"
+                                       placeholder="0.00"
+                                       value="@(item.Calificacion.HasValue ? item.Calificacion.Value.ToString("0.00") : "")"
+                                       onchange="actualizarEstadoArrastreConPlan(this)"
+                                       @(item.IntentosExtraordinarios >= 3 ? "disabled" : "")>
+
+                                <div style="text-align: center; margin-top: 5px;">
+                                    <span class="estado-arrastre label @(esReprobadaDefinitiva ? "label-danger" : "label-danger")" style="font-size: 10px;">
+                                        @(esReprobadaDefinitiva ? "Reprobada Definitiva" : "Reprobada")
+                                    </span>
+                                </div>
+
+                                @if (esReprobadaDefinitiva)
+                                {
+                                    <br /><small class="text-danger"><strong>NO SE PUEDE CALIFICAR</strong></small>
+                                }
+
+                                <div style="margin-top: 10px; text-align: center; white-space: nowrap;">
+                                    <button type="button"
+                                            class="btn btn-sm @(esReprobadaDefinitiva ? "btn-default" : "btn-success")"
+                                            onclick="guardarArrastreConPlan(@item.IdMateria, @item.IdPersona)"
+                                            @(esReprobadaDefinitiva ? "disabled" : "")>
+                                        <span class="glyphicon glyphicon-floppy-disk"></span> GUARDAR
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            style="margin-left: 6px;"
+                                            title="Eliminar este registro"
+                                            onclick="confirmarEliminarMateriaIndex(
+                                                @item.IdMateria, @item.IdPersona,
+                                                '@Html.Raw((item.NombreMateria ?? "").Replace("'", "\\'"))',
+                                                '@(item.IdGrado)°', '@(item.Estado ?? "")')">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                    </button>
+
+                                    @if (esReprobadaDefinitiva)
+                                    {
+                                        <br /><small class="text-muted" style="font-size: 9px;"><em>Sin acciones</em></small>
+                                    }
+                                </div>
+                            </td>
+
+                            <td>
+                                <textarea class="form-control input-sm observaciones-arrastre"
+                                          rows="2" placeholder="OBSERVACIONES..."
+                                          style="resize: vertical;"
+                                          @(esReprobadaDefinitiva ? "disabled" : "")>@item.Observaciones</textarea>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Panel de Reportes -->
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <h4>
+                <span class="glyphicon glyphicon-filter"></span> Reporte del Alumno
+            </h4>
+            <div class="btn-group" role="group">
+                <a class="btn btn-success" href="@Url.Action("DescargarPDF", new { id = idPersona })">
+                    <span class="glyphicon glyphicon-file"></span> Descargar PDF
+                </a>
+                <a class="btn btn-success" href="@Url.Action("DescargarExcel", new { id = idPersona })">
+                    <span class="glyphicon glyphicon-list-alt"></span> Descargar Excel
+                </a>
+                <button type="button" class="btn btn-info" onclick="imprimirReporte()">
+                    <span class="glyphicon glyphicon-print"></span> IMPRIMIR
+                </button>
+                <button type="button" class="btn btn-warning" onclick="history.back()">
+                    <span class="glyphicon glyphicon-arrow-left"></span> VOLVER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas de Materias Reprobadas -->
+    @if (tieneReprobadas)
+    {
+        <div class="alert @(totalReprobadas >= 4 ? "alert-danger" : "alert-warning")">
+            <h4>
+                <span class="glyphicon @(totalReprobadas >= 4 ? "glyphicon-ban-circle" : "glyphicon-warning-sign")"></span>
+                @(totalReprobadas >= 4 ? "CRÍTICO: Límite de Arrastre Excedido" : "Atención: Materias Reprobadas Detectadas")
+            </h4>
+            <ul>
+                @foreach (var item in materiasReprobadas)
+                {
+                    <li>
+                        <strong>@item.NombreMateria</strong> - Estado: Reprobada
+                        @{
+                            var fechaInicio = item.FechaInicioArrastre ?? DateTime.Now;
+                            var fechaLimiteItem = fechaInicio.AddMonths(8);
+                            var diasRestantes = Math.Max(0, (fechaLimiteItem - DateTime.Now).Days);
+                        }
+                        @if (diasRestantes <= 0)
+                        {
+                            <span class="text-danger">(FUERA DE TIEMPO)</span>
+                        }
+                        else if (diasRestantes <= 30)
+                        {
+                            <span class="text-warning">(EN RIESGO - @diasRestantes días)</span>
+                        }
+                        else
+                        {
+                            <span class="text-info">(@diasRestantes días restantes)</span>
+                        }
+                    </li>
+                }
+            </ul>
+            @if (totalReprobadas >= 4)
+            {
+                <p><small><em><strong>El alumno excedio el limite de 3 materias en arrastre. Restricciones academicas aplicadas.</strong></em></small></p>
+            }
+            else
+            {
+                <p><small><em><text>Estas materias aparecen en la sección "Materias en Arrastre" y deben ser acreditadas antes del período límite.</text></em></small></p>
+            }
+        </div>
+    }
+
+    <!-- Alerta para extraordinarios -->
+    @if (tieneExtraordinario)
+    {
+        <div class="alert @(totalExtraordinarios >= 4 ? "alert-danger" : (totalExtraordinarios == 3 ? "alert-warning" : "alert-info"))">
+            <h4>
+                <span class="glyphicon @(totalExtraordinarios >= 4 ? "glyphicon-ban-circle" : "glyphicon-time")"></span>
+                @if (totalExtraordinarios >= 4)
+                {
+                    <span>CRÍTICO: Límite de Extraordinarios Excedido</span>
+                }
+                else if (totalExtraordinarios == 3)
+                {
+                    <span>Atención: En el Límite de Extraordinarios</span>
+                }
+                else
+                {
+                    <span>Materias en Extraordinario</span>
+                }
+            </h4>
+            <p>
+                El alumno tiene <strong>@totalExtraordinarios</strong> materias en extraordinario (límite máximo: 3).
+            </p>
+            @if (totalExtraordinarios >= 4)
+            {
+                <p><small><em><strong>El alumno excedio el limite de 4 materias en extraordinario. Restricciones academicas aplicadas.</strong></em></small></p>
+            }
+            else if (totalExtraordinarios == 3)
+            {
+                <p><small><em><strong>El alumno esta en el limite. Agregar mas materias excedera el limite automaticamente.</strong></em></small></p>
+            }
+        </div>
+    }
+
+
+    <!-- ========================================= -->
+    <!-- MODALES DE CONFIRMACIÓN PERSONALIZADOS -->
+    <!-- ========================================= -->
+    <!-- MODAL: Eliminar registro de materia (tutor) -->
+    <div class="modal fade" id="modalEliminarMateriaIndex" tabindex="-1" role="dialog" aria-labelledby="modalEliminarMateriaIndexLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#e74c3c; color:white;">
+                    <button type="button" class="close" data-dismiss="modal" style="color:white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="modalEliminarMateriaIndexLabel">
+                        <i class="glyphicon glyphicon-trash"></i> Eliminar registro de materia
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <strong><i class="glyphicon glyphicon-exclamation-sign"></i> Atención:</strong>
+                        Esta acción es <strong>permanente e irreversible</strong>. Se eliminarán también
+                        las calificaciones por unidad e historial de intentos asociados.
+                    </div>
+                    <table class="table table-condensed">
+                        <tr><th style="width:35%">Materia</th><td id="elim-idx-materia"></td></tr>
+                        <tr><th>Cuatrimestre</th><td id="elim-idx-cuatri"></td></tr>
+                        <tr><th>Estado</th><td id="elim-idx-estado"></td></tr>
+                    </table>
+                    <p class="text-center text-muted" style="font-size:12px;">
+                        ¿Confirmas que deseas eliminar <strong>definitivamente</strong> este registro?
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <i class="glyphicon glyphicon-remove"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminarIndex">
+                        <i class="glyphicon glyphicon-trash"></i> Eliminar definitivamente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- FIN MODAL ELIMINAR -->
+
+    <!-- ========================================= -->
+    <!-- MODAL: Confirmar Calificaciones por Unidades -->
+    <div class="modal fade" id="modalConfirmarUnidades" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #337ab7; color: white;">
+                    <button type="button" class="close" data-dismiss="modal" style="color: white;"><span>&times;</span></button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-warning-sign"></span> Confirmar Calificaciones por Unidades
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <span class="glyphicon glyphicon-exclamation-sign"></span>
+                        <strong>¡Atención! Esta acción es irreversible</strong>
+                    </div>
+                    <p style="font-size: 15px;">
+                        Está a punto de confirmar las calificaciones por unidades de la materia:
+                    </p>
+                    <div style="background-color: #f5f5f5; padding: 15px; border-left: 4px solid #337ab7; margin: 15px 0;">
+                        <strong id="modalUnidadesNombreMateria" style="font-size: 16px; color: #337ab7;"></strong>
+                    </div>
+                    <p style="font-size: 14px; margin-top: 15px;">
+                        <strong>Una vez confirmadas:</strong>
+                    </p>
+                    <ul style="font-size: 14px;">
+                        <li>No podrá modificar las calificaciones de las unidades</li>
+                        <li>La materia quedará marcada como confirmada en el sistema</li>
+                        <li>Se calculará automáticamente el promedio final</li>
+                    </ul>
+                    <p style="font-size: 14px; color: #d9534f; margin-top: 15px;">
+                        <span class="glyphicon glyphicon-info-sign"></span>
+                        Asegúrese de que las calificaciones sean correctas antes de continuar.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarUnidadesModal">
+                        <span class="glyphicon glyphicon-ok"></span> Sí, Confirmar Calificaciones
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Confirmar Cambio de Materia en Extraordinario -->
+    <div class="modal fade" id="modalConfirmarExtraordinario" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #f0ad4e; color: white;">
+                    <button type="button" class="close" data-dismiss="modal" style="color: white;"><span>&times;</span></button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-alert"></span> Confirmar Cambio de Materia
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <span class="glyphicon glyphicon-exclamation-sign"></span>
+                        <strong>¡Advertencia! Este cambio es permanente</strong>
+                    </div>
+                    <p style="font-size: 15px;">
+                        Está a punto de realizar un cambio en la materia de extraordinario:
+                    </p>
+                    <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #f0ad4e; margin: 15px 0;">
+                        <strong id="modalExtraordinarioNombreMateria" style="font-size: 16px; color: #856404;"></strong>
+                    </div>
+                    <p style="font-size: 14px; margin-top: 15px;">
+                        <strong>Consecuencias de esta acción:</strong>
+                    </p>
+                    <ul style="font-size: 14px;">
+                        <li><strong>No podrá revertir</strong> este cambio una vez guardado</li>
+                        <li>La calificación quedara <strong>permanente</strong></li>
+                        <li>Afectará directamente el conteo de extraordinarios del alumno</li>
+                    </ul>
+                    <div class="alert alert-warning" style="margin-top: 15px;">
+                        <span class="glyphicon glyphicon-info-sign"></span>
+                        <strong>Recordatorio:</strong> El alumno tiene un límite de <strong>3 materias</strong> en extraordinario.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-warning" id="btnConfirmarExtraordinarioModal">
+                        <span class="glyphicon glyphicon-refresh"></span> Sí, Cambiar Calificación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Confirmar Calificación de Arrastre -->
+    <div class="modal fade" id="modalConfirmarArrastre" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #d9534f; color: white;">
+                    <button type="button" class="close" data-dismiss="modal" style="color: white;"><span>&times;</span></button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-ban-circle"></span> Confirmar Calificación de Arrastre
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <span class="glyphicon glyphicon-exclamation-sign"></span>
+                        <strong>¡Acción Crítica! Esta calificación es definitiva</strong>
+                    </div>
+                    <p style="font-size: 15px;">
+                        Está a punto de guardar la calificación de arrastre para:
+                    </p>
+                    <div style="background-color: #f2dede; padding: 15px; border-left: 4px solid #d9534f; margin: 15px 0;">
+                        <strong id="modalArrastreNombreMateria" style="font-size: 16px; color: #a94442;"></strong>
+                    </div>
+                    <p style="font-size: 14px; margin-top: 15px;">
+                        <strong>Importante:</strong>
+                    </p>
+                    <ul style="font-size: 14px;">
+                        <li><strong>No podrá modificar</strong> esta calificación después de guardarla</li>
+                        <li>Esta calificación determinará si el alumno aprueba o reprueba definitivamente</li>
+                        <li>Afectará el conteo total de materias en arrastre</li>
+                    </ul>
+                    <div class="alert alert-danger" style="margin-top: 15px;">
+                        <span class="glyphicon glyphicon-warning-sign"></span>
+                        <strong>Límite Crítico:</strong> El alumno puede tener un máximo de <strong>3 materias</strong> en arrastre.
+                    </div>
+                    <p style="font-size: 13px; color: #777; margin-top: 15px;">
+                        ¿Está seguro de que desea continuar con esta acción?
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarArrastreModal">
+                        <span class="glyphicon glyphicon-floppy-disk"></span> SÍ, GUARDAR CALIFICACIÓN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Confirmación Genérica (OPCIONAL para otros usos) -->
+    <div class="modal fade" id="modalConfirmacionGenerica" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #5bc0de; color: white;">
+                    <button type="button" class="close" data-dismiss="modal" style="color: white;"><span>&times;</span></button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-question-sign"></span> <span id="modalGenericoTitulo">Confirmación</span>
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p id="modalGenericoMensaje" style="font-size: 15px;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmarGenerico">
+                        <span class="glyphicon glyphicon-ok"></span> Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA EDITAR CALIFICACION DEL HISTORIAL (SOLO MASTER) -->
+    <div class="modal fade" id="modalEditarCalificacionHistorial" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #f0ad4e; color: white;">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-edit"></span>
+                        Editar Calificación del Historial
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarCalificacionHistorial">
+                        <input type="hidden" id="editHist_IdPersona" />
+                        <input type="hidden" id="editHist_IdMateria" />
+                        <input type="hidden" id="editHist_NumeroIntento" />
+
+                        <div class="form-group">
+                            <label><strong>Materia:</strong></label>
+                            <p id="editHist_NombreMateria" class="form-control-static"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label><strong>Tipo de Intento:</strong></label>
+                            <p id="editHist_TipoIntento" class="form-control-static"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label><strong>Calificación Actual:</strong></label>
+                            <p id="editHist_CalificacionActual" class="form-control-static text-primary" style="font-size: 18px; font-weight: bold;"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editHist_NuevaCalificacion">
+                                <strong>Nueva Calificación:</strong> <span class="text-danger">*</span>
+                            </label>
+                            <input type="number"
+                                   class="form-control input-lg"
+                                   id="editHist_NuevaCalificacion"
+                                   min="0"
+                                   max="7"
+                                   step="0.01"
+                                   required
+                                   placeholder="0.00"
+                                   style="font-size: 20px; font-weight: bold; text-align: center;">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editHist_Observaciones">Observaciones:</label>
+                            <textarea class="form-control"
+                                      id="editHist_Observaciones"
+                                      rows="3"
+                                      placeholder="Motivo de la corrección..."></textarea>
+                        </div>
+
+                        <div id="editHist_InfoPlan" class="alert alert-success" style="display:none;">
+                            <strong>Plan de Estudio:</strong> <span id="editHist_PlanDetalle"></span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-remove"></span> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-warning btn-lg" id="btnGuardarEdicionHistorial">
+                        <span class="glyphicon glyphicon-floppy-disk"></span> Guardar Corrección
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>
+
+<script>
+// Variables globales
+window.planesEstudio = @Html.Raw(ViewBag.PlanesJson ?? "{}");
+console.log('Planes de estudio cargados:', window.planesEstudio);
+
+// FUNCIÓN PRINCIPAL PARA GUARDAR MATERIAS
+function guardarTodasMaterias() {
+    console.log('INICIANDO GUARDADO DE MATERIAS');
+
+    var $filasPendientes = $('.materia-pendiente');
+    console.log('Filas pendientes encontradas:', $filasPendientes.length);
+
+    if ($filasPendientes.length === 0) {
+        mostrarNotificacion('No se encontraron materias pendientes para procesar', 'warning', 3000);
+        return;
+    }
+
+    var materias = [];
+    var materiasConCambios = 0;
+    var erroresValidacion = [];
+
+    $filasPendientes.each(function(index) {
+        var $fila = $(this);
+        var idMateria = $fila.data('materia');
+        var idPersona = $fila.data('persona');
+
+        if (!idMateria || !idPersona) {
+            return;
+        }
+
+        var $inputCalif = $fila.find('.calificacion-input');
+        if ($inputCalif.length === 0) {
+            return;
+        }
+
+        var calificacionTexto = $inputCalif.val();
+
+        if (calificacionTexto && calificacionTexto.trim() !== '') {
+            var calificacion = parseFloat(calificacionTexto.trim());
+
+            if (isNaN(calificacion) || calificacion < 0 || calificacion > 10) {
+                erroresValidacion.push(`Materia ${idMateria}: Calificación inválida "${calificacionTexto}"`);
+                return;
+            }
+
+            var planMinima = parseFloat($inputCalif.data('plan-minima')) || 7.0;
+            var planDecimales = $inputCalif.data('plan-decimales') === 'true' || $inputCalif.data('plan-decimales') === true;
+
+            var calificacionFinal = calificacion;
+            if (!planDecimales) {
+                calificacionFinal = Math.round(calificacion);
+                if (Math.abs(calificacion - calificacionFinal) > 0.001) {
+                    $inputCalif.val(calificacionFinal);
+                }
+            }
+
+            var estado;
+            if (calificacionFinal >= planMinima) {
+                estado = 'Acreditada';
+            } else {
+                estado = 'Extraordinario';
+            }
+
+            materias.push({
+                IdMateria: parseInt(idMateria),
+                IdPersona: parseInt(idPersona),
+                Calificacion: calificacionFinal,
+                Estado: estado,
+                IntentosExtraordinarios: estado === 'Extraordinario' ? 1 : 0,
+                Observaciones: '',
+                FechaInicioArrastre: null
+            });
+
+            materiasConCambios++;
+        }
+    });
+
+    console.log(`Resumen: ${materiasConCambios} materias preparadas`);
+
+    if (materiasConCambios === 0) {
+        mostrarNotificacion('No hay calificaciones nuevas para guardar', 'warning', 3000);
+        return;
+    }
+
+    if (erroresValidacion.length > 0) {
+        mostrarNotificacion('Errores de validación: ' + erroresValidacion.join(', '), 'error', 5000);
+        return;
+    }
+
+    var $boton = $('button[onclick="guardarTodasMaterias()"]');
+    var textoOriginal = $boton.html();
+    $boton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Guardando...');
+
+    console.log('Enviando datos al servidor:', materias);
+
+    $.ajax({
+        url: '@Url.Action("GuardarTodasMaterias", "MateriasAlumno")',
+        type: 'POST',
+        contentType: 'application/json; charset=utf-8',
+        data: JSON.stringify(materias),
+        dataType: 'json',
+        success: function(response) {
+            console.log('Respuesta del servidor:', response);
+            $boton.prop('disabled', false).html(textoOriginal);
+
+            if (response.success) {
+                mostrarNotificacion(response.message, 'success', 4000);
+
+                if (response.alumnoReprobado) {
+                    setTimeout(function() {
+                        mostrarNotificacion((response.motivoReprobacion || 'Límites académicos excedidos'), 'error', 8000);
+                    }, 2000);
+                }
+
+                setTimeout(function() {
+                    location.reload();
+                }, response.alumnoReprobado ? 4000 : 2000);
+
+            } else {
+                mostrarNotificacion('Error: ' + response.message, 'error', 6000);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error AJAX:', {xhr: xhr, status: status, error: error});
+            $boton.prop('disabled', false).html(textoOriginal);
+
+            var mensajeError = 'Error de conexión';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                mensajeError = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                mensajeError = xhr.responseText.substring(0, 100);
+            }
+
+            mostrarNotificacion(mensajeError, 'error', 6000);
+        }
+    });
+}
+
+// FUNCIÓN DE DEBUG
+function debugVerificarEstructura() {
+    console.log('=== DEBUG - VERIFICACION DE ESTRUCTURA ===');
+
+    var $filasPendientes = $('.materia-pendiente');
+    console.log('Total filas pendientes:', $filasPendientes.length);
+
+    $filasPendientes.each(function(index) {
+        var $fila = $(this);
+        var $input = $fila.find('.calificacion-input');
+
+        console.log(`Fila ${index + 1}:`, {
+            idMateria: $fila.data('materia'),
+            idPersona: $fila.data('persona'),
+            tieneInput: $input.length > 0,
+            valorInput: $input.val(),
+            planMinima: $input.data('plan-minima'),
+            planDecimales: $input.data('plan-decimales'),
+            planNombre: $input.data('plan-nombre')
+        });
+    });
+
+    console.log('=== FIN DEBUG ===');
+    }
+
+
+    // ====================================
+// FUNCION PARA GUARDAR FECHA DE ARRASTRE (MASTER)
+// ====================================
+function guardarFechaArrastre(input, idMateria, idPersona) {
+    var $input = $(input);
+    var nuevaFecha = $input.val();
+
+    if (!nuevaFecha) {
+        mostrarNotificacion('La fecha no puede estar vacía.', 'error');
+        $input.val($input.prop('defaultValue')); // Revertir
+        return;
+    }
+
+    console.log(`Actualizando Fecha Arrastre: Materia ${idMateria}, Fecha ${nuevaFecha}`);
+    // Guardar el valor original en caso de que falle
+    var valorOriginal = $input.prop('defaultValue');
+    $input.prop('disabled', true).css('opacity', 0.5);
+
+    $.ajax({
+        url: '@Url.Action("ActualizarFechaInicioArrastre", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona,
+            nuevaFechaInicio: nuevaFecha
+        },
+        success: function (response) {
+            $input.prop('disabled', false).css('opacity', 1);
+            if (response.success) {
+                mostrarNotificacion('Fecha de inicio actualizada.', 'success');
+
+                // 1. Actualizar celda "Período Límite"
+                var $celdaLimiteDisplay = $(`#limite-display-${idMateria}`);
+                if ($celdaLimiteDisplay.length) {
+                    $celdaLimiteDisplay.text(response.nuevaFechaLimiteDisplay);
+                }
+
+                // 2. Actualizar celda "Días Restantes"
+                var $containerDias = $(`#dias-restantes-${idMateria}`);
+                if ($containerDias.length) {
+                    var nuevoHtmlDias =
+                        '<br/><span class="label ' + response.nuevoEstadoLabel + '" style="font-size: 10px;">' +
+                        '<span class="glyphicon ' + response.nuevoIcono + '"></span> ' +
+                        response.nuevoEstadoTiempo +
+                        '</span>';
+                    $containerDias.html(nuevoHtmlDias);
+                }
+
+                // Actualizar el valor por defecto del input
+                $input.prop('defaultValue', nuevaFecha);
+
+            } else {
+                mostrarNotificacion(response.message, 'error', 5000);
+                $input.val(valorOriginal); // Revertir al valor original si falla
+            }
+        },
+        error: function () {
+            $input.prop('disabled', false).css('opacity', 1);
+            mostrarNotificacion('Error de conexion al guardar la fecha.', 'error', 5000);
+            $input.val(valorOriginal); // Revertir al valor original si falla
+        }
+    });
+}
+
+// FUNCIÓN PARA ACTUALIZAR ESTADO DINÁMICO
+function actualizarEstadoDinamico(input) {
+    var row = $(input).closest('tr');
+    var idMateria = row.data('materia');
+    var calificacionTexto = $(input).val().trim();
+    var estadoSpan = row.find('.estado-dinamico');
+    var mensajeDiv = row.find('.plan-validation-message');
+
+    var planMinima = parseFloat($(input).data('plan-minima')) || 7.0;
+    var planDecimales = $(input).data('plan-decimales') === 'true' || $(input).data('plan-decimales') === true;
+    var planNombre = $(input).data('plan-nombre') || 'Plan Estándar';
+
+    console.log(`Validando materia ${idMateria}`);
+
+    // Limpiar mensajes previos
+    mensajeDiv.html('');
+
+    if (!calificacionTexto || calificacionTexto === '') {
+        estadoSpan.removeClass('label-success label-warning label-danger').addClass('label-default').text('Pendiente');
+        return;
+    }
+
+    var calificacion = parseFloat(calificacionTexto);
+
+    if (isNaN(calificacion) || calificacion < 0 || calificacion > 10) {
+        estadoSpan.removeClass('label-success label-warning').addClass('label-danger').text('Error');
+        return;
+    }
+
+    // Aplicar redondeo según el plan
+    var calificacionFinal = calificacion;
+
+    if (!planDecimales) {
+        if (calificacion < 8.0) {
+            calificacionFinal = Math.floor(calificacion);
+            if (Math.abs(calificacion - calificacionFinal) > 0.001) {
+                $(input).val(calificacionFinal);
+            }
+        } else {
+            calificacionFinal = Math.round(calificacion);
+            if (Math.abs(calificacion - calificacionFinal) > 0.001) {
+                $(input).val(calificacionFinal);
+            }
+        }
+    } else {
+        calificacionFinal = Math.round(calificacion * 100) / 100;
+    }
+
+    // Determinar estado según la calificación mínima del plan
+    if (calificacionFinal >= planMinima) {
+        estadoSpan.removeClass('label-default label-warning label-danger').addClass('label-success').text('Acreditado');
+        mensajeDiv.html('');
+    } else if (calificacionFinal >= 0) {
+        estadoSpan.removeClass('label-default label-success label-danger').addClass('label-warning').text('No acreditado');
+        mensajeDiv.html('');
+    }
+
+    console.log(`Validación completada para materia ${idMateria}`);
+}
+
+// FUNCIÓN PARA EXTRAORDINARIO
+function actualizarEstadoExtraordinarioConPlan(input) {
+    var $input = $(input);
+    var $row = $input.closest('tr');
+    var idMateria = $row.data('materia');
+    var calificacionTexto = $input.val().trim();
+    var $estadoSpan = $row.find('.estado-extraordinario');
+    var $mensajeDiv = $row.find('.plan-validation-message-extra');
+
+    var planMinima = parseFloat($input.data('plan-minima')) || 7.0;
+    var planDecimales = $input.data('plan-decimales') === 'true' || $input.data('plan-decimales') === true;
+    var planNombre = $input.data('plan-nombre') || 'Plan Estándar';
+
+    console.log(`Validando extraordinario materia ${idMateria}`);
+
+    // Limpiar mensajes previos
+    $mensajeDiv.html('');
+
+    if (!calificacionTexto || calificacionTexto === '') {
+        $estadoSpan.removeClass('label-success label-danger').addClass('label-warning').text('No acreditado');
+        return;
+    }
+
+    var calificacion = parseFloat(calificacionTexto);
+
+    if (isNaN(calificacion) || calificacion < 0 || calificacion > 10) {
+        $estadoSpan.removeClass('label-success label-warning').addClass('label-danger').text('Error');
+        return;
+    }
+
+    // Aplicar redondeo según plan
+    var calificacionFinal = calificacion;
+
+    if (!planDecimales) {
+        if (calificacion < 8.0) {
+            calificacionFinal = Math.floor(calificacion);
+            if (Math.abs(calificacion - calificacionFinal) > 0.001) {
+                $input.val(calificacionFinal);
+            }
+        } else {
+            calificacionFinal = Math.round(calificacion);
+            if (Math.abs(calificacion - calificacionFinal) > 0.001) {
+                $input.val(calificacionFinal);
+            }
+        }
+    } else {
+        calificacionFinal = Math.round(calificacion * 100) / 100;
+    }
+    // Determinar estado según la calificación mínima del plan
+    if (calificacionFinal >= planMinima) {
+        $estadoSpan.removeClass('label-warning label-danger').addClass('label-success').text('Acreditado');
+        $mensajeDiv.html('');
+    } else if (calificacionFinal >= 0) {
+        $estadoSpan.removeClass('label-success label-danger').addClass('label-warning').text('No acreditado');
+        $mensajeDiv.html('');
+    }
+
+    console.log(`Validación extraordinario completada para materia ${idMateria}`);
+}
+
+// FUNCIÓN PARA ARRASTRE
+function actualizarEstadoArrastreConPlan(input) {
+    var $input = $(input);
+    var $row = $input.closest('tr');
+    var idMateria = $row.data('materia');
+    var calificacionTexto = $input.val().trim();
+    var $estadoSpan = $row.find('.estado-arrastre');
+    var $mensajeDiv = $row.find('.plan-validation-message-arrastre');
+
+    var planMinima = parseFloat($input.data('plan-minima')) || 7.0;
+    var planDecimales = $input.data('plan-decimales') === 'true' || $input.data('plan-decimales') === true;
+    var planNombre = $input.data('plan-nombre') || 'Plan Estándar';
+
+    console.log(`Validando arrastre materia ${idMateria}`);
+
+    // Limpiar mensajes previos
+    $mensajeDiv.html('');
+
+    if (!calificacionTexto || calificacionTexto === '') {
+        $estadoSpan.removeClass('label-success label-warning').addClass('label-danger').text('Reprobada');
+        return;
+    }
+
+    var calificacion = parseFloat(calificacionTexto);
+
+    if (isNaN(calificacion) || calificacion < 0 || calificacion > 10) {
+        $estadoSpan.removeClass('label-success label-warning').addClass('label-danger').text('Error');
+        return;
+    }
+
+    // Aplicar redondeo según plan
+    var calificacionFinal = calificacion;
+
+    if (!planDecimales) {
+        if (calificacion < 8.0) {
+            calificacionFinal = Math.floor(calificacion);
+            if (Math.abs(calificacion - calificacionFinal) > 0.001) {
+                $input.val(calificacionFinal);
+            }
+        } else {
+            calificacionFinal = Math.round(calificacion);
+            if (Math.abs(calificacion - calificacionFinal) > 0.001) {
+                $input.val(calificacionFinal);
+            }
+        }
+    } else {
+        calificacionFinal = Math.round(calificacion * 100) / 100;
+    }
+
+    // Determinar estado según calificación mínima del plan
+    if (calificacionFinal >= planMinima) {
+        $estadoSpan.removeClass('label-warning label-danger').addClass('label-success').text('Acreditada');
+        $mensajeDiv.html('');
+    } else if (calificacionFinal >= 0) {
+        $estadoSpan.removeClass('label-success label-warning').addClass('label-danger').text('Reprobada');
+        $mensajeDiv.html('');
+    }
+
+    console.log(`Validación arrastre completada para materia ${idMateria}`);
+    }
+
+
+
+// FUNCIÓN PARA GUARDAR EXTRAORDINARIO
+function guardarExtraordinarioConPlan(idMateria, idPersona) {
+    console.log(`Guardando extraordinario - Materia ${idMateria}...`);
+
+    var $row = $(`tr[data-materia="${idMateria}"][data-persona="${idPersona}"]`);
+    var $inputCalif = $row.find('.calificacion-extra');
+    var calificacionTexto = $inputCalif.val().trim();
+
+    var observaciones = $row.find('.observaciones-extra').val() || '';
+    var intentos = 1;
+
+    var planMinima = parseFloat($inputCalif.data('plan-minima')) || 7.0;
+    var planDecimales = $inputCalif.data('plan-decimales') === 'true' || $inputCalif.data('plan-decimales') === true;
+    var planNombre = $inputCalif.data('plan-nombre') || 'Plan Estándar';
+
+    if (!calificacionTexto || calificacionTexto === '') {
+        mostrarNotificacion('Por favor ingrese una calificacion valida', 'warning', 3000);
+        return;
+    }
+
+    var calificacion = parseFloat(calificacionTexto);
+
+    if (isNaN(calificacion) || calificacion < 0 || calificacion > 10) {
+        mostrarNotificacion('La calificacion debe estar entre 0 y 10', 'warning', 3000);
+        return;
+    }
+
+    var calificacionFinal = calificacion;
+    if (!planDecimales) {
+        if (calificacion < 8.0) {
+            calificacionFinal = Math.floor(calificacion);
+        } else {
+            calificacionFinal = Math.round(calificacion);
+        }
+    }
+
+    // Determinar estado
+    var estado;
+    if (calificacionFinal >= planMinima) {
+        estado = 'Acreditada';
+    } else {
+        estado = 'Reprobada';
+    }
+
+    console.log(`Estado determinado: ${estado}`);
+
+    var $boton = $row.find('button[onclick*="guardarExtraordinarioConPlan"]');
+    var textoOriginal = $boton.html();
+    $boton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Guardando...');
+
+    $.ajax({
+        url: '@Url.Action("ActualizarMateria", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona,
+            calificacion: calificacionFinal,
+            estado: estado,
+            intentosExtraordinarios: estado === 'Reprobada' ? 2 : 0,
+            observaciones: observaciones,
+            fechaExamen: new Date().toISOString().split('T')[0],
+            fechaInicioArrastre: estado === 'Reprobada' ? new Date().toISOString().split('T')[0] : null
+        },
+        success: function(result) {
+            $boton.prop('disabled', false).html(textoOriginal);
+
+            if (result.success) {
+                var mensaje = estado === 'Acreditada' ?
+                    `Materia acreditada` :
+                    `Materia reprobada`;
+
+                mostrarNotificacion(mensaje, estado === 'Acreditada' ? 'success' : 'warning', 4000);
+
+                setTimeout(function() {
+                    location.reload();
+                }, 2000);
+            } else {
+                mostrarNotificacion('Error: ' + result.message, 'error', 4000);
+            }
+        },
+        error: function(xhr, status, error) {
+            $boton.prop('disabled', false).html(textoOriginal);
+            mostrarNotificacion('Error de conexion', 'error', 4000);
+        }
+    });
+}
+
+// FUNCIÓN PARA HABILITAR EDICIÓN DE EXTRAORDINARIO
+function habilitarEdicionExtraordinario(idMateria, idPersona) {
+    var $row = $(`tr[data-materia="${idMateria}"][data-persona="${idPersona}"]`);
+    var calificacionGuardada = $row.data('calificacion-guardada');
+
+    var $inputCalif = $row.find('.calificacion-extra');
+    if (calificacionGuardada) {
+        $inputCalif.val(calificacionGuardada);
+        actualizarEstadoExtraordinarioConPlan($inputCalif[0]);
+    }
+
+    $row.find('.observaciones-extra').prop('disabled', false).prop('readonly', false);
+
+    mostrarNotificacion('Campos habilitados para edición. Modifique y presione GUARDAR.', 'info', 3000);
+}
+
+// FUNCIÓN PARA GUARDAR ARRASTRE
+function guardarArrastreConPlan(idMateria, idPersona) {
+    console.log(`Guardando arrastre - Materia ${idMateria}...`);
+
+    var $row = $(`tr[data-materia="${idMateria}"][data-persona="${idPersona}"]`);
+    var $inputCalif = $row.find('.calificacion-arrastre');
+    var calificacionTexto = $inputCalif.val().trim();
+
+    var observaciones = $row.find('.observaciones-arrastre').val() || '';
+    var intentoActual = parseInt($row.data('intentos-originales')) || 1;
+
+    var planMinima = parseFloat($inputCalif.data('plan-minima')) || 7.0;
+    var planDecimales = $inputCalif.data('plan-decimales') === 'true';
+    var planNombre = $inputCalif.data('plan-nombre') || 'Plan Estándar';
+
+    if (!calificacionTexto || calificacionTexto === '') {
+        mostrarNotificacion('Por favor ingrese una calificacion valida', 'warning', 3000);
+        return;
+    }
+
+    var calificacion = parseFloat(calificacionTexto);
+
+    if (isNaN(calificacion) || calificacion < 0 || calificacion > 10) {
+        mostrarNotificacion('La calificacion debe estar entre 0 y 10', 'warning', 3000);
+        return;
+    }
+
+    var calificacionFinal = calificacion;
+    if (!planDecimales) {
+        if (calificacion < 8.0) {
+            calificacionFinal = Math.floor(calificacion);
+        } else {
+            calificacionFinal = Math.round(calificacion);
+        }
+    }
+
+    var estado;
+    var nuevoIntento = intentoActual;
+
+    if (calificacionFinal >= planMinima) {
+        estado = 'Acreditada';
+        nuevoIntento = 0;
+    } else {
+        estado = 'Reprobada';
+        nuevoIntento = intentoActual + 1;
+
+        if (nuevoIntento >= 3) {
+            mostrarNotificacion('Se agotaron los 2 cambios permitidos. Materia bloqueada.', 'error', 5000);
+        }
+    }
+
+    console.log(`Estado: ${estado}, Intento: ${nuevoIntento}`);
+
+    var $boton = $row.find('button[onclick*="guardarArrastreConPlan"]');
+    var textoOriginal = $boton.html();
+    $boton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Guardando...');
+
+    $.ajax({
+        url: '@Url.Action("ActualizarMateria", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona,
+            calificacion: calificacionFinal,
+            estado: estado,
+            intentosExtraordinarios: nuevoIntento,
+            observaciones: observaciones,
+            fechaInicioArrastre: $row.find('.fecha-inicio-arrastre').val()
+        },
+        success: function(result) {
+            $boton.prop('disabled', false).html(textoOriginal);
+
+            if (result.success) {
+                var mensaje;
+                if (estado === 'Acreditada') {
+                    mensaje = `✓ Materia acreditada exitosamente`;
+                } else if (nuevoIntento >= 3) {
+                    mensaje = `Materia bloqueada - se agotaron los 2 cambios permitidos en arrastre`;
+                } else {
+                    var cambiosRestantes = 3 - nuevoIntento;
+                    var cambioActual = nuevoIntento - 1;
+                    mensaje = `✓ Cambio ${cambioActual}/2 guardado`;
+                }
+
+                mostrarNotificacion(mensaje, estado === 'Acreditada' ? 'success' : 'warning', 4000);
+
+                setTimeout(function() {
+                    location.reload();
+                }, 2000);
+            } else {
+                mostrarNotificacion('Error: ' + result.message, 'error', 4000);
+            }
+        },
+        error: function(xhr, status, error) {
+            $boton.prop('disabled', false).html(textoOriginal);
+            mostrarNotificacion('Error de conexion', 'error', 4000);
+        }
+    });
+}
+
+// FUNCIÓN PARA MOSTRAR NOTIFICACIONES
+function mostrarNotificacion(mensaje, tipo, duracion) {
+    duracion = duracion || 4000;
+
+    $('.notification-temp').fadeOut(300, function() {
+        $(this).remove();
+    });
+
+    var alertClass, icon;
+    switch(tipo) {
+        case 'success':
+            alertClass = 'alert-success';
+            icon = 'glyphicon-ok-circle';
+            break;
+        case 'error':
+            alertClass = 'alert-danger';
+            icon = 'glyphicon-exclamation-sign';
+            break;
+        case 'warning':
+            alertClass = 'alert-warning';
+            icon = 'glyphicon-warning-sign';
+            break;
+        case 'info':
+            alertClass = 'alert-info';
+            icon = 'glyphicon-info-sign';
+            break;
+        default:
+            alertClass = 'alert-info';
+            icon = 'glyphicon-info-sign';
+    }
+
+    var notificacion = $(`
+        <div class="alert ${alertClass} alert-dismissible notification-temp"
+             style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-radius: 6px;">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <span class="glyphicon ${icon}"></span> ${mensaje}
+        </div>
+    `);
+
+    $('body').append(notificacion);
+
+    if (duracion > 0) {
+        setTimeout(function() {
+            notificacion.fadeOut(500, function() {
+                $(this).remove();
+            });
+        }, duracion);
+    }
+}
+
+function imprimirReporte() {
+    window.print();
+}
+
+// INICIALIZACIÓN
+$(document).ready(function() {
+    console.log('Sistema de calificaciones cargado');
+
+    $('.calificacion-input').on('input keyup change', function() {
+        actualizarEstadoDinamico(this);
+    });
+
+    $('.calificacion-extra').on('input keyup change', function() {
+        actualizarEstadoExtraordinarioConPlan(this);
+    });
+
+    $('.calificacion-arrastre').on('input keyup change', function() {
+        actualizarEstadoArrastreConPlan(this);
+    });
+
+    $('.calificacion-input').each(function() {
+        if ($(this).val()) {
+            actualizarEstadoDinamico(this);
+        }
+    });
+
+    $('.calificacion-extra').each(function() {
+        if ($(this).val()) {
+            actualizarEstadoExtraordinarioConPlan(this);
+        }
+    });
+
+    $('.calificacion-arrastre').each(function() {
+        if ($(this).val()) {
+            actualizarEstadoArrastreConPlan(this);
+        }
+    });
+
+    setTimeout(function() {
+        var filasPendientes = $('.materia-pendiente').length;
+        var inputsCalificacion = $('.calificacion-input').length;
+        console.log(`- Filas pendientes: ${filasPendientes}`);
+        console.log(`- Inputs de calificación: ${inputsCalificacion}`);
+    }, 1000);
+
+    console.log('Sistema completamente inicializado');
+});
+
+
+// FUNCION PARA GUARDAR CALIFICACION DE UNIDAD
+function guardarCalificacionUnidad(input) {
+    var $input = $(input);
+    var idMateria = $input.data('materia-id');
+    var idPersona = $input.data('persona-id');
+    var numeroUnidad = $input.data('unidad');
+    var calificacion = $input.val().trim();
+
+    if (!calificacion || calificacion === '') {
+        return; // No guardar si está vacío
+    }
+
+    var calif = parseFloat(calificacion);
+    if (isNaN(calif) || calif < 0 || calif > 10) {
+        mostrarNotificacion('Calificacion debe estar entre 0 y 10', 'warning', 3000);
+        return;
+    }
+
+    console.log(`Guardando Unidad ${numeroUnidad} de materia ${idMateria}: ${calif}`);
+
+    $.ajax({
+        url: '@Url.Action("GuardarCalificacionUnidad", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona,
+            numeroUnidad: numeroUnidad,
+            calificacion: calif
+        },
+        success: function(result) {
+            if (result.success) {
+                // Actualizar contador de unidades calificadas
+                $(`.calificadas-info-${idMateria}`).text(
+                    `${result.unidadesCalificadas} de ${result.totalUnidades} calificadas (${result.porcentajeAvance}%)`
+                );
+
+                // Si todas las unidades estan calificadas, actualizar calificacion final
+                if (result.todasCalificadas && result.calificacionFinal) {
+                    $(`.calificacion-final-${idMateria}`).text(result.calificacionFinal.toFixed(2));
+
+                    var estado = result.calificacionFinal >= parseFloat($input.data('plan-minima')) ? 'Acreditada' : 'No Acreditada';
+                    var labelClass = estado === 'Acreditada' ? 'label-success' : 'label-danger';
+
+                    $(`.estado-materia-${idMateria}`)
+                        .removeClass('label-default label-success label-danger label-warning')
+                        .addClass(labelClass)
+                        .text(estado);
+
+                    mostrarNotificacion(result.message, 'success', 4000);
+
+                    // Recargar después de 2 segundos para reflejar cambios en el estado general
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    mostrarNotificacion(result.message, 'success', 3000);
+                }
+            } else {
+                mostrarNotificacion(result.message, 'error', 4000);
+            }
+        },
+        error: function() {
+            mostrarNotificacion('Error de conexion', 'error', 3000);
+        }
+    });
+}
+
+// Aplicar colores a inputs según calificación
+$(document).on('blur', '.unidad-input', function() {
+    var valor = parseFloat($(this).val());
+    var minima = parseFloat($(this).data('plan-minima')) || 7.0;
+
+    if (!isNaN(valor)) {
+        if (valor >= minima) {
+            $(this).css('border-color', '#5cb85c');
+        } else {
+            $(this).css('border-color', '#d9534f');
+        }
+    } else {
+        $(this).css('border-color', '');
+    }
+});
+
+
+// FUNCION: Guardar unidad SIN recargar pagina
+function guardarCalificacionUnidadSinRecargar(input) {
+    var $input = $(input);
+    var idMateria = $input.data('materia-id');
+    var idPersona = $input.data('persona-id');
+    var numeroUnidad = $input.data('unidad');
+    var calificacion = $input.val().trim();
+
+    if (!calificacion || calificacion === '') {
+        return;
+    }
+
+    var calif = parseFloat(calificacion);
+    if (isNaN(calif) || calif < 0 || calif > 10) {
+        mostrarNotificacion('Calificacion debe estar entre 0 y 10', 'warning', 3000);
+        $input.val('');
+        return;
+    }
+
+    console.log(`Guardando Unidad ${numeroUnidad} de materia ${idMateria}: ${calif}`);
+
+    $.ajax({
+        url: '@Url.Action("GuardarCalificacionUnidad", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona,
+            numeroUnidad: numeroUnidad,
+            calificacion: calif
+        },
+        success: function(result) {
+            if (result.success) {
+                // Actualizar contador
+                $(`.calificadas-info-${idMateria}`).text(
+                    `${result.unidadesCalificadas} de ${result.totalUnidades} calificadas (${result.porcentajeAvance}%)`
+                );
+
+                // Actualizar preview de calificacion final
+                if (result.calificacionFinalPreview) {
+                    $(`.calificacion-final-preview-${idMateria}`).text(result.calificacionFinalPreview.toFixed(2));
+
+                    var planMinima = parseFloat($input.data('plan-minima')) || 7.0;
+                    var esAprobatoria = result.calificacionFinalPreview >= planMinima;
+
+                    $(`.estado-preview-${idMateria}`)
+                        .removeClass('label-default label-success label-danger label-warning')
+                        .addClass(esAprobatoria ? 'label-success' : 'label-warning')
+                        .text(esAprobatoria ? 'Aprobatoria' : 'No Aprobatoria');
+                }
+
+                // Habilitar/deshabilitar boton de confirmar
+                var $botonConfirmar = $(`.btn-confirmar-materia[data-materia-id="${idMateria}"]`);
+                if (result.puedeConfirmar) {
+                    $botonConfirmar.prop('disabled', false).css('opacity', '1');
+                    $(`.mensaje-confirmar-${idMateria}`).html('<span class="text-success">✓ Listo para confirmar</span>');
+                } else {
+                    $botonConfirmar.prop('disabled', true).css('opacity', '0.5');
+                    $(`.mensaje-confirmar-${idMateria}`).html('<span class="text-warning">Faltan unidades</span>');
+                }
+
+                // ACTUALIZAR CONTADOR DE MATERIAS LISTAS
+                if (typeof actualizarContadorMateriasListas === 'function') {
+                    actualizarContadorMateriasListas();
+                }
+
+                // Mostrar notificacion sin recargar
+                mostrarNotificacion(result.message, 'success', 2000);
+
+            } else {
+                mostrarNotificacion(result.message, 'error', 4000);
+            }
+        },
+        error: function() {
+            mostrarNotificacion('Error de conexion', 'error', 3000);
+        }
+    });
+}
+
+// FUNCION: Confirmar calificaciones y pasar a otras tablas
+function confirmarCalificacionesMateria(idMateria, idPersona) {
+    if (!confirm('¿Está seguro de confirmar las calificaciones de esta materia? Una vez confirmada, pasará a las otras tablas según su estado.')) {
+        return;
+    }
+
+    var $boton = $(`.btn-confirmar-materia[data-materia-id="${idMateria}"]`);
+    var textoOriginal = $boton.html();
+    $boton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Confirmando...');
+
+    console.log(`Confirmando materia ${idMateria}...`);
+
+    $.ajax({
+        url: '@Url.Action("ConfirmarCalificacionesMateria", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona
+        },
+        success: function(result) {
+            if (result.success) {
+                mostrarNotificacion(result.message, 'success', 4000);
+
+                if (result.alumnoReprobado) {
+                    setTimeout(function() {
+                        mostrarNotificacion('Limites academicos excedidos', 'error', 5000);
+                    }, 2000);
+                }
+
+                // Recargar pagina despues de confirmar
+                setTimeout(function() {
+                    location.reload();
+                }, result.alumnoReprobado ? 4000 : 2000);
+
+            } else {
+                $boton.prop('disabled', false).html(textoOriginal);
+                mostrarNotificacion(result.message, 'error', 5000);
+            }
+        },
+        error: function(xhr, status, error) {
+            $boton.prop('disabled', false).html(textoOriginal);
+            mostrarNotificacion('Error de conexion', 'error', 4000);
+        }
+    });
+    }
+
+
+// ====================================
+// VARIABLES GLOBALES PARA MODALES
+// ====================================
+let materiaIdActualModal = 0;
+let personaIdActualModal = 0;
+let accionCallbackModal = null;
+
+// ====================================
+// GUARDAR REFERENCIAS A FUNCIONES ORIGINALES
+// ====================================
+
+// Guardar las funciones originales ANTES de sobrescribirlas
+var confirmarCalificacionesMateriaOriginal = window.confirmarCalificacionesMateria;
+var guardarExtraordinarioConPlanOriginal = window.guardarExtraordinarioConPlan;
+var guardarArrastreConPlanOriginal = window.guardarArrastreConPlan;
+
+// ====================================
+// MODAL 1: CONFIRMAR CALIFICACIONES POR UNIDADES
+// ====================================
+
+window.confirmarCalificacionesMateria = function(idMateria, idPersona) {
+    // Guardar IDs
+    materiaIdActualModal = idMateria;
+    personaIdActualModal = idPersona;
+
+    // Obtener nombre de la materia
+    var nombreMateria = $(`tr[data-materia="${idMateria}"] td:first strong`).text() || 'esta materia';
+
+    // Mostrar modal
+    $('#modalUnidadesNombreMateria').text(nombreMateria);
+    $('#modalConfirmarUnidades').modal('show');
+};
+
+$('#btnConfirmarUnidadesModal').on('click', function () {
+    $('#modalConfirmarUnidades').modal('hide');
+
+    var idMateria = materiaIdActualModal;
+    var idPersona = personaIdActualModal;
+
+    var $boton = $(`.btn-confirmar-materia[data-materia-id="${idMateria}"]`);
+    var textoOriginal = $boton.html();
+    $boton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Confirmando...');
+
+    console.log(`Confirmando materia ${idMateria}...`);
+
+    $.ajax({
+        url: '@Url.Action("ConfirmarCalificacionesMateria", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona
+        },
+        success: function(result) {
+            if (result.success) {
+                mostrarNotificacion(result.message, 'success', 4000);
+
+                if (result.alumnoReprobado) {
+                    setTimeout(function() {
+                        mostrarNotificacion('Limites academicos excedidos', 'error', 5000);
+                    }, 2000);
+                }
+
+                setTimeout(function() {
+                    location.reload();
+                }, result.alumnoReprobado ? 4000 : 2000);
+
+            } else {
+                $boton.prop('disabled', false).html(textoOriginal);
+                mostrarNotificacion(result.message, 'error', 5000);
+            }
+        },
+        error: function(xhr, status, error) {
+            $boton.prop('disabled', false).html(textoOriginal);
+            mostrarNotificacion('Error de conexion', 'error', 4000);
+        }
+    });
+});
+
+// ====================================
+// MODAL 2: CONFIRMAR CAMBIO DE MATERIA EN EXTRAORDINARIO
+// ====================================
+
+window.guardarExtraordinarioConPlan = function(idMateria, idPersona) {
+    // Guardar IDs
+    materiaIdActualModal = idMateria;
+    personaIdActualModal = idPersona;
+
+    // Obtener nombre de la materia
+    var nombreMateria = $(`tr[data-materia="${idMateria}"][data-persona="${idPersona}"] td:first strong`).text() || 'esta materia';
+
+    // Mostrar modal
+    $('#modalExtraordinarioNombreMateria').text(nombreMateria);
+    $('#modalConfirmarExtraordinario').modal('show');
+};
+
+$('#btnConfirmarExtraordinarioModal').on('click', function () {
+    $('#modalConfirmarExtraordinario').modal('hide');
+
+    var idMateria = materiaIdActualModal;
+    var idPersona = personaIdActualModal;
+
+    console.log(`Guardando extraordinario - Materia ${idMateria}...`);
+
+    var $row = $(`tr[data-materia="${idMateria}"][data-persona="${idPersona}"]`);
+    var $inputCalif = $row.find('.calificacion-extra');
+    var calificacionTexto = $inputCalif.val().trim();
+
+    var observaciones = $row.find('.observaciones-extra').val() || '';
+    var intentos = 1;
+
+    var planMinima = parseFloat($inputCalif.data('plan-minima')) || 7.0;
+    var planDecimales = $inputCalif.data('plan-decimales') === 'true' || $inputCalif.data('plan-decimales') === true;
+    var planNombre = $inputCalif.data('plan-nombre') || 'Plan Estándar';
+
+    if (!calificacionTexto || calificacionTexto === '') {
+        mostrarNotificacion('Por favor ingrese una calificacion valida', 'warning', 3000);
+        return;
+    }
+
+    var calificacion = parseFloat(calificacionTexto);
+
+    if (isNaN(calificacion) || calificacion < 0 || calificacion > 10) {
+        mostrarNotificacion('La calificacion debe estar entre 0 y 10', 'warning', 3000);
+        return;
+    }
+
+    var calificacionFinal = calificacion;
+    if (!planDecimales) {
+        if (calificacion < 8.0) {
+            calificacionFinal = Math.floor(calificacion);
+        } else {
+            calificacionFinal = Math.round(calificacion);
+        }
+    }
+
+    var estado;
+    if (calificacionFinal >= planMinima) {
+        estado = 'Acreditada';
+    } else {
+        estado = 'Reprobada';
+    }
+
+    console.log(`Estado determinado: ${estado}`);
+
+    var $boton = $row.find('button[onclick*="guardarExtraordinarioConPlan"]');
+    var textoOriginal = $boton.html();
+    $boton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Guardando...');
+
+    $.ajax({
+        url: '@Url.Action("ActualizarMateria", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona,
+            calificacion: calificacionFinal,
+            estado: estado,
+            intentosExtraordinarios: estado === 'Reprobada' ? 2 : 0,
+            observaciones: observaciones,
+            fechaExamen: new Date().toISOString().split('T')[0],
+            fechaInicioArrastre: estado === 'Reprobada' ? new Date().toISOString().split('T')[0] : null
+        },
+        success: function(result) {
+            $boton.prop('disabled', false).html(textoOriginal);
+
+            if (result.success) {
+                var mensaje = estado === 'Acreditada' ?
+                    `Materia acreditada` :
+                    `Materia reprobada`;
+
+                mostrarNotificacion(mensaje, estado === 'Acreditada' ? 'success' : 'warning', 4000);
+
+                setTimeout(function() {
+                    location.reload();
+                }, 2000);
+            } else {
+                mostrarNotificacion('Error: ' + result.message, 'error', 4000);
+            }
+        },
+        error: function(xhr, status, error) {
+            $boton.prop('disabled', false).html(textoOriginal);
+            mostrarNotificacion('Error de conexion', 'error', 4000);
+        }
+    });
+});
+
+// ====================================
+// MODAL 3: CONFIRMAR CALIFICACIÓN DE ARRASTRE
+// ====================================
+
+window.guardarArrastreConPlan = function(idMateria, idPersona) {
+    // Guardar IDs
+    materiaIdActualModal = idMateria;
+    personaIdActualModal = idPersona;
+
+    // Obtener nombre de la materia
+    var nombreMateria = $(`tr[data-materia="${idMateria}"][data-persona="${idPersona}"] td:first strong`).text() || 'esta materia';
+
+    // Mostrar modal
+    $('#modalArrastreNombreMateria').text(nombreMateria);
+    $('#modalConfirmarArrastre').modal('show');
+};
+
+$('#btnConfirmarArrastreModal').on('click', function () {
+    $('#modalConfirmarArrastre').modal('hide');
+
+    var idMateria = materiaIdActualModal;
+    var idPersona = personaIdActualModal;
+
+    console.log(`Guardando arrastre - Materia ${idMateria}...`);
+
+    var $row = $(`tr[data-materia="${idMateria}"][data-persona="${idPersona}"]`);
+    var $inputCalif = $row.find('.calificacion-arrastre');
+    var calificacionTexto = $inputCalif.val().trim();
+
+    var observaciones = $row.find('.observaciones-arrastre').val() || '';
+    var intentoActual = parseInt($row.data('intentos-originales')) || 2;
+
+    var planMinima = parseFloat($inputCalif.data('plan-minima')) || 7.0;
+    var planDecimales = $inputCalif.data('plan-decimales') === 'true';
+    var planNombre = $inputCalif.data('plan-nombre') || 'Plan Estándar';
+
+    if (!calificacionTexto || calificacionTexto === '') {
+        mostrarNotificacion('Por favor ingrese una calificacion valida', 'warning', 3000);
+        return;
+    }
+
+    var calificacion = parseFloat(calificacionTexto);
+
+    if (isNaN(calificacion) || calificacion < 0 || calificacion > 10) {
+        mostrarNotificacion('La calificacion debe estar entre 0 y 10', 'warning', 3000);
+        return;
+    }
+
+    var calificacionFinal = calificacion;
+    if (!planDecimales) {
+        if (calificacion < 8.0) {
+            calificacionFinal = Math.floor(calificacion);
+        } else {
+            calificacionFinal = Math.round(calificacion);
+        }
+    }
+
+    var estado;
+    var nuevoIntento = intentoActual;
+
+    if (calificacionFinal >= planMinima) {
+        estado = 'Acreditada';
+        nuevoIntento = 0;
+    } else {
+        estado = 'Reprobada';
+        // Piso de 2: indica que la materia esta en fase de arrastre (no incrementa)
+        nuevoIntento = Math.max(intentoActual, 2);
+
+        if (nuevoIntento > 3) {
+            mostrarNotificacion('Se agotaron los intentos permitidos. La materia queda como REPROBADA DEFINITIVA.', 'error', 5000);
+        }
+    }
+
+    console.log(`Estado: ${estado}, Intento: ${nuevoIntento}`);
+
+    var $boton = $row.find('button[onclick*="guardarArrastreConPlan"]');
+    var textoOriginal = $boton.html();
+    $boton.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Guardando...');
+
+    $.ajax({
+        url: '@Url.Action("ActualizarMateria", "MateriasAlumno")',
+        type: 'POST',
+        data: {
+            idMateria: idMateria,
+            idPersona: idPersona,
+            calificacion: calificacionFinal,
+            estado: estado,
+            intentosExtraordinarios: nuevoIntento,
+            observaciones: observaciones,
+            fechaInicioArrastre: $row.find('.fecha-inicio-arrastre').val()
+        },
+        success: function(result) {
+            $boton.prop('disabled', false).html(textoOriginal);
+
+            if (result.success) {
+                var mensaje;
+                if (estado === 'Acreditada') {
+                    mensaje = `Materia acreditada`;
+                } else if (nuevoIntento >= 3) {
+                    mensaje = `Intento ${nuevoIntento}/2 registrado - ULTIMO INTENTO`;
+                } else {
+                    mensaje = `Intento ${nuevoIntento}/2 registrado`;
+                }
+
+                mostrarNotificacion(mensaje, estado === 'Acreditada' ? 'success' : 'warning', 4000);
+
+                setTimeout(function() {
+                    location.reload();
+                }, 2000);
+            } else {
+                mostrarNotificacion('Error: ' + result.message, 'error', 4000);
+            }
+        },
+        error: function(xhr, status, error) {
+            $boton.prop('disabled', false).html(textoOriginal);
+            mostrarNotificacion('Error de conexion', 'error', 4000);
+        }
+    });
+});
+
+// ====================================
+// ELIMINAR MATERIA — vista tutor (Index)
+// ====================================
+var _elimIdxIdMateria = null;
+var _elimIdxIdPersona = null;
+
+function confirmarEliminarMateriaIndex(idMateria, idPersona, materia, cuatri, estado) {
+    _elimIdxIdMateria = idMateria;
+    _elimIdxIdPersona = idPersona;
+
+    $('#elim-idx-materia').text(materia);
+    $('#elim-idx-cuatri').text(cuatri + ' Cuatrimestre');
+    $('#elim-idx-estado').text(estado);
+
+    $('#modalEliminarMateriaIndex').modal('show');
+}
+
+$('#btnConfirmarEliminarIndex').on('click', function () {
+    var $btn = $(this);
+    $btn.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh"></span> Eliminando...');
+
+    $.ajax({
+        url: '@Url.Action("EliminarMateriaAlumno", "MateriasAlumno")',
+        type: 'POST',
+        data: { idMateria: _elimIdxIdMateria, idPersona: _elimIdxIdPersona },
+        success: function (result) {
+            $('#modalEliminarMateriaIndex').modal('hide');
+            if (result.success) {
+                mostrarNotificacion('Registro eliminado correctamente.', 'success', 3000);
+                setTimeout(function () { location.reload(); }, 1200);
+            } else {
+                mostrarNotificacion('Error: ' + result.message, 'error', 5000);
+                $btn.prop('disabled', false).html('<i class="glyphicon glyphicon-trash"></i> Eliminar definitivamente');
+            }
+        },
+        error: function () {
+            $('#modalEliminarMateriaIndex').modal('hide');
+            mostrarNotificacion('Error de conexión al intentar eliminar.', 'error', 4000);
+            $btn.prop('disabled', false).html('<i class="glyphicon glyphicon-trash"></i> Eliminar definitivamente');
+        }
+    });
+});
+
+// ====================================
+// MODAL GENÉRICO (OPCIONAL)
+// ====================================
+
+window.mostrarConfirmacion = function(titulo, mensaje, callback) {
+    $('#modalGenericoTitulo').text(titulo);
+    $('#modalGenericoMensaje').text(mensaje);
+    accionCallbackModal = callback;
+    $('#modalConfirmacionGenerica').modal('show');
+};
+
+$('#btnConfirmarGenerico').on('click', function () {
+    $('#modalConfirmacionGenerica').modal('hide');
+    if (typeof accionCallbackModal === 'function') {
+        accionCallbackModal();
+        accionCallbackModal = null;
+    }
+});
+
+$('#modalConfirmacionGenerica').on('hidden.bs.modal', function () {
+    accionCallbackModal = null;
+});
+
+$(document).ready(function() {
+
+    // ============================================================
+    // CARGAR FORMA DE APROBACIÓN AL CARGAR LA PÁGINA
+    // ============================================================
+    $('.fila-materia').each(function() {
+        var $fila = $(this);
+        var idMateria = $fila.data('id-materia');
+        var idPersona = $fila.data('id-persona');
+
+
+        // Solo cargar si no está pendiente
+        var materiaEstado = $fila.find('.label').first().text().trim();
+        if (materiaEstado !== 'Pendiente') {
+            cargarFormaAprobacion(idMateria, idPersona);
+        }
+    });
+
+    // ============================================================
+    // FUNCIÓN PARA CARGAR FORMA DE APROBACIÓN
+    // ============================================================
+    function cargarFormaAprobacion(idMateria, idPersona) {
+        $.ajax({
+            url: '@Url.Action("ObtenerHistorialMateria", "MateriasAlumno")',
+            type: 'GET',
+            data: { idPersona: idPersona, idMateria: idMateria },
+            success: function(response) {
+                if (response.success && response.intentos && response.intentos.length > 0) {
+                    var formaAprobacion = response.formaAprobacion;
+                    var fueAprobada = response.fueAprobada;
+
+                    var html = '';
+                    if (fueAprobada) {
+                        var intentoAprobatorio = response.intentos.find(function(i) { return i.esAprobatoria; });
+                        html = '<span class="label label-success">' +
+                               '<span class="glyphicon glyphicon-ok-circle"></span> ' +
+                               formaAprobacion +
+                               '</span><br/>' +
+                               '<small>Calif: <strong>' + intentoAprobatorio.calificacionAjustada.toFixed(intentoAprobatorio.permiteDecimales ? 2 : 0) + '</strong></small><br/>' +
+                               '<small class="text-muted">' + intentoAprobatorio.fechaRegistro + '</small>';
+                    } else {
+                        var ultimoIntento = response.intentos[response.intentos.length - 1];
+                        html = '<span class="label label-danger">' +
+                               '<span class="glyphicon glyphicon-remove-circle"></span> ' +
+                               ultimoIntento.tipoIntento +
+                               '</span><br/>' +
+                               '<small>Calif: <strong>' + ultimoIntento.calificacionAjustada.toFixed(ultimoIntento.permiteDecimales ? 2 : 0) + '</strong></small><br/>' +
+                               '<small class="text-muted">' + ultimoIntento.fechaRegistro + '</small>';
+                    }
+
+                    $('.forma-aprobacion-' + idMateria).html(html);
+                } else {
+                    $('.forma-aprobacion-' + idMateria).html('<span class="text-muted"><em>Sin información</em></span>');
+                }
+            },
+            error: function() {
+                $('.forma-aprobacion-' + idMateria).html('<span class="text-danger"><em>Error al cargar</em></span>');
+            }
+        });
+    }
+
+    // ============================================================
+    // BOTÓN VER HISTORIAL
+    // ============================================================
+    $(document).on('click', '.btn-ver-historial', function() {
+        var $btn = $(this);
+        var idMateria = $btn.data('id-materia');
+        var idPersona = $btn.data('id-persona');
+        var nombreMateria = $btn.data('nombre-materia');
+
+        // Mostrar modal
+        $('#nombreMateriaHistorial').html('<strong>' + nombreMateria + '</strong>');
+        $('#contenidoHistorial').html('<div class="text-center"><span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Cargando historial...</div>');
+        $('#modalHistorialMateria').modal('show');
+
+        // Cargar historial
+        $.ajax({
+            url: '@Url.Action("ObtenerHistorialMateria", "MateriasAlumno")',
+            type: 'GET',
+            data: { idPersona: idPersona, idMateria: idMateria },
+            success: function(response) {
+                if (response.success && response.intentos && response.intentos.length > 0) {
+// Definir si se muestra columna de Acciones
+var esMaster = @(esMaster ? "true" : "false");
+var columnaAcciones = esMaster ? '<th class="text-center">Acciones</th>' : '';
+
+var html = '<thead>' +
+           '<tr style="background-color: #f5f5f5;">' +
+           '<th style="text-align: center; width: 10%;">Intento</th>' +
+           '<th style="text-align: center; width: 25%;">Tipo</th>' +
+           '<th style="text-align: center; width: 15%;">Calificación</th>' +
+           '<th style="text-align: center; width: 15%;">Resultado</th>' +
+           '<th style="text-align: center; width: 20%;">Fecha</th>' +
+           '<th style="text-align: center; width: 15%;">Observaciones</th>' +
+           columnaAcciones +
+           '</tr>' +
+           '</thead>' +
+           '<tbody>';
+
+                    response.intentos.forEach(function(intento) {
+                        var decimales = intento.permiteDecimales ? 2 : 0;
+                        var califTexto = intento.calificacionAjustada.toFixed(decimales);
+
+                        if (intento.calificacionOriginal !== intento.calificacionAjustada) {
+                            // Original eliminado por simplicidad
+                        }
+
+                        html += '<tr class="' + (intento.esAprobatoria ? 'success' : 'danger') + '">' +
+                            '<td style="text-align: center; vertical-align: middle;"><strong>' + intento.intento + '</strong></td>' +
+                            '<td style="vertical-align: middle;">' +
+                            '<span class="label ' + intento.labelClass + '">' + intento.tipoIntento + '</span>' +
+                            '</td>' +
+                            '<td style="text-align: center; vertical-align: middle; font-size: 16px;"><strong>' + califTexto + '</strong>' +
+                            '</td>' +
+                            '<td style="text-align: center; vertical-align: middle;">' +
+                            '<span class="glyphicon ' + intento.iconoResultado + '"></span> ' +
+                            '<strong>' + intento.textoResultado + '</strong>' +
+                            '</td>' +
+                            '<td style="text-align: center; vertical-align: middle;">' +
+                              intento.fechaRegistro +
+                            '</td>' +
+                            '<td style="vertical-align: middle;">' +
+                            (intento.observaciones ? '<small>' + intento.observaciones + '</small>' : '<em class="text-muted">Sin observaciones</em>') +
+                            '</td>';
+
+                        // Agregar columna de Acciones solo para Master
+                        if (esMaster) {
+                            html += '<td style="text-align: center; vertical-align: middle;">' +
+                                '<button type="button" class="btn btn-xs btn-warning btn-editar-historial" ' +
+                                'data-idpersona="' + idPersona + '" ' +
+                                'data-idmateria="' + idMateria + '" ' +
+                                'data-numerointento="' + intento.intento + '" ' +
+                                'data-tipointento="' + intento.tipoIntento + '" ' +
+                                'data-calificacion="' + intento.calificacionAjustada + '" ' +
+                                'data-nombremateria="' + nombreMateria + '" ' +
+                                'title="Editar calificación">' +
+                                '<span class="glyphicon glyphicon-edit"></span> Editar' +
+                                '</button>' +
+                                '</td>';
+                        }
+
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody>';
+
+// Agregar event handlers para botones de editar
+setTimeout(function() {
+    $('.btn-editar-historial').off('click').on('click', function() {
+        var btn = $(this);
+        abrirModalEditarCalificacionHistorial(
+            btn.data('idpersona'),
+            btn.data('idmateria'),
+            btn.data('numerointento'),
+            btn.data('tipointento'),
+            btn.data('calificacion'),
+            btn.data('nombremateria')
+        );
+    });
+}, 100);
+
+                    // Resumen
+                    html += '<div class="alert alert-info" style="margin-top: 15px; margin-bottom: 0;">' +
+                            '<strong>Resumen:</strong> ' +
+                            '<span class="glyphicon glyphicon-stats"></span> ' +
+                            response.totalIntentos + ' intento(s) realizado(s) - ' +
+                            '<span class="glyphicon glyphicon-' + (response.fueAprobada ? 'ok' : 'remove') + '-circle"></span> ' +
+                            response.formaAprobacion +
+                            '</div>';
+
+                    $('#contenidoHistorial').html(html);
+                } else {
+                    $('#contenidoHistorial').html(
+                        '<div class="alert alert-warning">' +
+                        '<span class="glyphicon glyphicon-info-sign"></span> ' +
+                        'No hay intentos registrados para esta materia.' +
+                        '</div>'
+                    );
+                }
+            },
+            error: function() {
+                $('#contenidoHistorial').html(
+                    '<div class="alert alert-danger">' +
+                    '<span class="glyphicon glyphicon-exclamation-sign"></span> ' +
+                    'Error al cargar el historial. Por favor, intente nuevamente.' +
+                    '</div>'
+                );
+            }
+        });
+    });
+});
+
+
+function actualizarPromedioEnVista(idPersona) {
+    $.ajax({
+        url: '@Url.Action("CalcularYGuardarPromedio", "MateriasAlumno")',
+        type: 'GET',
+        data: { idPersona: idPersona },
+        success: function (response) {
+            if (response.success) {
+                // Recargar la página para mostrar el promedio actualizado
+                location.reload();
+            } else {
+                mostrarNotificacion(response.message, 'error');
+            }
+        },
+        error: function () {
+            mostrarNotificacion('Error al actualizar el promedio', 'error');
+        }
+    });
+    }
+
+
+    function verHistorialMateria(idPersona, idMateria, nombreMateria) {
+    console.log('Abriendo historial:', { idPersona, idMateria, nombreMateria });
+
+    // Limpiar tabla anterior
+    $('#bodyHistorialMateria').html('<tr><td colspan="9" class="text-center"><i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Cargando historial...</td></tr>');
+    $('#modalHistorialMateria #nombreMateriaHistorial').text(nombreMateria);
+    $('#modalHistorialMateria').modal('show');
+
+    // Obtener historial
+    $.ajax({
+        url: '@Url.Action("ObtenerHistorialMateria", "MateriasAlumno")',
+        type: 'GET',
+        data: {
+            idPersona: idPersona,
+            idMateria: idMateria
+        },
+        success: function(response) {
+            console.log('Historial recibido:', response);
+
+            if (response.success && response.intentos && response.intentos.length > 0) {
+                var html = '';
+                var esMaster = @(esMaster ? "true" : "false"); // Variable desde Razor
+
+                response.intentos.forEach(function(intento) {
+                    var claseResultado = intento.EsAprobatoria ? 'success' : 'danger';
+                    var iconoResultado = intento.EsAprobatoria ? 'glyphicon-ok-circle text-success' : 'glyphicon-remove-circle text-danger';
+                    var textoResultado = intento.EsAprobatoria ? 'APROBADO' : 'REPROBADO';
+
+                    var calificacionDisplay = intento.CalificacionAjustada.toFixed(2);
+                    if (intento.CalificacionOriginal !== intento.CalificacionAjustada) {
+                        calificacionDisplay += ' <small>(Original: ' + intento.CalificacionOriginal.toFixed(2) + ')</small>';
+                    }
+
+                    html += '<tr class="' + claseResultado + '">';
+                    html += '<td class="text-center"><strong>' + intento.Intento + '</strong></td>';
+                    html += '<td>' + intento.TipoIntento + '</td>';
+                    html += '<td class="text-center"><strong>' + calificacionDisplay + '</strong></td>';
+                    html += '<td class="text-center"><span class="glyphicon ' + iconoResultado + '"></span> <strong>' + textoResultado + '</strong></td>';
+                    html += '<td class="text-center">' + new Date(intento.FechaRegistro).toLocaleDateString('es-MX') + '</td>';
+                    html += '<td>' + intento.Estado + '</td>';
+                    html += '<td>' + (intento.Observaciones || '-') + '</td>';
+
+                    // COLUMNA DE ACCIONES - Solo visible para Master
+                    html += '<td class="text-center">';
+                    if (esMaster) {
+                        html += '<button type="button" class="btn btn-xs btn-warning btn-editar-historial" ';
+                        html += 'data-idpersona="' + idPersona + '" ';
+                        html += 'data-idmateria="' + idMateria + '" ';
+                        html += 'data-numerointento="' + intento.Intento + '" ';
+                        html += 'data-tipointento="' + intento.TipoIntento + '" ';
+                        html += 'data-calificacion="' + intento.CalificacionAjustada + '" ';
+                        html += 'data-nombremateria="' + nombreMateria + '" ';
+                        html += 'title="Editar calificación">';
+                        html += '<span class="glyphicon glyphicon-edit"></span> Editar';
+                        html += '</button>';
+                    } else {
+                        html += '<span class="text-muted">-</span>';
+                    }
+                    html += '</td>';
+
+                    html += '</tr>';
+                });
+
+                $('#bodyHistorialMateria').html(html);
+
+                // Asignar evento click a los botones de editar
+                $('.btn-editar-historial').off('click').on('click', function() {
+                    var btn = $(this);
+                    abrirModalEditarCalificacionHistorial(
+                        btn.data('idpersona'),
+                        btn.data('idmateria'),
+                        btn.data('numerointento'),
+                        btn.data('tipointento'),
+                        btn.data('calificacion'),
+                        btn.data('nombremateria')
+                    );
+                });
+
+            } else {
+                $('#bodyHistorialMateria').html('<tr><td colspan="9" class="text-center text-muted">No hay intentos registrados para esta materia</td></tr>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al obtener historial:', error);
+            $('#bodyHistorialMateria').html('<tr><td colspan="9" class="text-center text-danger">Error al cargar el historial</td></tr>');
+        }
+    });
+}
+
+
+    function abrirModalEditarCalificacionHistorial(idPersona, idMateria, numeroIntento, tipoIntento, calificacionActual, nombreMateria) {
+        console.log('Abriendo modal de edición:', { idPersona, idMateria, numeroIntento, tipoIntento, calificacionActual, nombreMateria });
+
+        // Llenar campos del modal
+        $('#editHist_IdPersona').val(idPersona);
+        $('#editHist_IdMateria').val(idMateria);
+        $('#editHist_NumeroIntento').val(numeroIntento);
+        $('#editHist_NombreMateria').text(nombreMateria);
+        $('#editHist_TipoIntento').text(tipoIntento);
+        $('#editHist_CalificacionActual').text(calificacionActual.toFixed(2));
+        $('#editHist_NuevaCalificacion').val('');
+        $('#editHist_Observaciones').val('');
+
+        // Mostrar modal
+        $('#modalEditarCalificacionHistorial').modal('show');
+
+        // Focus en el campo de nueva calificación
+        setTimeout(function () {
+            $('#editHist_NuevaCalificacion').focus();
+        }, 500);
+    }
+
+$(document).ready(function() {
+    $('#btnGuardarEdicionHistorial').off('click').on('click', function() {
+        var idPersona = parseInt($('#editHist_IdPersona').val());
+        var idMateria = parseInt($('#editHist_IdMateria').val());
+        var numeroIntento = parseInt($('#editHist_NumeroIntento').val());
+
+        // Asegurar que siempre sea decimal con 2 decimales
+var nuevaCalificacion = parseFloat(parseFloat($('#editHist_NuevaCalificacion').val()).toFixed(2));
+
+        var observaciones = $('#editHist_Observaciones').val() || '';
+
+        console.log('Datos a enviar:', {
+            idPersona: idPersona,
+            idMateria: idMateria,
+            numeroIntento: numeroIntento,
+            nuevaCalificacion: nuevaCalificacion,
+            tipoNuevaCalificacion: typeof nuevaCalificacion,
+            observaciones: observaciones
+        });
+
+        // Validaciones
+        if (isNaN(nuevaCalificacion) || nuevaCalificacion < 0 || nuevaCalificacion > 10) {
+            alert('Por favor, ingrese una calificacion valida entre 0 y 10');
+            return;
+        }
+
+        if (!confirm('¿Está seguro de que desea actualizar esta calificación?\n\nNueva calificación: ' + nuevaCalificacion.toFixed(2))) {
+            return;
+        }
+
+        // Deshabilitar botón
+        var btnOriginalHtml = $('#btnGuardarEdicionHistorial').html();
+        $('#btnGuardarEdicionHistorial').prop('disabled', true).html('<i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Guardando...');
+
+        // Enviar solicitud AJAX
+        $.ajax({
+            url: '@Url.Action("EditarCalificacionHistorialMaster", "MateriasAlumno")',
+            type: 'POST',
+            data: {
+                idPersona: idPersona,
+                idMateria: idMateria,
+                numeroIntento: numeroIntento,
+                nuevaCalificacion: nuevaCalificacion,
+                observaciones: observaciones
+            },
+            success: function(response) {
+                console.log('Respuesta de edición:', response);
+
+                if (response.success) {
+                    alert(response.mensaje);
+
+                    // Cerrar modal de edición
+                    $('#modalEditarCalificacionHistorial').modal('hide');
+
+                    // Recargar historial
+                    var nombreMateria = $('#editHist_NombreMateria').text();
+                    verHistorialMateria(idPersona, idMateria, nombreMateria);
+
+                    // Recargar la página después de 2 segundos para reflejar cambios
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+
+                } else {
+                    alert('❌ ' + response.mensaje);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error al editar calificación:', error);
+                console.error('Respuesta del servidor:', xhr.responseText);
+                alert('❌ Error al procesar la solicitud: ' + error);
+            },
+            complete: function() {
+                // Rehabilitar botón
+                $('#btnGuardarEdicionHistorial').prop('disabled', false).html(btnOriginalHtml);
+            }
+        });
+    });
+});
+
+
+
+
+
+</script>
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <style>
+        /* Botón de confirmar materia */
+        .btn-confirmar-materia {
+            white-space: nowrap;
+            margin: 2px 0;
+        }
+
+            .btn-confirmar-materia:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+            }
+
+            .btn-confirmar-materia:not(:disabled):hover {
+                background-color: #449d44;
+                border-color: #398439;
+                box-shadow: 0 2px 5px rgba(68, 157, 68, 0.3);
+            }
+
+        /* Preview indicators */
+        .calificacion-final-preview {
+            position: relative;
+        }
+
+            .calificacion-final-preview::after {
+                content: "";
+                font-size: 8px;
+                color: #999;
+                font-weight: normal;
+            }
+
+        /* Mensaje de confirmación */
+        .mensaje-confirmar {
+            display: block;
+            margin-top: 5px;
+            font-size: 10px;
+        }
+
+
+        /* ESTILOS PARA CALIFICACION POR UNIDADES */
+        .unidades-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .unidad-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .unidad-item label {
+                font-weight: bold;
+                font-size: 11px;
+                margin: 0;
+                min-width: 25px;
+            }
+
+        .unidad-input {
+            width: 60px !important;
+            text-align: center;
+            font-weight: bold;
+            padding: 4px;
+            height: 28px;
+            font-size: 11px;
+        }
+
+            .unidad-input:focus {
+                box-shadow: 0 0 5px rgba(92, 184, 92, 0.5);
+            }
+
+        .progress {
+            box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+        }
+
+        .progress-bar {
+            transition: width 0.6s ease;
+        }
+
+        @@media (max-width: 768px) {
+            .unidades-container {
+                flex-direction: column;
+            }
+
+            .unidad-item {
+                width: 100%;
+            }
+
+            .unidad-input {
+                width: 100px !important;
+            }
+        }
+
+        .badge-success {
+            background-color: #5cb85c;
+        }
+
+        .badge-danger {
+            background-color: #d9534f;
+        }
+
+        .badge-warning {
+            background-color: #f0ad4e;
+        }
+
+        .badge-info {
+            background-color: #5bc0de;
+        }
+
+        .estado-dinamico, .estado-extraordinario, .estado-arrastre {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .observaciones-extra, .observaciones-arrastre {
+            font-size: 11px;
+            min-height: 60px;
+        }
+
+        input[readonly] {
+            background-color: #f9f9f9 !important;
+            cursor: not-allowed;
+        }
+
+        .calificacion-input, .calificacion-extra, .calificacion-arrastre {
+            text-align: center;
+            font-weight: bold;
+        }
+
+            .calificacion-input:focus, .calificacion-extra:focus, .calificacion-arrastre:focus {
+                border-color: #5cb85c;
+                box-shadow: 0 0 5px rgba(92, 184, 92, 0.3);
+            }
+
+        @@keyframes pulse-critical {
+            0% {
+                border-color: #d9534f;
+                box-shadow: 0 0 0 0 rgba(217, 83, 79, 0.7);
+            }
+
+            70% {
+                border-color: #d9534f;
+                box-shadow: 0 0 0 10px rgba(217, 83, 79, 0);
+            }
+
+            100% {
+                border-color: #d9534f;
+                box-shadow: 0 0 0 0 rgba(217, 83, 79, 0);
+            }
+        }
+
+        .panel-danger {
+            border-color: #d9534f;
+        }
+
+            .panel-danger > .panel-heading {
+                background-color: #d9534f;
+                color: white;
+            }
+
+        .panel-warning {
+            border-color: #f0ad4e;
+        }
+
+            .panel-warning > .panel-heading {
+                background-color: #f0ad4e;
+                color: white;
+            }
+
+        .materia-extraordinario .calificacion-extra, .materia-reprobada .calificacion-arrastre {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .table tr.danger {
+            background-color: #f2dede !important;
+            border-left: 4px solid #d9534f;
+        }
+
+        .table tr.warning {
+            background-color: #fcf8e3 !important;
+            border-left: 4px solid #f0ad4e;
+        }
+
+        .ultimo-intento {
+            background-color: #ffcdd2 !important;
+            color: #c62828 !important;
+            font-weight: bold !important;
+        }
+
+        .notification-temp {
+            border-radius: 8px;
+            font-weight: 500;
+            border-left: 5px solid;
+        }
+
+            .notification-temp.alert-success {
+                border-left-color: #5cb85c;
+            }
+
+            .notification-temp.alert-danger {
+                border-left-color: #d9534f;
+            }
+
+            .notification-temp.alert-warning {
+                border-left-color: #f0ad4e;
+            }
+
+            .notification-temp.alert-info {
+                border-left-color: #5bc0de;
+            }
+
+        .label-danger {
+            animation: pulse 2s infinite;
+        }
+
+        @@keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .input-sm {
+            height: 30px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-xs {
+            padding: 1px 5px;
+            font-size: 12px;
+            line-height: 1.5;
+            border-radius: 3px;
+        }
+
+        .table-responsive {
+            margin-bottom: 20px;
+        }
+
+        .table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .panel {
+            margin-top: 20px;
+        }
+
+        .alert {
+            margin-top: 20px;
+        }
+
+        .glyphicon-refresh-animate {
+            animation: spin .7s infinite linear;
+        }
+
+        @@keyframes spin {
+            from {
+                transform: scale(1) rotate(0deg);
+            }
+
+            to {
+                transform: scale(1) rotate(360deg);
+            }
+        }
+
+        .fecha-examen[required]:invalid {
+            border-color: #f44336;
+            box-shadow: 0 0 5px rgba(244, 67, 54, 0.3);
+        }
+
+        .fecha-examen[required]:valid {
+            border-color: #4caf50;
+        }
+
+        @@media print {
+            .btn, .btn-group, .panel-body button {
+                display: none !important;
+            }
+
+            .notification-temp {
+                display: none !important;
+            }
+
+            .table {
+                border: 1px solid #000 !important;
+            }
+
+                .table th, .table td {
+                    border: 1px solid #000 !important;
+                }
+
+            body {
+                font-size: 12pt;
+            }
+
+            h2, h4 {
+                page-break-after: avoid;
+            }
+
+            table {
+                page-break-inside: avoid;
+            }
+        }
+
+        .materia-desactivada-fila {
+            background-color: #fff3cd !important;
+            border-left: 4px solid #f0ad4e !important;
+        }
+
+            .materia-desactivada-fila td {
+                background-color: #fff3cd !important;
+            }
+
+        .materia-activa {
+            border-left: 3px solid #5cb85c;
+        }
+
+        .materia-desactivada {
+            border-left: 3px solid #f0ad4e;
+            background-color: #fff3cd;
+        }
+
+            .materia-desactivada input,
+            .materia-desactivada select,
+            .materia-desactivada textarea {
+                background-color: #fff3cd !important;
+                border: 1px solid #f0ad4e !important;
+            }
+
+                .materia-desactivada input:focus,
+                .materia-desactivada select:focus,
+                .materia-desactivada textarea:focus {
+                    border-color: #f0ad4e !important;
+                    box-shadow: 0 0 5px rgba(240, 173, 78, 0.5) !important;
+                }
+
+        .materia-desactivada-fila {
+            animation: subtle-warning 3s ease-in-out infinite;
+        }
+
+        @@keyframes subtle-warning {
+            0%, 100% {
+                background-color: #fff3cd;
+            }
+
+            50% {
+                background-color: #fff8db;
+            }
+        }
+
+        .requiere-atencion-especial {
+            border: 2px solid #d9534f !important;
+            box-shadow: 0 0 10px rgba(217, 83, 79, 0.3);
+        }
+
+        .glyphicon-ok-circle.text-success {
+            color: #5cb85c !important;
+            text-shadow: 0 0 3px rgba(92, 184, 92, 0.5);
+        }
+
+        .glyphicon-ban-circle.text-warning {
+            color: #f0ad4e !important;
+            text-shadow: 0 0 3px rgba(240, 173, 78, 0.5);
+            animation: pulse-warning 2s infinite;
+        }
+
+        @@keyframes pulse-warning {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .plan-info-badge {
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            cursor: help;
+        }
+
+        .plan-details {
+            font-size: 9px;
+            line-height: 1.2;
+            margin-top: 3px;
+        }
+
+        .label-success {
+            background-color: #5cb85c;
+        }
+
+        .label-warning {
+            background-color: #f0ad4e;
+        }
+
+        .label-info {
+            background-color: #5bc0de;
+        }
+
+        /* Tooltips para planes */
+        .plan-info-badge[title]:hover {
+            position: relative;
+        }
+
+        /* ESTILOS ESPECÍFICOS PARA MATERIAS EN ARRASTRE */
+        .materia-reprobada .calificacion-arrastre {
+            border: 2px solid #d9534f;
+        }
+
+            .materia-reprobada .calificacion-arrastre:focus {
+                border-color: #c9302c;
+                box-shadow: 0 0 8px rgba(217, 83, 79, 0.4);
+            }
+
+        .materia-extraordinario .btn, .materia-reprobada .btn {
+            margin: 1px;
+            white-space: nowrap;
+        }
+
+        .materia-extraordinario .btn-xs, .materia-reprobada .btn-xs {
+            font-size: 10px;
+            padding: 2px 6px;
+        }
+
+        /* RESPONSIVE MEJORADO */
+        @@media (max-width: 768px) {
+            .table-responsive table {
+                font-size: 11px;
+            }
+
+            .plan-info-badge {
+                font-size: 8px;
+                padding: 2px 4px;
+            }
+
+            .plan-details {
+                font-size: 8px;
+            }
+
+            .btn-xs {
+                font-size: 9px;
+                padding: 1px 3px;
+            }
+
+            .input-sm {
+                height: 28px;
+                font-size: 11px;
+            }
+        }
+
+        /* Botón de editar en historial */
+        .btn-editar-historial {
+            transition: all 0.3s ease;
+        }
+
+            .btn-editar-historial:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+
+        /* Modal de edición */
+        #modalEditarCalificacionHistorial .modal-header {
+            color: white;
+        }
+
+        #modalEditarCalificacionHistorial input[type="number"] {
+            border: 3px solid #f0ad4e;
+        }
+
+            #modalEditarCalificacionHistorial input[type="number"]:focus {
+                border-color: #ec971f;
+                box-shadow: 0 0 10px rgba(240, 173, 78, 0.5);
+            }
+
+
+        /* Modales personalizados */
+        .modal-content {
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+
+        .modal-title {
+            font-weight: bold;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        /* ESTILOS MEJORADOS PARA TABLA DE ESTADO DE MATERIAS */
+        #tablaEstadoMaterias {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+            #tablaEstadoMaterias thead tr {
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            #tablaEstadoMaterias tbody tr {
+                transition: all 0.3s ease;
+            }
+
+                #tablaEstadoMaterias tbody tr:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+
+                #tablaEstadoMaterias tbody tr.success:hover {
+                    background-color: #d0e9c6 !important;
+                }
+
+                #tablaEstadoMaterias tbody tr.warning:hover {
+                    background-color: #faf2cc !important;
+                }
+
+                #tablaEstadoMaterias tbody tr.danger:hover {
+                    background-color: #ebcccc !important;
+                }
+
+            #tablaEstadoMaterias td {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+
+            #tablaEstadoMaterias th {
+                font-weight: 600;
+                font-size: 13px;
+                letter-spacing: 0.3px;
+            }
+
+            /* Mejorar visualización de labels en la tabla de estado */
+            #tablaEstadoMaterias .label {
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 4px;
+                display: inline-block;
+                min-width: 90px;
+            }
+
+            /* Estilos para la columna de Forma de Aprobación */
+            #tablaEstadoMaterias .forma-aprobacion-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+
+        /* Botón de historial mejorado */
+        .btn-ver-historial {
+            font-weight: 600;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+            .btn-ver-historial:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .btn-ver-historial .glyphicon {
+                margin-right: 5px;
+            }
+
+        /* ========================================== */
+        /* ESTILOS PARA FILA DE PROMEDIO GENERAL */
+        /* ========================================== */
+        #tablaEstadoMaterias tfoot tr {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-top: 3px solid #337ab7;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+            #tablaEstadoMaterias tfoot tr:hover {
+                background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+                box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+        #tablaEstadoMaterias tfoot td {
+            padding: 15px 10px;
+            font-size: 14px;
+        }
+
+        #tablaEstadoMaterias tfoot .glyphicon-stats {
+            font-size: 18px;
+            color: #337ab7;
+            margin-right: 8px;
+            animation: pulse-stats 2s ease-in-out infinite;
+        }
+
+        @@keyframes pulse-stats {
+            0%, 100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* ========================================== */
+        /* ESTILOS PROFESIONALES PARA LAS 3 TABLAS PRINCIPALES */
+        /* ========================================== */
+
+        /* TABLA DE CALIFICACIÓN POR UNIDADES */
+        #tabla-unidades {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+            #tabla-unidades thead {
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+                #tabla-unidades thead th {
+                    font-weight: 600;
+                    font-size: 13px;
+                    letter-spacing: 0.3px;
+                    padding: 12px 8px;
+                }
+
+            #tabla-unidades tbody tr {
+                transition: all 0.3s ease;
+                border-left: 3px solid transparent;
+            }
+
+                #tabla-unidades tbody tr:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    background-color: #f8f9fa !important;
+                    border-left: 3px solid #5cb85c;
+                }
+
+            #tabla-unidades tbody td {
+                padding: 12px 8px;
+                font-size: 13px;
+                vertical-align: middle;
+            }
+
+            #tabla-unidades .label {
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 4px;
+                display: inline-block;
+            }
+
+            #tabla-unidades .badge {
+                padding: 8px 12px;
+                font-size: 14px;
+                font-weight: 600;
+                border-radius: 4px;
+            }
+
+            #tabla-unidades .btn {
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+                #tabla-unidades .btn:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                }
+
+        /* TABLA DE MATERIAS EN EXTRAORDINARIO */
+        #materias-extraordinario {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+            #materias-extraordinario thead {
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+                #materias-extraordinario thead th {
+                    font-weight: 600;
+                    font-size: 13px;
+                    letter-spacing: 0.3px;
+                    padding: 12px 8px;
+                }
+
+            #materias-extraordinario tbody tr {
+                transition: all 0.3s ease;
+                border-left: 3px solid transparent;
+            }
+
+                #materias-extraordinario tbody tr:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    border-left: 3px solid #f0ad4e;
+                }
+
+                #materias-extraordinario tbody tr.warning:hover {
+                    background-color: #faf2cc !important;
+                }
+
+                #materias-extraordinario tbody tr.danger:hover {
+                    background-color: #ebcccc !important;
+                }
+
+            #materias-extraordinario tbody td {
+                padding: 12px 8px;
+                font-size: 13px;
+                vertical-align: middle;
+            }
+
+            #materias-extraordinario .label {
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 4px;
+                display: inline-block;
+            }
+
+            #materias-extraordinario .badge {
+                padding: 8px 12px;
+                font-size: 13px;
+                font-weight: 600;
+                border-radius: 4px;
+            }
+
+            #materias-extraordinario .btn {
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                font-weight: 600;
+            }
+
+                #materias-extraordinario .btn:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                }
+
+        /* TABLA DE MATERIAS EN ARRASTRE */
+        #materias-arrastradas {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+            #materias-arrastradas thead {
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+                #materias-arrastradas thead th {
+                    font-weight: 600;
+                    font-size: 13px;
+                    letter-spacing: 0.3px;
+                    padding: 12px 8px;
+                }
+
+            #materias-arrastradas tbody tr {
+                transition: all 0.3s ease;
+                border-left: 3px solid transparent;
+            }
+
+                #materias-arrastradas tbody tr:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    border-left: 3px solid #d9534f;
+                }
+
+                #materias-arrastradas tbody tr.warning:hover {
+                    background-color: #faf2cc !important;
+                }
+
+                #materias-arrastradas tbody tr.danger:hover {
+                    background-color: #ebcccc !important;
+                }
+
+            #materias-arrastradas tbody td {
+                padding: 12px 8px;
+                font-size: 13px;
+                vertical-align: middle;
+            }
+
+            #materias-arrastradas .label {
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 4px;
+                display: inline-block;
+            }
+
+            #materias-arrastradas .badge {
+                padding: 8px 12px;
+                font-size: 13px;
+                font-weight: 600;
+                border-radius: 4px;
+            }
+
+            #materias-arrastradas .btn {
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                font-weight: 600;
+            }
+
+                #materias-arrastradas .btn:hover:not(:disabled) {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                }
+
+            /* Mejoras adicionales para inputs en las tablas */
+            #tabla-unidades input.form-control,
+            #materias-extraordinario input.form-control,
+            #materias-arrastradas input.form-control {
+                transition: all 0.3s ease;
+                border: 2px solid #ddd;
+            }
+
+                #tabla-unidades input.form-control:focus,
+                #materias-extraordinario input.form-control:focus,
+                #materias-arrastradas input.form-control:focus {
+                    border-color: #337ab7;
+                    box-shadow: 0 0 8px rgba(51, 122, 183, 0.3);
+                    transform: scale(1.02);
+                }
+
+            /* Mejoras para textareas */
+            #materias-extraordinario textarea.form-control,
+            #materias-arrastradas textarea.form-control {
+                transition: all 0.3s ease;
+                border: 2px solid #ddd;
+            }
+
+                #materias-extraordinario textarea.form-control:focus,
+                #materias-arrastradas textarea.form-control:focus {
+                    border-color: #337ab7;
+                    box-shadow: 0 0 8px rgba(51, 122, 183, 0.3);
+                }
+
+        /* Unidades container mejorado */
+        .unidades-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .unidad-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+            .unidad-item:hover {
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+                transform: translateY(-1px);
+            }
+
+            .unidad-item label {
+                margin: 0;
+                font-weight: 600;
+                color: #555;
+                font-size: 12px;
+            }
+
+        .unidad-input {
+            width: 70px !important;
+        }
+
+        .reprobada-definitiva {
+            background-color: #f8d7da !important;
+            border-left: 5px solid #721c24 !important;
+        }
+
+            .reprobada-definitiva input,
+            .reprobada-definitiva textarea,
+            .reprobada-definitiva button {
+                opacity: 0.6;
+            }
+
+        /* Animación de carga */
+        .glyphicon-refresh-animate {
+            animation: spin .7s infinite linear;
+        }
+
+        @@keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Filas de estado */
+        .table tbody tr.success {
+            background-color: #dff0d8 !important;
+        }
+
+        .table tbody tr.warning {
+            background-color: #fcf8e3 !important;
+        }
+
+        .table tbody tr.danger {
+            background-color: #f2dede !important;
+        }
+
+        /* Botones de historial */
+        .btn-ver-historial {
+            white-space: nowrap;
+        }
+
+        /* Modal historial */
+        #modalHistorialMateria .modal-dialog {
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        /* Tabla de historial en modal */
+        #modalHistorialMateria table {
+            margin-bottom: 0;
+        }
+
+            #modalHistorialMateria table th {
+                font-weight: bold;
+                text-align: center;
+            }
+
+        /* Resaltado de celdas */
+        #modalHistorialMateria .table tbody tr.success td {
+            background-color: #dff0d8;
+        }
+
+        #modalHistorialMateria .table tbody tr.danger td {
+            background-color: #f2dede;
+        }
+
+        .sga-scope .panel-info {
+            border-color: #cfe8e2;
+        }
+
+            .sga-scope .panel-info > .panel-heading {
+                background-color: #e9f8f4;
+                border-color: #cfe8e2;
+                color: #09a787;
+                font-weight: 600;
+            }
+
+                .sga-scope .panel-info > .panel-heading h4 {
+                    color: #09a787;
+                    font-weight: 600;
+                }
+
+            .sga-scope .panel-info > .panel-body {
+                color: #004D40;
+            }
+
+                .sga-scope .panel-info > .panel-body strong {
+                    color: #00695C;
+                }
+
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 1.20rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+
+        .sga-plan-info-box {
+            margin-top: 10px;
+            border: 1px solid #cfe8e2;
+            color: #004D40;
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+            .sga-plan-info-box h5 {
+                margin-top: 0;
+                margin-bottom: 8px;
+                font-size: 14px;
+                font-weight: 700;
+                color: #09a787;
+            }
+
+        div.sga-scope table#tabla-unidades > thead > tr > th {
+            background-color: #5cb85c !important;
+            color: white !important;
+        }
+
+        div.sga-scope table#materias-extraordinario > thead > tr > th {
+            background-color: #f0ad4e !important;
+            color: white !important;
+        }
+
+        div.sga-scope table#materias-arrastradas > thead > tr > th {
+            background-color: #d9534f !important;
+            color: white !important;
+        }
+    </style>
+}

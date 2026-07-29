@@ -1,0 +1,56 @@
+﻿@model IEnumerable<PlataformaWeb.BecasTransporte.Models.Estudiante>
+@using Plataforma_Web.Models;
+
+@{
+    ViewBag.Title = "DetallesBeca";
+    List<SelectListItem> Grados = ViewBag.Grados as List<SelectListItem>;
+
+
+}
+
+
+@if (ViewBag.Mensaje != null)
+{
+    <div class="col-md-12 text-center">
+        <br />
+        <br />
+        <div class="alert alert-info">@ViewBag.Mensaje</div>
+        <a class="btn btn-default" href="@Url.Action("Estadisticas", "Estudiantes")"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a>
+    </div>
+}
+else
+{
+    <div class="row">
+        <h2 class="col-md-6">
+            Detalles De Becas
+            <a class="btn btn-default" href="@Url.Action("Estadisticas", "Estudiantes")"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a>
+        </h2>
+
+
+        <h2 class="col-md-6">Total Por Carrera: <strong>@ViewBag.montoTotalPorCuatrimestre</strong></h2>
+
+    </div>
+    <ul class="nav nav-tabs">
+        <li role="presentation"><a href="@Url.Action("DetallesBeca", "Estudiantes")">Becas Por Grupos</a></li>
+        <li role="presentation" class="active"><a href="#">Becas por grado</a></li>
+        <li role="presentation"><a href="@Url.Action("DetallesBecaEspecialidad", "Estudiantes")">Becas Por Especialidad</a></li>
+    </ul>
+    <br />
+    <div class="row">
+            @if (Grados != null)
+            {
+                <div class="col-md-12">
+                    <p>Grados Disponibles</p>
+                    @foreach (var grado in Grados)
+                    {
+                        <a href="@Url.Action("_GraficasGrado", "Estudiantes", new { id = Convert.ToInt32(grado.Value) })" class="btn btn-primary">@grado.Text</a>
+                    }
+                </div>
+            }
+    </div>
+    <div class="row">
+        @Html.Partial("_GraficasGrado")
+    </div>
+
+}
+

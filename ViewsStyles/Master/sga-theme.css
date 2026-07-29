@@ -1,0 +1,726 @@
+.sga-scope {
+    --primary: #09a787;
+    --primary-dark: #0aa06e;
+    --primary-light: #25c494;
+    --default: #09a787;
+    --secondary: #f9f9f9;
+    --white: #ffffff;
+    --text: #2e3d49;
+    --text-muted: #6c757d;
+    --light: #e9ecef;
+    --border: #dee2e6;
+    --success: #09a787;
+    --warning: #ffca2c;
+    --warning-text: #3d3d3d;
+    --danger: #dc3545;
+    --info: #09a787;
+    --shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ====== BASE ====== */
+.sga-scope {
+    background-color: transparent;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text);
+    text-transform: uppercase;
+    margin: 0;
+    padding: 0;
+}
+
+    .sga-scope h2 {
+        color: var(--primary);
+        font-weight: 700;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    /* ====== BOTONES ====== */
+    .sga-scope .btn {
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin: 2px 2px;
+        transition: background 0.2s, color 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+        .sga-scope .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+
+    .sga-scope .btn-success {
+        background-color: var(--success);
+        color: var(--white);
+    }
+
+    .sga-scope .btn-warning {
+        background-color: var(--warning);
+        color: var(--warning-text);
+    }
+
+    .sga-scope .btn-danger {
+        background-color: var(--danger);
+        color: var(--white);
+    }
+
+    .sga-scope .btn-info {
+        background-color: #09a787;
+        color: var(--white);
+    }
+
+    /* ====== TABLAS ====== */
+    .sga-scope .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        margin-bottom: 24px;
+    }
+
+        .sga-scope .table thead th {
+            background-color: #09a787;
+            color: var(--white);
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        .sga-scope .table th, .sga-scope .table td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 1rem;
+            vertical-align: middle;
+        }
+
+        .sga-scope .table tbody tr:hover {
+            background-color: rgba(14, 178, 124, 0.05);
+        }
+
+/* ====== TABLAS: FIX GLOBAL (scroll + evitar cards) ====== */
+/* Desktop/Laptop (>= 993px): SIN SCROLL y tabla fluida */
+@media (min-width: 993px) {
+    .sga-scope .table-responsive {
+        overflow-x: auto;
+    }
+
+    .sga-scope .table {
+        min-width: 100%;
+    }
+}
+
+/* Móvil/Tablet (<= 992px): CON SCROLL y ancho mínimo */
+@media (max-width: 992px) {
+    .sga-scope .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sga-scope .table {
+        min-width: var(--sga-table-min, 1100px);
+    }
+}
+
+.sga-scope .table thead th {
+    background: var(--primary) !important;
+    color: #fff !important;
+}
+
+/* ====== MODO CARDS (SOLO .as-cards) ====== */
+@media (max-width: 992px) {
+    .sga-scope .table.as-cards thead {
+        display: none;
+    }
+
+    .sga-scope .table.as-cards,
+    .sga-scope .table.as-cards tbody,
+    .sga-scope .table.as-cards tr,
+    .sga-scope .table.as-cards td {
+        display: block;
+        width: 100%;
+    }
+
+        .sga-scope .table.as-cards tr {
+            margin-bottom: 1rem;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .sga-scope .table.as-cards td {
+            text-align: right;
+            padding-left: 50%;
+            position: relative;
+        }
+
+            .sga-scope .table.as-cards td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 16px;
+                width: 45%;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-align: left;
+            }
+}
+
+@media (max-width: 700px) {
+    .sga-scope .table.as-cards thead {
+        display: none;
+    }
+
+    .sga-scope .table.as-cards tr {
+        margin-bottom: 1rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        padding: 6px 0;
+    }
+
+    .sga-scope .table.as-cards td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border: none;
+        font-size: .97rem;
+    }
+
+        .sga-scope .table.as-cards td::before {
+            left: 10px;
+            width: 48%;
+            font-weight: 600;
+            color: #6c757d;
+            text-align: left;
+        }
+}
+
+@media (max-width:600px) {
+    .sga-scope .table.as-cards tr {
+        border: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+
+    .sga-scope .table.as-cards td {
+        padding: 12px 6px 12px 30% !important;
+        white-space: normal !important;
+    }
+
+        .sga-scope .table.as-cards td::before {
+            left: 8px;
+            top: 12px;
+            width: 28%;
+            font-weight: 700;
+            color: var(--primary);
+        }
+}
+
+/* desactiva "cards" dentro de .no-cards */
+.no-cards .table,
+.no-cards .table thead,
+.no-cards .table tbody,
+.no-cards .table tr,
+.no-cards .table th,
+.no-cards .table td {
+    display: table !important;
+    width: auto !important;
+}
+
+    .no-cards .table thead {
+        display: table-header-group !important;
+    }
+
+    .no-cards .table tbody {
+        display: table-row-group !important;
+    }
+
+    .no-cards .table tr {
+        display: table-row !important;
+    }
+
+    .no-cards .table th,
+    .no-cards .table td {
+        display: table-cell !important;
+        text-align: left !important;
+        padding: 12px 16px !important;
+        position: static !important;
+        white-space: normal !important;
+        vertical-align: middle !important;
+    }
+
+        .no-cards .table td::before {
+            content: none !important;
+        }
+
+    .no-cards .table tr {
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+.sga-scope .wide-container {
+    max-width: 100% !important;
+}
+
+/* .btn-utt-outline ====== */
+.sga-scope .btn-utt-outline {
+    border: 1px solid var(--primary-light);
+    color: var(--primary);
+    background: var(--light);
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 6px 14px;
+    font-size: 0.95rem;
+    margin: 2px 2px;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    cursor: pointer;
+}
+
+    .sga-scope .btn-utt-outline:hover {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-hover);
+    }
+
+/* CLASE CONTENEDORA: Alinea el contador a la izquierda y los botones a la derecha */
+.results-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: 10px 0 14px;
+}
+
+/* CLASE DEL CONTADOR: Estilo de "píldora suave" para el número de resultados */
+.sga-scope .badge-soft {
+    background: #e9f8f4;
+    color: var(--primary);
+    font-weight: 600;
+    border-radius: 10px;
+    padding: .35rem .6rem;
+}
+
+/* CLASE DE BOTONES: Estilo de botón Outline (contorno) para los botones de impresión */
+.btn-utt-outline {
+    border: 1px solid #cfe8e2;
+    color: var(--primary);
+    background: #e9f8f4;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+    .btn-utt-outline:hover {
+        background: #def4ef;
+        color: #139f81;
+        border-color: #bde8df;
+    }
+
+/* En móvil volvemos a nowrap para que el scroll tenga sentido */
+@media (max-width: 992px) {
+    .no-cards .table th,
+    .no-cards .table td {
+        white-space: nowrap !important;
+    }
+}
+
+/* ===== Desktop: la tabla debe caber sin scroll ===== */
+@media (min-width: 993px) {
+    .no-cards .table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+        .no-cards .table th,
+        .no-cards .table td {
+            white-space: normal !important;
+            word-break: break-word;
+        }
+
+        .no-cards .table .btn {
+            white-space: normal;
+            line-height: 1.15;
+            padding: 6px 8px;
+            font-size: .85rem;
+        }
+
+    #groupTable th:nth-child(1) {
+        width: 40px;
+    }
+
+    #groupTable th:nth-child(2) {
+        width: 130px;
+    }
+
+
+    #groupTable th:nth-child(3) {
+        width: auto;
+    }
+
+    #groupTable th:nth-child(4) {
+        width: 120px;
+    }
+
+    #groupTable th:nth-child(n+5) {
+        width: 120px;
+    }
+}
+
+/* ====== DATATABLES: ADAPTACIÓN AL TEMA SGA ====== */
+.sga-scope .dataTables_wrapper {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text);
+}
+
+/* ====== INDICADOR DE PROCESAMIENTO (CARGANDO) ====== */
+/* ====== INDICADOR DE PROCESAMIENTO (CARGANDO) - CORREGIDO ====== */
+.sga-scope .dataTables_processing {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    text-align: center;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(9, 167, 135, 0.25) !important;
+    color: var(--primary) !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    z-index: 1000;
+}
+
+    .sga-scope .dataTables_processing i {
+        color: var(--primary);
+        margin-right: 8px;
+    }
+
+/* ====== BUSCADOR ====== */
+.sga-scope .dataTables_filter {
+    float: right;
+    text-align: right;
+    margin-bottom: 1rem;
+}
+
+    .sga-scope .dataTables_filter label {
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sga-scope .dataTables_filter input {
+        margin-left: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        outline: none;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+
+        .sga-scope .dataTables_filter input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(9, 167, 135, 0.1);
+        }
+
+/* ====== SELECTOR DE REGISTROS POR PÁGINA ====== */
+.sga-scope .dataTables_length {
+    float: left;
+    margin-bottom: 1rem;
+}
+
+    .sga-scope .dataTables_length label {
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sga-scope .dataTables_length select {
+        margin: 0 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        outline: none;
+        background-color: var(--white);
+        appearance: auto;
+        -webkit-appearance: auto;
+        -moz-appearance: auto;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        min-width: 70px;
+    }
+
+        .sga-scope .dataTables_length select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(9, 167, 135, 0.1);
+        }
+
+.sga-scope .dataTables_info {
+    float: left;
+    padding-top: 0.755em;
+    font-weight: 500;
+    background: #e9f8f4;
+    color: var(--primary);
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.35rem 0.6rem;
+    display: inline-block;
+}
+
+/* ====== PAGINACIÓN ====== */
+.sga-scope .dataTables_paginate {
+    float: right;
+    text-align: right;
+    padding-top: 0.25em;
+}
+
+    .sga-scope .dataTables_paginate .paginate_button {
+        display: inline-block;
+        padding: 0.5rem 0.75rem;
+        margin-left: 2px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--white);
+        color: var(--text) !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+        .sga-scope .dataTables_paginate .paginate_button:hover {
+            background: #e9f8f4;
+            border-color: var(--primary-light);
+            color: var(--primary) !important;
+            transform: translateY(-1px);
+        }
+
+        .sga-scope .dataTables_paginate .paginate_button.current {
+            background: var(--primary) !important;
+            color: var(--white) !important;
+            border-color: var(--primary) !important;
+            font-weight: 600;
+        }
+
+            .sga-scope .dataTables_paginate .paginate_button.current:hover {
+                background: var(--primary-dark) !important;
+                border-color: var(--primary-dark) !important;
+                transform: translateY(-1px);
+            }
+
+        .sga-scope .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+.sga-scope .dataTables_wrapper .dataTables_scroll {
+    clear: both;
+}
+
+.sga-scope .dataTables_empty {
+    text-align: center;
+    padding: 2rem !important;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.sga-scope .dataTables_wrapper::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* ====== ORDENAMIENTO EN COLUMNAS ====== */
+.sga-scope table.dataTable thead th,
+.sga-scope table.dataTable thead td {
+    position: relative;
+    background: var(--primary) !important;
+    color: var(--white) !important;
+}
+
+.sga-scope table.dataTable thead .sorting,
+.sga-scope table.dataTable thead .sorting_asc,
+.sga-scope table.dataTable thead .sorting_desc {
+    cursor: pointer;
+    position: relative;
+    padding-right: 30px;
+}
+
+    .sga-scope table.dataTable thead .sorting:before,
+    .sga-scope table.dataTable thead .sorting_asc:before,
+    .sga-scope table.dataTable thead .sorting_desc:before {
+        position: absolute;
+        right: 10px;
+        display: inline-block;
+        opacity: 0.3;
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        font-size: 0.8rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .sga-scope table.dataTable thead .sorting:before {
+        content: "\f0dc";
+    }
+
+    .sga-scope table.dataTable thead .sorting_asc:before {
+        content: "\f0de";
+        opacity: 1;
+        color: var(--white);
+    }
+
+    .sga-scope table.dataTable thead .sorting_desc:before {
+        content: "\f0dd";
+        opacity: 1;
+        color: var(--white);
+    }
+
+/* ====== RESPONSIVO MÓVIL ====== */
+@media (max-width: 768px) {
+    .sga-scope .dataTables_filter,
+    .sga-scope .dataTables_length,
+    .sga-scope .dataTables_info,
+    .sga-scope .dataTables_paginate {
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+        .sga-scope .dataTables_filter label,
+        .sga-scope .dataTables_length label {
+            justify-content: center;
+        }
+
+    .sga-scope .dataTables_paginate {
+        margin-top: 1rem;
+    }
+
+        .sga-scope .dataTables_paginate .paginate_button {
+            margin: 2px;
+        }
+}
+
+/* ====== ANIMACIÓN DE CARGA ====== */
+@keyframes datatables-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.sga-scope .dataTables_processing i.fa-spin {
+    animation: datatables-spin 1s linear infinite;
+}
+
+/* ====== HOVER EN FILAS ====== */
+.sga-scope table.dataTable tbody tr:hover {
+    background-color: rgba(14, 178, 124, 0.05) !important;
+}
+
+/* ====== BADGES EN LA TABLA ====== */
+.sga-scope .badge {
+    display: inline-block;
+    padding: 0.55em 0.9em;
+    font-size: 1.05em;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 6px;
+}
+
+    .sga-scope .badge.bg-success {
+        background-color: var(--success);
+        color: var(--white);
+    }
+
+    .sga-scope .badge.bg-danger {
+        background-color: var(--danger);
+        color: var(--white);
+    }
+
+.sga-scope table.dataTable {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background: #fff !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+    overflow: hidden !important;
+    margin-bottom: 24px !important;
+}
+
+    .sga-scope table.dataTable thead th {
+        background-color: var(--primary) !important;
+        color: var(--white) !important;
+        border: none !important;
+        text-transform: uppercase;
+        font-size: 1.1rem !important;
+        letter-spacing: 0.5px;
+        padding: 18px 20px !important;
+        text-align: left;
+    }
+
+    .sga-scope table.dataTable tbody td {
+        padding: 18px 16px !important;
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 1.25rem !important;
+        vertical-align: middle;
+        line-height: 1.6;
+    }
+
+    .sga-scope table.dataTable.no-footer {
+        border-bottom: none;
+    }
+
+.sga-scope .dataTables_wrapper .dataTables_length select,
+.sga-scope .dataTables_wrapper .dataTables_filter input {
+    border: 1px solid var(--border);
+}
+
+.sga-scope .dataTables_wrapper {
+    position: relative !important;
+    min-height: 200px !important;
+}
+
+.sga-scope .dataTables_processing {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    padding: 1.2rem 2rem !important;
+    transform: translate(-50%, -50%) !important;
+    width: auto !important;
+    margin: 0 !important;
+    z-index: 9999 !important;
+}
+
+.sga-scope .table.tabla-texto-grandecito th,
+.sga-scope .table.tabla-texto-grandecito td {
+    font-size: 0.9rem !important;
+}
+
+.sga-scope .table.tabla-texto-grandecito .btn {
+    font-size: 1rem !important;
+    padding: 8px 16px !important;
+}

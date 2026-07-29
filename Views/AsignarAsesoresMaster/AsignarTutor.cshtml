@@ -1,0 +1,328 @@
+@model IEnumerable<ProyectoIntegracion.Models.GestionUsuarios.Docente>
+
+@{
+    ViewBag.Title = "Asignar Docente como Tutor";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userNivel = ViewBag.UserNivel as int? ?? 0;
+    var userCarrera = ViewBag.UserCarrera as int? ?? 0;
+    var carrerasSelectList = ViewBag.Carreras as SelectList;
+    var carrerasPorDocente = ViewBag.CarrerasPorDocente as Dictionary<string, List<string>> ?? new Dictionary<string, List<string>>();
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap.min.css">
+
+    <style>
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 1.20rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+    </style>
+}
+<div class="sga-scope">
+    <h2>Asignar Docente como Tutor</h2>
+
+    <a href="@Url.Action("Index")" class="btn btn-info style=" margin-bottom:12px;"">
+        Volver a la lista
+    </a>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Mensaje"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (ViewBag.Mensaje != null)
+    {
+        <div class="alert alert-info">
+            @ViewBag.Mensaje
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.Error
+        </div>
+    }
+
+    @if (Model.Any())
+    {
+        <div class="sga-filter-bar" style="margin-bottom: 20px; margin-top: 15px; display:block;">
+            <strong>Instrucciones:</strong> Selecciona un docente de la lista para asignarlo como tutor.
+            <br><strong>Importante:</strong> Solo se muestran docentes que tienen un Microsoft Identifier (OID) asignado.
+            <br><strong>Nota:</strong> El correo electrónico y demás información del docente se copiará automáticamente al usuario tutor.
+            <br><strong>Tomar en cuenta:</strong> Ahora se puede asignar el mismo docente como tutor en múltiples carreras. Si el docente ya es tutor en alguna carrera, se mostrará en la columna "Carreras Asignadas".
+        </div>
+
+        <div class="row" style="margin-bottom: 20px;">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="buscarDocente" class="control-label">Buscar Docente:</label>
+                    <input id="buscarDocente" type="text" class="form-control" placeholder="Escribe un nombre o correo..." />
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table id="tutoresTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Nombre Completo</th>
+                        <th>Número de Empleado</th>
+                        <th>Correo Electrónico</th>
+                        <th>Estado</th>
+                        <th>Microsoft ID (OID)</th>
+                        <th>Carreras Asignadas</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var docente in Model)
+                    {
+                        // Obtener carreras asignadas para este docente
+                        var carrerasAsignadas = carrerasPorDocente.ContainsKey(docente.MicrosoftIdentifier)
+                            ? carrerasPorDocente[docente.MicrosoftIdentifier]
+                            : new List<string>();
+
+                        <tr>
+                            <td>@docente.Nombre</td>
+                            <td>@docente.NumeroEmpleado</td>
+                            <td>@docente.CorreoElectronico</td>
+                            <td>
+                                @if (docente.Habilitado && docente.Autorizado)
+                                {
+                                    <span class="label label-success">Habilitado y Autorizado</span>
+                                }
+                                else if (docente.Habilitado)
+                                {
+                                    <span class="label label-warning">Solo Habilitado</span>
+                                }
+                                else
+                                {
+                                    <span class="label label-danger">Deshabilitado</span>
+                                }
+                            </td>
+                            <td>
+                                <small style="font-family: monospace; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px;">
+                                    @(docente.MicrosoftIdentifier.Length > 10
+                        ? docente.MicrosoftIdentifier.Substring(0, 4) + "..." + docente.MicrosoftIdentifier.Substring(docente.MicrosoftIdentifier.Length - 4)
+                        : "••••••••")
+                                </small>
+                            </td>
+                            <td>
+                                @if (carrerasAsignadas.Any())
+                                {
+                                    <div style="max-width: 200px;">
+                                        @foreach (var carrera in carrerasAsignadas)
+                                        {
+                                            <span class="label label-info" style="display: inline-block; margin: 2px;">@carrera</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Ninguna</span>
+                                }
+                            </td>
+                            <td>
+                                @using (Html.BeginForm("AsignarTutor", "AsignarAsesoresMaster", FormMethod.Post,
+             new { style = "display: inline;", id = $"form-asignar-{docente.IdDocente}" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    @Html.Hidden("idDocente", docente.IdDocente)
+
+                                    <button type="button" class="btn btn-info btn-sm btn-abrir-modal"
+                                            data-toggle="modal"
+                                            data-target="#confirmarModal"
+                                            data-nombre="@docente.Nombre"
+                                            data-correo="@docente.CorreoElectronico"
+                                            data-oid="@docente.MicrosoftIdentifier"
+                                            data-form-id="form-asignar-@docente.IdDocente"
+                                            data-carreras-asignadas="@string.Join(", ", carrerasAsignadas)">
+                                        Asignar como Tutor
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <strong>No hay docentes disponibles</strong><br />
+            <p>No se encontraron docentes que cumplan con los siguientes criterios:</p>
+            <ul>
+                <li>- Estar habilitados y autorizados en el sistema</li>
+                <li>- Tener un Microsoft Identifier (OID) asignado</li>
+            </ul>
+            <p><strong>Nota:</strong> Los docentes sin OID no pueden ser asignados como tutores ya que el sistema requiere esta identificación para el funcionamiento correcto.</p>
+        </div>
+    }
+
+
+    <div class="modal fade" id="confirmarModal" tabindex="-1" role="dialog" aria-labelledby="modalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="modalLabel">Confirmar Asignación</h4>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro de asignar a <strong id="modalDocenteNombre"></strong> como tutor?</p>
+                    <p>Se copiará la siguiente información:</p>
+                    <ul>
+                        <li><strong>Correo:</strong> <span id="modalDocenteCorreo"></span></li>
+                        <li><strong>OID:</strong> <span id="modalDocenteOid" style="font-family: monospace; background-color: #f5f5f5; padding: 2px 4px;"></span></li>
+                    </ul>
+                    <div id="modalCarrerasAsignadas" style="margin-top: 10px; padding: 10px; background-color: #f9f9f9; border-radius: 5px; display: none;">
+                        <strong>Carreras ya asignadas:</strong>
+                        <div id="modalCarrerasLista" style="margin-top: 5px;"></div>
+                        <small class="text-muted">Se creará un nuevo registro para la carrera seleccionada.</small>
+                    </div>
+                    @if (userNivel >= 4 && carrerasSelectList != null)
+                    {
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label for="modalCarreraSelect"><strong>Seleccionar Carrera:</strong></label>
+                            @Html.DropDownList("idCarrera", carrerasSelectList, "-- Seleccione una carrera --",
+                                new { @class = "form-control", @id = "modalCarreraSelect", @required = "required" })
+                        </div>
+                    }
+                    else
+                    {
+                        @Html.Hidden("idCarrera", userCarrera)
+                        <div class="alert alert-info" style="margin-top: 15px;">
+                            <small>El tutor se asignará a su carrera actual.</small>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" id="btnConfirmarAsignacion">Confirmar Asignación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            var tablaTutores = $('#tutoresTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+                },
+                "pageLength": 10,
+                "responsive": true,
+
+                "dom": 'rt<"row"<"col-sm-5"i><"col-sm-7"p>>',
+
+                // Ordena por nombre (columna 0) alfabéticamente
+                "order": [[0, "asc"]],
+
+                "columnDefs": [
+                    { "orderable": false, "targets": [5, 6] }
+                ]
+            });
+
+            $('#buscarDocente').on('keyup', function () {
+                tablaTutores.search(this.value).draw();
+            });
+
+
+            var formIdParaEnviar;
+
+            $('#tutoresTable tbody').on('click', '.btn-abrir-modal', function () {
+                var boton = $(this);
+
+                var nombre = boton.data('nombre');
+                var correo = boton.data('correo');
+                var oid = boton.data('oid');
+                var carrerasAsignadas = boton.data('carreras-asignadas') || '';
+                formIdParaEnviar = boton.data('form-id');
+
+                $('#modalDocenteNombre').text(nombre);
+                $('#modalDocenteCorreo').text(correo);
+                $('#modalDocenteOid').text(oid);
+
+                // Mostrar carreras ya asignadas si existen
+                if (carrerasAsignadas && carrerasAsignadas.trim() !== '') {
+                    var carrerasArray = carrerasAsignadas.split(', ');
+                    var carrerasHtml = carrerasArray.map(function (carrera) {
+                        return '<span class="label label-info" style="margin: 2px; display: inline-block;">' + carrera + '</span>';
+                    }).join('');
+                    $('#modalCarrerasLista').html(carrerasHtml);
+                    $('#modalCarrerasAsignadas').show();
+                } else {
+                    $('#modalCarrerasAsignadas').hide();
+                }
+
+                // Resetear selector de carrera
+                if ($('#modalCarreraSelect').length) {
+                    $('#modalCarreraSelect').val('');
+                }
+            });
+
+            $('#btnConfirmarAsignacion').on('click', function () {
+                // Validar que se haya seleccionado una carrera (solo para usuarios Master)
+                if ($('#modalCarreraSelect').length && $('#modalCarreraSelect').val() === '') {
+                    alert('Por favor, seleccione una carrera.');
+                    return;
+                }
+
+                if (formIdParaEnviar) {
+                    // Agregar el valor de carrera al formulario si existe el selector
+                    if ($('#modalCarreraSelect').length) {
+                        var form = $('#' + formIdParaEnviar);
+                        // Verificar si ya existe un campo idCarrera
+                        if (form.find('input[name="idCarrera"]').length === 0) {
+                            form.append('<input type="hidden" name="idCarrera" value="' + $('#modalCarreraSelect').val() + '">');
+                        } else {
+                            form.find('input[name="idCarrera"]').val($('#modalCarreraSelect').val());
+                        }
+                    }
+                    $('#' + formIdParaEnviar).submit();
+                }
+            });
+
+            $('#confirmarModal').on('hidden.bs.modal', function () {
+                formIdParaEnviar = null;
+            });
+        });
+    </script>
+}

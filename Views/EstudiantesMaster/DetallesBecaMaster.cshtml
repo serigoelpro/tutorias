@@ -1,0 +1,91 @@
+@model PlataformaWeb.BecasTransporte.Models.Estudiante
+@using Plataforma_Web.Models;
+
+@{
+    ViewBag.Title = "DetallesBecaMaster";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    <div class="becas-detalles">
+        <h2>Detalles de Becas (Vista Master)</h2>
+
+        <div class="row">
+            <div class="col-md-4">
+                <label>Carrera</label>
+                @Html.DropDownList(
+                         "IdCarrera",
+                         ViewBag.Carreras as List<SelectListItem>,
+                         "Seleccione una carrera",
+                         new { @class = "form-control", id = "ddlCarrera" }
+                     )
+            </div>
+            <div class="col-md-4">
+                <label>Especialidad</label>
+                <select id="ddlEspecialidad" class="form-control">
+                    <option value="">Seleccione una especialidad</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="contenedorGraficas">
+            <!-- Aquí se cargará la vista parcial con las gráficas -->
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+    $(function () {
+      var $ddlCarr = $('#ddlCarrera');
+      var $ddlEsp  = $('#ddlEspecialidad');
+
+      // cargar especialidades al elegir carrera
+      $ddlCarr.on('change', function () {
+        var idCarrera = $(this).val();
+        $ddlEsp.prop('disabled', true)
+               .empty().append('<option value="">Cargando...</option>');
+
+        if (!idCarrera) {
+          $ddlEsp.html('<option value="">Seleccione una especialidad</option>')
+                 .prop('disabled', false);
+          return;
+        }
+
+        $.get('@Url.Action("GetEspecialidadesPorCarrera","EstudiantesMaster")', { idCarrera: idCarrera })
+          .done(function (data) {
+            $ddlEsp.empty().append('<option value="">Seleccione una especialidad</option>');
+            if (Array.isArray(data) && data.length) {
+              data.forEach(function (esp) {
+                $ddlEsp.append($('<option>', { value: esp.Value, text: esp.Text }));
+              });
+            } else {
+              $ddlEsp.append('<option value="">(Sin especialidades)</option>');
+            }
+          })
+          .fail(function () {
+            $ddlEsp.html('<option value="">Error al cargar</option>');
+          })
+          .always(function () {
+            $ddlEsp.prop('disabled', false);
+          });
+      });
+
+      // cargar parciales/gráficas al elegir especialidad
+      $ddlEsp.on('change', function () {
+        var idEsp = $(this).val();
+        if (!idEsp) { $('#contenedorGraficas').empty(); return; }
+
+        $.get('@Url.Action("_GraficasEspecialidad","EstudiantesMaster")', { id: idEsp })
+          .done(function (html) { $('#contenedorGraficas').html(html); })
+          .fail(function () { $('#contenedorGraficas').html('<div class="alert alert-danger">No se pudieron cargar las gráficas.</div>'); });
+      });
+
+      // si la vista ya trae una carrera seleccionada, dispara carga
+      if ($ddlCarr.val()) { $ddlCarr.trigger('change'); }
+    });
+    </script>
+}

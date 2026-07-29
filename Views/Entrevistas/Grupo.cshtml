@@ -1,0 +1,2119 @@
+﻿@{
+    ViewBag.Title = "Grupos";
+}
+@{
+    var usuario = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var esDirector = usuario != null && usuario.EsDirector;
+}
+
+<script>
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css";
+    document.head.appendChild(link);
+</script>
+
+@if (TempData["Message"] != null)
+{
+    <script>alert('@TempData["Message"]');</script>
+}
+
+
+@section Styles{
+    @{
+        var cssPath = "~/ViewsStyles/Master/sga-theme.css";
+        var cssStamp = System.IO.File.GetLastWriteTimeUtc(Server.MapPath(cssPath)).Ticks;
+    }
+    <link href="@Url.Content(cssPath)?v=@cssStamp" rel="stylesheet" />
+
+    <style>
+
+        .page-header-custom {
+            background: linear-gradient(135deg, #1ab192, #00e1b2); /* Bootstrap primary → info */
+            color: #fff;
+            padding: 40px 20px;
+            margin: 0 0 30px 0;
+            border: none; /* removes default page-header border */
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+            .page-header-custom h1,
+            .page-header-custom small {
+                color: #fff;
+            }
+        /* Estilos para el sistema de notificaciones */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.4rem;
+            padding: 6px 0.5rem;
+            color: #2c3e50;
+            margin-left: 1.5rem;
+            transition: all 0.3s ease;
+            vertical-align: middle;
+        }
+
+            .notification-bell:hover {
+                color: #1ab192;
+            }
+
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            min-width: 24px;
+            text-align: center;
+            transform: translate(25%, -25%);
+        }
+
+        .notification-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            width: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            z-index: 1050;
+            border: 1px solid #e0e0e0;
+        }
+
+            .notification-dropdown.active {
+                display: block;
+                animation: fadeIn 0.3s ease;
+            }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notification-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            background-color: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+        }
+
+            .notification-header h4 {
+                margin: 0;
+                color: #2c3e50;
+                font-weight: 600;
+            }
+
+        .notification-list {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .notification-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: flex-start;
+            transition: background-color 0.2s;
+        }
+
+            .notification-item:last-child {
+                border-bottom: none;
+            }
+
+            .notification-item:hover {
+                background-color: #f9f9f9;
+            }
+
+        .notification-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: #1ab192;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .notification-message {
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .notification-btn {
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-weight: 500;
+        }
+
+        .btn-mark-read {
+            background-color: #1ab192;
+            color: white;
+        }
+
+            .btn-mark-read:hover {
+                background-color: #169b7d;
+            }
+
+        .btn-delete {
+            background-color: #f8f9fa;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+            .btn-delete:hover {
+                background-color: #e74c3c;
+                color: white;
+            }
+
+        .notification-empty {
+            padding: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+
+        .fixedPopUp {
+            position: fixed;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+
+        .fixedPopUpHeading {
+            margin: 20px;
+            margin-bottom: 0px;
+        }
+
+        .student-name,
+        .studentName {
+            margin-top: 10px;
+            min-height: 61px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile {
+            margin: 10px;
+            display: inline-block;
+        }
+
+        .centerContent {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .StudentImage {
+            max-height: 120px;
+            min-height: 100px;
+            max-width: 100%;
+        }
+
+        .button {
+            width: 100%;
+        }
+
+        .panelBody {
+            min-height: 55%;
+        }
+
+
+        .grow-on-hover {
+            transition: transform 0.5s ease;
+        }
+
+            .grow-on-hover:hover {
+                transform: scale(1.1);
+            }
+
+        /* ✅ NUEVO: Contenedor del menú standalone */
+        .menu-container-standalone {
+            position: relative;
+            display: inline-block; /* Se asegura que esté en la línea */
+            float: right; /* Lo manda a la derecha */
+        }
+
+        /* ✅ NUEVO: Botón verde de 3 puntos */
+        .btn-menu-trigger-green {
+            background-color: #09a787;
+            border: 1px solid #09a787;
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            margin: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 6px 10px; /* ¡Para que mida igual que el botón de Vista! */
+            font-size: 13px; /* Le da la misma letra que btn-compact */
+            line-height: 1.5; /* Un alto de línea normal */
+        }
+
+            .btn-menu-trigger-green:hover {
+                background-color: #09a787;
+                border-color: #09a787;
+                transform: translateY(-1px);
+                box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            }
+
+            .btn-menu-trigger-green:active,
+            .btn-menu-trigger-green.active {
+                background-color: #09a787;
+                border-color: #09a787;
+                transform: translateY(0);
+            }
+
+        .menu-icon {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+        }
+
+        /* ✅ NUEVO: Menú de acciones standalone */
+        .menu-acciones-standalone {
+            position: absolute;
+            right: 50px;
+            top: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            padding: 15px;
+            width: auto;
+            min-width: 400px;
+            z-index: 1050;
+            animation: slideInMenu 0.2s ease-out;
+        }
+
+        .menu-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 0;
+        }
+
+            .menu-buttons .btn-compact {
+                flex: 1;
+                min-width: 120px;
+                margin: 0;
+            }
+
+        .menu-info-section {
+            padding: 0;
+            background-color: transparent;
+            border-radius: 0;
+            margin-top: 0;
+        }
+
+            .menu-info-section h5 {
+                margin: 0 0 8px 0;
+                color: #1ab192;
+                font-size: 14px;
+            }
+
+        .menu-flujo {
+            margin: 0;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .menu-divider {
+            margin: 12px 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        @@keyframes slideInMenu {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Ajuste para móviles */
+        @@media (max-width: 768px) {
+            .menu-acciones-standalone {
+                right: 0;
+                top: 50px;
+                min-width: 300px;
+            }
+
+            .menu-buttons {
+                flex-direction: column;
+            }
+
+                .menu-buttons .btn-compact {
+                    width: 100%;
+                }
+        }
+
+        /* Botones compactos */
+        .btn-compact {
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+            .btn-compact:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+        /* ✅ ESTILO ESPECÍFICO PARA EL BOTÓN DE ARRASTRE */
+        .btn-danger.btn-compact {
+            background-color: #d9534f;
+            border-color: #d43f3a;
+        }
+
+            .btn-danger.btn-compact:hover {
+                background-color: #c9302c;
+                border-color: #ac2925;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(217, 83, 79, 0.3);
+            }
+
+        /* ✅ EFECTO ESPECIAL PARA EL MENÚ DE ARRASTRE */
+        .menu-info-section h5 {
+            color: #1ab192;
+        }
+
+        /* ✅ ANIMACIÓN PARA EL BOTÓN DE ARRASTRE */
+        @@keyframes pulse-danger {
+            0% {
+                box-shadow: 0 0 0 0 rgba(217, 83, 79, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(217, 83, 79, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(217, 83, 79, 0);
+            }
+        }
+
+        .btn-danger.btn-compact.pulse {
+            animation: pulse-danger 2s infinite;
+        }
+
+        /* ✅ ESTILO PARA INDICAR CRITICIDAD EN EL MENÚ */
+        .menu-critical-notice {
+            background: linear-gradient(45deg, #d9534f, #c9302c);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 12px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+            .menu-critical-notice .glyphicon {
+                animation: pulse 1.5s infinite;
+            }
+
+        /* Notificaciones compactas */
+        .notification-compact {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 9999;
+            padding: 8px 15px;
+            margin: 0;
+            border-radius: 4px;
+            font-size: 13px;
+            min-width: 250px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            animation: slideInCompact 0.3s ease-out;
+        }
+
+        @@keyframes slideInCompact {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ✅ ESTILOS PARA MODALES */
+        .modal-header {
+            background-color: #1ab192;
+            color: white;
+            border-bottom: 2px solid #16a085;
+        }
+
+            .modal-header .close {
+                color: white;
+                opacity: 0.8;
+            }
+
+                .modal-header .close:hover {
+                    opacity: 1;
+                }
+
+        .modal-title {
+            font-weight: bold;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+
+        /* Progress bar styles */
+        .progress {
+            height: 25px;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            line-height: 25px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .progress-bar-success {
+            background-color: #5cb85c;
+        }
+
+        /* Modal dialog size */
+        .modal-lg {
+            width: 900px;
+        }
+
+        /* Alert dentro del modal */
+        .modal-body .alert {
+            margin-bottom: 20px;
+        }
+
+            .modal-body .alert h5 {
+                margin-top: 0;
+                margin-bottom: 10px;
+            }
+
+            .modal-body .alert ol {
+                margin-bottom: 0;
+                padding-left: 20px;
+            }
+
+        /* Well dentro del modal */
+        .modal-body .well {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+            margin: 0;
+        }
+
+        /* Input group en modal */
+        .modal-body .input-group-addon {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+        }
+
+        /* Label en modal */
+        .modal-body .label {
+            font-size: 13px;
+            padding: 4px 8px;
+        }
+
+        /* Help block en modal */
+        .modal-body .help-block {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* Responsive para móviles */
+        @@media (max-width: 768px) {
+            .btn-compact {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .modal-lg {
+                width: 95%;
+                margin: 10px auto;
+            }
+
+            .modal-body {
+                padding: 15px;
+            }
+        }
+
+        /* Mejoras visuales sutiles */
+        .btn-help {
+            border-style: dashed;
+        }
+
+        /* Ocultar texto en pantallas muy pequeñas */
+        @@media (max-width: 480px) {
+            .btn-compact .glyphicon {
+                margin-right: 3px;
+            }
+
+            .menu-acciones-standalone {
+                min-width: 280px;
+            }
+
+            .btn-compact {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+        }
+
+        /* Z-index para asegurar que los modales aparezcan encima */
+        .modal-backdrop {
+            z-index: 1040;
+        }
+
+        .modal {
+            z-index: 1050;
+        }
+
+        #loadingOverlay {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            /* horizontal center */
+            align-items: center;
+            /* vertical center */
+            z-index: 9999;
+        }
+
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .list-group-item .glyphicon-eye-open {
+            color: #28a745;
+        }
+        /* Revisado: verde */
+        .list-group-item .glyphicon-edit {
+            color: #d9534f;
+        }
+        /* Sin revisar: rojo */
+
+        /* === ALUMNO EN BAJA === */
+        .profile.is-baja {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 2px rgba(220,53,69,.25);
+        }
+
+            .profile.is-baja .panel-heading,
+            .profile.is-baja .student-name,
+            .profile.is-baja .studentName {
+                color: #c9302c !important;
+                font-weight: 700;
+            }
+
+            .profile.is-baja .list-group-item,
+            .profile.is-baja .list-group-item .glyphicon {
+                color: #c9302c !important;
+                font-weight: 700;
+            }
+
+        .studentCardFooter .list-group-item {
+            color: #2c3e50;
+        }
+
+        .baja-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 6px;
+            font-size: 11px;
+            border-radius: 3px;
+            background: #dc3545;
+            color: #fff;
+            vertical-align: middle;
+        }
+
+        /* ===== Tabla: fila en BAJA ===== */
+        tr.is-baja > td {
+            background: #fffafa; /* muy tenue */
+            border-color: #f2dede !important;
+        }
+
+        tr.is-baja .col-nombre {
+            color: #c9302c !important;
+            font-weight: 700;
+        }
+
+        tr.is-baja .col-matricula,
+        tr.is-baja .estado-icon {
+            color: #c9302c !important;
+            font-weight: 700;
+        }
+
+        /* Badge reutilizable (cards y tabla) */
+        .baja-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 6px;
+            font-size: 11px;
+            border-radius: 3px;
+            background: #dc3545;
+            color: #fff;
+            vertical-align: middle;
+        }
+
+        /* Utilidades de color para íconos (evita inline style=) */
+        .icon-success {
+            color: var(--primary, #1ab192) !important;
+        }
+
+        .icon-danger {
+            color: #c9302c !important;
+        }
+
+        .icon-muted {
+            color: #999 !important;
+        }
+
+
+        /* badge pequeña para vulnerabilidad (tarjeta) */
+        .vuln-badge {
+            display: inline-block;
+            min-width: 26px;
+            height: 26px;
+            line-height: 22px;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+            border-radius: 50%;
+            color: #fff;
+            vertical-align: middle;
+            margin-left: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.12);
+        }
+
+        /* colores por tipo */
+        .vuln-economico {
+            background: #e67e22;
+        }
+        /* naranja */
+        .vuln-academico {
+            background: #3498db;
+        }
+        /* azul */
+        .vuln-personal {
+            background: #9b59b6;
+        }
+        /* morado */
+        .vuln-no {
+            background: #7f8c8d;
+        }
+        /* gris (no vulnerable) */
+
+        /* ✅ ESTILOS PARA UNIDADES EN MODAL DE ARRASTRE */
+        .unidades-container-arrastre {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .unidad-item-arrastre {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            min-width: 80px;
+        }
+
+            .unidad-item-arrastre label {
+                font-weight: bold;
+                font-size: 12px;
+                margin: 0;
+                color: #555;
+            }
+
+        .unidad-input-arrastre {
+            width: 70px !important;
+            text-align: center;
+            font-weight: bold;
+            padding: 6px;
+            height: 32px;
+            font-size: 13px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+
+            .unidad-input-arrastre:focus {
+                border-color: #f0ad4e;
+                box-shadow: 0 0 5px rgba(240, 173, 78, 0.5);
+            }
+
+            .unidad-input-arrastre.aprobada {
+                border-color: #5cb85c;
+                background-color: #f0fff0;
+            }
+
+            .unidad-input-arrastre.reprobada {
+                border-color: #d9534f;
+                background-color: #fff5f5;
+            }
+
+        @@media (max-width: 768px) {
+            .unidades-container-arrastre {
+                flex-direction: column;
+            }
+
+            .unidad-item-arrastre {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        /* ✅ ESTILOS PARA SELECTOR DE INTENTO */
+        #ddlIntentoArrastre {
+            font-weight: bold;
+        }
+
+            #ddlIntentoArrastre option[value="3"] {
+                color: #d9534f;
+                font-weight: bold;
+            }
+
+        #alertaUltimoIntento {
+            animation: pulse-warning 2s infinite;
+        }
+
+        @@keyframes pulse-warning {
+            0%, 100% {
+                border-color: #d9534f;
+            }
+
+            50% {
+                border-color: #c9302c;
+            }
+        }
+
+        .sga-scope .panel-info {
+            border-color: #cfe8e2;
+        }
+
+            .sga-scope .panel-info > .panel-heading {
+                background-color: #e9f8f4;
+                border-color: #cfe8e2;
+                color: #09a787;
+                font-weight: 600;
+            }
+
+                .sga-scope .panel-info > .panel-heading h4 {
+                    color: #09a787;
+                    font-weight: 600;
+                }
+
+            .sga-scope .panel-info > .panel-body {
+                color: #004D40;
+            }
+
+                .sga-scope .panel-info > .panel-body strong {
+                    color: #00695C;
+                }
+
+        .sga-scope .sga-filter-bar {
+            border: 1px solid #cfe8e2;
+            color: var(--primary);
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 1.20rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px 10px;
+        }
+
+            .sga-scope .sga-filter-bar strong {
+                margin-right: 5px;
+            }
+
+            .sga-scope .sga-filter-bar .btn-utt-outline {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+            }
+
+        .sga-plan-info-box {
+            margin-top: 10px;
+            border: 1px solid #cfe8e2;
+            color: #004D40;
+            background: #e9f8f4;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 15px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+            .sga-plan-info-box h5 {
+                margin-top: 0;
+                margin-bottom: 8px;
+                font-size: 14px;
+                font-weight: 700;
+                color: #09a787;
+            }
+
+        #modalAgregarArrastre .form-control {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
+        #modalImportarExcel .sga-filter-bar {
+            position: relative;
+            display: block;
+            padding-right: 40px;
+        }
+
+            #modalImportarExcel .sga-filter-bar .close {
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                font-size: 21px;
+                color: inherit;
+                opacity: 0.7;
+            }
+
+                #modalImportarExcel .sga-filter-bar .close:hover {
+                    opacity: 1;
+                }
+
+            #modalImportarExcel .sga-filter-bar h5 {
+                margin-top: 0;
+                margin-bottom: 10px;
+            }
+
+            #modalImportarExcel .sga-filter-bar ol {
+                margin-bottom: 0;
+            }
+
+        /* Ajuste para que los botones estén juntos */
+
+        .menu-trigger-container {
+            display: flex;
+            gap: 5px; /* Espacio entre los dos botones de 3 puntos */
+
+            float: right;
+        }
+
+        /* Estilo para el segundo menú para que no tape al primero si ambos se abren (aunque haremos que se cierren mutuamente) */
+
+        #menu-reportes {
+            right: 50px; /* Misma posición base */
+
+            z-index: 1060; /* Un poquito más arriba por si acaso */
+        }
+    </style>
+
+}
+
+@*<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>*@
+
+
+<div id="nivelUsuario" data-nivel="@((Session["Nivel"] as Plataforma_Web.Models.Nivel)?.IdNivel)"></div>
+<div id="esDirector" data-esdirector="@(esDirector ? 1 : 0)" style="display:none;"></div>
+
+<div id="carreraUsuario" data-carrera=@usuario.IdCarrera></div>
+
+<div class="sga-scope">
+
+    <div class="container" style="margin-top: 30px;" id="bodyHeader">
+
+        <h2 id="groupTitle"></h2>
+
+
+        <label style="margin-left: 15px;" id="groupSelectLable">Grupo</label>
+        <select id="groupSelect" class="form-control" style="display: inline-block">
+            <option selected>Selecciona un grupo...</option>
+        </select>
+
+        <div class="menu-container-standalone" style="margin-right: 10px; margin-bottom: 15px;">
+
+
+
+            <div class="menu-trigger-container" style="display: flex; gap: 5px; float: right;">
+
+
+
+                <button type="button" class="btn-menu-trigger-green" onclick="toggleMenuGestion(event)"
+                        title="Gestión de Calificaciones y Arrastre">
+
+                    <span class="menu-icon"><i class="fas fa-book-open"></i></span>
+
+                </button>
+
+
+
+                <button type="button" class="btn-menu-trigger-green" onclick="toggleMenuReportes(event)"
+                        title="Reportes y Consultas">
+
+                    <span class="menu-icon"><i class="fas fa-ellipsis-v"></i></i></span>
+
+                </button>
+
+            </div>
+
+
+
+            <div id="menu-gestion" class="menu-acciones-standalone" style="display: none;">
+
+                <div class="menu-info-section">
+
+                    <h5 style="font-weight: bold; color: #09a787; margin-bottom: 5px;">
+
+                        <span class="glyphicon glyphicon-education"></span> Gestión Académica
+
+                    </h5>
+
+                </div>
+
+                <hr class="menu-divider" style="margin: 5px 0 10px 0;">
+
+
+
+                <div class="menu-buttons">
+
+                    <button type="button" class="btn btn-info" onclick="exportarMaterias()" title="Descargar plantilla Excel">
+
+                        <span class="glyphicon glyphicon-download-alt"></span> EXPORTAR CALIFICACIONES DEL SISTEMA
+
+                    </button>
+
+
+
+                    @if (!esDirector)
+                    {
+                    <button type="button" class="btn btn-info" id="btn-importar-modal" title="Subir Excel con calificaciones">
+
+                        <span class="glyphicon glyphicon-cloud-upload"></span> IMPORTAR EXCEL
+
+                    </button>
+                    }
+
+
+
+                    <button type="button" class="btn btn-info" onclick="verArrastrePorGrupo()" title="Ver materias de arrastre del grupo">
+
+                        <span class="glyphicon glyphicon-warning-sign"></span> CONSULTAR ARRASTRE
+
+                    </button>
+
+
+
+                    @if (!esDirector)
+                    {
+                    <button type="button" class="btn btn-info" onclick="abrirModalAgregarArrastre()" title="Agregar materia de arrastre manual">
+
+                        <span class="glyphicon glyphicon-plus"></span> AGREGAR ARRASTRE
+
+                    </button>
+                    }
+
+                </div>
+
+
+
+                <hr class="menu-divider">
+
+                <div class="menu-info-section">
+                    <h5><strong>Gestión de Calificaciones - Grupo </strong></h5>
+                    <p class="menu-flujo">
+                        <strong>EXPORTAR CALIFICACIONES DEL SISTEMA:</strong> 1) Descargar Excel → 2) Visualizar Calificaciones <br />
+                        <strong>Importar Excel:</strong> 1) Descargar plantilla → 2) Llenar calificaciones → 3) Importar archivo<br />
+                        <strong>CONSULTAR ARRASTRE:</strong> 1) Seleccionar grupo → 2) Visualizar Calificaciones<br />
+                        <strong>AGREGAR ARRASTRE:</strong> 1) Seleccionar alumno → 2) Llenar formulario → 3) Guardar
+                    </p>
+                </div>
+
+            </div>
+
+
+
+            <div id="menu-reportes" class="menu-acciones-standalone" style="display: none;">
+
+                <div class="menu-info-section">
+
+                    <div class="menu-info-section">
+
+                        <h5><strong> Consultas y Reportes</strong></h5>
+
+                    </div>
+
+                </div>
+
+                <hr class="menu-divider" style="margin: 5px 0 10px 0;">
+
+
+
+                <div class="menu-buttons">
+
+                    @if (usuario.IdNivel == 2)
+                    {
+                        @* CASO 1: TUTOR - Enlace directo original *@
+                        <a href="@Url.Action("HistorialGrupo", "Canalizaciones")"
+                           class="btn btn-info pull-right"
+                           style="margin-right: 10px; padding: 6px 12px;"
+                           title="Ver historial de canalizaciones del grupo">
+                            <span class="glyphicon glyphicon-list-alt"></span> Historial de Canalizaciones
+                        </a>
+                    }
+                    else
+                    {
+                        @* CASO 2: MASTER/COORDINADOR *@
+                        <a href="#"
+                           class="btn btn-info pull-right"
+                           style="margin-right: 10px; padding: 6px 12px;"
+                           title="Ver historial de canalizaciones del grupo"
+                           onclick="
+         var selectedGroupId = $('#groupSelect').val();
+
+         // Validación estricta
+         if (!selectedGroupId || selectedGroupId === 'Selecciona un grupo...' || selectedGroupId == null) {
+             alert('Por favor, seleccione un grupo del dropdown primero para ver el historial.');
+             return false;
+         }
+
+         // Redirección con ID
+         var baseUrl = '@Url.Action("HistorialGrupo", "Canalizaciones")';
+         window.location.href = baseUrl + '?idGrupo=' + selectedGroupId;
+         return false;
+        ">
+                            <span class="glyphicon glyphicon-list-alt"></span> Historial de Canalizaciones
+                        </a>
+                    }
+                    @if (usuario != null && (usuario.IdNivel == 3 || usuario.IdNivel == 4))
+
+                    {
+
+                        <button type="button" id="btnExportGrupoExcel" class="btn btn-success"
+                                style="display:none; text-transform: none;"
+                                title="Exportar lista del grupo a Excel" data-toggle="tooltip">
+
+                            <i class="fas fa-file-excel"></i> EXPORTAR GRUPO A EXCEL
+
+                        </button>
+
+                    }
+
+                    @if (usuario != null && (usuario.IdNivel == 3 || usuario.IdNivel == 4))
+
+                    {
+
+                        <button type="button" class="btn btn-info"
+                                onclick="window.location.href='@Url.Action("Index", "SeguimientosReporte")'"
+                                title="Reporte de seguimientos individuales">
+
+                            <span class="glyphicon glyphicon-stats"></span> SEGUIMIENTOS
+
+                        </button>
+
+                    }
+
+                    <button type="button" class="btn btn-info btn-utt-outline" onclick="mostrarAyudaRapida()"
+                            title="Ver flujo de trabajo">
+
+                        <span class="glyphicon glyphicon-question-sign"></span> AYUDA
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <button id="btnToggleView" type="button" class="btn btn-success pull-right" title="Cambiar vista" style="display:inline-block; margin-right:10px">
+
+            <span id="iconToggleView" class="glyphicon"></span>
+
+        </button>
+
+        <div class="notification-container pull-right" style="position: relative; display:inline-block; margin-right:10px">
+
+            <i class="fas fa-bell notification-bell"></i>
+
+            <span class="notification-badge" style="display: none;">0</span>
+
+            <div class="notification-dropdown">
+
+                <div class="notification-header">
+
+                    <h4>Notificaciones</h4>
+
+                </div>
+
+                <ul class="notification-list">
+
+                    <li class="notification-empty">Cargando notificaciones...</li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+        <div id="menu-acciones" class="menu-acciones-standalone" style="display: none;">
+            <div class="menu-buttons">
+                <button type="button" class="btn btn-info" onclick="exportarMaterias()"
+                        title="Descargar plantilla Excel">
+                    <span class="glyphicon glyphicon-download-alt"></span> EXPORTAR EXCEL
+                </button>
+                @if (!esDirector)
+                {
+                <button type="button" class="btn btn-info" id="btn-importar-modal"
+                        title="Subir Excel con calificaciones">
+                    <span class="glyphicon glyphicon-cloud-upload"></span> IMPORTAR EXCEL
+                </button>
+                }
+                <button type="button" class="btn btn-info" onclick="verArrastrePorGrupo()"
+                        title="Ver materias de arrastre del grupo">
+                    <span class="glyphicon glyphicon-exclamation-triangle"></span> CONSULTAR ARRASTRE
+                </button>
+                @if (!esDirector)
+                {
+                <button type="button" class="btn btn-info" onclick="abrirModalAgregarArrastre()"
+                        title="Agregar materia de arrastre de cuatrimestre anterior">
+                    <span class="glyphicon glyphicon-plus"></span> AGREGAR ARRASTRE
+                </button>
+                }
+                @* ✅ Nuevo: Botón para reporte de seguimientos (solo nivel 3 y 4) *@
+                @if (usuario != null && (usuario.IdNivel == 3 || usuario.IdNivel == 4))
+                {
+                    <button type="button" class="btn btn-info"
+                            onclick="window.location.href='@Url.Action("Index", "SeguimientosReporte")'"
+                            title="Reporte de seguimientos individuales">
+                        <span class="glyphicon glyphicon-stats"></span> SEGUIMIENTOS
+                    </button>
+                }
+                <button type="button" class="btn btn-info btn-utt-outline" onclick="mostrarAyudaRapida()"
+                        title="Ver flujo de trabajo">
+                    <span class="glyphicon glyphicon-question-sign"></span> AYUDA
+                </button>
+            </div>
+
+            <hr class="menu-divider">
+
+            <div class="menu-info-section">
+                <h5><strong>Gestión de Calificaciones - Grupo </strong></h5>
+                <p class="menu-flujo">
+                    <strong>Flujo:</strong> 1) Exportar plantilla → 2) Llenar calificaciones → 3) Importar archivo
+                </p>
+            </div>
+
+            <hr class="menu-divider">
+        </div>
+
+
+        <!-- ✅ MODAL PARA IMPORTACIÓN DE EXCEL -->
+        @if (!esDirector)
+        {
+        <div class="modal fade" id="modalImportarExcel" tabindex="-1" role="dialog" aria-labelledby="modalImportarLabel">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="modalImportarLabel">
+                            <span class="glyphicon glyphicon-cloud-upload"></span>
+                            Importar Calificaciones desde Excel
+                        </h4>
+                        <p>Grupo: <strong></strong></p>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Instrucciones rápidas -->
+                        <div class="sga-filter-bar" style="margin-bottom: 20px;">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h5><span class="glyphicon glyphicon-info-sign"></span> <strong>Instrucciones:</strong></h5>
+                            <ol>
+                                <li><strong>Exporta la plantilla</strong> con el botón "Descargar Plantilla"</li>
+                                <li><strong>Completa las calificaciones</strong> en el Excel (valores 0-10)</li>
+                                <li><strong>Sube el archivo</strong> usando el formulario inferior</li>
+                                <li><strong>El sistema procesará</strong> automáticamente las calificaciones</li>
+                            </ol>
+                        </div>
+
+                        <!-- Formulario de importación -->
+                        <form id="formImportarModal" enctype="multipart/form-data">
+                            <input type="hidden" name="idGrupo" value="" id="inputidGrupoActual" />
+                            <input type="hidden" name="idCarrera" value="" id="inputidCarreraActual" />
+                            <input type="hidden" name="idGrado" value="" id="inputidGradoActual" />
+                            <input type="hidden" name="idTurno" value="" id="inputidTurnoActual" />
+                            <input type="hidden" name="idPeriodo" value="" id="inputidPeriodoActual" />
+                            <input type="hidden" name="anio" value="" id="inputidAnioActual" />
+
+                            <!-- Información del grupo -->
+                            <div class="form-group">
+                                <label class="control-label"><strong>Grupo Destino:</strong></label>
+                                <div class="well well-sm">
+                                    <span class="label label-info" id="groupInfoName"></span>
+                                    <small class="text-muted" id="groupInfoData"></small>
+                                </div>
+                            </div>
+
+                            <!-- Selector de archivo -->
+                            <div class="form-group">
+                                <label for="archivoExcelModal" class="control-label">
+                                    <span class="glyphicon glyphicon-file"></span> <strong>Archivo Excel:</strong>
+                                </label>
+                                <div class="input-group">
+                                    <input type="file" id="archivoExcelModal" name="archivoExcel" class="form-control"
+                                           accept=".xlsx,.xls" onchange="validarArchivoModal(this)" />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-folder-open"></span>
+                                    </span>
+                                </div>
+                                <small class="help-block">
+                                    Selecciona el archivo Excel (.xlsx o .xls) con las calificaciones
+                                    completadas.
+                                </small>
+
+                                <!-- Información del archivo seleccionado -->
+                                <div id="info-archivo-modal" class="alert alert-success"
+                                     style="display: none; margin-top: 10px;">
+                                    <h6>
+                                        <span class="glyphicon glyphicon-file"></span> <strong>
+                                            Archivo
+                                            seleccionado:
+                                        </strong>
+                                    </h6>
+                                    <p id="nombre-archivo-modal" style="margin: 0;"></p>
+                                    <p id="tamaño-archivo-modal" style="margin: 0;"></p>
+                                </div>
+                            </div>
+
+                            <!-- Progress bar para el proceso -->
+                            <div id="progress-container" style="display: none;">
+                                <div class="form-group">
+                                    <label class="control-label">Progreso del procesamiento:</label>
+                                    <div class="progress">
+                                        <div id="progress-bar" class="progress-bar progress-bar-striped active"
+                                             role="progressbar" style="width: 0%">
+                                            <span id="progress-text">Preparando...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="modal-footer">
+                        <div class="btn-group">
+                            <!-- Botón para descargar plantilla -->
+                            <a href="" class="btn btn-info" target="_blank">
+                                <span class="glyphicon glyphicon-download-alt"></span> Descargar Plantilla
+                            </a>
+
+                            <!-- Botón de procesamiento -->
+                            <button type="button" class="btn btn-success" id="btn-procesar-modal"
+                                    onclick="procesarExcelModal()" disabled>
+                                <span class="glyphicon glyphicon-cog"></span> PROCESAR E IMPORTAR
+                            </button>
+
+                            <!-- Botón cerrar -->
+                            <button type="button" class="btn btn-default" data-dismiss="modal">
+                                <span class="glyphicon glyphicon-remove"></span> CERRAR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+        <div class="modal fade" id="modalResultados" tabindex="-1" role="dialog" aria-labelledby="modalResultadosLabel">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="modalResultadosLabel">
+                            <span id="icono-resultado" class="glyphicon"></span>
+                            Resultados de la Importación
+                        </h4>
+                    </div>
+
+                    <div class="modal-body" id="contenido-resultados">
+                        <!-- Los resultados se cargarán aquí dinámicamente -->
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="volverAImportar()">
+                            <span class="glyphicon glyphicon-upload"></span> Importar Otro Archivo
+                        </button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            <span class="glyphicon glyphicon-remove"></span> Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ✅ MODAL: Agregar Materia de Arrastre Manual CON CALIFICACIÓN POR UNIDADES -->
+    @if (!esDirector)
+    {
+    <div class="modal fade" id="modalAgregarArrastre" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #f0ad4e; color: white;">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span style="color: white;">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-plus-sign"></span> Agregar Materia de Arrastre Manual
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <form id="formAgregarArrastre">
+                        <!-- Alumno -->
+                        <div class="form-group">
+                            <label><strong>Alumno:</strong> *</label>
+                            <select id="ddlAlumnoArrastre" class="form-control" required>
+                                <option value="">-- Seleccionar Alumno --</option>
+                            </select>
+                            <small class="help-block" id="infoAlumnoArrastre"></small>
+                        </div>
+
+                        <!-- Cuatrimestre de la Materia -->
+                        <div class="form-group">
+                            <label><strong>Cuatrimestre de la Materia:</strong> *</label>
+                            <select id="ddlCuatrimestreArrastre" class="form-control" required disabled>
+                                <option value="">-- Primero seleccione un alumno --</option>
+                            </select>
+                            <small class="help-block">Seleccione el cuatrimestre al que pertenece la materia</small>
+                        </div>
+
+                        <!-- Materia -->
+                        <div class="form-group">
+                            <label><strong>Materia:</strong> *</label>
+                            <select id="ddlMateriaArrastre" class="form-control" required disabled>
+                                <option value="">-- Primero seleccione un cuatrimestre --</option>
+                            </select>
+                        </div>
+
+                        <!-- ✅ HISTORIAL COMPLETO DE INTENTOS -->
+                        <div class="form-group">
+                            <h5><strong><span class="glyphicon glyphicon-list-alt"></span> Historial de Intentos:</strong></h5>
+                            <!-- INTENTO 1: ORDINARIO (Unidades) -->
+                            <div class="panel panel-default">
+                                <div class="panel-heading" style="background-color: #5cb85c; color: white;">
+                                    <strong>Ordinario (Calificación por Unidades)</strong>
+                                </div>
+                                <div class="panel-body">
+                                    <div id="seccionUnidadesOrdinario" style="display: none;">
+                                        <div id="contenedorUnidadesOrdinario" class="unidades-container-arrastre">
+                                            <!-- Las unidades se generarán dinámicamente aquí -->
+                                        </div>
+                                        <div class="well well-sm" style="margin-top: 10px;">
+                                            <strong>Calificación Final Ordinario:</strong>
+                                            <span id="previewCalifOrdinario" class="badge" style="font-size: 16px;">---</span>
+                                            <strong>Estado:</strong>
+                                            <span id="previewEstadoOrdinario" class="label label-default">Pendiente</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- INTENTO 2: EXTRAORDINARIO -->
+                            <div class="panel panel-default">
+                                <div class="panel-heading" style="background-color: #f0ad4e; color: white;">
+                                    <strong>Extraordinario</strong>
+                                    <label style="float: right; margin: 0;">
+                                        <input type="checkbox" id="chkTieneExtraordinario" style="margin-right: 5px;">
+                                        ¿Presentó extraordinario?
+                                    </label>
+                                </div>
+                                <div class="panel-body" id="seccionExtraordinario" style="display: none;">
+                                    <div class="form-group">
+                                        <label><strong>Calificación del Examen Extraordinario:</strong></label>
+                                        <input type="number" id="txtCalifExtraordinario" class="form-control"
+                                               min="0" max="10" step="0.01" placeholder="0.00">
+                                        <small class="help-block">Ingrese la calificación obtenida en el examen extraordinario</small>
+                                    </div>
+                                    <div class="well well-sm">
+                                        <strong>Estado Extraordinario:</strong>
+                                        <span id="previewEstadoExtraordinario" class="label label-default">Pendiente</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- INTENTO 3: ARRASTRE 1 -->
+                            <div class="panel panel-default" id="panelArrastre1" style="display: none;">
+                                <div class="panel-heading" style="background-color: #d9534f; color: white;">
+                                    <strong>Arrastre (1er Intento)</strong>
+                                    <label style="float: right; margin: 0;">
+                                        <input type="checkbox" id="chkTieneArrastre1" style="margin-right: 5px;">
+                                        ¿Presentó 1er arrastre?
+                                    </label>
+                                </div>
+                                <div class="panel-body" id="seccionArrastre1" style="display: none;">
+                                    <div class="form-group">
+                                        <label><strong>Calificación del 1er Intento de Arrastre:</strong></label>
+                                        <input type="number" id="txtCalifArrastre1" class="form-control"
+                                               min="0" max="10" step="0.01" placeholder="0.00">
+                                        <small class="help-block">Ingrese la calificación obtenida en el primer intento de arrastre</small>
+                                    </div>
+                                    <div class="well well-sm">
+                                        <strong>Estado Arrastre 1:</strong>
+                                        <span id="previewEstadoArrastre1" class="label label-default">Pendiente</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- INTENTO 4: ARRASTRE 2 (ÚLTIMO) -->
+                            <div class="panel panel-default" id="panelArrastre2" style="display: none;">
+                                <div class="panel-heading" style="background-color: #8B0000; color: white;">
+                                    <strong>Arrastre (2do y ÚLTIMO Intento)</strong>
+                                    <label style="float: right; margin: 0;">
+                                        <input type="checkbox" id="chkTieneArrastre2" style="margin-right: 5px;">
+                                        ¿Presentó 2do arrastre?
+                                    </label>
+                                </div>
+                                <div class="panel-body" id="seccionArrastre2" style="display: none;">
+                                    <div class="alert alert-danger">
+                                        <span class="glyphicon glyphicon-warning-sign"></span>
+                                        <strong>ÚLTIMO INTENTO:</strong> Si reprueba este intento, quedará como REPROBADA DEFINITIVA.
+                                    </div>
+                                    <div class="form-group">
+                                        <label><strong>Calificación del 2do Intento de Arrastre:</strong></label>
+                                        <input type="number" id="txtCalifArrastre2" class="form-control"
+                                               min="0" max="10" step="0.01" placeholder="0.00">
+                                        <small class="help-block">Ingrese la calificación obtenida en el segundo intento de arrastre</small>
+                                    </div>
+                                    <div class="well well-sm">
+                                        <strong>Estado Arrastre 2:</strong>
+                                        <span id="previewEstadoArrastre2" class="label label-default">Pendiente</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="alertaUltimoIntento" class="alert alert-danger" style="display: none; margin-top: 10px;">
+                            <span class="glyphicon glyphicon-warning-sign"></span>
+                            <strong><span class="glyphicon glyphicon-warning-sign"></span>  ÚLTIMO INTENTO:</strong>
+                            Esta es la última oportunidad para acreditar la materia. Si se reprueba, quedará como REPROBADA DEFINITIVA.
+                        </div>
+
+                        <!-- Fecha de Inicio de Arrastre -->
+                        <div class="form-group">
+                            <label><strong>Fecha de Inicio de Arrastre:</strong> *</label>
+                            <input type="date" id="txtFechaInicioArrastre" class="form-control" required />
+                            <small class="help-block">Esta fecha determina el período límite (8 meses)</small>
+                        </div>
+
+                        <!-- Preview de Fecha Límite -->
+                        <div id="previewFechaLimite" style="display: none;" class="well well-sm">
+                            <strong>Período Límite Calculado:</strong> <span id="fechaLimiteDisplay"></span>
+                            <br><strong>Días Restantes:</strong> <span id="diasRestantesDisplay"></span>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="form-group">
+                            <label>Observaciones:</label>
+                            <textarea id="txtObservacionesArrastre" class="form-control" rows="3"
+                                      placeholder=""></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" id="btnGuardarArrastre" onclick="guardarMateriaArrastreConUnidades()">
+                        <span class="glyphicon glyphicon-floppy-disk"></span> Guardar Materia de Arrastre
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <div class="container-fluid centerContent" id="MainBody" style="padding-top: 0px; ">
+
+        <div id="main" style="display:flex; align-items:center; justify-content:center; flex-direction:column;">
+
+            <img src="~/Imagenes/noGroupSelected.png" style="height: 20vw">
+            <h3>Seleccione un grupo para comenzar...</h3>
+
+        </div>
+
+        <div id="loadingOverlay" class="text-center;" style="min-height: 300px; display:none;">
+            <span id="loadingCircle" class="glyphicon glyphicon-refresh spinning text-center"
+                  style="font-size:7rem; "></span>
+        </div>
+
+    </div>
+
+    <template id="studentCard">
+        <div class="panel panel-default col-md-2 profile grow-on-hover text-center" data-user-id="" data-user-status=""
+             data-user-grade="" data-user-baja="">
+            <!-- Default panel contents -->
+            <div class="panel-heading student-name"></div>
+
+            <div class="panel-body panelBody" style="display: flex; justify-content: center; align-items: center;">
+                <p>
+                    <img src="" class="img-responsive StudentImage center-block" />
+                </p>
+            </div>
+
+            <!-- List group -->
+            <ul class="list-group studentCardFooter">
+                <li class="list-group-item">2316109217</li>
+            </ul>
+        </div>
+    </template>
+
+    <template id="studentPopUpMenu">
+        <div class="panel panel-default col-md-3 fixedPopUp" data-user-id="">
+            <button type="button" class="close" aria-label="Close" id="PopUpCloseBtn">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <div class="panel-heading fixedPopUpHeading" style="padding-bottom:0px">
+                <div id="image&close-button-container centerblock"
+                     style="display: flex; justify-content: center; align-items: center;">
+                    <img src="" id="studentPopUpImage" class="img-responsive StudentImage"
+                         alt="Tijerina Medrano Mario Alberto" />
+                </div>
+                <p class="studentName" style="margin-bottom: 0px;"><strong></strong></p>
+            </div>
+            <div class="panel-body">
+                <div class="btn-group-vertical"
+                     style="display: flex; flex-direction:column; justify-content: center; align-items: center;" role="group"
+                     aria-label="...">
+                    @if (!esDirector)
+                    {
+                    <a class="btn btn-primary btn-sm" id="editarBtn">Revisar</a>
+                    }
+                    <a class="btn btn-primary btn-sm" id="revisarBtn">Ver</a>
+                    <a class="btn btn-primary btn-sm" id="imprimirBtn">Imprimir</a>
+                    <a class="btn btn-primary btn-sm" id="seguimientoBtn">
+                        Seguimiento Individual
+                    </a>
+                    <a class="btn btn-primary btn-sm" id="materiasBtn">Materias</a>
+                    @if (!esDirector)
+                    {
+                    <a class="btn btn-primary btn-sm" id="canalizacionBtn">Canalización</a>
+                    <a class="btn btn-primary btn-sm" id="bajaBtn">Tramitar Baja</a>
+                    <a class="btn btn-danger btn-sm" id="removerBtn">
+                        Remover del Grupo
+                    </a>
+                    <a class="btn btn-danger btn-sm" id="eliminarBtn">Eliminar</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <div class="modal fade" id="modalAyudaRapida" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header" style="background: linear-gradient(135deg, #09a787, #00e1b2) !important; color: white !important;">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true" style="color:white !important;">&times;</span>
+                    </button>
+                    <h4 class="modal-title" style="color: white !important;">
+                        <i class="fas fa-info-circle"></i> Gestión de Calificaciones
+                    </h4>
+                </div>
+
+                <div class="modal-body">
+                    <div class="list-group">
+                        <div class="list-group-item">
+                            <div class="media">
+                                <div class="media-left media-middle">
+                                    <i class="fas fa-file-download fa-2x" style="color: #09a787 !important;"></i>
+                                </div>
+                                <div class="media-body">
+                                    <h5 class="media-heading" style="font-weight:bold; color:#09a787 !important;">1. EXPORTAR</h5>
+                                    <p class="text-muted" style="margin:0;">Descarga la plantilla Excel con la lista de alumnos.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item">
+                            <div class="media">
+                                <div class="media-left media-middle">
+                                    <i class="fas fa-pencil-alt fa-2x" style="color: #f0ad4e !important;"></i>
+                                </div>
+                                <div class="media-body">
+                                    <h5 class="media-heading" style="font-weight:bold; color:#f0ad4e !important;">2. LLENAR</h5>
+                                    <p class="text-muted" style="margin:0;">Completa las calificaciones (Escala 0.0 - 10.0).</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item">
+                            <div class="media">
+                                <div class="media-left media-middle">
+                                    <i class="fas fa-file-upload fa-2x" style="color: #337ab7 !important;"></i>
+                                </div>
+                                <div class="media-body">
+                                    <h5 class="media-heading" style="font-weight:bold; color:#337ab7 !important;">3. IMPORTAR</h5>
+                                    <p class="text-muted" style="margin:0;">Sube el archivo para el registro automático.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-group-item">
+                            <div class="media">
+                                <div class="media-left media-middle">
+                                    <i class="fas fa-check-circle fa-2x" style="color: #5cb85c !important;"></i>
+                                </div>
+                                <div class="media-body">
+                                    <h5 class="media-heading" style="font-weight:bold; color:#5cb85c !important;">4. VERIFICAR</h5>
+                                    <p class="text-muted" style="margin:0;">Revisa el resumen de resultados.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 style="color: #d9534f !important; font-weight:bold; margin-bottom:15px;">
+                        <i class="fas fa-exclamation-triangle"></i> Materias de Arrastre
+                    </h5>
+
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <div class="thumbnail text-center" style="border:none; box-shadow:none;">
+                                <i class="fas fa-search fa-2x" style="color: #d9534f !important; margin-bottom:5px;"></i>
+                                <br><strong style="color:#555;">CONSULTAR</strong>
+                                <p class="small text-muted">Ver materias reprobadas.</p>
+                            </div>
+                        </div>
+                        <div class="col-xs-6">
+                            <div class="thumbnail text-center" style="border:none; box-shadow:none;">
+                                <i class="fas fa-plus-circle fa-2x" style="color: #d9534f !important; margin-bottom:5px;"></i>
+                                <br><strong style="color:#555;">AGREGAR</strong>
+                                <p class="small text-muted">Registra manualmente.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" style="margin-bottom: 0; padding: 10px; font-size: 12px; background-color: #fcf8e3 !important; color: #8a6d3b !important;">
+                        <strong>Nota:</strong> Seleccione un alumno antes de agregar arrastre.
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" style="background-color: #09a787 !important; border-color: #09a787 !important;" data-dismiss="modal">Entendido</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMACIÓN -->
+    @if (!esDirector)
+    {
+    <div class="modal fade" id="modalConfirmacionArrastre" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #8D0404; color: white;">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <span class="glyphicon glyphicon-question-sign"></span> Confirmar Registro
+                    </h4>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-danger" style="margin-top:10px;">
+                        ¿Está seguro de agregar esta materia con su historial completo?
+                    </div>
+
+                    <!-- Lista de datos bonitos -->
+                    <form class="form-horizontal">
+                        <div class="form-group" style="margin-bottom: 5px;">
+                            <label class="col-sm-4 control-label">Alumno:</label>
+                            <div class="col-sm-8">
+                                <p class="form-control-static" id="lblConfAlumno" style="font-weight:bold;"></p>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 5px;">
+                            <label class="col-sm-4 control-label">Materia:</label>
+                            <div class="col-sm-8">
+                                <p class="form-control-static" id="lblConfMateria"></p>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 5px;">
+                            <label class="col-sm-4 control-label">Cuatrimestre:</label>
+                            <div class="col-sm-8">
+                                <p class="form-control-static" id="lblConfCuatri"></p>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 5px;">
+                            <label class="col-sm-4 control-label">Plan:</label>
+                            <div class="col-sm-8">
+                                <p class="form-control-static" id="lblConfPlan"></p>
+                            </div>
+                        </div>
+                        <hr style="margin: 10px 0;">
+                        <div class="form-group" style="margin-bottom: 5px;">
+                            <label class="col-sm-4 control-label">Intentos:</label>
+                            <div class="col-sm-8">
+                                <p class="form-control-static" id="lblConfIntentos"></p>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 5px;">
+                            <label class="col-sm-4 control-label">Estado Final:</label>
+                            <div class="col-sm-8">
+                                <p class="form-control-static" id="lblConfEstado" style="font-weight:bold; color:#;"></p>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 5px;">
+                            <label class="col-sm-4 control-label">Calificación:</label>
+                            <div class="col-sm-8">
+                                <p class="form-control-static" id="lblConfCalif" style="font-weight:bold; font-size: 16px;"></p>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Alerta especial si reprueba definitivamente -->
+                    <div id="alertaReprobadaDefinitiva" class="alert alert-danger" style="display:none; margin-top:10px;">
+                        <strong><span class="glyphicon glyphicon-warning-sign"></span> ATENCIÓN:</strong>
+                        Esta materia quedará registrada como <strong>REPROBADA DEFINITIVA</strong>.
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" id="btnConfirmarFinal">
+                        <span class="glyphicon glyphicon-ok"></span> Sí, Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+
+@*<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+    integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+    crossorigin="anonymous"></script>*@
+
+@{
+    var jsPath = "~/ViewScripts/Entrevistas/MainGrupos.js";
+    var stamp = System.IO.File.GetLastWriteTimeUtc(Server.MapPath(jsPath)).Ticks;
+}
+<script src="@Url.Content(jsPath)?v=@stamp"></script>
+
+<script>
+    var esDirector = (function () { var el = document.getElementById('esDirector'); return !!(el && el.dataset && el.dataset.esdirector === '1'); })();
+
+    $('.notification-bell').click(function (e) {
+        e.stopPropagation();
+        $('.notification-dropdown').toggleClass('active');
+        loadNotifications();
+    });
+
+    $(document).click(function () {
+        $('.notification-dropdown').removeClass('active');
+    });
+
+    function loadNotifications() {
+        $.get('/Asesor/GetUnreadNotifications', function (data) {
+            const notificationList = $('.notification-list');
+            notificationList.empty();
+
+            if (data.length === 0) {
+                notificationList.append('<div class="notification-empty">No hay notificaciones nuevas</div>');
+                return;
+            }
+
+            data.forEach(function (notification) {
+                const fecha = new Date(notification.FechaEnvio);
+                const hora = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const fechaStr = fecha.toLocaleDateString() + ' ' + hora;
+
+                var accionesNotif = esDirector ? '' : `<button class="notification-btn btn-mark-read" onclick="markAsRead(${notification.IdNotificacion})">
+                            <i class="fas fa-check"></i> Marcar como leída
+                        </button>
+                        <button class="notification-btn btn-delete" onclick="deleteNotification(${notification.IdNotificacion})">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>`;
+
+                const item = `
+            <li class="notification-item" data-id="${notification.IdNotificacion}">
+                <img src="/Asesor/ObtenerFoto?id=${notification.IdEstudiante}"
+                     alt="${notification.NombreEstudiante}"
+                     class="notification-avatar"
+                     onerror="this.src='/css/estudiantes/default.png'">
+                <div class="notification-content">
+                    <div class="notification-title">
+                        <i class="fas fa-exclamation-circle"></i> Solicitud de canalización
+                    </div>
+                    <div class="notification-message">
+                        <strong>${notification.NombreEstudiante}</strong>: ${notification.Mensaje}
+                    </div>
+                    <span class="notification-time">${fechaStr}</span>
+                    <div class="notification-actions">
+                        ${accionesNotif}
+                    </div>
+                </div>
+            </li>
+          `;
+                notificationList.append(item);
+            });
+        }).fail(function (xhr, status, error) {
+            console.error('Error loading notifications:', status, error, xhr.responseText);
+            $('.notification-list').empty().append('<div class="notification-empty">Error al cargar notificaciones</div>');
+        });
+    }
+
+    function updateNotificationCount() {
+        $.get('/Asesor/GetUnreadNotificationCount')
+            .done(function (count) {
+                const badge = $('.notification-badge');
+                if (count > 0) {
+                    badge.text(count).show();
+                } else {
+                    badge.hide();
+                }
+            })
+            .fail(function (xhr, status, error) {
+                console.error('Error in updateNotificationCount:', status, error, xhr.responseText);
+            });
+    }
+
+    updateNotificationCount();
+    setInterval(updateNotificationCount, 30000);
+
+    function markAsRead(id) {
+        $.post('/Asesor/MarkNotificationAsRead', { id: id }, function () {
+            $(`.notification-item[data-id="${id}"]`).remove();
+            updateNotificationCount();
+            if ($('.notification-list').children().length === 0) {
+                $('.notification-list').append('<div class="notification-empty">No hay notificaciones nuevas</div>');
+            }
+        }).fail(function (xhr, status, error) {
+            console.error('Error marking notification as read:', status, error, xhr.responseText);
+        });
+    }
+
+    function deleteNotification(id) {
+        $.post('/Asesor/DeleteNotification', { id: id }, function () {
+            $(`.notification-item[data-id="${id}"]`).remove();
+            updateNotificationCount();
+            if ($('.notification-list').children().length === 0) {
+                $('.notification-list').append('<div class="notification-empty">No hay notificaciones nuevas</div>');
+            }
+        }).fail(function (xhr, status, error) {
+            console.error('Error deleting notification:', status, error, xhr.responseText);
+        });
+    }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+    // 0 = Cards (cuadrícula), 1 = Tabla
+    function setToggleIcon() {
+        const vt = Number(sessionStorage.getItem('viewTypeData') ?? 0);
+        const icon = document.getElementById('iconToggleView');
+        const btn = document.getElementById('btnToggleView');
+        if (!icon || !btn) return;
+
+        // Ícono según LA VISTA ACTUAL
+        // cuadrícula -> glyphicon-th | tabla -> glyphicon-th-list
+        icon.className = 'glyphicon ' + (vt === 1 ? 'glyphicon-th-list' : 'glyphicon-th');
+        btn.title = vt === 1 ? 'Vista: Tabla' : 'Vista: Cuadrícula';
+    }
+
+    async function toggleViewAndIcon() {
+        // Cambia la vista (tu función existente)
+        await switchViewToTable();
+        // Actualiza el ícono según la nueva vista
+        setToggleIcon();
+    }
+
+    // Click del botón
+    document.getElementById('btnToggleView').addEventListener('click', toggleViewAndIcon);
+
+    // Poner el ícono correcto al cargar la página (según lo que haya en sessionStorage)
+    document.addEventListener('DOMContentLoaded', setToggleIcon);
+
+    // Cuando generas un enlace para ver detalles de un alumno
+    function verDetallesAlumno(idPersona) {
+        // Generar token en el servidor
+        $.ajax({
+            url: '@Url.Action("GenerarTokenAcceso", "Entrevistas")',
+            type: 'POST',
+            data: { idPersona: idPersona },
+            success: function(response) {
+                if (response.success) {
+                    window.location.href = '@Url.Action("Detalles", "Entrevistas")' +
+                        '?idPersona=' + idPersona + '&token=' + response.token;
+                }
+            }
+        });
+    }
+
+    // Mostrar botón de exportación cuando hay grupo seleccionado (solo para nivel 3 y 4)
+    (function(){
+        var select = document.getElementById('groupSelect');
+        var btn = document.getElementById('btnExportGrupoExcel');
+        if (!btn) return; // Si no existe el botón (usuario nivel 1 o 2), salir
+        function updateExportBtn(){
+            var val = select && select.value && !isNaN(parseInt(select.value)) ? parseInt(select.value) : 0;
+            if (val > 0 || val === -1) {
+// 1. Mostramos el botón
+                btn.style.display = 'inline-block';
+
+                // 2. CORRECCIÓN: Usamos onclick para redireccionar
+                // (Los botones no tienen href, así que hacemos esto:)
+                var urlDescarga = '@Url.Action("ExportarGrupoDetallesExcel","Entrevistas")' + '?idGrupo=' + val;
+
+                btn.onclick = function() {
+                    window.location.href = urlDescarga;
+                };
+            } else {
+                btn.style.display = 'none';
+                btn.removeAttribute('href');
+            }
+        }
+        if (select) {
+            select.addEventListener('change', updateExportBtn);
+            setTimeout(updateExportBtn, 0);
+        }
+        // tooltip
+        if (window.jQuery && $('#btnExportGrupoExcel').tooltip) {
+            $('#btnExportGrupoExcel').tooltip();
+        }
+    })();
+
+    // Lógica para abrir/cerrar el Menú 1 (Gestión)
+    function toggleMenuGestion(e) {
+        e.stopPropagation(); // Evita que se cierre inmediatamente
+        var menuGestion = document.getElementById('menu-gestion');
+        var menuReportes = document.getElementById('menu-reportes');
+
+        // Cierra el otro menú si está abierto
+        if (menuReportes) menuReportes.style.display = 'none';
+
+        // Toggle del actual
+        if (menuGestion.style.display === 'none' || menuGestion.style.display === '') {
+            menuGestion.style.display = 'block';
+        } else {
+            menuGestion.style.display = 'none';
+        }
+    }
+
+    // Lógica para abrir/cerrar el Menú 2 (Reportes)
+    function toggleMenuReportes(e) {
+        e.stopPropagation();
+        var menuGestion = document.getElementById('menu-gestion');
+        var menuReportes = document.getElementById('menu-reportes');
+
+        // Cierra el otro menú si está abierto
+        if (menuGestion) menuGestion.style.display = 'none';
+
+        // Toggle del actual
+        if (menuReportes.style.display === 'none' || menuReportes.style.display === '') {
+            menuReportes.style.display = 'block';
+        } else {
+            menuReportes.style.display = 'none';
+        }
+    }
+
+    // Cerrar ambos menús al hacer clic fuera
+    $(document).click(function (event) {
+        // Si el clic NO fue dentro de los menús, ciérralos
+        if (!$(event.target).closest('.menu-acciones-standalone').length &&
+            !$(event.target).closest('.btn-menu-trigger-green').length) {
+            $('.menu-acciones-standalone').hide();
+        }
+    });
+
+    // Función para abrir el Modal de Ayuda Bonito
+    function mostrarAyudaRapida() {
+        $('#modalAyudaRapida').modal('show');
+    }
+
+</script>

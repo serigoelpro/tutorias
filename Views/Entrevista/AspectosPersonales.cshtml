@@ -1,0 +1,355 @@
+﻿@model Plataforma_Web.Models.PrimeraEntrevista.AspectosPersonales
+
+
+
+@{
+
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <link rel="icon" type="image/png" href="~/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Aspectos Personales</title>
+    <!-- custom style sheet -->
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/animate.css">
+    <!-- Icomoon Icon Fonts-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/icomoon.css">
+    <!-- Themify Icons-->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/themify-icons.css">
+    <!-- Bootstrap  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/magnific-popup.css">
+
+    <!-- Magnific Popup -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/bootstrap-datepicker.min.css">
+
+    <!-- Owl Carousel  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/owl.theme.default.min.css">
+
+    <!-- Theme style  -->
+    <link rel="stylesheet" href="~/EstilosEntrevista/css/style.css">
+
+    <!-- Modernizr JS -->
+    <script src="~/EstilosEntrevista/js/modernizr-2.6.2.min.js"></script>
+
+</head>
+<body>
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <div id="page">
+            <header id="gtco-header" role="banner" style="background-image: url(../../EstilosEntrevista/images/img_bg_1.jpg)" data-stellar-background-ratio="0.8">
+                <div class="overlay"></div>
+                <div class="gtco-container">
+                    <div class="row">
+                        <div class="col-md-12 col-md-push-1 col-md-offset-0 text-left">
+
+
+                            <div class="row" style="margin-top: 2em; margin-bottom:3em;">
+
+                                <div class="col-md-10 animate-box" data-animate-effect="fadeInRight">
+                                    <div class="form-wrap">
+                                        <div class="tab">
+
+                                            <div class="tab-content">
+                                                <div class="tab-content-inner active" data-content="signup">
+                                                    <h3>Aspectos Personales</h3>
+                                                    @if (ViewBag.Mensaje != null)
+                                                    {
+                                                        <div class="alert alert-danger">
+                                                            <pre>@ViewBag.Mensaje</pre>
+                                                        </div>
+                                                    }
+                                                    <form action="#">
+                                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="fullname">¿Estás casado(a)?</label>
+                                                                        @Html.DropDownList("IdCasado", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdCasado, "", new { @class = "text-danger" })
+
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="activities">¿Tienes hijos?</label>
+                                                                        @Html.DropDownList("IdHijo", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta1" })
+                                                                        @Html.ValidationMessageFor(model => model.IdHijo, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="fullname">En caso de ser mujer, ¿estás embarazada?</label>
+                                                                        @Html.DropDownList("IdEmbarazo", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdEmbarazo, "", new { @class = "text-danger" })
+
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Padeces alguna enfermedad o alergia?</label>
+                                                                        @Html.DropDownList("IdEnfermedad", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta2" })
+                                                                        @Html.ValidationMessageFor(model => model.IdEnfermedad, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12 hidden" id="2">
+                                                                        <label for="lastfullname">Especifica tu enfermedad o alergia</label>
+                                                                        @Html.EditorFor(model => model.Especifica, new { htmlAttributes = new { @class = "form-control", placeholder = "Especifica que enfermedad o alergia padeces" } })
+                                                                        @Html.ValidationMessageFor(model => model.Especifica, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Fumas?</label>
+                                                                        @Html.DropDownList("IdFuma", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta3" })
+                                                                        @Html.ValidationMessageFor(model => model.IdFuma, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12 hidden" id="3">
+                                                                        <label for="lastfullname">Especifica la cantidad y frecuencia</label>
+                                                                        @Html.EditorFor(model => model.CantidadFuma, new { htmlAttributes = new { @class = "form-control", placeholder = "Numero de cigarrillos y con qué frecuencia" } })
+                                                                        @Html.ValidationMessageFor(model => model.CantidadFuma, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Ingieres bebidas alcohólicas?</label>
+                                                                        @Html.DropDownList("IdBebida", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta4" })
+                                                                        @Html.ValidationMessageFor(model => model.IdBebida, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12 hidden" id="4">
+                                                                        <label for="lastfullname">Especifica la cantidad y frecuencia con que ingieres bebidas alcohólicas</label>
+                                                                        @Html.EditorFor(model => model.CantidadBedida, new { htmlAttributes = new { @class = "form-control", placeholder = "Cantidad y frecuencia" } })
+                                                                        @Html.ValidationMessageFor(model => model.CantidadBedida, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿En los últimos 3 años has pensado que la vida no tiene sentido?</label>
+                                                                        @Html.DropDownList("IdVidaSinSentido", null, "Elija una opción", htmlAttributes: new { @class = "form-control", id = "Pregunta5" })
+                                                                        @Html.ValidationMessageFor(model => model.IdVidaSinSentido, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12 hidden" id="5">
+                                                                        <label for="lastfullname">¿Por qué?</label>
+                                                                        @Html.EditorFor(model => model.Porque, new { htmlAttributes = new { @class = "form-control", placeholder = "Expresa por qué piensas eso" } })
+                                                                        @Html.ValidationMessageFor(model => model.Porque, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿En tu familia has observado que hay violencia?</label>
+                                                                        @Html.DropDownList("IdObservacionFamilia", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                                                        @Html.ValidationMessageFor(model => model.IdObservacionFamilia, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Consideras que el apoyo de tu familia es el adecuado cuando tienes un problema?</label>
+                                                                        @Html.EditorFor(model => model.ApoyoFamiliaEnProblemas, new { htmlAttributes = new { @class = "form-control" } })
+                                                                        @Html.ValidationMessageFor(model => model.ApoyoFamiliaEnProblemas, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Por qué?</label>
+                                                                        @Html.EditorFor(model => model.ApoyoFamiliaEnProblemasPorque, new { htmlAttributes = new { @class = "form-control" } })
+                                                                        @Html.ValidationMessageFor(model => model.ApoyoFamiliaEnProblemasPorque, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Los problemas económicos de tu familia te afectan o te desconcentran?</label>
+                                                                        @Html.EditorFor(model => model.ProblemasEconomicosFamilia, new { htmlAttributes = new { @class = "form-control" } })
+                                                                        @Html.ValidationMessageFor(model => model.ProblemasEconomicosFamilia, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <div class="col-md-12">
+                                                                        <label for="lastfullname">¿Por qué?</label>
+                                                                        @Html.EditorFor(model => model.ProblemasEconomicosFamiliaPorque, new { htmlAttributes = new { @class = "form-control" } })
+                                                                        @Html.ValidationMessageFor(model => model.ProblemasEconomicosFamiliaPorque, "", new { @class = "text-danger" })
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row form-group">
+                                                            <div class="col-md-12">
+                                                                <input type="submit" class="btn btn-primary btn-block" value="Finalizar Entrevista">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+        </div>
+
+
+        <!-- jQuery -->
+        <script src="~/EstilosEntrevista/js/jquery.min.js"></script>
+        <!-- jQuery Easing -->
+        <script src="~/EstilosEntrevista/js/jquery.easing.1.3.js"></script>
+        <!-- Bootstrap -->
+        <script src="~/EstilosEntrevista/js/bootstrap.min.js"></script>
+        <!-- Waypoints -->
+        <script src="~/EstilosEntrevista/js/jquery.waypoints.min.js"></script>
+        <!-- Carousel -->
+        <script src="~/EstilosEntrevista/js/owl.carousel.min.js"></script>
+        <!-- countTo -->
+        <script src="~/EstilosEntrevista/js/jquery.countTo.js"></script>
+
+        <!-- Stellar Parallax -->
+        <script src="~/EstilosEntrevista/js/jquery.stellar.min.js"></script>
+
+        <!-- Magnific Popup -->
+        <script src="~/EstilosEntrevista/js/jquery.magnific-popup.min.js"></script>
+        <script src="~/EstilosEntrevista/js/magnific-popup-options.js"></script>
+
+        <!-- Datepicker -->
+        <script src="~/EstilosEntrevista/js/bootstrap-datepicker.min.js"></script>
+
+
+        <!-- Main -->
+        <script src="~/EstilosEntrevista/js/main.js"></script>
+
+        <script>
+            $(document).ready(function () {
+                if ($('#Pregunta1').val() == 1) {
+                    $("#1").removeClass("hidden");
+                };
+
+                $("#Pregunta1").change(function (e) {
+                    if ($('#Pregunta1').val() == 1) {
+                        $("#1").removeClass("hidden");
+                    } else {
+                        $("#1").addClass("hidden");
+                    }
+                });
+                if ($('#Pregunta2').val() == 1) {
+                    $("#2").removeClass("hidden");
+                };
+
+                $("#Pregunta2").change(function (e) {
+                    if ($('#Pregunta2').val() == 1) {
+                        $("#2").removeClass("hidden");
+                    } else {
+                        $("#2").addClass("hidden");
+                    }
+                });
+
+                if ($('#Pregunta3').val() == 1) {
+                    $("#3").removeClass("hidden");
+                };
+
+                $("#Pregunta3").change(function (e) {
+                    if ($('#Pregunta3').val() == 1) {
+                        $("#3").removeClass("hidden");
+                    } else {
+                        $("#3").addClass("hidden");
+                    }
+                });
+
+                if ($('#Pregunta4').val() == 1) {
+                    $("#4").removeClass("hidden");
+                };
+
+                $("#Pregunta4").change(function (e) {
+                    if ($('#Pregunta4').val() == 1) {
+                        $("#4").removeClass("hidden");
+                    } else {
+                        $("#4").addClass("hidden");
+                    }
+                });
+                if ($('#Pregunta5').val() == 1) {
+                    $("#5").removeClass("hidden");
+                };
+
+                $("#Pregunta5").change(function (e) {
+                    if ($('#Pregunta5').val() == 1) {
+                        $("#5").removeClass("hidden");
+                    } else {
+                        $("#5").addClass("hidden");
+                    }
+                });
+
+            });
+        </script>
+        <script>
+            $(document).ready(function () {
+                function removeEmojisAndUppercase(input) {
+                    input.value = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+                }
+
+                var camposTexto = [
+                    'input[name="Especifica"]',
+                    'input[name="CantidadFuma"]',
+                    'input[name="CantidadBebida"]',
+                    'input[name="Porque"]',
+                    'input[name="ApoyoFamiliaEnProblemas"]',
+                    'input[name="ApoyoFamiliaEnProblemasPorque"]',
+                    'input[name="ProblemasEconomicosFamilia"]',
+                    'input[name="ProblemasEconomicosFamiliaPorque"]'
+
+                ];
+
+                camposTexto.forEach(function (selector) {
+                    var campo = $(selector);
+
+                    campo.on('input', function () {
+                        removeEmojisAndUppercase(this);
+                    });
+
+                    campo.on('paste', function (e) {
+                        e.preventDefault();
+                        var pastedText = (e.originalEvent || e).clipboardData.getData('text/plain');
+                        pastedText = pastedText.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s./-]/g, '').toUpperCase();
+
+                        var start = this.selectionStart;
+                        var end = this.selectionEnd;
+                        var value = this.value;
+                        this.value = value.substring(0, start) + pastedText + value.substring(end);
+                        this.selectionStart = this.selectionEnd = start + pastedText.length;
+
+                        $(this).trigger('input');
+                    });
+                });
+            });
+        </script>
+    }
+
+</body>
+</html>

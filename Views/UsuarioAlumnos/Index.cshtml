@@ -1,0 +1,1643 @@
+﻿@{
+    ViewBag.Title = "Gestión de Usuarios";
+    var _usrSesion = Session["Usuario"] as Plataforma_Web.Models.Usuario;
+    var esDirector = _usrSesion != null && _usrSesion.EsDirector;
+}
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<!-- Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<div class="sga-scope">
+
+    <div class="container-fluid usuarios-container">
+        <!-- Header Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-header-modern">
+                    <div class="header-content">
+                        <div class="header-icon">
+                            <i class="fa fa-users"></i>
+                        </div>
+                        <div class="header-text">
+                            <h1>Gestión de Usuarios</h1>
+                            <p class="subtitle">Sistema de Tutorías y Gestión</p>
+                        </div>
+                    </div>
+                    <div class="header-divider"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes de Alerta -->
+        @if (TempData["Mensaje"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade in">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <i class="fa fa-check-circle"></i>
+                @TempData["Mensaje"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade in">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <i class="fa fa-exclamation-circle"></i>
+                @TempData["Error"]
+            </div>
+        }
+
+        <!-- Estadísticas Generales -->
+        <!--<div class="row stats-section">-->
+        <!-- Tarjetas para TODOS (Coordinador y Master) -->
+        <!--<div class="col-md-6">
+                <div class="stat-card tutorias-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fa fa-graduation-cap"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Sistema de Tutorías</h4>
+                            <p class="stat-description">Gestión de usuarios del sistema de tutorías</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="stat-card gestion-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fa fa-user"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h4>Sistema de Gestión</h4>
+                            <p class="stat-description">Gestión de alumnos del sistema general</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>-->
+        <!-- Tabla de Usuarios de Tutorías -->
+        <section class="data-block">
+            <h3 class="section-title">
+                <i class="fa fa-graduation-cap"></i>
+                Usuarios del Sistema de Tutorías
+            </h3>
+
+            <div class="row controls-row" style="margin-bottom:12px; align-items:end;">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="buscarTutorias" class="control-label">Buscar:</label>
+                        <input id="buscarTutorias" type="text" class="form-control" placeholder="Escribe un nombre, carrera o matrícula..." />
+                    </div>
+                </div>
+
+                <!-- placeholder donde moveremos el select "Mostrar X" -->
+                <div class="col-md-4 d-flex align-items-end">
+                    <div id="tutorias-length-placeholder" style="width: 220px;"></div>
+                </div>
+            </div>
+
+
+            <div class="panel-content">
+                <div class="table-responsive">
+                    <table id="tablaTutorias" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre Completo</th>
+                                <th>Nombre de Usuario</th>
+                                <th>Correo Electrónico</th>
+                                <th>Carrera</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- DataTables llena esto automáticamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabla de Alumnos de Gestión -->
+        <section class="data-block">
+            <div class="section-title">
+                <i class="fa fa-user"></i>
+                Alumnos del Sistema de Gestión
+            </div>
+
+            <div class="row controls-row" style="margin-bottom:12px; align-items:end;">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="buscarGestion" class="control-label">Buscar:</label>
+                        <input id="buscarGestion" type="text" class="form-control" placeholder="Escribe un nombre o matrícula..." />
+                    </div>
+                </div>
+
+                <!-- placeholder donde moveremos el select "Mostrar X" -->
+                <div class="col-md-4 d-flex align-items-end">
+                    <div id="gestion-length-placeholder" style="width: 220px;"></div>
+                </div>
+            </div>
+
+            <div class="panel-content">
+                <div class="table-responsive">
+                    <table id="tablaGestion" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Apellido Paterno</th>
+                                <th>Apellido Materno</th>
+                                <th>Matrícula</th>
+                                <th>Correo Electrónico</th>
+                                <th>Carrera</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- DataTables llena esto automáticamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- MODAL: Editar Usuario de Tutorías -->
+    <div class="modal fade" id="modalEditarTutorias" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-modern" role="document">
+            <div class="modal-content">
+                <form id="formEditarTutorias">
+
+                    <div class="modal-header modal-header-tutorias">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">
+                            <i class="fa fa-edit"></i>
+                            Editar Usuario - Tutorías
+                        </h4>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <div id="vistaPrincipalTutorias">
+
+                            <input type="hidden" id="tutoriaIdUsuario" name="IdUsuario" />
+
+                            <div class="form-group">
+                                <label>Nombre Completo <span class="text-danger">*</span></label>
+
+                                <input type="text"
+                                       class="form-control modern-input"
+                                       id="tutoriaNombreCompleto"
+                                       name="NombreCompleto"
+                                       required
+                                       style="text-transform: uppercase;"
+                                       oninput="this.value = this.value.toUpperCase()" />
+
+                                <input type="hidden" id="tutoriaNombreCompletoOriginal" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nombre de Usuario <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control modern-input" id="tutoriaUserName" name="UserName" required />
+                                <small class="text-muted">Ingrese un nombre de usuario único</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Correo Electrónico (Usuarios)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control modern-input readonly-field" id="tutoriaCorreo" readonly />
+                                    @if (!esDirector)
+                                    {
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-info" type="button" id="btnSincronizarCorreo" style="border-radius: 0 8px 8px 0;">
+                                            <i class="fa fa-refresh"></i> Sincronizar
+                                        </button>
+                                    </span>
+                                    }
+                                </div>
+                                <small class="text-muted">Sincroniza desde Gestión si es incorrecto.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Microsoft Identifier</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control modern-input readonly-field" id="tutoriaMicrosoftIdentifier" readonly />
+                                    @if (!esDirector)
+                                    {
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-info" type="button" id="btnSincronizarIdentifier" style="border-radius: 0 8px 8px 0;">
+                                            <i class="fa fa-refresh"></i> Sincronizar
+                                        </button>
+                                    </span>
+                                    }
+                                </div>
+                                <small class="text-muted">Sincroniza desde Gestión. El ID se guardará en Tutorías y Estadias.</small>
+                            </div>
+
+                            <input type="hidden" id="tutoriaUserNameOriginal" />
+
+                        </div> <div id="vistaDatosPersonales" style="display:none;">
+                            <h4 style="color: var(--primary-color);"><i class="fa fa-id-card"></i> Editar Datos Personales Completos</h4>
+                            <p class="text-muted" style="display:block; margin-top:-10px; margin-bottom:15px;">
+                                Información detallada del registro `DatosPersonales`.
+                            </p>
+
+                            <input type="hidden" id="dp-idpersona-hidden" />
+                            <input type="hidden" id="dp-matricula-original" />
+                            <input type="hidden" id="dp-nombre-original" />
+                            <input type="hidden" id="dp-email-original" />
+                            <input type="hidden" id="dp-idcarrera-original" />
+                            <input type="hidden" id="dp-especialidad-original" />
+
+                            <div class="form-group">
+                                <label>Matrícula <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control modern-input" id="dp-matricula-edit" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nombre Completo <span class="text-danger">*</span></label>
+                                <input type="text"
+                                       class="form-control modern-input"
+                                       id="dp-nombre-edit"
+                                       required
+                                       style="text-transform: uppercase;"
+                                       oninput="this.value = this.value.toUpperCase()" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control modern-input" id="dp-email-edit" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Carrera <span class="text-danger">*</span></label>
+                                <select class="form-control modern-input" id="dp-carrera-select" required>
+                                    <option value="">Cargando carreras...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Especialidad</label>
+                                <select class="form-control modern-input" id="dp-especialidad-select" disabled>
+                                    <option value="">Seleccione una carrera primero...</option>
+                                </select>
+                            </div>
+
+                            <small id="dp-no-encontrado-msg" class="text-danger" style="display:none; font-size: 16px; text-align: center; display: block; padding: 20px;">
+                                <i class="fa fa-exclamation-triangle"></i> No se encontró un registro completo en DatosPersonales.
+                            </small>
+                        </div>
+
+                    </div> <div class="modal-footer" id="footerEdicionTutorias">
+                        <button type="button" class="btn btn-info btn-modern" id="btnVerDatosPersonales" style="float:left;">
+                            <i class="fa fa-id-card"></i> Ver Datos Personales
+                        </button>
+
+                        <button type="button" class="btn btn-danger btn-modern" data-dismiss="modal">
+                            <i class="fa fa-times"></i> Cancelar
+                        </button>
+                        @if (!esDirector)
+                        {
+                        <button type="submit" class="btn btn-success btn-modern">
+                            <i class="fa fa-save"></i> Guardar Cambios (Usuario)
+                        </button>
+                        }
+                    </div>
+
+                    <div class="modal-footer" id="footerDatosPersonales" style="display:none;">
+                        <button type="button" class="btn btn-utt-outline btn-modern" id="btnVolverAEdicion">
+                            <i class="fa fa-arrow-left"></i> Volver (Sin Guardar)
+                        </button>
+                        @if (!esDirector)
+                        {
+                        <button type="button" class="btn btn-success btn-modern" id="btnGuardarDatosPersonales">
+                            <i class="fa fa-save"></i> Guardar Cambios (Datos)
+                        </button>
+                        }
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Editar Alumno de Gestión -->
+    <div class="modal fade" id="modalEditarGestion" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-modern" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header modal-header-gestion">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">
+                        <i class="fa fa-edit"></i>
+                        Editar Alumno - Gestión
+                    </h4>
+                </div>
+
+                <div id="vistaPrincipalGestion">
+                    <form id="formEditarGestion">
+                        <div class="modal-body">
+
+                            <input type="hidden" id="gestionIdAlumno" name="IdAlumno" />
+
+                            <div class="form-group">
+                                <label>Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control modern-input" id="gestionNombre" name="Nombre" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Apellido Paterno <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control modern-input" id="gestionApellidoPaterno" name="ApellidoPaterno" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Apellido Materno <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control modern-input" id="gestionApellidoMaterno" name="ApellidoMaterno" required />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Matrícula <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control modern-input" id="gestionMatricula" name="Matricula" required />
+                                <small class="text-muted">Ingrese una matrícula única</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Correo Electrónico</label>
+                                <input type="text" class="form-control modern-input readonly-field" id="gestionCorreo" readonly />
+                                <small class="text-muted">Este campo no se puede modificar</small>
+                            </div>
+
+                            <input type="hidden" id="gestionNombreOriginal" />
+                            <input type="hidden" id="gestionApellidoPaternoOriginal" />
+                            <input type="hidden" id="gestionApellidoMaternoOriginal" />
+                            <input type="hidden" id="gestionMatriculaOriginal" />
+                        </div>
+
+                        <div class="modal-footer" id="footerEdicionGestion">
+                            <button type="button" class="btn btn-utt-outline btn-modern" id="btnVerDatosAcademicos" style="float:left;">
+                                <i class="fa fa-graduation-cap"></i> Ver Datos Académicos
+                            </button>
+                            <button type="button" class="btn btn-danger btn-modern" data-dismiss="modal">
+                                <i class="fa fa-times"></i> Cancelar
+                            </button>
+                            @if (!esDirector)
+                            {
+                            <button type="submit" class="btn btn-success btn-modern">
+                                <i class="fa fa-save"></i> Guardar Cambios (Datos)
+                            </button>
+                            }
+                        </div>
+                    </form>
+                </div>
+
+                <div id="vistaDatosAcademicosGestion" style="display:none;">
+                    <form id="formEditarGestionCarrera">
+                        <div class="modal-body">
+
+                            <h4 style="color: var(--primary-color);"><i class="fa fa-graduation-cap"></i> Editar Datos Académicos</h4>
+                            <p class="text-muted" style="display:block; margin-top:-10px; margin-bottom:15px;">
+                                Información de la base de datos de Estadias.
+                            </p>
+
+                            <input type="hidden" id="gestion-id_alumno-carrera" />
+                            <input type="hidden" id="gestion-idcarrera-original" />
+
+                            <div class="form-group">
+                                <label>Carrera (Área)</label>
+                                <select class="form-control modern-input" id="gestion-carrera-select" required>
+                                    <option value="">Cargando carreras...</option>
+                                </select>
+                                <small class="text-muted">Esta es la carrera principal (Ej: TECNOLOGÍAS DE LA INFORMACIÓN) de la BD Estadias.</small>
+                            </div>
+
+                            @*<div class="form-group">
+                                    <label><i class="fa fa-star"></i> Especialidad (Programa Específico)</label>
+                                    <select class="form-control modern-input" id="gestion-especialidad-select" disabled>
+                                        <option value="">(No implementado)</option>
+                                    </select>
+                                    <small class="text-danger">
+                                        <i class="fa fa-exclamation-triangle"></i>
+                                        La edición de Especialidad (Programas de Area1) no está implementada.
+                                        El sistema de Gestión solo guarda la Carrera principal.
+                                    </small>
+                                </div>*@
+
+                        </div>
+
+                        <div class="modal-footer" id="footerDatosAcademicosGestion">
+                            <button type="button" class="btn btn-utt-outline btn-modern" id="btnVolverAEdicionGestion">
+                                <i class="fa fa-arrow-left"></i> Volver (Sin Guardar)
+                            </button>
+                            @if (!esDirector)
+                            {
+                            <button type="button" class="btn btn-success btn-modern" id="btnGuardarGestionCarrera">
+                                <i class="fa fa-save"></i> Guardar Carrera
+                            </button>
+                            }
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Confirmación de Cambios -->
+    <div class="modal fade" id="modalConfirmarCambios" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-modern" role="document">
+            <div class="modal-content">
+                <div class="modal-header modal-header-warning">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        Confirmar Cambios
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p class="lead">¿Está seguro de que desea modificar los siguientes datos?</p>
+                    <div id="listaCambios"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger btn-modern" data-dismiss="modal">
+                        <i class="fa fa-times"></i> Cancelar
+                    </button>
+                    @if (!esDirector)
+                    {
+                    <button type="button" class="btn btn-info btn-modern" id="btnConfirmarCambios">
+                        <i class="fa fa-check"></i> Sí, Modificar
+                    </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            var formularioPendiente = null;
+            var esDirector = @(esDirector ? "true" : "false");
+            var userNivel = @(ViewBag.UserNivel ?? 0);
+            var userCarreraId = @(ViewBag.UserCarrera ?? 0);
+            var userCarreraNombre = '@Html.Raw(ViewBag.UserCarreraNombre ?? "N/A")';
+
+            var tablaTutorias = $('#tablaTutorias').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "pageLength": 10,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "dom": 'rtip',
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json",
+                    "infoFiltered": ""
+                },
+                "ajax": {
+                    "url": "@Url.Action("GetUsuariosTutorias", "UsuarioAlumnos")",
+                    "type": "POST",
+                    "error": function (xhr, error, code) {
+                        console.log('Error en Tabla Tutorías:', error);
+                        alert('Error al cargar los datos de tutorías');
+                    }
+                },
+                "columns": [
+                    { "data": "NombreCompleto", "width": "25%" },
+                    { "data": "UserName", "width": "15%" },
+                    { "data": "CorreoElectronico", "width": "20%" },
+                    { "data": "CarreraNombre", "width": "20%" },
+                    {
+                        "data": null,
+                        "width": "20%",
+                        "orderable": false,
+                        "searchable": false,
+                        "render": function (data, type, row) {
+                            if (esDirector) { return ''; }
+                            return '<button class="btn btn-warning btn-sm btn-action btn-editar-tutorias" data-id="' + row.IdUsuario + '">' +
+                                '<i class="fa fa-edit"></i> Editar' +
+                                '</button>';
+                        }
+                    }
+                ],
+                "order": [[0, "asc"]],
+                "responsive": true
+            });
+
+            var tablaGestion = $('#tablaGestion').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "pageLength": 10,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "dom": 'rtip',
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json",
+                    "processing": "Cargando...",
+                    "infoFiltered": ""
+                },
+                "ajax": {
+                    "url": "@Url.Action("GetAlumnosGestion", "AlumnosGestion")",
+                    "type": "POST",
+                    "error": function (xhr, error, code) {
+                        console.log('Error en Tabla Gestión:', error);
+                        console.log('Respuesta del servidor:', xhr.responseText);
+                        alert('Error al cargar los datos de gestión');
+                    }
+                },
+                "columns": [
+                    { "data": "Nombre", "width": "15%" },
+                    { "data": "ApellidoPaterno", "width": "15%" },
+                    { "data": "ApellidoMaterno", "width": "15%" },
+                    { "data": "Matricula", "width": "12%" },
+                    { "data": "CorreoElectronico", "width": "18%" },
+                    { "data": "CarreraNombre", "width": "15%" },
+                    {
+                        "data": null,
+                        "width": "10%",
+                        "orderable": false,
+                        "searchable": false,
+                        "render": function (data, type, row) {
+                            if (esDirector) { return ''; }
+                            return '<button class="btn btn-warning btn-sm btn-action btn-editar-gestion" data-id="' + row.IdAlumno + '">' +
+                                '<i class="fa fa-edit"></i> Editar' +
+                                '</button>';
+                        }
+                    }
+                ],
+                "order": [[0, "asc"]],
+                "responsive": true
+            });
+
+            $('#buscarTutorias').on('keyup', function () {
+                tablaTutorias.search(this.value).draw();
+            });
+
+            $('#buscarGestion').on('keyup', function () {
+                tablaGestion.search(this.value).draw();
+            });
+
+            $('#tablaTutorias').on('click', '.btn-editar-tutorias', function () {
+                var idUsuario = $(this).data('id');
+
+                $.ajax({
+                    url: '@Url.Action("GetUsuarioById", "UsuarioAlumnos")',
+                    type: 'GET',
+                    data: { id: idUsuario },
+                    success: function (data) {
+
+                        if (data.success) {
+
+                            $('#tutoriaIdUsuario').val(data.usuario.IdUsuario);
+                            $('#tutoriaNombreCompleto').val(data.usuario.NombreCompleto);
+                            $('#tutoriaNombreCompletoOriginal').val(data.usuario.NombreCompleto);
+                            $('#tutoriaUserName').val(data.usuario.UserName);
+                            $('#tutoriaUserNameOriginal').val(data.usuario.UserName);
+                            $('#tutoriaCorreo').val(data.usuario.CorreoElectronico);
+                            $('#tutoriaMicrosoftIdentifier').val(data.usuario.MicrosoftIdentifier || 'No asignado');
+
+                            if (data.datosPersonales) {
+                                $('#dp-idpersona-hidden').val(data.datosPersonales.IdPersona);
+                                $('#dp-matricula-edit').val(data.datosPersonales.Matricula);
+                                $('#dp-nombre-edit').val(data.datosPersonales.Nombre);
+                                $('#dp-email-edit').val(data.datosPersonales.Email);
+
+                                $('#dp-matricula-original').val(data.datosPersonales.Matricula);
+                                $('#dp-nombre-original').val(data.datosPersonales.Nombre);
+                                $('#dp-email-original').val(data.datosPersonales.Email);
+                                $('#dp-idcarrera-original').val(data.datosPersonales.IdCarrera);
+                                $('#dp-especialidad-original').val(data.datosPersonales.Especialidad || '');
+
+                                var esMaster = (userNivel == 4);
+                                var esCoordinador = (userNivel == 3);
+                                var puedeEditarCampos = (esMaster || esCoordinador);
+
+                                $('#dp-matricula-edit').prop('readonly', !puedeEditarCampos);
+                                $('#dp-nombre-edit').prop('readonly', !puedeEditarCampos);
+                                $('#dp-email-edit').prop('readonly', !puedeEditarCampos);
+
+                                var idCarreraParaEspecialidad;
+
+                                if (esMaster) {
+                                    $('#dp-carrera-select').prop('disabled', false);
+                                    $('#dp-carrera-select').val(data.datosPersonales.IdCarrera);
+                                    idCarreraParaEspecialidad = data.datosPersonales.IdCarrera;
+                                } else if (esCoordinador) {
+                                    $('#dp-carrera-select').val(userCarreraId);
+                                    idCarreraParaEspecialidad = userCarreraId;
+                                }
+
+                                cargarDropdownEspecialidades(idCarreraParaEspecialidad, data.datosPersonales.Especialidad);
+
+                                $('#dp-no-encontrado-msg').hide();
+                                $('#btnVerDatosPersonales').prop('disabled', false).removeClass('disabled');
+                            } else {
+                                $('#dp-idpersona-hidden').val('');
+                                $('#dp-matricula-edit').val('NO ENCONTRADO').prop('readonly', true);
+                                $('#dp-nombre-edit').val('NO ENCONTRADO').prop('readonly', true);
+                                $('#dp-email-edit').val('NO ENCONTRADO').prop('readonly', true);
+                                $('#dp-carrera-select').val('').prop('disabled', true);
+                                $('#dp-especialidad-select').val('').prop('disabled', true);
+
+                                $('#dp-no-encontrado-msg').show();
+                                $('#btnVerDatosPersonales').prop('disabled', true).addClass('disabled');
+                            }
+
+                            $('#vistaPrincipalTutorias').show();
+                            $('#footerEdicionTutorias').show();
+                            $('#vistaDatosPersonales').hide();
+                            $('#footerDatosPersonales').hide();
+
+                            $('#modalEditarTutorias').modal('show');
+                        } else {
+                            alert('Error al cargar los datos del usuario');
+                        }
+                    },
+                    error: function () {
+                        alert('Error al conectar con el servidor');
+                    }
+                });
+            });
+
+            $('#modalEditarTutorias').on('click', '#btnVerDatosPersonales', function () {
+                $('#vistaPrincipalTutorias').fadeOut(200, function() {
+                    $('#vistaDatosPersonales').fadeIn(200);
+                });
+
+                $('#footerEdicionTutorias').fadeOut(200, function() {
+                    $('#footerDatosPersonales').fadeIn(200);
+                });
+            });
+
+            $('#modalEditarTutorias').on('click', '#btnVolverAEdicion', function () {
+                $('#vistaDatosPersonales').fadeOut(200, function() {
+                    $('#vistaPrincipalTutorias').fadeIn(200);
+                });
+
+                $('#footerDatosPersonales').fadeOut(200, function() {
+                    $('#footerEdicionTutorias').fadeIn(200);
+                });
+            });
+
+            var nombreOriginal = $('#tutoriaNombreCompletoOriginal').val();
+            var nombreNuevo = $('#tutoriaNombreCompleto').val();
+
+            if (nombreOriginal !== nombreNuevo) {
+                cambios.push({
+                    campo: 'Nombre Completo',
+                    antes: nombreOriginal,
+                    despues: nombreNuevo
+                });
+            }
+
+            function cargarDropdownCarreras() {
+                var $select = $('#dp-carrera-select');
+                if (userNivel == 3) {
+                    $select.html('');
+                    $select.append($('<option>', {
+                        value: userCarreraId,
+                        text: userCarreraNombre
+                    }));
+                    $select.val(userCarreraId);
+                    $select.prop('disabled', true);
+                }
+                else if (userNivel == 4) {
+                    $select.html('<option value="">Cargando...</option>');
+                    $select.prop('disabled', false);
+
+                    $.ajax({
+                        url: '@Url.Action("GetCarrerasList", "UsuarioAlumnos")',
+                        type: 'GET',
+                        success: function (response) {
+                            if (response.success) {
+                                $select.html('<option value="">-- Seleccione una Carrera --</option>');
+                                response.data.forEach(function (carrera) {
+                                    $select.append($('<option>', {
+                                        value: carrera.IdCarrera,
+                                        text: carrera.Nombre
+                                    }));
+                                });
+                            } else {
+                                $select.html('<option value="">Error al cargar</option>');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error en cargarDropdownCarreras:", xhr.responseText, status, error);
+                            $select.html('<option value="">Error de conexión</option>');
+                        }
+                    });
+                }
+                else {
+                    $select.html('<option value="">No autorizado</option>');
+                    $select.prop('disabled', true);
+                }
+            }
+
+            function cargarDropdownEspecialidades(idCarrera, especialidadPreseleccionada) {
+                var $select = $('#dp-especialidad-select');
+                if (!idCarrera || idCarrera === "") {
+                    $select.html('<option value="">Seleccione una carrera primero...</option>');
+                    $select.prop('disabled', true);
+                    return;
+                }
+
+                $select.html('<option value="">Cargando...</option>');
+                var puedeEditar = (userNivel == 3 || userNivel == 4);
+                $select.prop('disabled', !puedeEditar);
+                $.ajax({
+                    url: '@Url.Action("GetEspecialidadesList", "UsuarioAlumnos")',
+                    type: 'GET',
+                    data: { idCarrera: idCarrera },
+                    success: function (response) {
+                        if (response.success) {
+                            $select.html('<option value="">-- Sin Especialidad --</option>');
+                            response.data.forEach(function (esp) {
+                                $select.append($('<option>', {
+                                    value: esp.Nombre,
+                                    text: esp.Nombre
+                                }));
+                            });
+
+                            if (especialidadPreseleccionada) {
+                                $select.val(especialidadPreseleccionada);
+                            }
+                        } else {
+                            $select.html('<option value="">Error al cargar</option>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error en cargarDropdownEspecialidades:", xhr.responseText, status, error);
+                        $select.html('<option value="">Error de conexión</option>');
+                    }
+                });
+            }
+
+            $('#dp-carrera-select').on('change', function () {
+                var idCarrera = $(this).val();
+                cargarDropdownEspecialidades(idCarrera, null);
+            });
+
+            cargarDropdownCarreras();
+
+            $('#modalEditarTutorias').on('click', '#btnGuardarDatosPersonales', function () {
+
+                var cambios = [];
+
+                var matriculaOriginal = $('#dp-matricula-original').val();
+                var matriculaNueva = $('#dp-matricula-edit').val();
+                if (matriculaOriginal !== matriculaNueva) {
+                    cambios.push({ campo: 'Matrícula (DP)', antes: matriculaOriginal, despues: matriculaNueva });
+                }
+
+                var nombreOriginal = $('#dp-nombre-original').val();
+                var nombreNuevo = $('#dp-nombre-edit').val();
+                if (nombreOriginal !== nombreNuevo) {
+                    cambios.push({ campo: 'Nombre (DP)', antes: nombreOriginal, despues: nombreNuevo });
+                }
+
+                var emailOriginal = $('#dp-email-original').val();
+                var emailNuevo = $('#dp-email-edit').val();
+                if (emailOriginal !== emailNuevo) {
+                    cambios.push({ campo: 'Email (DP)', antes: emailOriginal, despues: emailNuevo });
+                }
+
+                var carreraOriginal = $('#dp-idcarrera-original').val();
+                var carreraNueva = $('#dp-carrera-select').val();
+                if (carreraOriginal !== carreraNueva) {
+                    cambios.push({
+                        campo: 'Carrera (DP)',
+                        antes: $('#dp-carrera-select option[value="' + carreraOriginal + '"]').text(),
+                        despues: $('#dp-carrera-select option:selected').text()
+                    });
+                }
+
+                var especialidadOriginal = $('#dp-especialidad-original').val();
+                var especialidadNueva = $('#dp-especialidad-select').val();
+                if (especialidadOriginal !== especialidadNueva) {
+                    cambios.push({ campo: 'Especialidad (DP)', antes: especialidadOriginal || 'N/A', despues: especialidadNueva || 'N/A' });
+                }
+
+                if (cambios.length === 0) {
+                    alert('No hay cambios para guardar en Datos Personales');
+                    return;
+                }
+
+                mostrarConfirmacion(cambios, 'datosPersonales');
+            });
+
+            function enviarFormularioDatosPersonales() {
+
+                var idPersona = parseInt($('#dp-idpersona-hidden').val()) || 0;
+                var idUsuario = parseInt($('#tutoriaIdUsuario').val()) || 0;
+                var idCarrera = parseInt($('#dp-carrera-select').val()) || 0;
+
+                var formData = {
+                    IdPersona: idPersona,
+                    IdUsuario: idUsuario,
+                    Matricula: $('#dp-matricula-edit').val(),
+                    Nombre: $('#dp-nombre-edit').val(),
+                    Email: $('#dp-email-edit').val(),
+                    IdCarrera: idCarrera,
+                    Especialidad: $('#dp-especialidad-select').val() || ''
+                };
+
+                $.ajax({
+                    url: '@Url.Action("EditDatosPersonalesAjax", "UsuarioAlumnos")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            $('#modalEditarTutorias').modal('hide');
+                            tablaTutorias.ajax.reload();
+                            tablaGestion.ajax.reload();
+                            mostrarMensaje('success', response.message);
+                        } else {
+                            alert('Error al guardar: ' + response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error en enviarFormularioDatosPersonales:", xhr.responseText, status, error);
+                        alert('Error al guardar los datos personales');
+                    }
+                });
+            }
+
+            $('#modalEditarTutorias').on('click', '#btnSincronizarCorreo', function () {
+                var idUsuario = $('#tutoriaIdUsuario').val();
+                var btn = $(this);
+                var originalHtml = btn.html();
+
+                btn.html('<i class="fa fa-spinner fa-spin"></i> Sincronizando...');
+                btn.prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("SincronizarCorreo", "UsuarioAlumnos")',
+                    type: 'POST',
+                    data: { idUsuario: idUsuario },
+                    success: function (response) {
+                        if (response.success) {
+                            $('#tutoriaCorreo').val(response.newEmail);
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('No se pudo conectar con el servidor para sincronizar.');
+                    },
+                    complete: function () {
+                        btn.html(originalHtml);
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+
+            $('#modalEditarTutorias').on('click', '#btnSincronizarIdentifier', function () {
+                var idUsuario = $('#tutoriaIdUsuario').val();
+                var btn = $(this);
+                var originalHtml = btn.html();
+
+                btn.html('<i class="fa fa-spinner fa-spin"></i> Sincronizando...');
+                btn.prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("SincronizarMicrosoftIdentifier", "UsuarioAlumnos")',
+                    type: 'POST',
+                    data: { idUsuario: idUsuario },
+                    success: function (response) {
+                        if (response.success) {
+                            $('#tutoriaMicrosoftIdentifier').val(response.newIdentifier);
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('No se pudo conectar con el servidor para sincronizar.');
+                    },
+                    complete: function () {
+                        btn.html(originalHtml);
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+
+            $('#modalEditarTutorias').on('click', '.btn-sincronizar-dp', function () {
+                var idUsuario = $('#tutoriaIdUsuario').val();
+                var btn = $(this);
+                var originalHtml = btn.html();
+
+                btn.html('<i class="fa fa-spinner fa-spin"></i>');
+                btn.prop('disabled', true);
+
+                $.ajax({
+                    url: '@Url.Action("SincronizarDatosPersonales", "UsuarioAlumnos")',
+                    type: 'POST',
+                    data: { idUsuario: idUsuario },
+                    success: function (response) {
+                        if (response.success) {
+                            $('#tutoriaDpMatricula').val(response.newMatricula);
+                            $('#tutoriaDpEmail').val(response.newEmail);
+                            alert(response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('No se pudo conectar con el servidor para sincronizar.');
+                    },
+                    complete: function () {
+                        btn.html(originalHtml);
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
+
+            $('#formEditarTutorias').on('submit', function (e) {
+                e.preventDefault();
+
+                var cambios = [];
+
+                // 1. Revisar si cambió el Nombre de Usuario
+                var userNameOriginal = $('#tutoriaUserNameOriginal').val();
+                var userNameNuevo = $('#tutoriaUserName').val();
+
+                if (userNameOriginal !== userNameNuevo) {
+                    cambios.push({
+                        campo: 'Nombre de Usuario',
+                        antes: userNameOriginal,
+                        despues: userNameNuevo
+                    });
+                }
+
+                // 2. Revisar si cambió el Nombre Completo (ESTO FALTABA)
+                var nombreOriginal = $('#tutoriaNombreCompletoOriginal').val();
+                var nombreNuevo = $('#tutoriaNombreCompleto').val();
+
+                if (nombreOriginal !== nombreNuevo) {
+                    cambios.push({
+                        campo: 'Nombre Completo',
+                        antes: nombreOriginal,
+                        despues: nombreNuevo
+                    });
+                }
+
+                // Si no hay cambios en ninguno de los dos, muestra el mensaje de error
+                if (cambios.length === 0) {
+                    alert('No hay cambios para guardar');
+                    return;
+                }
+
+                mostrarConfirmacion(cambios, 'tutorias');
+            });
+
+            $('#formEditarGestion').on('submit', function (e) {
+                e.preventDefault();
+
+                var cambios = [];
+
+                var nombreOriginal = $('#gestionNombreOriginal').val();
+                var nombreNuevo = $('#gestionNombre').val();
+                if (nombreOriginal !== nombreNuevo) {
+                    cambios.push({
+                        campo: 'Nombre',
+                        antes: nombreOriginal,
+                        despues: nombreNuevo
+                    });
+                }
+
+                var apPaternoOriginal = $('#gestionApellidoPaternoOriginal').val();
+                var apPaternoNuevo = $('#gestionApellidoPaterno').val();
+                if (apPaternoOriginal !== apPaternoNuevo) {
+                    cambios.push({
+                        campo: 'Apellido Paterno',
+                        antes: apPaternoOriginal,
+                        despues: apPaternoNuevo
+                    });
+                }
+
+                var apMaternoOriginal = $('#gestionApellidoMaternoOriginal').val();
+                var apMaternoNuevo = $('#gestionApellidoMaterno').val();
+                if (apMaternoOriginal !== apMaternoNuevo) {
+                    cambios.push({
+                        campo: 'Apellido Materno',
+                        antes: apMaternoOriginal,
+                        despues: apMaternoNuevo
+                    });
+                }
+
+                var matriculaOriginal = $('#gestionMatriculaOriginal').val();
+                var matriculaNueva = $('#gestionMatricula').val();
+                if (matriculaOriginal !== matriculaNueva) {
+                    cambios.push({
+                        campo: 'Matrícula',
+                        antes: matriculaOriginal,
+                        despues: matriculaNueva
+                    });
+                }
+
+                if (cambios.length === 0) {
+                    alert('No hay cambios para guardar');
+                    return;
+                }
+
+                mostrarConfirmacion(cambios, 'gestion');
+            });
+
+            function mostrarConfirmacion(cambios, tipo) {
+                var html = '';
+                cambios.forEach(function(cambio) {
+                    html += '<div class="cambio-item">';
+                    html += '<div class="cambio-label"><i class="fa fa-arrow-right"></i> ' + cambio.campo + ':</div>';
+                    html += '<div><span class="cambio-antes">' + cambio.antes + '</span></div>';
+                    html += '<div><span class="cambio-despues">➜ ' + cambio.despues + '</span></div>';
+                    html += '</div>';
+                });
+                $('#listaCambios').html(html);
+                formularioPendiente = tipo;
+
+                $('#modalConfirmarCambios').modal('show');
+            }
+
+            function enviarFormularioTutorias() {
+                var formData = {
+                    IdUsuario: $('#tutoriaIdUsuario').val(),
+                    UserName: $('#tutoriaUserName').val(),
+                    NombreCompleto: $('#tutoriaNombreCompleto').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("EditAjax", "UsuarioAlumnos")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            $('#modalEditarTutorias').modal('hide');
+                            tablaTutorias.ajax.reload();
+                            mostrarMensaje('success', response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error al guardar los cambios');
+                    }
+                });
+            }
+
+            function enviarFormularioGestion() {
+                var formData = {
+                    IdAlumno: $('#gestionIdAlumno').val(),
+                    Nombre: $('#gestionNombre').val(),
+                    ApellidoPaterno: $('#gestionApellidoPaterno').val(),
+                    ApellidoMaterno: $('#gestionApellidoMaterno').val(),
+                    Matricula: $('#gestionMatricula').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("EditAjax", "AlumnosGestion")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            $('#modalEditarGestion').modal('hide');
+                            tablaGestion.ajax.reload();
+                            mostrarMensaje('success', response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error al guardar los cambios');
+                    }
+                });
+            }
+
+            function mostrarMensaje(tipo, mensaje) {
+                var alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+                var icono = tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+                var html = '<div class="alert ' + alertClass + ' alert-dismissible fade in">' +
+                    '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                    '<i class="fa ' + icono + '"></i> ' + mensaje +
+                    '</div>';
+                $('.page-header-modern').after(html);
+
+                setTimeout(function() {
+                    $('.alert').fadeOut('slow', function() {
+                        $(this).remove();
+                    });
+                }, 5000);
+            }
+
+            $('.dataTables_processing').html('<i class="fa fa-spinner fa-spin"></i> Cargando datos...');
+
+            function cargarDropdownEstadiasCarreras() {
+                var $select = $('#gestion-carrera-select');
+                $select.html('<option value="">Cargando...</option>');
+
+                $.ajax({
+                    url: '@Url.Action("GetEstadiasCarrerasList", "AlumnosGestion")',
+                    type: 'GET',
+                    success: function (response) {
+                        if (response.success) {
+                            $select.html('<option value="">-- Seleccione una Carrera --</option>');
+                            response.data.forEach(function (carrera) {
+                                $select.append($('<option>', {
+                                    value: carrera.IdArea,
+                                    text: carrera.Nombre
+                                }));
+                            });
+                        } else {
+                            $select.html('<option value="">Error al cargar</option>');
+                        }
+                    },
+                    error: function () {
+                        $select.html('<option value="">Error de conexión</option>');
+                    }
+                });
+            }
+
+            if (userNivel == 4) {
+                cargarDropdownEstadiasCarreras();
+            }
+
+$('#tablaGestion').on('click', '.btn-editar-gestion', function () {
+                var idAlumno = $(this).data('id');
+
+                $.ajax({
+                    url: '@Url.Action("GetAlumnoById", "AlumnosGestion")',
+                    type: 'GET',
+                    data: { id: idAlumno },
+                    success: function (data) {
+                        if (data.success) {
+                            $('#gestionIdAlumno').val(data.alumno.IdAlumno);
+                            $('#gestionNombre').val(data.alumno.Nombre);
+                            $('#gestionApellidoPaterno').val(data.alumno.ApellidoPaterno);
+                            $('#gestionApellidoMaterno').val(data.alumno.ApellidoMaterno);
+                            $('#gestionMatricula').val(data.alumno.Matricula);
+                            $('#gestionCorreo').val(data.alumno.CorreoElectronico);
+
+                            $('#gestionNombreOriginal').val(data.alumno.Nombre);
+                            $('#gestionApellidoPaternoOriginal').val(data.alumno.ApellidoPaterno);
+                            $('#gestionApellidoMaternoOriginal').val(data.alumno.ApellidoMaterno);
+                            $('#gestionMatriculaOriginal').val(data.alumno.Matricula);
+
+                            if (userNivel == 4) {
+                                $('#gestion-id_alumno-carrera').val(data.alumno.IdAlumno);
+                                $('#gestion-idcarrera-original').val(data.idCarrera);
+                                $('#gestion-carrera-select').val(data.idCarrera);
+                                $('#btnVerDatosAcademicos').show();
+                            } else {
+                                $('#btnVerDatosAcademicos').hide();
+                            }
+
+                            $('#vistaPrincipalGestion').show();
+                            $('#footerEdicionGestion').show();
+                            $('#vistaDatosAcademicosGestion').hide();
+                            $('#footerDatosAcademicosGestion').hide();
+
+                            $('#modalEditarGestion').modal('show');
+                        } else {
+                            alert('Error al cargar los datos del alumno: ' + data.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error al conectar con el servidor');
+                    }
+                });
+            });
+
+            $('#modalEditarGestion').on('click', '#btnVerDatosAcademicos', function () {
+                $('#vistaPrincipalGestion').fadeOut(200, function() {
+                    $('#vistaDatosAcademicosGestion').fadeIn(200);
+                });
+                $('#footerEdicionGestion').fadeOut(200, function() {
+                    $('#footerDatosAcademicosGestion').fadeIn(200);
+                });
+            });
+
+            $('#modalEditarGestion').on('click', '#btnVolverAEdicionGestion', function () {
+                $('#vistaDatosAcademicosGestion').fadeOut(200, function() {
+                    $('#vistaPrincipalGestion').fadeIn(200);
+                });
+                $('#footerDatosAcademicosGestion').fadeOut(200, function() {
+                    $('#footerEdicionGestion').fadeIn(200);
+                });
+            });
+
+            $('#modalEditarGestion').on('click', '#btnGuardarGestionCarrera', function () {
+                var cambios = [];
+                var idOriginal = $('#gestion-idcarrera-original').val();
+                var idNuevo = $('#gestion-carrera-select').val();
+
+                if (idOriginal !== idNuevo) {
+                    cambios.push({
+                        campo: 'Carrera (Estadias)',
+                        antes: $('#gestion-carrera-select option[value="' + idOriginal + '"]').text(),
+                        despues: $('#gestion-carrera-select option:selected').text()
+                    });
+                }
+
+                if (cambios.length === 0) {
+                    alert('No hay cambios de carrera para guardar');
+                    return;
+                }
+
+                mostrarConfirmacion(cambios, 'gestionCarrera');
+            });
+
+            function enviarFormularioGestionCarrera() {
+                var formData = {
+                    IdAlumno: $('#gestion-id_alumno-carrera').val(),
+                    IdCarrera: $('#gestion-carrera-select').val()
+                };
+
+                $.ajax({
+                    url: '@Url.Action("EditGestionCarreraAjax", "AlumnosGestion")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            $('#modalEditarGestion').modal('hide');
+                            tablaGestion.ajax.reload();
+                            tablaTutorias.ajax.reload();
+                            mostrarMensaje('success', response.message);
+                        } else {
+                            alert('Error al guardar: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error al guardar la carrera');
+                    }
+                });
+            }
+
+            $('#btnConfirmarCambios').on('click', function () {
+                $('#modalConfirmarCambios').modal('hide');
+
+                if (formularioPendiente === 'tutorias') {
+                    enviarFormularioTutorias();
+                } else if (formularioPendiente === 'gestion') {
+                    enviarFormularioGestion();
+                } else if (formularioPendiente === 'datosPersonales') {
+                    enviarFormularioDatosPersonales();
+                } else if (formularioPendiente === 'gestionCarrera') {
+                    enviarFormularioGestionCarrera();
+                }
+            });
+
+        });
+    </script>
+}
+
+<style>
+    :root {
+        --primary-color: #1ab192;
+        --primary-dark: #169073;
+        --primary-light: #e8f8f5;
+        --secondary-color: #f8f9fa;
+        --border-color: #e9ecef;
+        --text-dark: #2c3e50;
+        --text-muted: #6c757d;
+        --shadow-light: 0 2px 4px rgba(0,0,0,0.1);
+        --shadow-medium: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .usuarios-container {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    /* Header Moderno */
+    .page-header-modern {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 30px 35px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        box-shadow: var(--shadow-medium);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .header-icon {
+        background: rgba(255, 255, 255, 0.2);
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .header-text h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .subtitle {
+        margin: 3px 0 0 0;
+        opacity: 0.9;
+        font-size: 16px;
+    }
+
+    .header-divider {
+        height: 3px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        margin-top: 15px;
+    }
+
+    /* Sección de Estadísticas */
+    .stats-section {
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+    .stat-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .stat-icon {
+        background: var(--white);
+        color: var(--primary);
+        width: 55px;
+        height: 55px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .stat-info {
+        flex: 1;
+    }
+
+        .stat-info h4 {
+            margin: 0;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 18px;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+    .stat-number {
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+
+    /* Paneles de Datos */
+    .section-spacing {
+        margin-bottom: 30px;
+    }
+
+    .data-panel {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+
+    /* Tablas Modernas */
+    .table-container {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+
+    .table-modern {
+        margin-bottom: 0;
+        background: white;
+    }
+
+        .table-modern thead th {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--text-dark);
+            font-weight: 600;
+            border: none;
+            padding: 15px 12px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 14px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .table-modern tbody td {
+            padding: 12px;
+            vertical-align: middle;
+            border-color: var(--border-color);
+            font-size: 14px;
+        }
+
+        .table-modern tbody tr:hover {
+            background-color: var(--primary-light);
+        }
+
+    /* Badges de Estado */
+    .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+        min-width: 70px;
+    }
+
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .status-undefined {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    /* DataTables Personalización */
+    .dataTables_wrapper {
+        font-family: inherit;
+    }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 20px;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 20px;
+        }
+
+            .dataTables_wrapper .dataTables_paginate .paginate_button {
+                padding: 8px 16px;
+                margin: 0 2px;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+                background: white;
+                color: var(--text-dark);
+            }
+
+                .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+                    background: var(--primary-color);
+                    color: white;
+                    border-color: var(--primary-color);
+                }
+
+                .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+                    background: var(--primary-color);
+                    color: white;
+                    border-color: var(--primary-color);
+                }
+
+    .dataTables_processing {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .usuarios-container {
+            padding: 15px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 15px;
+        }
+
+        .stat-card {
+            margin-bottom: 20px;
+            height: auto;
+        }
+
+        .panel-content {
+            padding: 15px;
+        }
+    }
+
+    /* Bloque sencillo para secciones de tabla */
+    .data-block {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px 20px 16px;
+        box-shadow: var(--shadow-light);
+        margin-bottom: 30px;
+    }
+
+    /* Título */
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 14px 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+        .section-title i {
+            font-size: 20px;
+            line-height: 1;
+            color: inherit; /* hereda color primario */
+        }
+
+    /* Asegura que el overlay se centre sobre CADA tabla */
+    .dataTables_wrapper {
+        position: relative;
+        min-height: 120px; /* evita saltos cuando está vacío */
+    }
+
+    .dataTables_processing {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%);
+        padding: 12px 16px;
+        background: #fff;
+        border: 2px solid var(--primary-color);
+        border-radius: 12px;
+        box-shadow: var(--shadow-medium);
+        color: var(--primary-color);
+        font-weight: 600;
+        z-index: 10;
+    }
+
+    .sga-scope .dataTables_processing {
+        background-image: none !important;
+    }
+
+        .sga-scope .dataTables_processing::before,
+        .sga-scope .dataTables_processing::after {
+            content: none !important;
+            display: none !important;
+        }
+
+        .sga-scope .dataTables_processing .dots,
+        .sga-scope .dataTables_processing .loader,
+        .sga-scope .dataTables_processing .dt-loader,
+        .sga-scope .dataTables_processing svg {
+            display: none !important;
+        }
+
+    .data-block .form-group .control-label {
+        font-weight: 600;
+        margin-bottom: .35rem;
+    }
+
+    .data-block .form-control {
+        padding: .5rem .75rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+</style>

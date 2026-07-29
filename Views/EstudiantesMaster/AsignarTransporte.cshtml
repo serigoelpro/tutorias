@@ -1,0 +1,69 @@
+﻿@model PlataformaWeb.BecasTransporte.Models.Estudiante
+@using Plataforma_Web.Models;
+
+@{
+    ViewBag.Title = "AsignarTransporte";
+    TutoriaGrupal Grupo = (TutoriaGrupal)ViewBag.Tutor;
+    Usuario user = (Usuario)Session["Usuario"];
+
+}
+
+<h2>AsignarTransporte</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4><strong>Estudiante:</strong> @ViewBag.Alumno</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.Id)
+        @Html.HiddenFor(model => model.Nombre)
+        @Html.HiddenFor(model => model.ApellidoM)
+        @Html.HiddenFor(model => model.ApellidoP)
+        @Html.HiddenFor(model => model.Matricula)
+        @Html.HiddenFor(model => model.Sexo)
+        @Html.HiddenFor(model => model.IdBeca)
+        @Html.HiddenFor(model => model.MontoBeca)
+        @Html.HiddenFor(model => model.IdCarrera)
+        @Html.HiddenFor(model => model.IdGrado)
+        @Html.HiddenFor(model => model.IdGrupo)
+        @Html.HiddenFor(model => model.IdTurno)
+        @Html.HiddenFor(model => model.Direccion)
+
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.IdTransporte, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model.IdTransporte, new SelectList(ViewBag.RutasTransporte, "Id", "Ruta"), "Elije una opción", new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.IdTransporte, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                @if (user.IdNivel >= 3)
+                {
+                    <input type="submit" value="Agregar" class="btn btn-success" />
+                    @Html.ActionLink("Cancelar", "Grupo", "Estudiantes", new { id = Grupo.IdTutoriaGrupal }, new { @class = "btn btn-danger" });
+
+                }
+                else
+                {
+                    if (Model == null || Model.IdTransporte == 0 )
+                    {
+                        <input type="submit" value="Agregar" class="btn btn-success" />
+                        @Html.ActionLink("Cancelar", "Grupo", "Estudiantes", new { id = Grupo.IdTutoriaGrupal }, new { @class = "btn btn-danger" });
+
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Grupo","Estudiantes", new { id = Grupo.IdTutoriaGrupal })" class="btn btn-primary"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</a>
+                    }
+
+                }
+            </div>
+        </div>
+    </div>
+}

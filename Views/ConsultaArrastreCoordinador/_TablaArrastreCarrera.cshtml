@@ -1,0 +1,1280 @@
+﻿@model IEnumerable<PlataformaWeb.Models.Materias.ArrastreCarreraDto>
+@using PlataformaWeb.Models.Materias
+
+@{
+    var modeloSeguro = Model ?? new List<ArrastreCarreraDto>();
+
+    var listaAlumnos = new List<ArrastreCarreraDto>();
+    foreach (var item in modeloSeguro)
+    {
+        listaAlumnos.Add(item);
+    }
+
+    var hayDatos = listaAlumnos.Count > 0;
+
+    var totalRegistros = listaAlumnos.Count;
+    var totalAlumnosUnicos = 0;
+    var totalIntentos = 0;
+    var totalFueraDeTiempo = 0;
+    var promedioIntentos = 0.0;
+
+    // 1. CALCULO DE MATERIAS POR ALUMNO
+    // Creamos un diccionario para contar las materias de cada alumno
+    // (Asumimos que esta vista solo trae materias de arrastre)
+    var conteoMateriasPorAlumno = new Dictionary<int, int>();
+    foreach (var item in modeloSeguro)
+    {
+        if (conteoMateriasPorAlumno.ContainsKey(item.IdPersona))
+        {
+            conteoMateriasPorAlumno[item.IdPersona]++;
+        }
+        else
+        {
+            conteoMateriasPorAlumno.Add(item.IdPersona, 1);
+        }
+    }
+
+    var alumnosVistos = new List<int>();
+    var especialidadesVistas = new List<string>();
+
+    foreach (var alumno in listaAlumnos)
+    {
+        var yaContado = false;
+        foreach (var id in alumnosVistos)
+        {
+            if (id == alumno.IdPersona)
+            {
+                yaContado = true;
+                break;
+            }
+        }
+        if (!yaContado)
+        {
+            alumnosVistos.Add(alumno.IdPersona);
+            totalAlumnosUnicos++;
+        }
+
+        var especialidadYaContada = false;
+        foreach (var esp in especialidadesVistas)
+        {
+            if (esp == alumno.NombreEspecialidad)
+            {
+                especialidadYaContada = true;
+                break;
+            }
+        }
+        if (!especialidadYaContada && !string.IsNullOrEmpty(alumno.NombreEspecialidad))
+        {
+            especialidadesVistas.Add(alumno.NombreEspecialidad);
+        }
+
+        totalIntentos += alumno.IntentosExtraordinarios;
+        if (alumno.DiasRestantes <= 0)
+        {
+            totalFueraDeTiempo++;
+        }
+    }
+
+    if (totalRegistros > 0)
+    {
+        promedioIntentos = (double)totalIntentos / totalRegistros;
+    }
+
+    var totalEspecialidades = especialidadesVistas.Count;
+}
+<div class="sga-scope">
+
+    @if (hayDatos)
+    {
+        <div class="row" style="margin-bottom: 15px;">
+            <div class="col-md-12">
+                <div class="controles-filtro-carrera pull-right">
+                    <div class="btn-toolbar">
+                        <div class="btn-group btn-group-sm" data-toggle="buttons">
+                            <label class="btn btn-danger" data-filtro-carrera="fuera-tiempo" title="Fuera de tiempo (días restantes <= 0)">
+                                <input type="radio" name="filtro-estado-carrera" value="fuera-tiempo">
+                                <i class="glyphicon glyphicon-ban-circle"></i> Fuera de Tiempo
+                            </label>
+                            <label class="btn btn-warning" data-filtro-carrera="critico" title="Crítico (1-60 días restantes)">
+                                <input type="radio" name="filtro-estado-carrera" value="critico">
+                                <i class="glyphicon glyphicon-exclamation-sign"></i> Crítico
+                            </label>
+                            <label class="btn btn-warning-light" data-filtro-carrera="medio" title="Medio (61-180 días restantes)">
+                                <input type="radio" name="filtro-estado-carrera" value="medio">
+                                <i class="glyphicon glyphicon-time"></i> Medio
+                            </label>
+                            <label class="btn btn-success" data-filtro-carrera="en-tiempo" title="En Tiempo (más de 180 días)">
+                                <input type="radio" name="filtro-estado-carrera" value="en-tiempo">
+                                <i class="glyphicon glyphicon-ok-circle"></i> En Tiempo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabla-carrera-principal">
+            <table class="table table-striped table-hover" style="width:100%" id="tablaArrastreCarreraId">
+                <thead>
+                    <tr class="active">
+                        <th style="width:8%">Matricula</th>
+                        <th style="width:16%">Nombre del Alumno</th>
+                        <th style="width:18%">Especialidad</th>
+                        <th style="width:8%">Grado y Grupo</th>
+                        <th style="width:18%">Materia de Arrastre</th>
+                        <th class="text-center" style="width:6%">Cuatri</th>
+                        <th class="text-center" style="width:6%">Intentos</th>
+                        <th class="text-center" style="width:8%">Estado</th>
+                        <th class="text-center" style="width:7%">Dias Rest.</th>
+                        <th class="text-center" style="width:5%">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-carrera-body-filtrable">
+                    @foreach (var alumno in listaAlumnos)
+                    {
+                        var estadoTiempoClass = alumno.EstadoTiempo.ToLower().Replace(" ", "-");
+                        var filaColorClass = "fila-" + estadoTiempoClass;
+
+                        // 2. ASIGNACION DE CLASE DE BORDE
+                        var bordeClass = "";
+                        var conteo = 0;
+                        if (conteoMateriasPorAlumno.TryGetValue(alumno.IdPersona, out conteo))
+                        {
+                            if (conteo >= 3)
+                            {
+                                bordeClass = "borde-rojo-carrera"; // 3+ materias
+                            }
+                            else if (conteo == 2)
+                            {
+                                bordeClass = "borde-naranja-carrera"; // 2 materias
+                            }
+                            else if (conteo == 1)
+                            {
+                                bordeClass = "borde-amarillo-carrera"; // 1 materia
+                            }
+                        }
+
+                        // 3. APLICACION DE LA NUEVA CLASE EN LA FILA
+                        <tr class="@filaColorClass fila-carrera-filtrable @bordeClass"
+                            data-criticidad="@alumno.NivelCriticidad"
+                            data-tipo="@(alumno.NivelCriticidad == 1 ? "criticos" : alumno.NivelCriticidad == 2 ? "medios" : "recientes")"
+                            data-matricula="@(alumno.Matricula ?? "").ToLower()"
+                            data-nombre="@(alumno.NombreAlumno ?? "").ToLower()"
+                            data-especialidad="@(alumno.NombreEspecialidad ?? "").ToLower()"
+                            data-grado-grupo="@(alumno.GradoGrupo ?? "").ToLower()"
+                            data-materia="@(alumno.MateriaArrastre ?? "").ToLower()"
+                            data-cuatrimestre="@alumno.CuatrimestreMateria"
+                            data-cuatrimestre-texto="@(alumno.CuatrimestreTexto ?? "").ToLower()"
+                            data-intentos="@alumno.IntentosExtraordinarios"
+                            data-estado-tiempo="@alumno.EstadoTiempo"
+                            data-dias-restantes="@alumno.DiasRestantes"
+                            data-fuera-tiempo="@(alumno.DiasRestantes <= 0 ?
+"true" : "false")"
+                            data-materia-activa="@(alumno.MateriaEstaActiva.ToString().ToLower())"
+                            data-contenido-busqueda="@((alumno.Matricula ?? "") + " " + (alumno.NombreAlumno ?? "") + " " + (alumno.NombreEspecialidad ?? "") + " " + (alumno.GradoGrupo ?? "") + " " + (alumno.MateriaArrastre ?? "") + " " + (alumno.CuatrimestreTexto ?? "")).ToLower()"
+                            data-tutor="@(alumno.TutorAsignado ?? "").ToLower()"
+                            data-observaciones="@(alumno.Observaciones ?? "").ToLower()">
+
+                            <td data-label="Matrícula">
+                                <strong class="matricula-highlight-carrera @(!alumno.EstadoAlumno ? "text-danger" : "")">@alumno.Matricula</strong>
+                                @if (!alumno.EstadoAlumno)
+                                {
+                                    <br><small class="label label-danger"><i class="glyphicon glyphicon-ban-circle"></i> Baja</small>
+                                }
+                            </td>
+                            <td data-label="Nombre">
+                                <div class="alumno-info-carrera">
+
+                                    <strong class="nombre-highlight-carrera">@alumno.NombreAlumno</strong>
+                                    @if (!string.IsNullOrEmpty(alumno.TutorAsignado) && alumno.TutorAsignado != "Sin tutor")
+                                    {
+
+                                        <br><small class="text-info tutor-highlight-carrera">
+                                            <i class="glyphicon glyphicon-user"></i> @alumno.TutorAsignado
+                                        </small>
+
+                                    }
+                                </div>
+                            </td>
+                            <td data-label="Especialidad">
+                                <div class="especialidad-info-carrera">
+                                    <span class="especialidad-badge especialidad-highlight-carrera">
+                                        <i class="glyphicon glyphicon-tag"></i>
+                                        @(alumno.NombreEspecialidad ??
+"Sin especialidad")
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(alumno.NombreTurno))
+                                    {
+
+                                        <br><small class="text-muted turno-highlight-carrera">@alumno.NombreTurno</small>
+                                    }
+                                </div>
+
+                            </td>
+                            <td data-label="Grado-Grupo">
+                                <div class="grado-grupo-info">
+
+                                    <span class="grado-grupo-texto grado-grupo-highlight-carrera">@alumno.GradoGrupo</span>
+                                    @if (alumno.Año > 0)
+                                    {
+
+                                        <br><small class="text-muted">@alumno.Año</small>
+                                    }
+                                </div>
+                            </td>
+
+                            <td data-label="Materia">
+                                <div class="materia-info-carrera">
+                                    <span class="materia-nombre-carrera materia-highlight-carrera">@alumno.MateriaArrastre</span>
+
+
+                                    @if (!alumno.MateriaEstaActiva)
+                                    {
+                                        <br><small class="label label-warning">
+
+                                            <i class="glyphicon glyphicon-eye-close"></i> Materia Desactivada
+                                        </small>
+                                    }
+
+
+                                    @if (!string.IsNullOrEmpty(alumno.Observaciones))
+                                    {
+
+                                        <br><small class='text-info observaciones-carrera observaciones-highlight-carrera'>
+                                            <i class='glyphicon glyphicon-comment'></i> @alumno.Observaciones
+                                        </small>
+
+                                    }
+                                </div>
+                            </td>
+                            <td data-label="Cuatrimestre" class="text-center">
+
+                                <span class="label label-cuatri-carrera-@alumno.CuatrimestreMateria cuatrimestre-highlight-carrera">
+                                    @alumno.CuatrimestreTexto
+                                </span>
+
+                            </td>
+
+                            <td data-label="Intentos" class="text-center">
+                                @Html.Raw(alumno.IntentosExtraordinarios > 0 ?
+    "<span class='badge badge-intentos-" + (alumno.IntentosExtraordinarios >= 3 ? "danger" : "warning") + "'>" + alumno.IntentosExtraordinarios + "</span>" :
+                                    "<span class='text-muted'>-</span>")
+                            </td>
+
+                            <td data-label="Estado"
+                                class="text-center">
+                                <span class="label label-estado-@estadoTiempoClass">@alumno.EstadoTiempo</span>
+                                @if (alumno.FechaInicioArrastre.HasValue)
+                                {
+
+                                    <br><small class='text-muted'>Inicio: @alumno.FechaInicioArrastre.Value.ToString("dd/MM/yyyy")</small>
+                                }
+                            </td>
+
+                            <td data-label="Días" class="text-center">
+
+                                @if (alumno.DiasRestantes > 0)
+                                {
+                                    <span class="badge badge-tiempo-carrera-@(alumno.DiasRestantes <= 60 ?
+"danger" : alumno.DiasRestantes <= 180 ? "warning" : "info")">
+                                        @alumno.DiasRestantes días
+                                    </span>
+
+                                    if (alumno.FechaLimiteArrastre.HasValue)
+                                    {
+                                        <br><small class='text-muted'>Límite: @alumno.FechaLimiteArrastre.Value.ToString("dd/MM/yyyy")</small>
+
+                                    }
+                                }
+                                else
+                                {
+
+                                    <span class="label label-danger">Vencido</span>
+                                    if (Math.Abs(alumno.DiasRestantes) > 0)
+                                    {
+
+                                        <br><small class='text-danger'>@Math.Abs(alumno.DiasRestantes) días atrás</small>
+                                    }
+                                }
+
+                            </td>
+                            <td data-label="Acciones" class="text-center">
+                                <div class="btn-group-vertical btn-group-xs">
+
+                                    <a href="@Url.Action("Index", "MateriasAlumno", new { id = alumno.IdPersona })"
+                                       class="btn btn-primary btn-xs" title="Ver materias del alumno">
+                                        <i class="glyphicon glyphicon-list-alt"></i>
+                                    </a>
+                                    <a href="@Url.Action("Index", "Individuals", new { id = alumno.IdPersona })"
+                                       class="btn btn-info btn-xs" title="Seguimiento individual">
+                                        <i class="glyphicon glyphicon-user"></i>
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-danger btn-xs"
+                                            title="Eliminar este registro de materia"
+                                            onclick="confirmarEliminarMateria(
+                                                @alumno.IdMateria,
+                                                @alumno.IdPersona,
+                                                '@Html.Raw(alumno.NombreAlumno?.Replace("'", "\\'"))',
+                                                '@Html.Raw(alumno.MateriaArrastre?.Replace("'", "\\'"))',
+                                                '@alumno.CuatrimestreTexto',
+                                                '@alumno.EstadoMateriaAlumno',
+                                                '@(alumno.EstadoMateriaAlumno == "Extraordinario" || alumno.EstadoMateriaAlumno == "Reprobada" ? "true" : "false")')">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </button>
+
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+                <tbody id="mensaje-sin-resultados-carrera" style="display: none;">
+
+                    <tr>
+                        <td colspan="10" class="sin-resultados-carrera">
+                            <div class="mensaje-sin-resultados-container">
+                                <div class="sin-resultados-icon">
+
+                                    <i class="glyphicon glyphicon-search"></i>
+                                </div>
+                                <div class="sin-resultados-content">
+
+                                    <h4 class="sin-resultados-title">Sin resultados encontrados</h4>
+                                    <p class="sin-resultados-description" id="descripcion-sin-resultados">
+                                        No se encontraron registros que coincidan con los criterios de búsqueda o filtros aplicados.
+                                    </p>
+                                    <div class="sin-resultados-suggestions">
+                                        <p><strong>Sugerencias:</strong></p>
+
+                                        <ul>
+                                            <li>Verifique la ortografía de los términos de búsqueda</li>
+                                            <li>Pruebe con palabras clave más generales</li>
+
+                                            <li>Elimine algunos filtros para ampliar la búsqueda</li>
+                                        </ul>
+
+                                    </div>
+                                    <div class="sin-resultados-actions">
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="limpiarTodosFiltrosCarrera()">
+
+                                            <i class="glyphicon glyphicon-refresh"></i> Limpiar Filtros
+                                        </button>
+
+                                        <button type="button" class="btn btn-default btn-sm" onclick="mostrarTodosCarrera()">
+                                            <i class="glyphicon glyphicon-list"></i> Mostrar Todos
+                                        </button>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+
+        <div class="alert alert-info alert-carrera-vacio text-center">
+            <div class="empty-icon-carrera">
+                <i class="glyphicon glyphicon-info-sign fa-3x"></i>
+            </div>
+            <h4>Sin datos de arrastre en esta carrera</h4>
+            <p>No hay alumnos con materias de arrastre para mostrar en la carrera seleccionada.</p>
+            <div class="empty-actions-carrera">
+                <button type="button" class="btn btn-primary" onclick="cambiarCarrera('')">
+
+                    <i class="glyphicon glyphicon-repeat"></i> Cambiar Carrera
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- ===== MODAL ELIMINAR MATERIA (coordinador) ===== -->
+    <div class="modal fade" id="modalEliminarMateriaCoord" tabindex="-1" role="dialog" aria-labelledby="modalEliminarMateriaCoordLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#e74c3c; color:white;">
+                    <button type="button" class="close" data-dismiss="modal" style="color:white;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="modalEliminarMateriaCoordLabel">
+                        <i class="glyphicon glyphicon-trash"></i> Eliminar registro de materia
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <strong><i class="glyphicon glyphicon-exclamation-sign"></i> Atención:</strong>
+                        Esta acción es <strong>permanente e irreversible</strong>. Se eliminarán también
+                        las calificaciones por unidad e historial de intentos asociados a este registro.
+                    </div>
+                    <table class="table table-condensed">
+                        <tr><th style="width:35%">Alumno</th><td id="elim-coord-alumno"></td></tr>
+                        <tr><th>Materia</th><td id="elim-coord-materia"></td></tr>
+                        <tr><th>Cuatrimestre</th><td id="elim-coord-cuatri"></td></tr>
+                        <tr><th>Estado</th><td id="elim-coord-estado"></td></tr>
+                    </table>
+                    <p class="text-center text-muted" style="font-size:12px;">
+                        ¿Confirmas que deseas eliminar <strong>definitivamente</strong> este registro?
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <i class="glyphicon glyphicon-remove"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminarCoord">
+                        <i class="glyphicon glyphicon-trash"></i> Eliminar definitivamente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== FIN MODAL ELIMINAR ===== -->
+
+    <div class="modal fade" id="modalBusquedaAvanzadaCarrera" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <i class="glyphicon glyphicon-search"></i> Búsqueda Avanzada por Carrera
+                    </h4>
+
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+
+                                <label>Matrícula:</label>
+                                <input type="text" class="form-control" id="busquedaMatricula" placeholder="Ej: 123456">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Nombre del Alumno:</label>
+                                <input type="text" class="form-control" id="busquedaNombre" placeholder="Ej: Juan Pérez">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+
+                            <div class="form-group">
+                                <label>Especialidad:</label>
+                                <input type="text" class="form-control" id="busquedaEspecialidad" placeholder="Ej: Informática">
+
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Grado y Grupo:</label>
+
+                                <input type="text" class="form-control" id="busquedaGradoGrupo" placeholder="Ej: 1° - A">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Materia de Arrastre:</label>
+
+                                <input type="text" class="form-control" id="busquedaMateria" placeholder="Ej: Matemáticas">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+
+                            <div class="form-group">
+                                <label>Cuatrimestre:</label>
+                                <select class="form-control" id="busquedaCuatrimestre">
+                                    <option value="">
+                                        Todos
+                                        los cuatrimestres
+                                    </option>
+                                    <option value="1">1er Cuatrimestre</option>
+                                    <option value="2">2do Cuatrimestre</option>
+
+                                    <option value="3">3er Cuatrimestre</option>
+                                    <option value="4">4to Cuatrimestre</option>
+                                    <option value="5">5to Cuatrimestre</option>
+
+                                    <option value="6">6to Cuatrimestre</option>
+                                    <option value="7">7mo Cuatrimestre</option>
+                                    <option value="8">8vo Cuatrimestre</option>
+
+                                    <option value="9">9no Cuatrimestre</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" onclick="limpiarBusquedaAvanzada()">
+                        <i class="glyphicon glyphicon-refresh"></i> Limpiar
+                    </button>
+
+                    <button type="button" class="btn btn-primary" onclick="aplicarBusquedaAvanzada()">
+                        <i class="glyphicon glyphicon-search"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --carrera-primary: #1abc9c;
+        --carrera-secondary: #3498db;
+        --carrera-success: #27ae60;
+        --carrera-warning: #f39c12;
+        --carrera-danger: #e74c3c;
+        --carrera-info: #17a2b8;
+        --carrera-amarillo: #f1c40f;
+    }
+
+    /* ===== COLORES DE FILA SEGÚN ESTADO DE TIEMPO (como grupo) ===== */
+    .fila-fuera-de-tiempo {
+        background-color: rgba(231, 76, 60, 0.08) !important;
+        /* border-left: 4px solid #e74c3c !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-fuera-de-tiempo:hover {
+            background-color: rgba(231, 76, 60, 0.15) !important;
+        }
+
+    .fila-crítico {
+        background-color: rgba(243, 156, 18, 0.08) !important;
+        /* border-left: 4px solid #f39c12 !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-crítico:hover {
+            background-color: rgba(243, 156, 18, 0.15) !important;
+        }
+
+    .fila-medio {
+        background-color: rgba(241, 196, 15, 0.05) !important;
+        /* border-left: 4px solid #f1c40f !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-medio:hover {
+            background-color: rgba(241, 196, 15, 0.12) !important;
+        }
+
+    .fila-en-tiempo {
+        background-color: rgba(39, 174, 96, 0.05) !important;
+        /* border-left: 4px solid #27ae60 !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-en-tiempo:hover {
+            background-color: rgba(39, 174, 96, 0.12) !important;
+        }
+
+    /* 4. NUEVOS ESTILOS DE BORDE POR CONTEO DE MATERIAS */
+    .borde-rojo-carrera {
+        border-left: 5px solid var(--carrera-danger) !important; /* 3+ materias */
+    }
+
+    .borde-naranja-carrera {
+        border-left: 5px solid var(--carrera-warning) !important; /* 2 materias */
+    }
+
+    .borde-amarillo-carrera {
+        border-left: 5px solid var(--carrera-amarillo) !important; /* 1 materia */
+    }
+
+
+    /* ===== LABELS DE ESTADO (colores actualizados) ===== */
+    .label-estado-fuera-de-tiempo {
+        background-color: #e74c3c !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .label-estado-crítico {
+        background-color: #f39c12 !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .label-estado-medio {
+        background-color: #f1c40f !important;
+        color: #333 !important;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .label-estado-en-tiempo {
+        background-color: #27ae60 !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    /* ===== BOTONES DE FILTRO (colores actualizados como grupo) ===== */
+    .btn-warning-light {
+        background-color: #f1c40f;
+        border-color: #f39c12;
+        color: #333;
+        font-weight: 500;
+    }
+
+        .btn-warning-light:hover, .btn-warning-light.active {
+            background-color: #e2b607;
+            border-color: #d4a005;
+            color: #333;
+        }
+
+    .controles-filtro-carrera .btn {
+        border: 1px solid #ddd;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+        .controles-filtro-carrera .btn.active,
+        .controles-filtro-carrera .btn:active {
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.125);
+            border-color: #adadad;
+        }
+
+    .controles-filtro-carrera .btn-danger.active {
+        background-color: #e74c3c;
+        border-color: #e74c3c;
+        color: white;
+    }
+
+    .controles-filtro-carrera .btn-warning.active {
+        background-color: #f39c12;
+        border-color: #f39c12;
+        color: white;
+    }
+
+    .controles-filtro-carrera .btn-warning-light.active {
+        background-color: #f1c40f;
+        border-color: #f1c40f;
+        color: #333;
+    }
+
+    .controles-filtro-carrera .btn-success.active {
+        background-color: #27ae60;
+        border-color: #27ae60;
+        color: white;
+    }
+
+    .controles-filtro-carrera .btn-info.active {
+        background-color: var(--carrera-info);
+        border-color: var(--carrera-info);
+        color: white;
+    }
+
+    .controles-filtro-carrera .btn-primary.active {
+        background-color: var(--carrera-primary);
+        border-color: var(--carrera-primary);
+        color: white;
+    }
+
+    .controles-tabla-carrera {
+        background: white;
+        border: 1px solid #e3e3e3;
+        border-radius: 4px 4px 0 0;
+        padding: 15px;
+        margin-bottom: 0;
+    }
+
+    .busqueda-carrera .input-group {
+        display: flex !important;
+        width: 100%;
+    }
+
+    .busqueda-carrera .input-group-addon {
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-right: none;
+        color: #7f8c8d;
+        display: flex !important;
+        align-items: center;
+        padding: 0 12px;
+        border-radius: 0 !important;
+        flex-shrink: 0;
+    }
+
+    .busqueda-carrera .form-control {
+        border-radius: 0 !important;
+        box-shadow: none;
+        border: 1px solid #ddd;
+        height: 34px;
+        border-left: none !important;
+        border-right: none !important;
+        flex: 1;
+        margin: 0 !important;
+        transition: all 0.3s ease;
+    }
+
+        .busqueda-carrera .form-control:focus {
+            border-color: var(--carrera-primary);
+            box-shadow: 0 0 0 2px rgba(26, 188, 156, 0.2);
+            border-left: none !important;
+            border-right: none !important;
+        }
+
+    .busqueda-carrera .input-group-btn {
+        display: flex !important;
+        margin: 0 !important;
+        flex-shrink: 0;
+    }
+
+        .busqueda-carrera .input-group-btn .btn {
+            border-radius: 0 4px 4px 0 !important;
+            border-left: none !important;
+            border: 1px solid #ddd;
+            height: 34px;
+            padding: 0 12px;
+            background: #f8f9fa;
+            color: #7f8c8d;
+            margin: 0 !important;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+            .busqueda-carrera .input-group-btn .btn:hover {
+                background: #e9ecef;
+                color: #495057;
+            }
+
+    .resultados-busqueda-carrera {
+        margin-top: 5px;
+        padding: 5px 10px;
+        background: rgba(26, 188, 156, 0.1);
+        border-radius: 4px;
+        border-left: 3px solid var(--carrera-primary);
+    }
+
+    .controles-filtro-carrera {
+        margin-top: 0;
+    }
+
+        .controles-filtro-carrera .btn-group {
+            margin-left: 5px;
+        }
+
+    .dropdown-carrera {
+        position: relative;
+    }
+
+    .dropdown-opciones-carrera {
+        position: absolute !important;
+        top: 100% !important;
+        right: 0 !important;
+        left: auto !important;
+        z-index: 2000 !important;
+        min-width: 200px;
+        max-height: 300px;
+        overflow-y: auto;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.175) !important;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        background: white;
+    }
+
+        .dropdown-opciones-carrera .dropdown-header {
+            padding: 8px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .dropdown-opciones-carrera li > a {
+            padding: 8px 20px;
+            display: block;
+            color: #333;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+            .dropdown-opciones-carrera li > a:hover {
+                background-color: #f8f9fa;
+                color: #333;
+            }
+
+            .dropdown-opciones-carrera li > a i {
+                margin-right: 8px;
+                width: 14px;
+                text-align: center;
+            }
+
+    .tabla-carrera-principal {
+        border: 1px solid #e3e3e3;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        margin-bottom: 0;
+    }
+
+        .tabla-carrera-principal table {
+            margin-bottom: 0;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .tabla-carrera-principal td,
+        .tabla-carrera-principal th {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        .tabla-carrera-principal thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            vertical-align: middle;
+            padding: 12px 8px;
+            position: relative;
+        }
+
+    .sortable-header-carrera {
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+        position: relative;
+        font-weight: 600;
+        color: #495057;
+    }
+
+        .sortable-header-carrera .ordenamiento-icono {
+            opacity: 0.3;
+            margin-left: 5px;
+            transition: opacity 0.2s ease;
+        }
+
+        .sortable-header-carrera:hover {
+            background-color: #e8f4fd !important;
+            color: #007bff;
+        }
+
+            .sortable-header-carrera:hover .ordenamiento-icono {
+                opacity: 0.7;
+            }
+
+        .sortable-header-carrera.sorted-asc {
+            background-color: #d1ecf1 !important;
+            color: #0c5460;
+        }
+
+        .sortable-header-carrera.sorted-desc {
+            background-color: #f8d7da !important;
+            color: #721c24;
+        }
+
+        .sortable-header-carrera.sorted-asc .ordenamiento-icono:before {
+            content: "\e155";
+            opacity: 1;
+        }
+
+        .sortable-header-carrera.sorted-desc .ordenamiento-icono:before {
+            content: "\e156";
+            opacity: 1;
+        }
+
+    .tabla-carrera-principal tbody tr:hover {
+        background-color: rgba(0,0,0,0.03);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+
+    .label-cuatri-carrera-1,
+    .label-cuatri-carrera-2 {
+        background-color: var(--carrera-danger);
+    }
+
+    .label-cuatri-carrera-3,
+    .label-cuatri-carrera-4 {
+        background-color: var(--carrera-warning);
+    }
+
+    .label-cuatri-carrera-5,
+    .label-cuatri-carrera-6,
+    .label-cuatri-carrera-7,
+    .label-cuatri-carrera-8,
+    .label-cuatri-carrera-9 {
+        background-color: var(--carrera-info);
+    }
+
+    .badge-tiempo-carrera-danger {
+        background-color: var(--carrera-danger);
+    }
+
+    .badge-tiempo-carrera-warning {
+        background-color: var(--carrera-warning);
+    }
+
+    .badge-tiempo-carrera-info {
+        background-color: var(--carrera-info);
+    }
+
+    .badge-intentos-danger {
+        background-color: var(--carrera-danger);
+    }
+
+    .badge-intentos-warning {
+        background-color: var(--carrera-warning);
+    }
+
+    .alumno-info-carrera strong {
+        font-size: 1.1em;
+        color: #333;
+    }
+
+    .especialidad-badge {
+        background: linear-gradient(135deg, var(--carrera-secondary) 0%, var(--carrera-info) 100%);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .materia-info-carrera .materia-nombre-carrera {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .observaciones-carrera {
+        font-style: italic;
+        max-width: 200px;
+        display: inline-block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .resumen-tabla-carrera {
+        margin-top: 20px;
+    }
+
+    .metric-carrera {
+        text-align: center;
+        padding: 10px;
+    }
+
+    .metric-number-carrera {
+        display: block;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--carrera-primary);
+        line-height: 1;
+    }
+
+    .metric-label-carrera {
+        display: block;
+        font-size: 12px;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        margin-top: 4px;
+        font-weight: 500;
+    }
+
+    .texto-destacado-carrera {
+        background: rgba(255, 235, 59, 0.7);
+        padding: 1px 3px;
+        border-radius: 3px;
+        font-weight: 600;
+        box-shadow: 0 1px 2px rgba(255, 193, 7, 0.3);
+    }
+
+    .fila-carrera-filtrable.filtered-out {
+        display: none !important;
+    }
+
+    .btn-group-vertical .btn {
+        margin-bottom: 2px;
+    }
+
+    .alert-carrera-vacio {
+        padding: 30px;
+        border-radius: 6px;
+        border: 2px solid var(--carrera-info);
+        background: rgba(23, 162, 184, 0.05);
+    }
+
+    .empty-icon-carrera {
+        color: var(--carrera-info);
+        margin-bottom: 15px;
+    }
+
+    .empty-actions-carrera {
+        margin-top: 15px;
+    }
+
+    .sin-resultados-carrera {
+        padding: 0 !important;
+        border: none !important;
+        background: #f8f9fa !important;
+    }
+
+    .mensaje-sin-resultados-container {
+        text-align: center;
+        padding: 40px 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        margin: 10px;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .sin-resultados-icon {
+        font-size: 48px;
+        color: #6c757d;
+        margin-bottom: 20px;
+        opacity: 0.7;
+    }
+
+    .sin-resultados-content {
+        max-width: 500px;
+    }
+
+    .sin-resultados-title {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 1.5em;
+    }
+
+    .sin-resultados-description {
+        color: #6c757d;
+        margin-bottom: 20px;
+        font-size: 1.1em;
+        line-height: 1.5;
+    }
+
+    .sin-resultados-suggestions {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 20px 0;
+        text-align: left;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+        .sin-resultados-suggestions p {
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .sin-resultados-suggestions ul {
+            margin: 10px 0 0 20px;
+            color: #6c757d;
+        }
+
+        .sin-resultados-suggestions li {
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+    .sin-resultados-actions {
+        margin-top: 25px;
+    }
+
+        .sin-resultados-actions .btn {
+            margin: 0 5px;
+            padding: 8px 16px;
+            font-weight: 500;
+        }
+
+    /* Indicar visualmente las filas con materias desactivadas */
+    .fila-carrera-filtrable[data-materia-activa="false"] {
+        background-color: rgba(255, 193, 7, 0.05) !important;
+        /* border-left: 3px solid #ffc107 !important; */ /* <- REMOVIDO */
+    }
+
+        .fila-carrera-filtrable[data-materia-activa="false"] .materia-nombre-carrera {
+            color: #856404;
+            font-style: italic;
+        }
+
+    @@media (max-width: 768px) {
+        .controles-tabla-carrera {
+            padding: 10px;
+        }
+
+            .controles-tabla-carrera .row > div {
+                margin-bottom: 10px;
+            }
+
+        .controles-filtro-carrera .btn-toolbar {
+            text-align: center !important;
+        }
+
+        .controles-filtro-carrera .btn-group {
+            margin: 2px;
+            display: inline-block;
+        }
+
+        .tabla-carrera-principal table,
+        .tabla-carrera-principal thead,
+        .tabla-carrera-principal tbody,
+        .tabla-carrera-principal th,
+        .tabla-carrera-principal td,
+        .tabla-carrera-principal tr {
+            display: block;
+        }
+
+            .tabla-carrera-principal thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+        .tabla-carrera-principal tr {
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .tabla-carrera-principal td {
+            border: none;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            padding-left: 35% !important;
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+            .tabla-carrera-principal td:before {
+                content: attr(data-label);
+                position: absolute;
+                left: 6px;
+                width: 30%;
+                padding-right: 10px;
+                white-space: nowrap;
+                font-weight: bold;
+                color: #666;
+                font-size: 11px;
+            }
+
+        .metric-carrera {
+            border-right: none;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+
+        .mensaje-sin-resultados-container {
+            padding: 30px 15px;
+            margin: 5px;
+            min-height: 250px;
+        }
+
+        .sin-resultados-icon {
+            font-size: 36px;
+            margin-bottom: 15px;
+        }
+
+        .sin-resultados-title {
+            font-size: 1.3em;
+        }
+
+        .sin-resultados-description {
+            font-size: 1em;
+        }
+
+        .sin-resultados-suggestions {
+            padding: 12px;
+            margin: 15px 0;
+        }
+
+        .sin-resultados-actions .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+        }
+    }
+</style>
+
+<script>
+    // ======================================================
+    // ELIMINAR MATERIA — vista coordinador/master
+    // ======================================================
+    var _elimCoordIdMateria = null;
+    var _elimCoordIdPersona = null;
+
+    function confirmarEliminarMateria(idMateria, idPersona, alumno, materia, cuatri, estado, tieneInfo) {
+        _elimCoordIdMateria = idMateria;
+        _elimCoordIdPersona = idPersona;
+
+        $('#elim-coord-alumno').text(alumno);
+        $('#elim-coord-materia').text(materia);
+        $('#elim-coord-cuatri').text(cuatri + '° Cuatrimestre');
+        $('#elim-coord-estado').text(estado);
+
+        $('#modalEliminarMateriaCoord').modal('show');
+    }
+
+    $('#btnConfirmarEliminarCoord').on('click', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<span class="glyphicon glyphicon-refresh"></span> Eliminando...');
+
+        $.ajax({
+            url: '@Url.Action("EliminarMateriaAlumno", "MateriasAlumno")',
+            type: 'POST',
+            data: {
+                idMateria: _elimCoordIdMateria,
+                idPersona: _elimCoordIdPersona
+            },
+            success: function (result) {
+                $('#modalEliminarMateriaCoord').modal('hide');
+                if (result.success) {
+                    setTimeout(function () { location.reload(); }, 800);
+                } else {
+                    alert('Error: ' + result.message);
+                    $btn.prop('disabled', false).html('<i class="glyphicon glyphicon-trash"></i> Eliminar definitivamente');
+                }
+            },
+            error: function () {
+                $('#modalEliminarMateriaCoord').modal('hide');
+                alert('Error de conexión al intentar eliminar.');
+                $btn.prop('disabled', false).html('<i class="glyphicon glyphicon-trash"></i> Eliminar definitivamente');
+            }
+        });
+    });
+</script>
+

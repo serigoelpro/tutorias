@@ -1,0 +1,576 @@
+@model Plataforma_Web.Models.EntrevistaInicial
+@using Plataforma_Web.Models.PrimeraEntrevista
+@{
+    DatosPersonales datos = ViewBag.datos as DatosPersonales;
+    AspectosAcademicos academicos = ViewBag.academicos as AspectosAcademicos;
+    AspectosEconomicos economicos = ViewBag.economicos as AspectosEconomicos;
+    AspectosPersonales personales = ViewBag.personales as AspectosPersonales;
+    ViewBag.Title = "Detalles";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link href="~/ViewsStyles/Master/sga-theme.css" rel="stylesheet" />
+}
+<div class="sga-scope">
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="entrevista-detalles">
+            <h2>Detalles</h2>
+
+            @{
+                var nombre = (datos != null ? datos.Nombre : "");
+                var matricula = (datos != null ? datos.Matricula : "");
+                var carreraTxt = (datos != null
+                                    ? (!string.IsNullOrWhiteSpace(datos.CarreraNom)
+                                        ? datos.CarreraNom
+                                        : (datos.Carrera != null ? datos.Carrera.Nombre : ""))
+                                    : "");
+                var gradoTxt = (datos != null && datos.Grado != null ? datos.Grado.Nombre : "");
+                var grupoTxt = (datos != null && datos.Grupo != null ? datos.Grupo.Nombre : "");
+                var turnoTxt = (datos != null && datos.Turno != null ? datos.Turno.Nombre : "");
+                var inicial = (!string.IsNullOrWhiteSpace(nombre) ? nombre.Trim()[0].ToString().ToUpper() : "?");
+            }
+
+            <!-- ====== HEADER PERFIL ====== -->
+            <div class="ei-profile-card">
+                <div class="ei-photo">
+                    @if (datos != null && !string.IsNullOrWhiteSpace(datos.Foto))
+                    {
+                        <img class="ei-avatar" src="@datos.Foto" alt="Foto de @nombre" />
+                    }
+                    else
+                    {
+                        <div class="ei-avatar-fallback">@inicial</div>
+                    }
+                </div>
+
+                <div class="ei-meta">
+                    <div class="ei-name">@nombre</div>
+                    <div class="ei-chips">
+                        <span class="ei-chip"><small>Matrícula</small> @matricula</span>
+                        <span class="ei-chip"><small>Carrera</small> @carreraTxt</span>
+                        <span class="ei-chip"><small>Grado</small> @gradoTxt</span>
+                        <span class="ei-chip"><small>Grupo</small> @grupoTxt</span>
+                        <span class="ei-chip"><small>Turno</small> @turnoTxt</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ei-grid">
+                <div class="ei-kv"><label>Edad</label><div>@(datos != null ? datos.Edad + " años" : "")</div></div>
+                <div class="ei-kv"><label>Sexo</label><div>@(datos != null && !string.IsNullOrWhiteSpace(datos.Sexo) ? datos.Sexo : "Sin actualizar")</div></div>
+                <div class="ei-kv"><label>Especialidad</label><div>@(datos != null && !string.IsNullOrWhiteSpace(datos.Area) ? datos.Area : "N/A")</div></div>
+                <div class="ei-kv"><label>Correo</label><div>@(datos != null ? datos.Email : "")</div></div>
+                <div class="ei-kv"><label>Tel.</label><div>@(datos != null ? datos.Telefono : "")</div></div>
+                <div class="ei-kv"><label>Emergencia</label><div>@(datos != null ? datos.TelEmergencia : "")</div></div>
+                <div class="ei-kv ei-span2"><label>Dirección</label><div>@(datos != null ? datos.Direccion : "")</div></div>
+            </div>
+            <!-- ====== /HEADER PERFIL ====== -->
+            <!-- ====== ASPECTOS ECONÓMICOS ====== -->
+            <div class="panel panel-default" style="background-color:white;">
+                <div class="panel-heading" style="text-align:center;">
+                    <div class="row"><div class="col-md-12"><h2>Aspectos Económicos</h2></div></div>
+                </div>
+                <div class="panel-body"></div>
+                <div class="row">
+                    <div class="col-md-12 col-md-push-1">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Reside en esta ciudad?</label><br />
+                                    @((economicos != null && economicos.Respuesta1 != null) ? economicos.Respuesta1.Nombre : "")
+                                </div>
+                            </div>
+
+                            @if (economicos != null && economicos.IdCiudad == 2)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Especifica donde</label><br />
+                                        @(economicos != null ? economicos.Ciudad : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Especifica donde</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Con quién vives actualmente?</label><br />
+                                    @(economicos != null ? economicos.Familiar : "")
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Trabajas?</label><br />
+                                    @((economicos != null && economicos.Respuesta2 != null) ? economicos.Respuesta2.Nombre : "")
+                                </div>
+                            </div>
+
+                            @if (economicos != null && economicos.IdTrabajo == 1)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Especifica donde trabajas</label><br />
+                                        @(economicos != null ? economicos.Trabaja : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Especifica donde trabajas</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Tienes dependientes económicos?</label><br />
+                                    @((economicos != null && economicos.Respuesta3 != null) ? economicos.Respuesta3.Nombre : "")
+                                </div>
+                            </div>
+
+                            @if (economicos != null && economicos.IdDependientes == 1)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Dependientes económicos</label><br />
+                                        @(economicos != null ? economicos.Dependiente : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Dependientes económicos</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿A qué se dedica tu papá?</label><br />
+                                    @(economicos != null ? economicos.OcupacionPapa : "")
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿A qué se dedica tu mamá?</label><br />
+                                    @(economicos != null ? economicos.OcupacionMama : "")
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Si tienes hermanos, ¿cuántos son?</label><br />
+                                    @(economicos != null ? economicos.CantidadHermano : "")
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Ingreso familiar mensual</label><br />
+                                    @(economicos != null ? economicos.IngresoM : "")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer"><div class="row"><div class="col-md-12">&nbsp;</div></div></div>
+            </div>
+            <!-- ====== /ASPECTOS ECONÓMICOS ====== -->
+            <!-- ====== ASPECTOS ACADÉMICOS ====== -->
+            <div class="panel panel-default" style="background-color:white;">
+                <div class="panel-heading" style="text-align:center;">
+                    <div class="row"><div class="col-md-12"><h2>Aspectos Académicos</h2></div></div>
+                </div>
+                <div class="panel-body"></div>
+                <div class="row">
+                    <div class="col-md-12 col-md-push-1">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿De qué bachillerato egresaste?</label><br />
+                                    @(academicos != null ? academicos.Bachillerato : "")
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Especialidad en el bachillerato</label><br />
+                                    @(academicos != null ? academicos.Especialidad : "")
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Promedio general</label><br />
+                                    @(academicos != null ? academicos.Promedio : "")
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Materias que se le dificultan</label><br />
+                                    @(academicos != null ? academicos.MateriasDif : "")
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Utiliza técnicas de estudio?</label><br />
+                                    @((academicos != null && academicos.Respuesta0 != null) ? academicos.Respuesta0.Nombre : "")
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            @if (academicos != null && academicos.IdTecnicaEst == 1)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Técnicas de estudio que utiliza</label><br />
+                                        @(academicos != null ? academicos.TecnicaEst : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Técnicas de estudio que utiliza</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer"><div class="row"><div class="col-md-12">&nbsp;</div></div></div>
+            </div>
+            <!-- ====== /ASPECTOS ACADÉMICOS ====== -->
+            <!-- ====== ASPECTOS PERSONALES ====== -->
+            <div class="panel panel-default" style="background-color:white;">
+                <div class="panel-heading" style="text-align:center;">
+                    <div class="row"><div class="col-md-12"><h2>Aspectos Personales</h2></div></div>
+                </div>
+                <div class="panel-body"></div>
+                <div class="row">
+                    <div class="col-md-12 col-md-push-1">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Está casado?</label><br />
+                                    @((personales != null && personales.Respuesta4 != null) ? personales.Respuesta4.Nombre : "")
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Tiene hijos?</label><br />
+                                    @((personales != null && personales.Respuesta5 != null) ? personales.Respuesta5.Nombre : "")
+                                </div>
+                            </div>
+
+                            @if (personales != null && personales.IdHijo == 1)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Cantidad de hijos</label><br />
+                                        @(personales != null ? personales.CantidadHijo : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Cantidad de hijos</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Padece alguna enfermedad?</label><br />
+                                    @((personales != null && personales.Respuesta6 != null) ? personales.Respuesta6.Nombre : "")
+                                </div>
+                            </div>
+
+                            @if (personales != null && personales.IdEnfermedad == 1)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Especifica</label><br />
+                                        @(personales != null ? personales.Especifica : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Especifica</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Fuma?</label><br />
+                                    @((personales != null && personales.Respuesta7 != null) ? personales.Respuesta7.Nombre : "")
+                                </div>
+                            </div>
+
+                            @if (personales != null && personales.IdFuma == 1)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Cantidad y frecuencia</label><br />
+                                        @(personales != null ? personales.CantidadFuma : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Cantidad y frecuencia</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Ingiere bebidas alcohólicas?</label><br />
+                                    @((personales != null && personales.Respuesta8 != null) ? personales.Respuesta8.Nombre : "")
+                                </div>
+                            </div>
+
+                            @if (personales != null && personales.IdBebida == 1)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Cantidad y frecuencia</label><br />
+                                        @(personales != null ? personales.CantidadBedida : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Cantidad y frecuencia</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>En tu familia has observado que hay</label><br />
+                                    @((personales != null && personales.Observacio != null) ? personales.Observacio.Nombre : "")
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Has pensado que la vida no tiene sentido?</label><br />
+                                    @((personales != null && personales.Respuesta9 != null) ? personales.Respuesta9.Nombre : "")
+                                </div>
+                            </div>
+
+                            @if (personales != null && personales.IdVidaSinSentido == 1)
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>¿Por qué?</label><br />
+                                        @(personales != null ? personales.Porque : "")
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>¿Por qué?</label><br />N/A
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>¿El apoyo de tu familia es adecuado cuando tienes un problema?</label><br />
+                                    @(personales != null ? personales.ApoyoFamiliaEnProblemas : "")
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Por qué?</label><br />
+                                    @(personales != null ? personales.ApoyoFamiliaEnProblemasPorque : "")
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>¿Los problemas económicos de tu familia te desconcentran?</label><br />
+                                    @(personales != null ? personales.ProblemasEconomicosFamilia : "")
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>¿Por qué?</label><br />
+                                    @(personales != null ? personales.ProblemasEconomicosFamiliaPorque : "")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer"><div class="row"><div class="col-md-12">&nbsp;</div></div></div>
+            </div>
+            <!-- ====== /ASPECTOS PERSONALES ====== -->
+            <!-- ====== SECCIÓN TUTOR ====== -->
+            <div class="panel panel-default" style="background-color:white;">
+                <div class="panel-heading" style="text-align:center;">
+                    <div class="row"><div class="col-md-12"><h2>Sección a ser llenada por el Tutor del Grupo</h2></div></div>
+                </div>
+
+                <div class="panel-body"></div>
+                <div class="row">
+                    <div class="col-md-12 col-md-push-1">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row"><div class="col-md-12"><h4 style="text-align:center;">Resultados del Exani</h4></div></div>
+
+                                <div class="row">
+                                    <div class="col-lg-6"><h5 style="text-align:center;">Área</h5></div>
+                                    <div class="col-lg-6"><h5 style="text-align:center;">Nivel de desempeño</h5></div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        @Html.EditorFor(model => model.Area1, new { htmlAttributes = new { @class = "form-control", placeholder = "Área 1" } })
+                                        @Html.ValidationMessageFor(model => model.Area1, "", new { @class = "text-danger" })
+                                    </div>
+                                    <div class="col-lg-6">
+                                        @Html.EditorFor(model => model.NivelDesempeño1, new { htmlAttributes = new { @class = "form-control", placeholder = "Nivel de desempeño 1" } })
+                                        @Html.ValidationMessageFor(model => model.NivelDesempeño1, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        @Html.EditorFor(model => model.Area2, new { htmlAttributes = new { @class = "form-control", placeholder = "Área 2" } })
+                                        @Html.ValidationMessageFor(model => model.Area2, "", new { @class = "text-danger" })
+                                    </div>
+                                    <div class="col-lg-6">
+                                        @Html.EditorFor(model => model.NivelDesempeño2, new { htmlAttributes = new { @class = "form-control", placeholder = "Nivel de desempeño 2" } })
+                                        @Html.ValidationMessageFor(model => model.NivelDesempeño2, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        @Html.EditorFor(model => model.Area3, new { htmlAttributes = new { @class = "form-control", placeholder = "Área 3" } })
+                                        @Html.ValidationMessageFor(model => model.Area3, "", new { @class = "text-danger" })
+                                    </div>
+                                    <div class="col-lg-6">
+                                        @Html.EditorFor(model => model.NivelDesempeño3, new { htmlAttributes = new { @class = "form-control", placeholder = "Nivel de desempeño 3" } })
+                                        @Html.ValidationMessageFor(model => model.NivelDesempeño3, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        @Html.EditorFor(model => model.Area4, new { htmlAttributes = new { @class = "form-control", placeholder = "Área 4" } })
+                                        @Html.ValidationMessageFor(model => model.Area4, "", new { @class = "text-danger" })
+                                    </div>
+                                    <div class="col-lg-6">
+                                        @Html.EditorFor(model => model.NivelDesempeño4, new { htmlAttributes = new { @class = "form-control", placeholder = "Nivel de desempeño 4" } })
+                                        @Html.ValidationMessageFor(model => model.NivelDesempeño4, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6">
+                                <br /><br />
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <h5>Resultado de la Evaluación Psicométrica</h5>
+                                        @Html.EditorFor(model => model.EvaluacionPsicometrica, new { htmlAttributes = new { @class = "form-control", placeholder = "Resultados Psicométricos" } })
+                                        @Html.ValidationMessageFor(model => model.EvaluacionPsicometrica, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row"><div class="col-md-10"><hr /></div></div>
+
+                        <div class="row">
+                            <div class="col-md-10">
+                                <h4>Resultado de examen propedéutico</h4>
+                                <p>10-Autónomo, 9-Destacado, 8-Satisfactorio y 7-Deficiente</p>
+                                <p>De 2 a 3 dependientes, con un salario mensual de $2,500 a $5,000, se considera vulnerable</p>
+                                <p>De 4 a 8 dependientes, con un ingreso de $6,000 a $8,000, se considera vulnerable</p>
+
+                                <p>
+                                    De acuerdo a la información obtenida en los aspectos anteriores, ¿Se considera al alumno vulnerable?
+                                    @Html.DropDownList("IdVulnerable", null, "Elija una opción", htmlAttributes: new { @class = "form-control" })
+                                    @Html.ValidationMessageFor(model => model.IdVulnerable, "", new { @class = "text-danger" })
+                                </p>
+                                <p>
+                                    Seleccione el grupo en que se considera  al alumno como vulnerable.
+                                    @Html.DropDownList("IdEleccionVunerabilidad", null, "Elija una opcion", htmlAttributes: new { @class = "form-control" })
+                                    @Html.ValidationMessageFor(model => model.IdEleccionVunerabilidad, "", new { @class = "text-danger" })
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-footer">
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="col-md-10">
+                                <input type="submit" value="Guardar" class="btn btn-default" />
+                            </div>
+                        </div>
+                        <div class="col-md-12">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+            <!-- ====== /SECCIÓN TUTOR ====== -->
+        </div> <!-- /.entrevista-detalles -->
+    }
+
+    <a class="btn btn-primary" href="@Url.Action("Grupo", new { id = ViewBag.id })" role="button">
+        <span class="glyphicon glyphicon-arrow-left"></span>
+        Regresar
+    </a>
+
+    @if (!string.IsNullOrEmpty(ViewBag.Mensaje))
+    {
+        <script type="text/javascript">
+        alert("@ViewBag.Mensaje");
+        </script>
+    }
+</div>
+    @section Scripts {
+        <script src="~/ViewsStyles/Master/sga-theme.js"></script>
+    }
