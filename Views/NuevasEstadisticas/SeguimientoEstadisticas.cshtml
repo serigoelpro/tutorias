@@ -525,22 +525,10 @@
         section.data-block.dash-colapsada .dash-chevron { transform:rotate(180deg); }
         section.data-block.dash-colapsada > *:not(.card-header):not(script):not(style),
         section.data-block.dash-colapsada > div:not(.card-header) { display:none !important; }
-        /* ===== Dashboard BI (Fase 1): grid sidebar + contenido ===== */
+        /* ===== Dashboard BI (Fase 1): full-bleed + re-estilizado de controles ===== */
         /* Full-bleed SOLO en esta página: el layout envuelve en .container (ancho fijo con
            márgenes blancos); este override vive en el <style> de la vista, no toca otras páginas. */
         .container.body-content { width:auto !important; max-width:none !important; padding-left:22px; padding-right:22px; }
-        .dash-grid { display:flex; gap:24px; align-items:flex-start; }
-        #dashSidebar { width:260px; flex:0 0 260px; position:sticky; top:60px; max-height:calc(100vh - 70px); overflow-y:auto; }
-        #dashMain { flex:1 1 auto; min-width:0; }
-        .dash-side-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:14px; overflow:hidden; }
-        .dash-side-head { background:linear-gradient(135deg,var(--dash-verde),var(--dash-verde-2)); color:#fff; font-size:12.5px; font-weight:700; letter-spacing:.5px; padding:9px 14px; }
-        .dash-side-head i { margin-right:7px; }
-        .dash-side-body { padding:12px 14px; }
-        .dash-side-nota { font-size:12.5px; color:#6b7280; margin:0 0 10px; }
-        .dash-btn-primario { display:block; width:100%; text-align:center; background:var(--dash-verde); color:#fff !important; border:none; border-radius:8px; padding:9px 12px; font-size:13px; font-weight:600; cursor:pointer; }
-        .dash-btn-primario:hover { background:var(--dash-verde-2); }
-        @@media (max-width: 992px) { .dash-grid { flex-direction:column; } #dashSidebar { position:static; width:100%; flex:1 1 auto; max-height:none; } }
-        /* ===== Dashboard BI (Fase 1): re-estilizado de controles ===== */
         .hist-menu { border-radius:10px !important; border:1px solid #e5e7eb !important; box-shadow:0 8px 24px rgba(0,0,0,.12) !important; }
         .hist-menu li a { font-size:12.5px; }
         #menuRapidoEstadisticas a, #menuRapidoEstadisticas .menu-rapido-pill { border-radius:999px; font-size:12.5px; }
@@ -549,18 +537,6 @@
         .data-block .btn-success:hover { background:var(--dash-verde-2); border-color:var(--dash-verde-2); }
         .data-block select.form-control, .data-block .form-select { border-radius:8px; border-color:#d6dade; }
         .corte-badge { border-radius:999px; }
-        /* ===== Dashboard BI (Fase 2): filtros del sidebar ===== */
-        .sb-filtro { margin-bottom:9px; }
-        .sb-filtro label { display:block; font-size:11.5px; font-weight:700; letter-spacing:.3px; color:#6b7280; text-transform:uppercase; margin-bottom:3px; }
-        .sb-filtro select { width:100%; border-radius:8px; border:1px solid #d6dade; font-size:12.5px; padding:5px 8px; }
-        .sb-btn-sec { display:block; width:100%; text-align:center; background:#fff; color:var(--dash-verde); border:1.5px solid var(--dash-verde); border-radius:8px; padding:7px 12px; font-size:12.5px; font-weight:600; cursor:pointer; margin-top:8px; }
-        .sb-btn-sec:hover { background:#e6f2ef; }
-        .sb-subtitulo { font-size:11px; font-weight:800; letter-spacing:.5px; color:#374151; margin:14px 0 6px; }
-        .sb-chip { display:inline-flex; align-items:center; gap:6px; background:#e6f2ef; color:#0b5345; border:1px solid #bfe0d8; border-radius:999px; padding:3px 10px; font-size:11.5px; font-weight:600; margin:0 6px 6px 0; }
-        .sb-chip button { background:none; border:none; color:#0b5345; cursor:pointer; font-size:12px; padding:0; line-height:1; }
-        .sb-consulta { display:flex; justify-content:space-between; align-items:center; gap:6px; background:#f6f7f8; border:1px solid #e5e7eb; border-radius:8px; padding:6px 10px; font-size:12px; margin-bottom:6px; }
-        .sb-consulta a { cursor:pointer; color:var(--dash-verde); font-weight:700; }
-        .sb-consulta button { background:none; border:none; color:#9ca3af; cursor:pointer; }
         /* ===== Dashboard BI (Fase 3): tarjetas KPI ===== */
         /* min 126px para que las 7 tarjetas quepan en una fila incluso en anchos chicos (Bajas no baja sola). */
         .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(114px, 1fr)); gap:10px; padding:14px 16px 4px; }
@@ -685,113 +661,7 @@
         });
     </script>
     <div class="container-fluid mt-4">
-        <div class="dash-grid">
-            <aside id="dashSidebar">
-                <div class="dash-side-card" id="sidebarFiltros">
-                    <div class="dash-side-head"><i class="fas fa-filter"></i> FILTROS GENERALES</div>
-                    <div class="dash-side-body">
-                        @{ int nivelSidebar = ViewBag.UsuarioNivel as int? ?? 0; }
-                        <div class="sb-filtro"><label>Año</label>
-                            <select id="sbAnio" class="form-control" data-label="Año">
-                                <option value="">Todos</option>
-                                @if (ViewBag.FiltroAnios != null) { foreach (int a in (List<int>)ViewBag.FiltroAnios) { <option value="@a">@a</option> } }
-                            </select></div>
-                        <div class="sb-filtro"><label>Mes</label>
-                            <select id="sbMes" class="form-control" data-label="Mes">
-                                <option value="">Todos</option>
-                                @if (ViewBag.NombresMeses != null) { foreach (var m in (Dictionary<int, string>)ViewBag.NombresMeses) { <option value="@m.Key">@m.Value</option> } }
-                            </select></div>
-                        @if (nivelSidebar == 4)
-                        {
-                            <div class="sb-filtro"><label>Carrera</label>
-                                <select id="sbCarrera" class="form-control" data-label="Carrera">
-                                    <option value="">Todas</option>
-                                    @if (ViewBag.CarrerasMaterias != null) { foreach (var c in (Dictionary<int, string>)ViewBag.CarrerasMaterias) { <option value="@c.Value">@c.Value</option> } }
-                                </select></div>
-                        }
-                        <div class="sb-filtro"><label>Especialidad</label>
-                            <select id="sbEspecialidad" class="form-control" data-label="Especialidad">
-                                <option value="">Todas</option>
-                                @if (ViewBag.Especialidades != null) { foreach (var e in (List<PlataformaWeb.BecasTransporte.Models.Especialidad>)ViewBag.Especialidades) { <option value="@e.Id">@e.Nombre</option> } }
-                            </select></div>
-                        <div class="sb-filtro"><label>Cuatrimestre (grado)</label>
-                            <select id="sbGrado" class="form-control" data-label="Grado">
-                                <option value="">Todos</option>
-                                @if (ViewBag.FiltroGrados != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrados) { <option value="@g.Key">@g.Value</option> } }
-                            </select></div>
-                        <div class="sb-filtro"><label>Grupo</label>
-                            <select id="sbGrupo" class="form-control" data-label="Grupo">
-                                <option value="">Todos</option>
-                                @if (ViewBag.FiltroGrupos != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrupos) { <option value="@g.Key">@g.Value</option> } }
-                            </select></div>
-                        <div class="sb-filtro"><label>Turno</label>
-                            <select id="sbTurno" class="form-control" data-label="Turno">
-                                <option value="">Todos</option>
-                                @if (ViewBag.FiltroTurnos != null) { foreach (var t in (Dictionary<int, string>)ViewBag.FiltroTurnos) { <option value="@t.Key">@t.Value</option> } }
-                            </select></div>
-                        <div class="sb-filtro"><label>Materia</label>
-                            <select id="sbMateria" class="form-control" data-label="Materia">
-                                <option value="">Todas</option>
-                                @if (ViewBag.FiltroMaterias != null) { foreach (string m in (List<string>)ViewBag.FiltroMaterias) { <option value="@m">@m</option> } }
-                            </select></div>
-                        <div class="sb-filtro"><label>Tipo de Reprobación</label>
-                            <select id="sbEstadoMateria" class="form-control" data-label="Tipo">
-                                <option value="">Todas</option>
-                                <option value="Reprobada">Solo Reprobadas (arrastre)</option>
-                                <option value="Extraordinario">Solo Extraordinario</option>
-                            </select></div>
-                        <div class="sb-filtro"><label>Número de Intento</label>
-                            <select id="sbIntentos" class="form-control" data-label="Intentos">
-                                <option value="">Todos</option>
-                                <option value="1">1er intento</option>
-                                <option value="2">2do intento</option>
-                                <option value="3+">3+ intentos</option>
-                            </select></div>
-                        <div class="sb-filtro"><label>Causa de Baja</label>
-                            <select id="sbCausaBaja" class="form-control" data-label="Causa">
-                                <option value="">Todas</option>
-                                @if (ViewBag.FiltroCausasBaja != null) { foreach (string c in (List<string>)ViewBag.FiltroCausasBaja) { <option value="@c">@c</option> } }
-                            </select></div>
-                        <div class="sb-filtro"><label>Sexo</label>
-                            <select id="sbSexo" class="form-control" data-label="Sexo">
-                                <option value="">Todos</option>
-                                <option value="H">Hombres</option>
-                                <option value="M">Mujeres</option>
-                            </select></div>
-                        <div class="sb-filtro"><label>Estatus</label>
-                            <select id="sbEstatus" class="form-control" data-label="Estatus">
-                                <option value="">Activos</option>
-                                <option value="1">Incluir bajas del periodo</option>
-                            </select></div>
-                        <button type="button" id="sbAplicar" class="dash-btn-primario" style="margin-top:10px;"><i class="fas fa-filter"></i> Aplicar Filtros</button>
-                        <button type="button" id="sbLimpiar" class="sb-btn-sec"><i class="fas fa-eraser"></i> Limpiar Filtros</button>
-                        <button type="button" id="sbGuardar" class="sb-btn-sec"><i class="fas fa-bookmark"></i> Guardar Consulta</button>
-                        <div id="sbChipsWrap" style="display:none;">
-                            <div class="sb-subtitulo">FILTROS ACTIVOS (<span id="sbChipsCount">0</span>)</div>
-                            <div id="sbChips"></div>
-                        </div>
-                        <div id="sbConsultasWrap" style="display:none;">
-                            <div class="sb-subtitulo">CONSULTAS GUARDADAS</div>
-                            <div id="sbConsultas"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="dash-side-card" id="sidebarInfo">
-                    <div class="dash-side-head"><i class="fas fa-circle-info"></i> INFORMACIÓN</div>
-                    <div class="dash-side-body">
-                        <p class="dash-side-nota">Última actualización:<br /><strong id="dashUltimaAct"></strong></p>
-                        <button type="button" id="btnExportarModulo" class="dash-btn-primario"
-                                title="Descarga un ZIP con los mismos archivos Excel que las exportaciones por sección (respeta filtros y toggles de bajas)">
-                            <i class="fas fa-file-export"></i> Exportar Dashboard
-                        </button>
-                        <button type="button" id="btnProgramarReporte" class="dash-btn-primario" style="margin-top:8px;">
-                            <i class="far fa-clock"></i> Programar Reporte
-                        </button>
-                    </div>
-                </div>
-            </aside>
-            <div id="dashMain">
-                <div class="card shadow-sm">
+        <div class="card shadow-sm">
                     @{
                         var incluirBajasActual = ViewBag.IncluirBajas as bool? ?? false;
                     }
@@ -956,7 +826,17 @@
                             }
 
                             @* Menu rapido sticky: accesos directos a cada seccion (se arma por JS segun lo que exista en el DOM) *@
-                            <nav id="menuRapidoEstadisticas" aria-label="Secciones"></nav>
+                            <nav id="menuRapidoEstadisticas" aria-label="Secciones">
+                                <span id="dashAccionesRapidas" style="display:flex; align-items:center; gap:8px; flex:0 0 auto; order:99;">
+                                    <span style="font-size:11px; color:#6b7280; white-space:nowrap;">Actualizado: <strong id="dashUltimaAct"></strong></span>
+                                    <button type="button" id="btnExportarModulo" class="btn btn-success btn-sm" title="Descarga un ZIP con los mismos archivos Excel que las exportaciones por sección (respeta filtros y toggles de bajas)">
+                                        <i class="fas fa-file-export"></i> Exportar
+                                    </button>
+                                    <button type="button" id="btnProgramarReporte" class="btn btn-default btn-sm" title="Programar Reporte">
+                                        <i class="far fa-clock"></i>
+                                    </button>
+                                </span>
+                            </nav>
                             <style>
                                 /* Compacto (pedido 2026-07-28): UNA fila con scroll horizontal si no caben. */
                                 #menuRapidoEstadisticas { position: sticky; top: 51px; z-index: 1500; background: #fff; padding: 7px 12px; margin: 8px 0 14px; border-radius: 0 0 10px 10px; display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; transition: box-shadow .15s; }
@@ -1050,180 +930,12 @@
         var u = document.getElementById('dashUltimaAct'); if (u) u.textContent = new Date().toLocaleString('es-MX');
     });
 </script>
+@*
+    Task 8 (2026-07-29): bloque DashFiltros (Fase 2 sidebar) eliminado junto con el aside#dashSidebar.
+    Los filtros por sección siguen funcionando de forma independiente; window.DashFiltros ya no existe.
+*@
 <script>
-    // Fase 2 dashboard: sidebar = control remoto de los filtros por seccion existentes.
-    // Task 2: DashFiltros — aplicar/limpiar en lote + chips.
-    $(function () {
-        // MAPA: espejo sidebar -> destinos reales.
-        // Carrera usa modo:'texto' (2 ViewBags distintos: Carreras vs CarrerasMaterias).
-        // #sbCarrera NO existe en nivel 3 — guards $s.length en todas las funciones.
-        // #anioFiltroCierre NO tiene opcion vacia — si sbAnio='' se omite (no se resetea a vacio).
-        var MAPA = [
-            { sb: '#sbAnio',          dest: ['#anioFiltroCierre'], modo: 'valor' },
-            { sb: '#sbMes',           dest: ['#mesFiltroVulnerabilidad', '#mesFiltroBajas'], modo: 'valor' },
-            { sb: '#sbCarrera',       dest: ['#carreraFiltroResumen', '#carreraFiltroCierre', '#carreraFiltro', '#carreraFiltroMaterias', '#carreraFiltroBajas'], modo: 'texto' },
-            { sb: '#sbEspecialidad',  dest: ['#especialidadFiltro', '#especialidadFiltroNivel', '#especialidadFiltroGrupos', '#especialidadFiltroMaterias'], modo: 'valor' },
-            { sb: '#sbGrado',         dest: ['#gradoFiltroResumen'], modo: 'valor' },
-            { sb: '#sbGrupo',         dest: ['#grupoFiltroResumen'], modo: 'valor' },
-            { sb: '#sbTurno',         dest: ['#turnoFiltroGrupos'], modo: 'valor' },
-            { sb: '#sbMateria',       dest: ['#materiaFiltroMaterias'], modo: 'valor' },
-            { sb: '#sbEstadoMateria', dest: ['#estadoFiltroMaterias'], modo: 'valor' },
-            { sb: '#sbIntentos',      dest: ['#intentosFiltroMaterias'], modo: 'valor' },
-            { sb: '#sbCausaBaja',     dest: ['#causaFiltroBajas'], modo: 'valor' },
-            { sb: '#sbSexo',          dest: [], modo: 'valor' },
-            { sb: '#sbEstatus',       dest: [], modo: 'valor' }
-        ];
-
-        // Setea un select destino al valor indicado.
-        // Para modo texto: busca option cuyo text() === valor (match exacto trimmed).
-        // Si valor==='' y el destino NO tiene option vacia (p.ej. #anioFiltroCierre), retorna false y NO modifica.
-        function setDestino($d, valor, modo) {
-            if (!$d.length || $d.prop('disabled')) return false;
-            if (modo === 'texto') {
-                if (valor === '') {
-                    // Resetear a opcion vacia si existe, si no saltar
-                    if ($d.find('option[value=""]').length) { $d.val(''); return true; }
-                    return false;
-                }
-                var opt = $d.find('option').filter(function () { return $(this).text().trim() === valor; }).first();
-                if (!opt.length) return false;
-                $d.val(opt.val());
-                return true;
-            }
-            // modo valor
-            if (valor === '') {
-                // Solo resetear si existe opcion vacia
-                if ($d.find('option[value=""]').length) { $d.val(''); return true; }
-                return false; // #anioFiltroCierre no tiene opcion vacia — no forzar
-            }
-            if (!$d.find('option[value="' + valor + '"]').length) return false;
-            $d.val(valor);
-            return true;
-        }
-
-        function valores() {
-            var v = {};
-            MAPA.forEach(function (m) { var $s = $(m.sb); if ($s.length) v[m.sb] = $s.val() || ''; });
-            return v;
-        }
-
-        function aplicar() {
-            var tocados = { cierre: false, vulnBajas: false, resumen: false, grupos: false, materias: false, bajas: false, nivel: false };
-            // Rastrear si Resumen recibio al menos un valor no-vacio (para evitar reload al limpiar)
-            var resumenConValor = false;
-            MAPA.forEach(function (m) {
-                var $sb = $(m.sb);
-                if (!$sb.length) return; // #sbCarrera no existe en nivel 3
-                var val = $sb.val() || '';
-                m.dest.forEach(function (sel) {
-                    var ok = setDestino($(sel), val, m.modo);
-                    if (!ok) return;
-                    if (sel === '#anioFiltroCierre' || sel === '#carreraFiltroCierre') tocados.cierre = true;
-                    if (sel === '#mesFiltroVulnerabilidad') tocados.vulnBajas = true;
-                    if (sel === '#mesFiltroBajas' || sel === '#carreraFiltroBajas' || sel === '#causaFiltroBajas') tocados.bajas = true;
-                    if (sel === '#carreraFiltroResumen' || sel === '#especialidadFiltro' || sel === '#gradoFiltroResumen' || sel === '#grupoFiltroResumen') {
-                        tocados.resumen = true;
-                        if (val !== '') resumenConValor = true;
-                    }
-                    if (sel === '#carreraFiltro' || sel === '#turnoFiltroGrupos' || sel === '#especialidadFiltroGrupos') tocados.grupos = true;
-                    // Nota: #sbMateria corregido — destino es #materiaFiltroMaterias (no el espejo #sbMateria)
-                    if (sel === '#carreraFiltroMaterias' || sel === '#especialidadFiltroMaterias' || sel === '#materiaFiltroMaterias' || sel === '#estadoFiltroMaterias' || sel === '#intentosFiltroMaterias') tocados.materias = true;
-                    if (sel === '#especialidadFiltroNivel') tocados.nivel = true;
-                });
-            });
-            // Sexo y Estatus (Task 4 2026-07-26): siempre afectan el Resumen directamente.
-            var sbSexoVal = $('#sbSexo').length ? ($('#sbSexo').val() || '') : '';
-            var sbEstatusVal = $('#sbEstatus').length ? ($('#sbEstatus').val() || '') : '';
-            if (sbSexoVal !== '' || sbEstatusVal !== '') {
-                tocados.resumen = true;
-                resumenConValor = true;
-            }
-            // Disparar handlers existentes — un solo disparo por seccion.
-            // GUARD Resumen: #aplicarFiltro llama location.reload() si todos sus valores son ''.
-            // Solo disparar si hubo al menos un valor no-vacio para Resumen; de lo contrario
-            // los selects ya quedaron en '' y el estado es "sin filtro" visualmente — recargar Resumen.
-            if (tocados.resumen) {
-                if (resumenConValor && $('#aplicarFiltro').length) {
-                    $('#aplicarFiltro').trigger('click');
-                } else if (!resumenConValor && window.aplicarFiltroResumen) {
-                    window.aplicarFiltroResumen(null, null, null, null, null);
-                }
-            }
-            if (tocados.vulnBajas && $('#aplicarFiltroVulnerabilidad').length) $('#aplicarFiltroVulnerabilidad').trigger('click');
-            if (tocados.nivel) $('#especialidadFiltroNivel').trigger('change');
-            if (tocados.cierre) $('#anioFiltroCierre').trigger('change');
-            if (tocados.grupos) $('#turnoFiltroGrupos').trigger('change');
-            if (tocados.materias) $('#materiaFiltroMaterias').trigger('change');
-            if (tocados.bajas) $('#causaFiltroBajas').trigger('change');
-            pintarChips();
-        }
-
-        function limpiar() {
-            MAPA.forEach(function (m) { var $s = $(m.sb); if ($s.length) $s.val(''); });
-            aplicar();
-        }
-
-        function quitar(sbId) { var $s = $(sbId); if ($s.length) $s.val(''); aplicar(); }
-
-        function setValores(v) {
-            Object.keys(v || {}).forEach(function (k) {
-                var $s = $(k);
-                if ($s.length && (v[k] === '' || $s.find('option[value="' + v[k] + '"]').length)) $s.val(v[k]);
-            });
-            aplicar();
-        }
-
-        function pintarChips() {
-            var $wrap = $('#sbChipsWrap'), $chips = $('#sbChips').empty(), n = 0;
-            MAPA.forEach(function (m) {
-                var $s = $(m.sb), val = $s.val();
-                if (!$s.length || !val) return;
-                n++;
-                var etiqueta = ($s.data('label') || m.sb) + ': ' + $s.find('option:selected').text().trim();
-                $('<span class="sb-chip"></span>').text(etiqueta)
-                    .append($('<button type="button" title="Quitar">&times;</button>').on('click', (function (id) { return function () { quitar(id); }; })(m.sb)))
-                    .appendTo($chips);
-            });
-            $('#sbChipsCount').text(n);
-            if ($wrap.length) $wrap.toggle(n > 0);
-        }
-
-        $('#sbAplicar').on('click', aplicar);
-        $('#sbLimpiar').on('click', limpiar);
-        MAPA.forEach(function (m) { $(m.sb).on('change', pintarChips); });
-
-        window.DashFiltros = { valores: valores, aplicar: aplicar, limpiar: limpiar, setValores: setValores };
-        pintarChips();
-
-        // Fase 2 Task 3: Guardar Consulta (localStorage)
-        var LSC = 'dashConsultas';
-        function consultas() { try { return JSON.parse(localStorage.getItem(LSC)) || []; } catch (e) { return []; } }
-        function pintarConsultas() {
-            var lista = consultas(), $w = $('#sbConsultasWrap'), $c = $('#sbConsultas').empty();
-            lista.forEach(function (q, i) {
-                var $row = $('<div class="sb-consulta"></div>');
-                $('<a></a>').text(q.nombre).attr('title', 'Aplicar esta consulta').on('click', function () { setValores(q.filtros); }).appendTo($row);
-                $('<button type="button" title="Borrar">&times;</button>').on('click', function () {
-                    lista.splice(i, 1); localStorage.setItem(LSC, JSON.stringify(lista)); pintarConsultas();
-                }).appendTo($row);
-                $c.append($row);
-            });
-            $w.toggle(lista.length > 0);
-        }
-        $('#sbGuardar').on('click', function () {
-            var v = valores(), activos = Object.keys(v).filter(function (k) { return v[k]; });
-            if (!activos.length) { alert('No hay filtros activos que guardar. Elige filtros primero.'); return; }
-            var nombre = prompt('Nombre para esta consulta:');
-            if (!nombre || !nombre.trim()) return;
-            var lista = consultas();
-            var idx = lista.findIndex(function (q) { return q.nombre === nombre.trim(); });
-            var item = { nombre: nombre.trim(), filtros: v };
-            if (idx >= 0) lista[idx] = item; else lista.push(item);
-            localStorage.setItem(LSC, JSON.stringify(lista));
-            pintarConsultas();
-        });
-        pintarConsultas();
-    });
+    // Task 8 (2026-07-29): DashFiltros eliminado con el sidebar. Ver comentario Razor arriba.
 </script>
 <script>
     // Fase 3 Task 3: KPIs en vivo (escuchando los AJAX que la pagina ya hace) + variacion anual.
@@ -1294,9 +1006,9 @@
                 pintarVariaciones();
             }, 'json').fail(function () { antCargado = true; kpisAnt = null; pintarVariaciones(); });
         }
-        // Disparo inicial: GetEstadisticasPorEspecialidad solo se llama automaticamente si hay
-        // filtros previos en localStorage (DashFiltros los restaura). Sin localStorage, el resumen
-        // viene renderizado desde el servidor pero no pasa por AJAX, por lo que las tarjetas
+        // Disparo inicial: GetEstadisticasPorEspecialidad se llama automaticamente via los filtros
+        // de cada seccion. Sin una llamada explicita aqui, el resumen inicial renderizado por el servidor
+        // no pasa por AJAX, por lo que las tarjetas
         // quedarian en "--". Se hace un $.post inicial aqui para garantizar la alimentacion
         // al cargar por primera vez o cuando no hay filtros guardados.
         if (!$('#seccionKpis .kpi-cifra').filter(function () { return $(this).text() !== '–'; }).length) {
@@ -2198,9 +1910,10 @@
                                                         @if (ViewBag.Especialidades != null)
                                                         {
                                                             var especialidades = ViewBag.Especialidades as List<PlataformaWeb.BecasTransporte.Models.Especialidad>;
+                                                            var espCarreraMapRes = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
                                                             foreach (var especialidad in especialidades)
                                                             {
-                                                                <option value="@especialidad.Id">@especialidad.Nombre</option>
+                                                                <option value="@especialidad.Id" data-carrera="@(espCarreraMapRes != null && espCarreraMapRes.ContainsKey(especialidad.Id) ? espCarreraMapRes[especialidad.Id] : "")">@especialidad.Nombre</option>
                                                             }
                                                         }
                                                     </select>
@@ -2287,9 +2000,10 @@
                                                         @if (ViewBag.Especialidades != null)
                                                         {
                                                             var especialidadesCoord = ViewBag.Especialidades as List<PlataformaWeb.BecasTransporte.Models.Especialidad>;
+                                                            var espCarreraMapCoord = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
                                                             foreach (var especialidad in especialidadesCoord)
                                                             {
-                                                                <option value="@especialidad.Id">@especialidad.Nombre</option>
+                                                                <option value="@especialidad.Id" data-carrera="@(espCarreraMapCoord != null && espCarreraMapCoord.ContainsKey(especialidad.Id) ? espCarreraMapCoord[especialidad.Id] : "")">@especialidad.Nombre</option>
                                                             }
                                                         }
                                                     </select>
@@ -2580,15 +2294,31 @@
                                         Estadísticas por Nivel de Estudio
                                     </h3>
                                     <div class="d-flex gap-2">
+                                        @if ((ViewBag.UsuarioNivel as int? ?? 0) == 4)
+                                        {
+                                            <select id="carreraFiltroNivel" class="form-select form-select-sm" style="width:auto; max-width:220px;" title="Filtrar por carrera">
+                                                <option value="">Todas las carreras</option>
+                                                @if (ViewBag.Carreras != null) { foreach (var c in (Dictionary<int, string>)ViewBag.Carreras) { <option value="@c.Key">@c.Value</option> } }
+                                            </select>
+                                        }
                                         <select id="especialidadFiltroNivel" class="form-select form-select-sm" style="width:auto; max-width:260px;" title="Filtrar por especialidad">
                                             <option value="">Todas las especialidades</option>
                                             @if (ViewBag.Especialidades != null)
                                             {
+                                                var espCarreraMapNivel = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
                                                 foreach (var espN in (List<PlataformaWeb.BecasTransporte.Models.Especialidad>)ViewBag.Especialidades)
                                                 {
-                                                    <option value="@espN.Id">@espN.Nombre</option>
+                                                    <option value="@espN.Id" data-carrera="@(espCarreraMapNivel != null && espCarreraMapNivel.ContainsKey(espN.Id) ? espCarreraMapNivel[espN.Id] : "")">@espN.Nombre</option>
                                                 }
                                             }
+                                        </select>
+                                        <select id="gradoFiltroNivel" class="form-select form-select-sm" style="width:auto;" title="Filtrar por cuatrimestre (grado)">
+                                            <option value="">Todos los grados</option>
+                                            @if (ViewBag.FiltroGrados != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrados) { <option value="@g.Key">@g.Value</option> } }
+                                        </select>
+                                        <select id="grupoFiltroNivel" class="form-select form-select-sm" style="width:auto;" title="Filtrar por grupo">
+                                            <option value="">Todos los grupos</option>
+                                            @if (ViewBag.FiltroGrupos != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrupos) { <option value="@g.Key">@g.Value</option> } }
                                         </select>
                                         <button type="button" class="btn btn-outline-secondary btn-sm" id="btnBajasNivel" onclick="toggleIncluirBajas('Nivel', this)" title="Incluir bajas en el conteo">
                                             <i class="fas fa-user-slash me-1"></i>
@@ -2883,6 +2613,23 @@
                                                 }
                                             </select>
                                         }
+                                        <select id="especialidadFiltroCierre" class="form-select form-select-sm" style="width:auto; max-width:240px;" title="Filtrar por especialidad">
+                                            <option value="">Todas las especialidades</option>
+                                            @if (ViewBag.Especialidades != null) {
+                                                var espCarreraMapCierre = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
+                                                foreach (var e in (List<PlataformaWeb.BecasTransporte.Models.Especialidad>)ViewBag.Especialidades) {
+                                                    <option value="@e.Id" data-carrera="@(espCarreraMapCierre != null && espCarreraMapCierre.ContainsKey(e.Id) ? espCarreraMapCierre[e.Id] : "")">@e.Nombre</option>
+                                                }
+                                            }
+                                        </select>
+                                        <select id="gradoFiltroCierre" class="form-select form-select-sm" style="width:auto;" title="Filtrar por cuatrimestre (grado)">
+                                            <option value="">Todos los grados</option>
+                                            @if (ViewBag.FiltroGrados != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrados) { <option value="@g.Key">@g.Value</option> } }
+                                        </select>
+                                        <select id="grupoFiltroCierre" class="form-select form-select-sm" style="width:auto;" title="Filtrar por grupo">
+                                            <option value="">Todos los grupos</option>
+                                            @if (ViewBag.FiltroGrupos != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrupos) { <option value="@g.Key">@g.Value</option> } }
+                                        </select>
                                         <button type="button" class="btn btn-outline-secondary btn-sm" id="btnBajasCierre" onclick="toggleIncluirBajas('Cierre', this)" title="Incluir bajas en el conteo">
                                             <i class="fas fa-user-slash me-1"></i>
                                             Incluir Bajas
@@ -2947,6 +2694,23 @@
                                             Estadísticas por Carrera
                                         </h3>
                                         <div class="d-flex gap-2">
+                                            <select id="especialidadFiltroCarreras" class="form-select form-select-sm" style="width:auto; max-width:240px;" title="Filtrar por especialidad">
+                                                <option value="">Todas las especialidades</option>
+                                                @if (ViewBag.Especialidades != null) {
+                                                    var espCarreraMapCarreras = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
+                                                    foreach (var e in (List<PlataformaWeb.BecasTransporte.Models.Especialidad>)ViewBag.Especialidades) {
+                                                        <option value="@e.Id" data-carrera="@(espCarreraMapCarreras != null && espCarreraMapCarreras.ContainsKey(e.Id) ? espCarreraMapCarreras[e.Id] : "")">@e.Nombre</option>
+                                                    }
+                                                }
+                                            </select>
+                                            <select id="gradoFiltroCarreras" class="form-select form-select-sm" style="width:auto;" title="Filtrar por cuatrimestre (grado)">
+                                                <option value="">Todos los grados</option>
+                                                @if (ViewBag.FiltroGrados != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrados) { <option value="@g.Key">@g.Value</option> } }
+                                            </select>
+                                            <select id="grupoFiltroCarreras" class="form-select form-select-sm" style="width:auto;" title="Filtrar por grupo">
+                                                <option value="">Todos los grupos</option>
+                                                @if (ViewBag.FiltroGrupos != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrupos) { <option value="@g.Key">@g.Value</option> } }
+                                            </select>
                                             <button type="button" class="btn btn-outline-secondary btn-sm" id="btnBajasCarrera" onclick="toggleIncluirBajas('Carrera', this)" title="Incluir bajas en el conteo">
                                                 <i class="fas fa-user-slash me-1"></i>
                                                 Incluir Bajas
@@ -3054,11 +2818,16 @@
                                                     <option value="">Todas las especialidades</option>
                                                     @if (ViewBag.Especialidades != null)
                                                     {
+                                                        var espCarreraMapGrupos = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
                                                         foreach (var espG in (List<PlataformaWeb.BecasTransporte.Models.Especialidad>)ViewBag.Especialidades)
                                                         {
-                                                            <option value="@espG.Id">@espG.Nombre</option>
+                                                            <option value="@espG.Id" data-carrera="@(espCarreraMapGrupos != null && espCarreraMapGrupos.ContainsKey(espG.Id) ? espCarreraMapGrupos[espG.Id] : "")">@espG.Nombre</option>
                                                         }
                                                     }
+                                                </select>
+                                                <select id="gradoFiltroGrupos" class="form-select form-select-sm" style="width:auto;" title="Filtrar por cuatrimestre (grado)">
+                                                    <option value="">Todos los grados</option>
+                                                    @if (ViewBag.FiltroGrados != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrados) { <option value="@g.Key">@g.Value</option> } }
                                                 </select>
                                                 <div class="hist-wrap" style="position:relative; display:inline-block;">
                                                     <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistGrupo" title="Ver un corte histórico de esta sección">
@@ -3282,6 +3051,23 @@
                                                                 }
                                                             </select>
                                                         }
+                                                        <select id="especialidadFiltroBajas" class="form-select form-select-sm" style="width:auto; max-width:240px;" title="Filtrar por especialidad">
+                                                            <option value="">Todas las especialidades</option>
+                                                            @if (ViewBag.Especialidades != null) {
+                                                                var espCarreraMapBajas = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
+                                                                foreach (var e in (List<PlataformaWeb.BecasTransporte.Models.Especialidad>)ViewBag.Especialidades) {
+                                                                    <option value="@e.Id" data-carrera="@(espCarreraMapBajas != null && espCarreraMapBajas.ContainsKey(e.Id) ? espCarreraMapBajas[e.Id] : "")">@e.Nombre</option>
+                                                                }
+                                                            }
+                                                        </select>
+                                                        <select id="gradoFiltroBajas" class="form-select form-select-sm" style="width:auto;" title="Filtrar por cuatrimestre (grado)">
+                                                            <option value="">Todos los grados</option>
+                                                            @if (ViewBag.FiltroGrados != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrados) { <option value="@g.Key">@g.Value</option> } }
+                                                        </select>
+                                                        <select id="grupoFiltroBajas" class="form-select form-select-sm" style="width:auto;" title="Filtrar por grupo">
+                                                            <option value="">Todos los grupos</option>
+                                                            @if (ViewBag.FiltroGrupos != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrupos) { <option value="@g.Key">@g.Value</option> } }
+                                                        </select>
                                                         <span id="rotuloHistBajas" class="badge bg-warning text-dark" style="display:none;"></span>
                                                         <div class="hist-wrap" style="position:relative; display:inline-block;">
                                                             <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistBajas" title="Ver un corte histórico de esta sección">
@@ -3514,11 +3300,20 @@
                                         <option value="">Todas las especialidades</option>
                                         @if (ViewBag.Especialidades != null)
                                         {
+                                            var espCarreraMapMaterias = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
                                             foreach (var espM in (List<PlataformaWeb.BecasTransporte.Models.Especialidad>)ViewBag.Especialidades)
                                             {
-                                                <option value="@espM.Id">@espM.Nombre</option>
+                                                <option value="@espM.Id" data-carrera="@(espCarreraMapMaterias != null && espCarreraMapMaterias.ContainsKey(espM.Id) ? espCarreraMapMaterias[espM.Id] : "")">@espM.Nombre</option>
                                             }
                                         }
+                                    </select>
+                                    <select id="gradoFiltroMaterias" class="form-select form-select-sm" style="width:auto;" title="Filtrar por cuatrimestre (grado)">
+                                        <option value="">Todos los grados</option>
+                                        @if (ViewBag.FiltroGrados != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrados) { <option value="@g.Key">@g.Value</option> } }
+                                    </select>
+                                    <select id="grupoFiltroMaterias" class="form-select form-select-sm" style="width:auto;" title="Filtrar por grupo">
+                                        <option value="">Todos los grupos</option>
+                                        @if (ViewBag.FiltroGrupos != null) { foreach (var g in (Dictionary<int, string>)ViewBag.FiltroGrupos) { <option value="@g.Key">@g.Value</option> } }
                                     </select>
                                     <span id="rotuloHistMaterias" class="badge bg-warning text-dark" style="display:none;"></span>
                                     <span id="modoHostMaterias"></span>
@@ -3578,8 +3373,6 @@
                         </section>
                     </div>
                 </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -4085,13 +3878,14 @@
             var $tbody = $('#tbodyNivelEstudio');
             $tbody.html('<tr><td colspan="10" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando...</td></tr>');
 
-            // Filtro de especialidad (solo en vivo; en historico el snapshot es agregado).
-            $('#especialidadFiltroNivel').prop('disabled', !!corteId)
-                .attr('title', corteId ? 'Filtro disponible solo en vivo' : 'Filtrar por especialidad');
+            // Filtros (solo en vivo; en historico el snapshot es agregado).
+            $('#especialidadFiltroNivel, #carreraFiltroNivel, #gradoFiltroNivel, #grupoFiltroNivel').prop('disabled', !!corteId)
+                .attr('title', corteId ? 'Filtro disponible solo en vivo' : '');
+            $('#especialidadFiltroNivel').attr('title', corteId ? 'Filtro disponible solo en vivo' : 'Filtrar por especialidad');
             $.ajax({
                 url: '@Url.Action("GetEstadisticasPorNivelEstudio", "NuevasEstadisticas")',
                 type: 'POST',
-                data: { incluirBajas: incluirBajasNivel, corteId: corteId || null, especialidadId: (corteId ? null : ($('#especialidadFiltroNivel').val() || null)) },
+                data: { incluirBajas: incluirBajasNivel, corteId: corteId || null, especialidadId: (corteId ? null : ($('#especialidadFiltroNivel').val() || null)), carreraId: (corteId ? null : ($('#carreraFiltroNivel').val() || null)), gradoId: (corteId ? null : ($('#gradoFiltroNivel').val() || null)), grupoId: (corteId ? null : ($('#grupoFiltroNivel').val() || null)) },
                 success: function(r) {
                     if (!r.success) { $tbody.html('<tr><td colspan="10" class="text-center text-danger">Error: ' + r.error + '</td></tr>'); return; }
                     var d = r.data;
@@ -4121,7 +3915,7 @@
             });
         }
 
-        $(function () { $('#especialidadFiltroNivel').on('change', function () { cargarNivelEstudio(); }); });
+        $(function () { $('#especialidadFiltroNivel, #carreraFiltroNivel, #gradoFiltroNivel, #grupoFiltroNivel').on('change', function () { cargarNivelEstudio(); }); });
 
         function cargarCarreras(corteId, _retry) {
             if (typeof dtCarreras !== 'undefined' && dtCarreras !== null) {
@@ -4131,10 +3925,12 @@
             var $tbody = $('#tablaCarreras tbody');
             $tbody.html('<tr><td colspan="10" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando...</td></tr>');
 
+            $('#especialidadFiltroCarreras, #gradoFiltroCarreras, #grupoFiltroCarreras').prop('disabled', !!corteId)
+                .attr('title', corteId ? 'Filtro disponible solo en vivo' : '');
             $.ajax({
                 url: '@Url.Action("GetEstadisticasPorCarrera", "NuevasEstadisticas")',
                 type: 'POST',
-                data: { incluirBajas: incluirBajasCarrera, corteId: corteId || null },
+                data: { incluirBajas: incluirBajasCarrera, corteId: corteId || null, especialidadId: (corteId ? null : ($('#especialidadFiltroCarreras').val() || null)), gradoId: (corteId ? null : ($('#gradoFiltroCarreras').val() || null)), grupoId: (corteId ? null : ($('#grupoFiltroCarreras').val() || null)) },
                 success: function(r) {
                     if (!r.success) { $tbody.html('<tr><td colspan="10" class="text-center text-danger">Error: ' + r.error + '</td></tr>'); return; }
                     if (window.ModoEstadisticas) ModoEstadisticas.datos('carrera', r.data);
@@ -4171,6 +3967,8 @@
                 }
             });
         }
+
+        $(function () { $('#especialidadFiltroCarreras, #gradoFiltroCarreras, #grupoFiltroCarreras').on('change', function () { cargarCarreras(null); }); });
 
         $(document).ready(function () {
             // Corte manual de emergencia (solo Master): modal de confirmación propio,
@@ -4334,13 +4132,13 @@
                 }
             }
             inicializarDataTableGrupos();
-            $('#turnoFiltroGrupos, #especialidadFiltroGrupos').on('change', function () { window.cargarEstadisticasGrupos(null); });
+            $('#turnoFiltroGrupos, #especialidadFiltroGrupos, #gradoFiltroGrupos').on('change', function () { window.cargarEstadisticasGrupos(null); });
 
             window.cargarEstadisticasGrupos = function(corteId, _retry) {
                 var $tbody = $('#tablaGrupos tbody');
                 if (!$tbody.length) return;
                 // Filtros solo en vivo (el snapshot historico es agregado).
-                $('#turnoFiltroGrupos, #especialidadFiltroGrupos').prop('disabled', !!corteId)
+                $('#turnoFiltroGrupos, #especialidadFiltroGrupos, #gradoFiltroGrupos').prop('disabled', !!corteId)
                     .attr('title', corteId ? 'Filtro disponible solo en vivo' : '');
                 $tbody.html('<tr><td colspan="14" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando grupos...</td></tr>');
                 $.ajax({
@@ -4350,7 +4148,8 @@
                         carreraId: $('#carreraFiltro').val() || null,
                         corteId: corteId || null,
                         turnoId: (corteId ? null : ($('#turnoFiltroGrupos').val() || null)),
-                        especialidadId: (corteId ? null : ($('#especialidadFiltroGrupos').val() || null))
+                        especialidadId: (corteId ? null : ($('#especialidadFiltroGrupos').val() || null)),
+                        gradoId: (corteId ? null : ($('#gradoFiltroGrupos').val() || null))
                     },
                     success: function(r) {
                         if (!r.success) {
@@ -4796,7 +4595,7 @@
             function cargarEstadisticasCierreCuatrimestres(corteId) {
                 var añoActual = parseInt($('#anioFiltroCierre').val() || '@DateTime.Now.Year', 10);
                 // Filtros solo en vivo (el snapshot historico es agregado).
-                $('#anioFiltroCierre, #carreraFiltroCierre').prop('disabled', !!corteId)
+                $('#anioFiltroCierre, #carreraFiltroCierre, #especialidadFiltroCierre, #gradoFiltroCierre, #grupoFiltroCierre').prop('disabled', !!corteId)
                     .attr('title', corteId ? 'Filtro disponible solo en vivo' : '');
 
                 $.ajax({
@@ -4806,7 +4605,10 @@
                         año: corteId ? @DateTime.Now.Year : añoActual,
                         incluirBajas: incluirBajasCierre,
                         corteId: corteId || null,
-                        carreraId: (corteId ? null : ($('#carreraFiltroCierre').val() || null))
+                        carreraId: (corteId ? null : ($('#carreraFiltroCierre').val() || null)),
+                        especialidadId: (corteId ? null : ($('#especialidadFiltroCierre').val() || null)),
+                        gradoId: (corteId ? null : ($('#gradoFiltroCierre').val() || null)),
+                        grupoId: (corteId ? null : ($('#grupoFiltroCierre').val() || null))
                     },
                     success: function(response) {
                         console.log('Respuesta estadísticas cierre cuatrimestres:', response);
@@ -4823,7 +4625,7 @@
                 });
             }
 
-            $('#anioFiltroCierre, #carreraFiltroCierre').on('change', function () { cargarEstadisticasCierreCuatrimestres(null); });
+            $('#anioFiltroCierre, #carreraFiltroCierre, #especialidadFiltroCierre, #gradoFiltroCierre, #grupoFiltroCierre').on('change', function () { cargarEstadisticasCierreCuatrimestres(null); });
 
             function actualizarTablaCierreCuatrimestres(datos) {
                 if (window.ModoEstadisticas) ModoEstadisticas.datos('cierre', datos);
@@ -5455,7 +5257,7 @@
 
         function cargarBajas(corteId) {
             // Filtros solo en vivo (el snapshot historico es agregado).
-            $('#causaFiltroBajas, #mesFiltroBajas, #carreraFiltroBajas').prop('disabled', !!corteId)
+            $('#causaFiltroBajas, #mesFiltroBajas, #carreraFiltroBajas, #especialidadFiltroBajas, #gradoFiltroBajas, #grupoFiltroBajas').prop('disabled', !!corteId)
                 .attr('title', corteId ? 'Filtro disponible solo en vivo' : '');
             $.ajax({
                 url: '@Url.Action("GetEstadisticasBajas", "NuevasEstadisticas")',
@@ -5464,13 +5266,16 @@
                     corteId: corteId || null,
                     causa: (corteId ? null : ($('#causaFiltroBajas').val() || null)),
                     mes: (corteId ? null : ($('#mesFiltroBajas').val() || null)),
-                    carreraId: (corteId ? null : ($('#carreraFiltroBajas').val() || null))
+                    carreraId: (corteId ? null : ($('#carreraFiltroBajas').val() || null)),
+                    especialidadId: (corteId ? null : ($('#especialidadFiltroBajas').val() || null)),
+                    gradoId: (corteId ? null : ($('#gradoFiltroBajas').val() || null)),
+                    grupoId: (corteId ? null : ($('#grupoFiltroBajas').val() || null))
                 },
                 success: function (r) { if (r && r.success) renderBajas(r.data); },
                 error: function () { /* dejar las graficas actuales */ }
             });
         }
-        $(function () { $('#causaFiltroBajas, #mesFiltroBajas, #carreraFiltroBajas').on('change', function () { cargarBajas(null); }); });
+        $(function () { $('#causaFiltroBajas, #mesFiltroBajas, #carreraFiltroBajas, #especialidadFiltroBajas, #gradoFiltroBajas, #grupoFiltroBajas').on('change', function () { cargarBajas(null); }); });
 
         // Función para inicializar gráficas de PATs
         function inicializarGraficasPATs() {
@@ -5925,7 +5730,7 @@
             window.cargarMaterias = function (corteId, _retry) {
                 corteMateriasActual = corteId || null;
                 // Filtros de la seccion (solo en vivo; el snapshot historico es agregado).
-                $('#especialidadFiltroMaterias, #materiaFiltroMaterias, #estadoFiltroMaterias, #intentosFiltroMaterias').prop('disabled', !!corteId)
+                $('#especialidadFiltroMaterias, #materiaFiltroMaterias, #estadoFiltroMaterias, #intentosFiltroMaterias, #gradoFiltroMaterias, #grupoFiltroMaterias').prop('disabled', !!corteId)
                     .attr('title', corteId ? 'Filtro disponible solo en vivo' : '');
                 $.ajax({
                     url: '@Url.Action("GetEstadisticasMaterias", "NuevasEstadisticas")',
@@ -5937,6 +5742,8 @@
                         materiaNombre: (corteId ? null : ($('#materiaFiltroMaterias').val() || null)),
                         estado: (corteId ? null : ($('#estadoFiltroMaterias').val() || null)),
                         intentos: (corteId ? null : ($('#intentosFiltroMaterias').val() || null)),
+                        gradoId: (corteId ? null : ($('#gradoFiltroMaterias').val() || null)),
+                        grupoId: (corteId ? null : ($('#grupoFiltroMaterias').val() || null)),
                         agruparPor: ($('#agruparPorMaterias').length && !corteId) ? ($('#agruparPorMaterias').val() || 'materia') : 'materia'
                     },
                     success: function (r) {
@@ -6052,7 +5859,7 @@
             };
             window.cargarMaterias(null);
             $('#carreraFiltroMaterias').on('change', function () { window.cargarMaterias(corteMateriasActual); });
-            $('#especialidadFiltroMaterias, #materiaFiltroMaterias, #estadoFiltroMaterias, #intentosFiltroMaterias').on('change', function () { window.cargarMaterias(corteMateriasActual); });
+            $('#especialidadFiltroMaterias, #materiaFiltroMaterias, #estadoFiltroMaterias, #intentosFiltroMaterias, #gradoFiltroMaterias, #grupoFiltroMaterias').on('change', function () { window.cargarMaterias(corteMateriasActual); });
             $('#agruparPorMaterias').on('change', function () {
                 // En modo carrera, los filtros por materia/especialidad no aplican — deshabilitarlos visualmente
                 var esCarrera = $(this).val() === 'carrera';
@@ -6185,5 +5992,39 @@
                 error: function () { $('#tendMensaje').text('Error de conexión al cargar las tendencias.').show(); $('#tendGraficas').hide(); }
             });
         });
+    </script>
+    <script>
+        // Cascada carrera -> especialidad (2026-07-29). Compara por TEXTO normalizado porque
+        // los selects de carrera usan 2 espacios de IDs (area vs Tutorias) pero los nombres coinciden.
+        (function () {
+            function normTxt(s) {
+                return (s || '').toString().normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toUpperCase();
+            }
+            window.initCascadaEspecialidad = function (carreraSelId, espSelId) {
+                var $car = $(carreraSelId), $esp = $(espSelId);
+                if (!$car.length || !$esp.length) return;
+                $car.on('change', function () {
+                    var carNombre = normTxt($car.find('option:selected').text());
+                    var esTodas = !$car.val();
+                    var limpiado = false;
+                    $esp.find('option').each(function () {
+                        var $o = $(this);
+                        if (!$o.attr('value')) { $o.show(); return; } // "Todas"
+                        var visible = esTodas || normTxt($o.data('carrera')) === carNombre;
+                        $o.toggle(visible);
+                        if (!visible && $o.is(':selected')) { $esp.val(''); limpiado = true; }
+                    });
+                    if (limpiado) $esp.trigger('change');
+                });
+            };
+            $(function () {
+                window.initCascadaEspecialidad('#carreraFiltroResumen', '#especialidadFiltro');
+                window.initCascadaEspecialidad('#carreraFiltroNivel', '#especialidadFiltroNivel');
+                window.initCascadaEspecialidad('#carreraFiltroCierre', '#especialidadFiltroCierre');
+                window.initCascadaEspecialidad('#carreraFiltro', '#especialidadFiltroGrupos');
+                window.initCascadaEspecialidad('#carreraFiltroMaterias', '#especialidadFiltroMaterias');
+                window.initCascadaEspecialidad('#carreraFiltroBajas', '#especialidadFiltroBajas');
+            });
+        })();
     </script>
 }

@@ -1392,6 +1392,12 @@ namespace Plataforma_Web.Controllers
                 ViewBag.Especialidades = especialidades;
                 ViewBag.Carreras = catalogoCarreras;
 
+                // Cascada carrera->especialidad (2026-07-29): nombre de la carrera (Tutorias) de cada especialidad.
+                var carrerasTutoriasNombres = db.Carreras.ToDictionary(c => c.IdCarrera, c => c.Nombre);
+                ViewBag.EspecialidadCarrera = especialidades.ToDictionary(
+                    e => e.Id,
+                    e => carrerasTutoriasNombres.ContainsKey(e.IdCarrera) ? (carrerasTutoriasNombres[e.IdCarrera] ?? "") : "");
+
                 // Catálogo para el filtro de Materias Reprobadas: IDs de Tutorias.Carreras (los que usa
                 // GetEstadisticasMaterias vía dp.IdCarrera), NO los IDs de área de ViewBag.Carreras.
                 ViewBag.CarrerasMaterias = db.Carreras
@@ -1697,7 +1703,7 @@ namespace Plataforma_Web.Controllers
 
         // Obtener estadísticas por cierre de cuatrimestres (todos los períodos)
         [HttpPost]
-        public ActionResult GetEstadisticasPorCierreCuatrimestres(int? año = null, bool incluirBajas = false, int? corteId = null, int? carreraId = null)
+        public ActionResult GetEstadisticasPorCierreCuatrimestres(int? año = null, bool incluirBajas = false, int? corteId = null, int? carreraId = null, int? especialidadId = null, int? gradoId = null, int? grupoId = null)
         {
             try
             {
@@ -1755,6 +1761,11 @@ namespace Plataforma_Web.Controllers
                     if (matriculasBaja.Any())
                         alumnosMatriculas = alumnosMatriculas.Where(m => !matriculasBaja.Contains(m)).ToList();
                 }
+
+                // Filtros por seccion (2026-07-29): especialidad + grado/grupo.
+                if (especialidadId.HasValue)
+                    alumnosMatriculas = FiltrarMatriculasPorEspecialidad(alumnosMatriculas, especialidadId.Value);
+                alumnosMatriculas = FiltrarMatriculasPorGrupoGrado(alumnosMatriculas, grupoId, gradoId);
 
                 // Reinicio por corte: restringir la poblacion a alumnos con actividad posterior al corte.
                 var _activasPostCorte = ObtenerMatriculasActivasPostCorte();
@@ -1898,7 +1909,7 @@ namespace Plataforma_Web.Controllers
 
         // Método adicional para obtener estadísticas por carrera
         [HttpPost]
-        public ActionResult GetEstadisticasPorCarrera(bool incluirBajas = false, int? corteId = null)
+        public ActionResult GetEstadisticasPorCarrera(bool incluirBajas = false, int? corteId = null, int? especialidadId = null, int? gradoId = null, int? grupoId = null)
         {
             try
             {
@@ -1944,6 +1955,11 @@ namespace Plataforma_Web.Controllers
                     if (matriculasBaja.Any())
                         alumnosMatriculas = alumnosMatriculas.Where(m => !matriculasBaja.Contains(m)).ToList();
                 }
+
+                // Filtros por seccion (2026-07-29): especialidad + grado/grupo.
+                if (especialidadId.HasValue)
+                    alumnosMatriculas = FiltrarMatriculasPorEspecialidad(alumnosMatriculas, especialidadId.Value);
+                alumnosMatriculas = FiltrarMatriculasPorGrupoGrado(alumnosMatriculas, grupoId, gradoId);
 
                 // Reinicio por corte: restringir la poblacion a alumnos con actividad posterior al corte.
                 var _activasPostCorte = ObtenerMatriculasActivasPostCorte();
@@ -2000,7 +2016,7 @@ namespace Plataforma_Web.Controllers
 
         // Método para obtener estadísticas por nivel de estudio (TSU / Ingeniería / Licenciatura) vía AJAX
         [HttpPost]
-        public ActionResult GetEstadisticasPorNivelEstudio(bool incluirBajas = false, int? corteId = null, int? especialidadId = null)
+        public ActionResult GetEstadisticasPorNivelEstudio(bool incluirBajas = false, int? corteId = null, int? especialidadId = null, int? carreraId = null, int? gradoId = null, int? grupoId = null)
         {
             try
             {
@@ -2028,6 +2044,11 @@ namespace Plataforma_Web.Controllers
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
                 if (idAreaCoordinador.HasValue)
                     alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == idAreaCoordinador.Value);
+                else if (carreraId.HasValue && usuario.IdNivel == 4)
+                {
+                    // Filtro de carrera para Master (filtros por seccion 2026-07-29); IDs de AREA como ViewBag.Carreras.
+                    alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == carreraId.Value);
+                }
 
                 var alumnosMatriculas = alumnosQuery
                     .Select(a => a.Matricula)
@@ -2066,6 +2087,9 @@ namespace Plataforma_Web.Controllers
                         alumnosMatriculas = alumnosMatriculas.Where(m => hashEsp.Contains(m)).ToList();
                     }
                 }
+
+                // Filtros por seccion (2026-07-29): grado (cuatrimestre) y grupo (letra).
+                alumnosMatriculas = FiltrarMatriculasPorGrupoGrado(alumnosMatriculas, grupoId, gradoId);
 
                 // Reinicio por corte: restringir la poblacion a alumnos con actividad posterior al corte.
                 var _activasPostCorte = ObtenerMatriculasActivasPostCorte();
@@ -2496,7 +2520,7 @@ namespace Plataforma_Web.Controllers
         }
 
         [HttpPost]
-        public ActionResult GetEstadisticasPorGrupo(int? carreraId = null, int? corteId = null, int? turnoId = null, int? especialidadId = null)
+        public ActionResult GetEstadisticasPorGrupo(int? carreraId = null, int? corteId = null, int? turnoId = null, int? especialidadId = null, int? gradoId = null)
         {
             try
             {
@@ -2547,6 +2571,10 @@ namespace Plataforma_Web.Controllers
                             && NormalizarSinAcentos(g.Especialidad.Trim()).Equals(espGrupoNorm, StringComparison.OrdinalIgnoreCase)).ToList();
                     }
                 }
+
+                // Filtro por grado/cuatrimestre (2026-07-29): IdGrado del grupo, mismo espacio que ViewBag.FiltroGrados.
+                if (gradoId.HasValue)
+                    estadisticasGrupos = estadisticasGrupos.Where(g => g.IdGrado == gradoId.Value).ToList();
 
                 var data = estadisticasGrupos.Select(g => new
                 {
@@ -3647,6 +3675,48 @@ namespace Plataforma_Web.Controllers
             public EstadisticasVulnerabilidad Vulnerabilidades { get; set; }
             public string NombreEspecialidad { get; set; }
             public string NombreCarrera { get; set; }
+        }
+
+        // Filtro por especialidad del alumno (texto libre dp.Especialidad vs catalogo Especialidads),
+        // patron NormalizarSinAcentos ya usado en Resumen/Nivel/Materias. Extraido 2026-07-29.
+        private List<string> FiltrarMatriculasPorEspecialidad(List<string> matriculas, int especialidadId)
+        {
+            var esp = tutoriasDb.Especialidads.Find(especialidadId);
+            if (esp == null || string.IsNullOrEmpty(esp.Nombre)) return matriculas;
+            string espNorm = NormalizarSinAcentos(esp.Nombre.Trim());
+            var hash = new HashSet<string>(matriculas, StringComparer.OrdinalIgnoreCase);
+            var matsEsp = tutoriasDb.DatosPersonales
+                .Where(dp => dp.Matricula != null && dp.Especialidad != null)
+                .Select(dp => new { dp.Matricula, dp.Especialidad })
+                .ToList()
+                .Where(dp => hash.Contains(NormalizarMatricula(dp.Matricula))
+                          && NormalizarSinAcentos(dp.Especialidad.Trim()).Equals(espNorm, StringComparison.OrdinalIgnoreCase))
+                .Select(dp => NormalizarMatricula(dp.Matricula))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var hashEsp = new HashSet<string>(matsEsp, StringComparer.OrdinalIgnoreCase);
+            return matriculas.Where(m => hashEsp.Contains(m)).ToList();
+        }
+
+        // Filtro por grupo (letra) y/o grado (cuatrimestre) sobre el registro MAS RECIENTE de
+        // DatosPersonales de cada matricula. Misma logica que ObtenerPoblacionResumen (~L3726).
+        private List<string> FiltrarMatriculasPorGrupoGrado(List<string> matriculas, int? grupoId, int? gradoId)
+        {
+            if (!grupoId.HasValue && !gradoId.HasValue) return matriculas;
+            var hashPobl = new HashSet<string>(matriculas, StringComparer.OrdinalIgnoreCase);
+            var dpGrupo = tutoriasDb.DatosPersonales
+                .Where(dp => dp.Matricula != null)
+                .Select(dp => new { dp.Matricula, dp.IdGrupo, dp.IdGrado, Fecha = (DateTime?)dp.Fecha })
+                .ToList()
+                .Where(dp => !string.IsNullOrWhiteSpace(dp.Matricula) && hashPobl.Contains(dp.Matricula.Trim()))
+                .GroupBy(dp => dp.Matricula.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.OrderByDescending(x => x.Fecha ?? DateTime.MinValue).First())
+                .Where(dp => (!grupoId.HasValue || dp.IdGrupo == grupoId.Value)
+                          && (!gradoId.HasValue || dp.IdGrado == gradoId.Value))
+                .Select(dp => dp.Matricula.Trim())
+                .ToList();
+            var hashGrupo = new HashSet<string>(dpGrupo, StringComparer.OrdinalIgnoreCase);
+            return matriculas.Where(m => hashGrupo.Contains(m)).ToList();
         }
 
         // Poblacion base del Resumen Detallado (padron filtrado por rol/carrera/bajas/especialidad/post-corte).
@@ -4883,7 +4953,7 @@ namespace Plataforma_Web.Controllers
 
         // Método AJAX para obtener estadísticas de bajas bajo demanda
         [HttpPost]
-        public ActionResult GetEstadisticasBajas(int? corteId = null, string causa = null, int? mes = null, int? carreraId = null)
+        public ActionResult GetEstadisticasBajas(int? corteId = null, string causa = null, int? mes = null, int? carreraId = null, int? especialidadId = null, int? gradoId = null, int? grupoId = null)
         {
             try
             {
@@ -4898,7 +4968,7 @@ namespace Plataforma_Web.Controllers
                 int? carreraIdFiltro = (usuario != null && usuario.IdNivel == 3)
                     ? (int?)usuario.IdCarrera
                     : ((usuario != null && usuario.IdNivel == 4) ? carreraId : null);
-                var estadisticasBajas = CalcularEstadisticasBajas(carreraIdFiltro, causa, mes);
+                var estadisticasBajas = CalcularEstadisticasBajas(carreraIdFiltro, causa, mes, especialidadId, gradoId, grupoId);
                 return Json(new { success = true, data = estadisticasBajas });
             }
             catch (Exception ex)
@@ -5017,7 +5087,7 @@ namespace Plataforma_Web.Controllers
 
         // Método para calcular estadísticas de bajas
         // El parámetro carreraId representa el IdCarrera proveniente del módulo de Tutorias
-        private EstadisticaBaja CalcularEstadisticasBajas(int? carreraId = null, string causa = null, int? mes = null)
+        private EstadisticaBaja CalcularEstadisticasBajas(int? carreraId = null, string causa = null, int? mes = null, int? especialidadId = null, int? gradoId = null, int? grupoId = null)
         {
             try
             {
@@ -5036,7 +5106,7 @@ namespace Plataforma_Web.Controllers
                 var queryBajas = from b in db.Bajas
                                  join p in db.DatosPersonales on b.IdPersona equals p.IdPersona
                                  join c in db.Carreras on p.IdCarrera equals c.IdCarrera
-                                 select new { Baja = b, CarreraNombre = c.Nombre, IdCarrera = p.IdCarrera };
+                                 select new { Baja = b, CarreraNombre = c.Nombre, IdCarrera = p.IdCarrera, p.Especialidad, p.IdGrado, p.IdGrupo };
 
                 // Si se especifica una carrera, filtrar por ella (usando IdCarrera de Tutorias)
                 if (carreraId.HasValue)
@@ -5052,6 +5122,22 @@ namespace Plataforma_Web.Controllers
                 queryBajas = queryBajas.Where(x => x.Baja.Fecha >= limiteInferiorBajas && x.Baja.Fecha <= periodoBajas.Fin);
 
                 var bajasConCarrera = queryBajas.ToList();
+
+                // Filtros por seccion (2026-07-29): especialidad (texto vs catalogo), grado y grupo del alumno.
+                if (especialidadId.HasValue)
+                {
+                    var espBaja = tutoriasDb.Especialidads.Find(especialidadId.Value);
+                    if (espBaja != null && !string.IsNullOrEmpty(espBaja.Nombre))
+                    {
+                        string espBajaNorm = NormalizarSinAcentos(espBaja.Nombre.Trim());
+                        bajasConCarrera = bajasConCarrera.Where(x => !string.IsNullOrWhiteSpace(x.Especialidad)
+                            && NormalizarSinAcentos(x.Especialidad.Trim()).Equals(espBajaNorm, StringComparison.OrdinalIgnoreCase)).ToList();
+                    }
+                }
+                if (gradoId.HasValue)
+                    bajasConCarrera = bajasConCarrera.Where(x => x.IdGrado == gradoId.Value).ToList();
+                if (grupoId.HasValue)
+                    bajasConCarrera = bajasConCarrera.Where(x => x.IdGrupo == grupoId.Value).ToList();
 
                 // Filtros por seccion (direccion 2026-07-16): causa (etiqueta canonica) y mes.
                 if (!string.IsNullOrWhiteSpace(causa))
@@ -5365,7 +5451,7 @@ namespace Plataforma_Web.Controllers
         // Requerimiento dirección 2026-07. incluirAlumnos=false para el snapshot del corte
         // (el histórico guarda el agregado, no el detalle nominal).
         [HttpPost]
-        public ActionResult GetEstadisticasMaterias(int? carreraId = null, int? corteId = null, bool incluirAlumnos = true, int? especialidadId = null, string materiaNombre = null, string estado = null, string intentos = null, string agruparPor = "materia")
+        public ActionResult GetEstadisticasMaterias(int? carreraId = null, int? corteId = null, bool incluirAlumnos = true, int? especialidadId = null, string materiaNombre = null, string estado = null, string intentos = null, string agruparPor = "materia", int? gradoId = null, int? grupoId = null)
         {
             try
             {
@@ -5450,6 +5536,18 @@ namespace Plataforma_Web.Controllers
                                   .ThenByDescending(x => x.Estado == "Extraordinario" ? 1 : 0)
                                   .First())
                     .ToList();
+
+                // Filtro por grado/grupo del alumno (2026-07-29): mismo helper de poblacion que las demas secciones.
+                if (gradoId.HasValue || grupoId.HasValue)
+                {
+                    var matsMaterias = filas.Select(f => NormalizarMatricula(f.Matricula))
+                        .Where(m => !string.IsNullOrEmpty(m))
+                        .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    var matsGG = new HashSet<string>(
+                        FiltrarMatriculasPorGrupoGrado(matsMaterias, grupoId, gradoId),
+                        StringComparer.OrdinalIgnoreCase);
+                    filas = filas.Where(f => matsGG.Contains(NormalizarMatricula(f.Matricula))).ToList();
+                }
 
                 // Filtros por seccion (direccion 2026-07-16): materia exacta, estado y nº de intentos.
                 if (!string.IsNullOrWhiteSpace(materiaNombre))
