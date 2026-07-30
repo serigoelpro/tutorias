@@ -1429,7 +1429,7 @@
                                         if (!materias || !materias.length) { if (nota) nota.textContent = 'Sin datos para graficar.'; return; }
                                         var orden = materias.slice().sort(function (a, b) { return (b.alumnosDistintos || 0) - (a.alumnosDistintos || 0); });
                                         var top = orden.slice(0, 15);
-                                        if (nota) nota.textContent = (orden.length > 15 ? ('Top 15 de ' + orden.length + ' materias por alumnos, con su distribución de intentos — cambia a modo tabla para ver todas.') : 'Distribución de intentos de extraordinario por materia.');
+                                        if (nota) nota.textContent = (orden.length > 15 ? ('Top 15 de ' + orden.length + ' materias con más alumnos en extraordinario o arrastre — cambia a modo tabla para ver todas.') : 'Alumnos en extraordinario o arrastre por materia.');
                                         _chMateriasTabla = new Chart(ctx, {
                                             type: 'bar',
                                             data: {
@@ -3068,7 +3068,6 @@
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div id="materiasResumen" style="margin-bottom: 10px; color:#555;"></div>
                                 <div class="chart-container" style="max-width: 900px; margin: 0 auto 15px auto; min-height: 380px;">
                                     <canvas id="chartMaterias"></canvas>
                                 </div>
@@ -3079,7 +3078,7 @@
                                 @* Materias en modo grafica: top-15 por alumnos (ancho completo) + fila de 3 compactas del
                                    mockup (top-10 por tasa %, dona de intentos, reprobadas vs extraordinario). *@
                                 <div class="modo-chart-wrap" id="chartWrapMateriasTabla" style="max-width:none; height:auto; padding:12px;">
-                                    <h4 class="dash-sub">Top 15 Materias por Alumnos (distribución de intentos)</h4>
+                                    <h4 class="dash-sub">Top 15 Materias con Más Alumnos en Extraordinario o Arrastre</h4>
                                     <div class="dash-canvas-wrap" style="height:420px;"><canvas id="chartModoMateriasTabla"></canvas></div>
                                     <small id="chartNotaMateriasTabla" style="display:block;text-align:center;color:#777;margin:4px 0 12px;"></small>
                                     <div class="dash-graf-row">
@@ -5489,7 +5488,7 @@
                     success: function (r) {
                         var $nd = $('#materiasNoDisponible'), $tb = $('#tablaMaterias tbody');
                         if (!r || !r.success) {
-                            $tb.empty(); $('#materiasResumen').empty();
+                            $tb.empty();
                             if (chartMaterias) { chartMaterias.destroy(); chartMaterias = null; }
                             $nd.toggle(!!(r && r.noDisponible));
                             $('#tablaMaterias').toggle(!(r && r.noDisponible));
@@ -5518,17 +5517,8 @@
                                 return ((m.carreraNombre || '').trim().toUpperCase()) === nombreFiltro;
                             });
                         }
-                        if (nombreFiltro) {
-                            // Sin detalle nominal en el snapshot: "alumnos" es suma por materia (aprox., puede contar
-                            // dos veces a un alumno con 2 materias).
-                            var sumaAlumnos = materias.reduce(function (s, m) { return s + (m.alumnosDistintos || 0); }, 0);
-                            $('#materiasResumen').text('Materias con reprobación: ' + materias.length +
-                                ' · Alumnos (suma por materia): ' + sumaAlumnos);
-                        } else {
-                            $('#materiasResumen').text(modoCarrera
-                                ? ('Carreras con reprobación: ' + materias.length + ' · Alumnos afectados: ' + (d.totalAlumnosAfectados || 0))
-                                : ('Materias con reprobación: ' + (d.totalMateriasDistintas || 0) + ' · Alumnos afectados: ' + (d.totalAlumnosAfectados || 0)));
-                        }
+                        // 2026-07-29: se elimino el subtitulo "Materias con reprobacion / Alumnos afectados"
+                        // (la directora no lo entendia).
 
                         var top = materias.slice(0, 10);
                         if (chartMaterias) chartMaterias.destroy();
