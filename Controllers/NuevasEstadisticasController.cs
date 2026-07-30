@@ -151,6 +151,22 @@ namespace Plataforma_Web.Controllers
             public string EspecialidadMateria { get; set; }
         }
 
+        // DTO para GetReprobadosDetalle (2026-07-29): detalle plano de registros reprobados/extraordinario
+        public class ReprobadoDetalleRow
+        {
+            public string NombreMateria { get; set; }
+            public string Matricula { get; set; }
+            public string NombreAlumno { get; set; }
+            public string Estado { get; set; }
+            public int IntentosExtraordinarios { get; set; }
+            public int IdCarrera { get; set; }
+            public string CarreraNombre { get; set; }
+            public string EspecialidadAlumno { get; set; }
+            public string EspecialidadMateria { get; set; }
+            public int? IdGrado { get; set; }
+            public int? IdGrupo { get; set; }
+        }
+
         // Cache estático para nombres de carreras (se carga una vez)
         private static Dictionary<int, string> _cacheNombresCarreras = null;
         private static object _lockCache = new object();
@@ -5622,6 +5638,111 @@ namespace Plataforma_Web.Controllers
                 };
 
                 return Json(new { success = true, data });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
+        // Detalle plano de registros reprobados/extraordinario para las secciones REPROBADOS,
+        // EXTRAORDINARIOS y la tabla de alumnos (2026-07-29). MISMA consulta y dedupe que
+        // GetEstadisticasMaterias (los numeros cuadran con esa seccion) + IdGrado/IdGrupo del
+        // registro de inscripcion. Sin snapshot de corte: seccion solo en vivo.
+        [HttpPost]
+        public ActionResult GetReprobadosDetalle(int? carreraId = null, int? especialidadId = null, int? gradoId = null, int? grupoId = null)
+        {
+            try
+            {
+                // Fail-closed nivel 3: solo SU carrera (usuario.IdCarrera esta en el espacio de
+                // Tutorias.Carreras, el mismo que dp.IdCarrera).
+                var usuarioSesion = Session["Usuario"] as Usuario;
+                if (usuarioSesion != null && usuarioSesion.IdNivel == 3)
+                {
+                    carreraId = usuarioSesion.IdCarrera;
+                }
+
+                db.Database.CommandTimeout = 300;
+
+                var consulta = @"
+                    SELECT
+                        m.Nombre               AS NombreMateria,
+                        dp.Matricula           AS Matricula,
+                        ISNULL(dp.Nombre, dp.Matricula) AS NombreAlumno,
+                        ma.Estado              AS Estado,
+                        ma.IntentosExtraordinarios AS IntentosExtraordinarios,
+                        dp.IdCarrera           AS IdCarrera,
+                        c.Nombre               AS CarreraNombre,
+                        dp.Especialidad        AS EspecialidadAlumno,
+                        e.Nombre               AS EspecialidadMateria,
+                        dp.IdGrado             AS IdGrado,
+                        dp.IdGrupo             AS IdGrupo
+                    FROM DatosPersonales dp
+                    INNER JOIN MateriasAlumno ma ON dp.IdPersona = ma.IdPersona
+                    INNER JOIN Materias m ON ma.IdMateria = m.IdMateria
+                    INNER JOIN Carreras c ON dp.IdCarrera = c.IdCarrera
+                    LEFT JOIN Especialidads e ON m.IdEspecialidad = e.Id
+                    WHERE ma.Estado IN ('Reprobada', 'Extraordinario')
+                      AND dp.Estado = 1
+                      AND m.IdCarrera = dp.IdCarrera";
+
+                List<ReprobadoDetalleRow> filas;
+                if (carreraId.HasValue)
+                {
+                    consulta += " AND dp.IdCarrera = @carreraId";
+                    filas = db.Database.SqlQuery<ReprobadoDetalleRow>(consulta,
+                        new System.Data.SqlClient.SqlParameter("@carreraId", carreraId.Value)).ToList();
+                }
+                else
+                {
+                    filas = db.Database.SqlQuery<ReprobadoDetalleRow>(consulta).ToList();
+                }
+
+                // Filtro por especialidad del ALUMNO (mismo patron que GetEstadisticasMaterias).
+                if (especialidadId.HasValue)
+                {
+                    var espDet = tutoriasDb.Especialidads.Find(especialidadId.Value);
+                    if (espDet != null && !string.IsNullOrEmpty(espDet.Nombre))
+                    {
+                        string espDetNorm = NormalizarSinAcentos(espDet.Nombre.Trim());
+                        filas = filas.Where(fx => !string.IsNullOrWhiteSpace(fx.EspecialidadAlumno)
+                            && NormalizarSinAcentos(fx.EspecialidadAlumno.Trim()).Equals(espDetNorm, StringComparison.OrdinalIgnoreCase)).ToList();
+                    }
+                }
+
+                // Filtro por grado/grupo del registro de inscripcion (mismo criterio que Bajas).
+                if (gradoId.HasValue)
+                    filas = filas.Where(fx => fx.IdGrado == gradoId.Value).ToList();
+                if (grupoId.HasValue)
+                    filas = filas.Where(fx => fx.IdGrupo == grupoId.Value).ToList();
+
+                // Dedupe por alumno+materia PREFIRIENDO la copia cuya especialidad coincide con la
+                // del alumno; sin match se conserva la fila mas avanzada (regla del profe, 2026-07-16).
+                filas = filas
+                    .GroupBy(f => new { Mat = (f.Matricula ?? "").ToUpperInvariant(), f.NombreMateria, f.CarreraNombre })
+                    .Select(g => g.OrderByDescending(x => !string.IsNullOrWhiteSpace(x.EspecialidadAlumno)
+                                                          && !string.IsNullOrWhiteSpace(x.EspecialidadMateria)
+                                                          && NormalizarSinAcentos(x.EspecialidadAlumno.Trim())
+                                                             .Equals(NormalizarSinAcentos(x.EspecialidadMateria.Trim()), StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+                                  .ThenByDescending(x => x.IntentosExtraordinarios)
+                                  .ThenByDescending(x => x.Estado == "Extraordinario" ? 1 : 0)
+                                  .First())
+                    .ToList();
+
+                var registros = filas.Select(f => new
+                {
+                    matricula = f.Matricula,
+                    nombreAlumno = f.NombreAlumno,
+                    materia = f.NombreMateria,
+                    estado = f.Estado,
+                    intentos = f.IntentosExtraordinarios,
+                    carreraNombre = f.CarreraNombre,
+                    especialidad = f.EspecialidadAlumno,
+                    idGrado = f.IdGrado,
+                    idGrupo = f.IdGrupo
+                }).ToList();
+
+                return Json(new { success = true, data = new { registros } });
             }
             catch (Exception ex)
             {

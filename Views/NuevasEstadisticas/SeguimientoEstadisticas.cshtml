@@ -642,6 +642,15 @@
             </div>
         </div>
     </div>
+    <div id="reprobAlumnoModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2000;">
+        <div style="background:#fff; border-radius:12px; max-width:640px; width:92%; margin:6vh auto 0; max-height:82vh; overflow:auto; box-shadow:0 20px 50px rgba(0,0,0,.35);">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #eef0f2;">
+                <strong id="reprobAlumnoModalTitulo" style="color:#1f2937;"></strong>
+                <button type="button" id="reprobAlumnoModalCerrar" class="btn btn-sm btn-default" title="Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="reprobAlumnoModalCuerpo" style="padding: 14px 20px;"></div>
+        </div>
+    </div>
     <div id="progRepOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:12px;max-width:420px;margin:auto;padding:0;box-shadow:0 10px 40px rgba(0,0,0,.25);">
             <div style="background:linear-gradient(135deg,var(--dash-verde),var(--dash-verde-2));color:#fff;border-radius:12px 12px 0 0;padding:12px 16px;font-weight:700;"><i class="far fa-clock"></i> Programar Reporte</div>
@@ -3110,6 +3119,114 @@
                                 </div>
                             </div>
                         </section>
+
+                        @* ===== REPROBADOS (2026-07-29): top-10 en vivo desde GetReprobadosDetalle ===== *@
+                        <section class="data-block" id="seccionReprobados">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
+                                <h3 class="section-title"><i class="fas fa-times-circle me-2"></i>Reprobados</h3>
+                                <div class="d-flex gap-2 align-items-center">
+                                    @{ var nivelUsuarioReprob = ViewBag.UsuarioNivel as int? ?? 0; }
+                                    @if (nivelUsuarioReprob == 4)
+                                    {
+                                        <select id="carreraFiltroReprob" class="form-select form-select-sm" style="width:auto; max-width:240px;" title="Filtrar por carrera">
+                                            <option value="">Todas las carreras</option>
+                                            @if (ViewBag.CarrerasMaterias != null)
+                                            {
+                                                foreach (var cr in (Dictionary<int, string>)ViewBag.CarrerasMaterias)
+                                                {
+                                                    <option value="@cr.Key">@cr.Value</option>
+                                                }
+                                            }
+                                        </select>
+                                    }
+                                    <select id="especialidadFiltroReprob" class="form-select form-select-sm" style="width:auto; max-width:240px;" title="Filtrar por especialidad">
+                                        <option value="">Todas las especialidades</option>
+                                        @if (ViewBag.Especialidades != null)
+                                        {
+                                            var espCarreraMapReprob = ViewBag.EspecialidadCarrera as Dictionary<int, string>;
+                                            foreach (var er in (List<PlataformaWeb.BecasTransporte.Models.Especialidad>)ViewBag.Especialidades)
+                                            {
+                                                <option value="@er.Id" data-carrera="@(espCarreraMapReprob != null && espCarreraMapReprob.ContainsKey(er.Id) ? espCarreraMapReprob[er.Id] : "")">@er.Nombre</option>
+                                            }
+                                        }
+                                    </select>
+                                    <select id="gradoFiltroReprob" class="form-select form-select-sm" style="width:auto;" title="Filtrar por cuatrimestre (grado)">
+                                        <option value="">Todos los grados</option>
+                                        @if (ViewBag.FiltroGrados != null) { foreach (var gr in (Dictionary<int, string>)ViewBag.FiltroGrados) { <option value="@gr.Key">@gr.Value</option> } }
+                                    </select>
+                                    <select id="grupoFiltroReprob" class="form-select form-select-sm" style="width:auto;" title="Filtrar por grupo">
+                                        <option value="">Todos los grupos</option>
+                                        @if (ViewBag.FiltroGrupos != null) { foreach (var gp in (Dictionary<int, string>)ViewBag.FiltroGrupos) { <option value="@gp.Key">@gp.Value</option> } }
+                                    </select>
+                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Estas secciones no guardan histórico de cortes">Sección en vivo</span>
+                                </div>
+                            </div>
+                            <div style="padding: 12px;">
+                                <div id="reprobCargando" class="text-muted" style="padding:8px;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+                                <div id="reprobError" class="alert alert-danger" style="display:none;"></div>
+                                <div class="dash-graf-row">
+                                    <div class="demo-graf-col"><h4 class="dash-sub">Top 10 Materias con Más Reprobados</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartReprobMaterias"></canvas></div></div>
+                                    @if (nivelUsuarioReprob == 4)
+                                    {
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Top 10 Carreras con Más Reprobados</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartReprobCarreras"></canvas></div></div>
+                                    }
+                                </div>
+                                <div class="dash-graf-row" style="margin-top:14px;">
+                                    <div class="demo-graf-col"><h4 class="dash-sub">Top 10 Especialidades con Más Reprobados</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartReprobEspecialidades"></canvas></div></div>
+                                    <div class="demo-graf-col"><h4 class="dash-sub">Top 10 Grupos con Más Reprobados</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartReprobGrupos"></canvas></div></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        @* ===== EXTRAORDINARIOS (2026-07-29): mismos datos, estado Extraordinario ===== *@
+                        <section class="data-block" id="seccionExtraordinarios">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
+                                <h3 class="section-title"><i class="fas fa-exclamation-circle me-2"></i>Extraordinarios</h3>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Usa los filtros de la sección Reprobados">Filtros: sección Reprobados · Sección en vivo</span>
+                                </div>
+                            </div>
+                            <div style="padding: 12px;">
+                                <div class="dash-graf-row">
+                                    <div class="demo-graf-col"><h4 class="dash-sub">Top 10 Materias con Más Extraordinarios</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartExtraMaterias"></canvas></div></div>
+                                    @if (nivelUsuarioReprob == 4)
+                                    {
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Top 10 Carreras con Más Extraordinarios</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartExtraCarreras"></canvas></div></div>
+                                    }
+                                </div>
+                                <div class="dash-graf-row" style="margin-top:14px;">
+                                    <div class="demo-graf-col"><h4 class="dash-sub">Top 10 Especialidades con Más Extraordinarios</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartExtraEspecialidades"></canvas></div></div>
+                                    <div class="demo-graf-col"><h4 class="dash-sub">Top 10 Grupos con Más Extraordinarios</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartExtraGrupos"></canvas></div></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        @* ===== ALUMNOS CON MATERIAS REPROBADAS (2026-07-29) ===== *@
+                        <section class="data-block" id="seccionAlumnosReprobados">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
+                                <h3 class="section-title"><i class="fas fa-user-graduate me-2"></i>Alumnos con Materias Reprobadas</h3>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Usa los filtros de la sección Reprobados">Filtros: sección Reprobados · Sección en vivo</span>
+                                </div>
+                            </div>
+                            <div style="padding: 12px;">
+                                <p class="text-muted" style="font-size:0.85rem;">Haz click en un alumno para ver sus materias reprobadas y en extraordinario.</p>
+                                <div class="table-responsive-lg">
+                                    <table id="tablaAlumnosReprobados" class="table table-striped table-hover" style="width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th>Alumno</th>
+                                                <th class="text-center">Grado y grupo</th>
+                                                <th class="text-center">Reprobadas</th>
+                                                <th class="text-center">Extraordinario</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+
                     </div>
                 </div>
     </div>
@@ -5757,4 +5874,150 @@
             });
         })();
     </script>
+<script>
+    // ===== REPROBADOS / EXTRAORDINARIOS / tabla de alumnos (2026-07-29) =====
+    // 1 POST a GetReprobadosDetalle; las 8 graficas top-10 y la tabla se derivan client-side.
+    $(function () {
+        var GRADOS = {};
+        var GRUPOS = {};
+        @if (ViewBag.FiltroGrados != null) { foreach (var gd in (Dictionary<int, string>)ViewBag.FiltroGrados) { @:GRADOS[@gd.Key] = '@Html.Raw(HttpUtility.JavaScriptStringEncode(gd.Value))';
+        } }
+        @if (ViewBag.FiltroGrupos != null) { foreach (var gu in (Dictionary<int, string>)ViewBag.FiltroGrupos) { @:GRUPOS[@gu.Key] = '@Html.Raw(HttpUtility.JavaScriptStringEncode(gu.Value))';
+        } }
+
+        var chartsRD = {};
+        function barTop10(canvasId, pares, color) {
+            var el = document.getElementById(canvasId);
+            if (!el || typeof Chart === 'undefined') return;
+            if (chartsRD[canvasId]) { chartsRD[canvasId].destroy(); delete chartsRD[canvasId]; }
+            chartsRD[canvasId] = new Chart(el.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: pares.map(function (p) { return p[0]; }),
+                    datasets: [{ label: 'Registros', data: pares.map(function (p) { return p[1]; }), backgroundColor: color }]
+                },
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { ticks: { precision: 0 } }, y: { ticks: { font: { size: 10 } } } }
+                }
+            });
+        }
+        function etiquetaGrupo(r) {
+            if (r.idGrado == null || r.idGrupo == null) return null;
+            var g = GRADOS[r.idGrado], l = GRUPOS[r.idGrupo];
+            if (g === undefined || l === undefined) return null;
+            return g + l;
+        }
+        function top10(regs, keyFn) {
+            var acc = {};
+            regs.forEach(function (r) {
+                var k = keyFn(r);
+                if (!k) return; // sin dato: fuera del top-10 (spec §3)
+                acc[k] = (acc[k] || 0) + 1;
+            });
+            return Object.keys(acc).map(function (k) { return [k, acc[k]]; })
+                .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 10);
+        }
+        function pintar(regs) {
+            var rep = regs.filter(function (r) { return r.estado === 'Reprobada'; });
+            var ext = regs.filter(function (r) { return r.estado === 'Extraordinario'; });
+            barTop10('chartReprobMaterias', top10(rep, function (r) { return r.materia; }), '#b3402e');
+            barTop10('chartReprobCarreras', top10(rep, function (r) { return r.carreraNombre; }), '#b3402e');
+            barTop10('chartReprobEspecialidades', top10(rep, function (r) { return (r.especialidad || '').trim() || null; }), '#b3402e');
+            barTop10('chartReprobGrupos', top10(rep, etiquetaGrupo), '#b3402e');
+            barTop10('chartExtraMaterias', top10(ext, function (r) { return r.materia; }), '#dba13a');
+            barTop10('chartExtraCarreras', top10(ext, function (r) { return r.carreraNombre; }), '#dba13a');
+            barTop10('chartExtraEspecialidades', top10(ext, function (r) { return (r.especialidad || '').trim() || null; }), '#dba13a');
+            barTop10('chartExtraGrupos', top10(ext, etiquetaGrupo), '#dba13a');
+            if (window.ReprobDetalle && window.ReprobDetalle.onDatos) window.ReprobDetalle.onDatos(regs); // tabla (Task 3)
+        }
+        var SELS = '#carreraFiltroReprob, #especialidadFiltroReprob, #gradoFiltroReprob, #grupoFiltroReprob';
+        function cargar(_retry) {
+            $('#reprobCargando').show(); $('#reprobError').hide(); $(SELS).prop('disabled', true);
+            $.ajax({
+                url: '@Url.Action("GetReprobadosDetalle", "NuevasEstadisticas")',
+                type: 'POST',
+                data: {
+                    carreraId: $('#carreraFiltroReprob').val() || null,
+                    especialidadId: $('#especialidadFiltroReprob').val() || null,
+                    gradoId: $('#gradoFiltroReprob').val() || null,
+                    grupoId: $('#grupoFiltroReprob').val() || null
+                },
+                success: function (r) {
+                    $('#reprobCargando').hide(); $(SELS).prop('disabled', false);
+                    if (!r || !r.success) {
+                        $('#reprobError').text('No se pudieron obtener los datos: ' + ((r && r.error) || 'error desconocido')).show();
+                        return;
+                    }
+                    window.ReprobDetalle.cache = (r.data && r.data.registros) || [];
+                    pintar(window.ReprobDetalle.cache);
+                },
+                error: function () {
+                    if (!_retry) { setTimeout(function () { cargar(true); }, 1500); return; } // reintento 1 vez (patron existente)
+                    $('#reprobCargando').hide(); $(SELS).prop('disabled', false);
+                    $('#reprobError').text('Error de conexión al cargar Reprobados/Extraordinarios.').show();
+                }
+            });
+        }
+        window.ReprobDetalle = { cache: [], cargar: cargar, etiquetaGrupo: etiquetaGrupo, onDatos: null };
+        $(SELS).on('change', function () { cargar(); });
+        if (window.initCascadaEspecialidad) window.initCascadaEspecialidad('#carreraFiltroReprob', '#especialidadFiltroReprob');
+        // Carga diferida 3s como las demas graficas (choque con DataTables init, regla del proyecto).
+        setTimeout(function () { if (document.getElementById('seccionReprobados')) cargar(); }, 3000);
+        // ===== Tabla de alumnos (Task 3) =====
+        var dtAlumnosReprob = null;
+        function escR(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        window.ReprobDetalle.onDatos = function (regs) {
+            var porAlumno = {};
+            regs.forEach(function (r) {
+                var k = (r.matricula || '').toUpperCase();
+                if (!k) return;
+                if (!porAlumno[k]) porAlumno[k] = { matricula: r.matricula, nombre: r.nombreAlumno || r.matricula, grupo: etiquetaGrupo(r), rep: 0, ext: 0, materias: [] };
+                if (r.estado === 'Reprobada') porAlumno[k].rep++;
+                else if (r.estado === 'Extraordinario') porAlumno[k].ext++;
+                porAlumno[k].materias.push(r);
+            });
+            var alumnos = Object.keys(porAlumno).map(function (k) { return porAlumno[k]; });
+            if ($.fn.dataTable.isDataTable('#tablaAlumnosReprobados')) { $('#tablaAlumnosReprobados').DataTable().destroy(); }
+            var $tb = $('#tablaAlumnosReprobados tbody').empty();
+            alumnos.forEach(function (a, i) {
+                $tb.append('<tr data-idx="' + i + '" style="cursor:pointer;">' +
+                    '<td>' + escR(a.nombre) + ' <small class="text-muted">(' + escR(a.matricula) + ')</small></td>' +
+                    '<td class="text-center">' + (a.grupo ? escR(a.grupo) : '—') + '</td>' +
+                    '<td class="text-center">' + a.rep + '</td>' +
+                    '<td class="text-center">' + a.ext + '</td></tr>');
+            });
+            window.ReprobDetalle._alumnos = alumnos;
+            dtAlumnosReprob = $('#tablaAlumnosReprobados').DataTable({
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
+                order: [[2, 'desc']],
+                pageLength: 10
+            });
+        };
+        $('#tablaAlumnosReprobados tbody').on('click', 'tr', function () {
+            var idx = $(this).data('idx');
+            var a = (window.ReprobDetalle._alumnos || [])[idx];
+            if (!a) return;
+            $('#reprobAlumnoModalTitulo').text(a.nombre + ' (' + a.matricula + ')' + (a.grupo ? ' · Grupo ' + a.grupo : ''));
+            function lista(estado, titulo, color) {
+                var items = a.materias.filter(function (m) { return m.estado === estado; });
+                if (!items.length) return '';
+                var h = '<h5 style="color:' + color + '; margin:10px 0 6px;">' + titulo + ' (' + items.length + ')</h5><ul style="margin:0 0 8px 18px; padding:0;">';
+                items.forEach(function (m) {
+                    h += '<li>' + escR(m.materia) + (m.intentos ? ' <small class="text-muted">— ' + m.intentos + ' intento(s) de extraordinario</small>' : '') + '</li>';
+                });
+                return h + '</ul>';
+            }
+            $('#reprobAlumnoModalCuerpo').html(
+                (lista('Reprobada', 'Reprobadas (arrastre)', '#b3402e') + lista('Extraordinario', 'En extraordinario', '#b26a00')) ||
+                '<p class="text-muted">Sin materias.</p>');
+            $('#reprobAlumnoModalOverlay').css('display', 'block');
+        });
+        function cerrarReprobModal() { $('#reprobAlumnoModalOverlay').hide(); }
+        $('#reprobAlumnoModalCerrar').on('click', cerrarReprobModal);
+        $('#reprobAlumnoModalOverlay').on('click', function (e) { if (e.target === this) cerrarReprobModal(); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#reprobAlumnoModalOverlay').is(':visible')) cerrarReprobModal(); });
+    });
+</script>
 }
