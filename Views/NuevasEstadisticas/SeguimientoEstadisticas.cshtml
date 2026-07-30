@@ -1021,57 +1021,10 @@
     });
 </script>
 <script>
-    // Fase 4: tasas por nivel, heatmap carrera×tipo, sexo×carrera, heatmap materia×carrera (client-side puro).
+    // Fase 4 (recortada 2026-07-29): quedan las graficas extra de Demografia y la apilada
+    // de Vulnerabilidad por carrera; se eliminaron tasas por nivel, heatmaps y sexo×carrera.
     $(function () {
         var charts = {};
-
-        // ── helpers ──────────────────────────────────────────────────────────────
-        function fmt1(v) { return Math.round(v * 10) / 10; }
-
-        function colorHeat(v, max) {
-            if (v === null || v === undefined || isNaN(v) || max === 0) return '';
-            var t = Math.max(0, Math.min(1, v / max));
-            // blanco (#fff) → #b3402e
-            var r = Math.round(255 + (224 - 255) * t);
-            var g = Math.round(255 + (91  - 255) * t);
-            var b = Math.round(255 + (75  - 255) * t);
-            return 'background:rgb(' + r + ',' + g + ',' + b + ');color:#1f2937;';
-        }
-
-        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-
-        function renderHeat(contId, columnas, filas) {
-            var $c = $('#' + contId); if (!$c.length) return;
-            if (!filas || !filas.length) { $c.html('<p class="text-muted small p-2">Sin datos.</p>'); return; }
-            // Calcular máximo global para escala de color
-            var maxV = 0;
-            filas.forEach(function (f) { f.celdas.forEach(function (c) { if (c.v !== null && c.v > maxV) maxV = c.v; }); });
-
-            var html = '<div style="overflow-x:auto;"><table class="dash-heat table table-bordered table-sm mb-1" style="font-size:0.78rem;min-width:300px;">';
-            html += '<thead><tr><th class="rowh" style="min-width:120px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></th>';
-            columnas.forEach(function (col) { html += '<th style="text-align:center;white-space:nowrap;">' + esc(col) + '</th>'; });
-            html += '</tr></thead><tbody>';
-            filas.forEach(function (f) {
-                html += '<tr><th class="rowh" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;" title="' + esc(f.nombre) + '">' + esc(f.nombre) + '</th>';
-                f.celdas.forEach(function (c) {
-                    if (c.v === null || c.v === undefined) {
-                        html += '<td style="text-align:center;color:#9ca3af;">–</td>';
-                    } else {
-                        var estilo = colorHeat(c.v, maxV);
-                        var titulo = c.abs ? ' title="' + esc(c.abs) + '"' : '';
-                        html += '<td style="text-align:center;' + estilo + '"' + titulo + '>' + fmt1(c.v) + '%</td>';
-                    }
-                });
-                html += '</tr>';
-            });
-            html += '</tbody></table></div>';
-            // Leyenda Bajo → Alto
-            html += '<div style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:#6b7280;margin-top:2px;">' +
-                '<span>Bajo</span>' +
-                '<div class="heat-barra" style="width:80px;height:10px;border-radius:3px;background:linear-gradient(to right,#ffffff,#b3402e);border:1px solid #e5e7eb;"></div>' +
-                '<span>Alto</span></div>';
-            $c.html(html);
-        }
 
         function barChart(canvasId, labels, datasets, opciones) {
             var el = document.getElementById(canvasId);
@@ -1084,162 +1037,7 @@
             });
         }
 
-        // ── render tasas por nivel ────────────────────────────────────────────────
-        function renderTasasNivel(d) {
-            if (!$('#tasasNivelWrap').length) return;
-            var niveles = [];
-            if (d.tsu && d.tsu.total)          niveles.push({ label: 'TSU',          n: d.tsu });
-            if (d.ingenieria && d.ingenieria.total)  niveles.push({ label: 'Ingeniería',   n: d.ingenieria });
-            if (d.licenciatura && d.licenciatura.total) niveles.push({ label: 'Licenciatura', n: d.licenciatura });
-            if (!niveles.length) return;
-
-            // Fila "Total" = suma de los niveles presentes
-            var tot = { total: 0, econ: 0, acad: 0, pers: 0, sinSeg: 0 };
-            niveles.forEach(function (item) {
-                tot.total  += (item.n.total  || 0);
-                tot.econ   += (item.n.econ   || 0);
-                tot.acad   += (item.n.acad   || 0);
-                tot.pers   += (item.n.pers   || 0);
-                tot.sinSeg += (item.n.sinSeg || 0);
-            });
-            var allLabels = niveles.map(function (x) { return x.label; }).concat(['Total']);
-
-            function tasaVuln(n) {
-                if (!n.total) return null;
-                return (n.econ + n.acad + n.pers) / n.total * 100;
-            }
-            function tasaSeg(n) {
-                if (!n.total) return null;
-                return (n.total - n.sinSeg) / n.total * 100;
-            }
-
-            var vulnData = niveles.map(function (x) { return tasaVuln(x.n); }).concat([tasaVuln(tot)]);
-            var segData  = niveles.map(function (x) { return tasaSeg(x.n); }).concat([tasaSeg(tot)]);
-
-            var optsBase = {
-                indexAxis: 'y',
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    x: { min: 0, max: 100, ticks: { callback: function (v) { return v + '%'; } } }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function (ctx) { return ' ' + fmt1(ctx.parsed.x) + '%'; }
-                        }
-                    },
-                    legend: { display: false }
-                }
-            };
-
-            barChart('chartTasaVuln', allLabels,
-                [{ label: 'Tasa de Vulnerabilidad', data: vulnData, backgroundColor: '#00695C' }],
-                optsBase);
-            barChart('chartTasaSeg', allLabels,
-                [{ label: 'Tasa de Seguimiento', data: segData, backgroundColor: '#00695C' }],
-                optsBase);
-        }
-
-        // ── render carrera: heatmap + sexo×carrera ────────────────────────────────
-        function renderCarrera(arr) {
-            if (!arr || !arr.length) return;
-
-            // ── Heatmap Carrera×Tipo ──────────────────────────────────────────────
-            if ($('#heatCarreraTipo').length) {
-                var colsTipo = ['Económica', 'Académica', 'Personal', 'Sin Seguimiento'];
-                var filasTipo = arr.map(function (c) {
-                    var cant = c.cantidad || 0;
-                    function pct(x) { return cant ? (x / cant * 100) : null; }
-                    return {
-                        nombre: c.nombre,
-                        celdas: [
-                            { v: cant ? pct(c.econ   || 0) : null, abs: cant ? ((c.econ   || 0) + ' de ' + cant) : null },
-                            { v: cant ? pct(c.acad   || 0) : null, abs: cant ? ((c.acad   || 0) + ' de ' + cant) : null },
-                            { v: cant ? pct(c.pers   || 0) : null, abs: cant ? ((c.pers   || 0) + ' de ' + cant) : null },
-                            { v: cant ? pct(c.sinSeg || 0) : null, abs: cant ? ((c.sinSeg || 0) + ' de ' + cant) : null }
-                        ]
-                    };
-                });
-                renderHeat('heatCarreraTipo', colsTipo, filasTipo);
-            }
-
-            // ── Sexo × Carrera (top-10 por cantidad, apilado) ────────────────────
-            if ($('#sexoCarreraWrap').length && $('#chartSexoCarrera').length) {
-                var top10 = arr.slice(0, 10);
-                var labelsCarr = top10.map(function (c) { return c.nombre; });
-                var dataH = top10.map(function (c) { return c.hombres || 0; });
-                var dataM = top10.map(function (c) { return c.mujeres || 0; });
-                barChart('chartSexoCarrera', labelsCarr,
-                    [
-                        { label: 'Hombres', data: dataH, backgroundColor: '#1f4e5f' },
-                        { label: 'Mujeres', data: dataM, backgroundColor: '#b56d8e' }
-                    ],
-                    {
-                        indexAxis: 'y',
-                        responsive: true, maintainAspectRatio: false,
-                        scales: {
-                            x: { stacked: true, ticks: { precision: 0 } },
-                            y: { stacked: true }
-                        },
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    label: function (ctx) { return ' ' + ctx.dataset.label + ': ' + ctx.parsed.x; }
-                                }
-                            }
-                        }
-                    });
-            }
-        }
-
-        // ── render heatmap materia×carrera ────────────────────────────────────────
-        function renderMaterias(materias) {
-            if (!$('#heatMateriaCarrera').length || !materias || !materias.length) return;
-            // Modo carrera: todas las filas tienen carreraNombre vacío → heatmap no tiene sentido; ocultarlo.
-            var todasSinCarrera = materias.every(function (m) { return !m.carreraNombre; });
-            var $heatWrap = $('#heatMateriaCarrera').closest('.dash-heat, [class*="col"], [id*="heat"]').addBack();
-            if (todasSinCarrera) { $('#heatMateriaCarrera').hide(); $('h4.dash-sub').filter(function(){ return $(this).text().indexOf('Mapa de Calor') >= 0; }).hide(); return; }
-            $('#heatMateriaCarrera').show(); $('h4.dash-sub').filter(function(){ return $(this).text().indexOf('Mapa de Calor') >= 0; }).show();
-
-            // Agrupar por materia → suma de reprobadas
-            var mapaMateria = {};
-            materias.forEach(function (m) {
-                var nom = m.nombreMateria || '(sin nombre)';
-                if (!mapaMateria[nom]) mapaMateria[nom] = { total: 0, carreras: {} };
-                mapaMateria[nom].total += (m.reprobadas || 0);
-                if (!mapaMateria[nom].carreras[m.carreraNombre]) {
-                    mapaMateria[nom].carreras[m.carreraNombre] = { reprobadas: 0, totalRegistros: 0 };
-                }
-                mapaMateria[nom].carreras[m.carreraNombre].reprobadas    += (m.reprobadas    || 0);
-                mapaMateria[nom].carreras[m.carreraNombre].totalRegistros += (m.totalRegistros || 0);
-            });
-
-            // Top-10 materias por suma de reprobadas
-            var sorted = Object.keys(mapaMateria).map(function (k) { return { nombre: k, total: mapaMateria[k].total, carreras: mapaMateria[k].carreras }; });
-            sorted.sort(function (a, b) { return b.total - a.total; });
-            var top10 = sorted.slice(0, 10);
-
-            // Carreras presentes en esas 10 filas
-            var carrerasSet = {};
-            top10.forEach(function (m) { Object.keys(m.carreras).forEach(function (c) { carrerasSet[c] = true; }); });
-            var colsCarr = Object.keys(carrerasSet);
-
-            var filasHeat = top10.map(function (m) {
-                return {
-                    nombre: m.nombre,
-                    celdas: colsCarr.map(function (c) {
-                        var datos = m.carreras[c];
-                        if (!datos || !datos.totalRegistros) return { v: null, abs: null };
-                        var pct = datos.reprobadas / datos.totalRegistros * 100;
-                        return { v: pct, abs: datos.reprobadas + ' de ' + datos.totalRegistros + ' registros' };
-                    })
-                };
-            });
-
-            renderHeat('heatMateriaCarrera', colsCarr, filasHeat);
-        }
-
-        // ── graficas extra de Demografia (mockup): sexo x nivel, matricula x nivel, sexo x carrera ──
+        // ── graficas extra de Demografia (mockup): sexo x nivel, matricula x nivel ──
         var demoCache = { nivel: null, carreras: null };
         function renderDemoNivel(d) {
             if (!document.getElementById('chartDemoSexoNivel') || !d) return;
@@ -1257,14 +1055,6 @@
                 { label: 'Estudiantes', data: niveles.map(function (x) { return x.n.total || 0; }), backgroundColor: '#00695C' }
             ], { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { precision: 0 } } } });
         }
-        function renderDemoSexoCarrera(arr) {
-            if (!document.getElementById('chartDemoSexoCarrera') || !arr || !arr.length) return;
-            var top10 = arr.slice(0, 10);
-            barChart('chartDemoSexoCarrera', top10.map(function (c) { return c.nombre; }), [
-                { label: 'Hombres', data: top10.map(function (c) { return c.hombres || 0; }), backgroundColor: '#1f4e5f' },
-                { label: 'Mujeres', data: top10.map(function (c) { return c.mujeres || 0; }), backgroundColor: '#b56d8e' }
-            ], { indexAxis: 'y', scales: { x: { stacked: true, ticks: { precision: 0 } }, y: { stacked: true, ticks: { font: { size: 9 } } } } });
-        }
         // Vulnerabilidad por carrera top-10 (apiladas econ/acad/pers) — mockup, seccion Vulnerabilidad.
         function renderVulnCarrera(arr) {
             if (!document.getElementById('chartVulnCarrera') || !arr || !arr.length) return;
@@ -1280,28 +1070,22 @@
         // Re-render desde cache cuando la seccion Demografia repinta (toggle tabla/grafica, colapso).
         window.renderDemoExtras = function () {
             renderDemoNivel(demoCache.nivel);
-            renderDemoSexoCarrera(demoCache.carreras);
         };
         // Idem para la apilada por carrera de la seccion Vulnerabilidad.
         window.renderVulnCarreraExtra = function () { renderVulnCarrera(demoCache.carreras); };
-        // Director (nivel 3): no existe la seccion Carrera ⇒ sin datos por carrera; ocultar esas columnas.
-        if (!document.getElementById('tablaCarreras')) { $('#demoSexoCarreraCol').hide(); $('#vulnCarreraCol').hide(); }
+        // Director (nivel 3): no existe la seccion Carrera ⇒ sin datos por carrera; ocultar esa columna.
+        if (!document.getElementById('tablaCarreras')) { $('#vulnCarreraCol').hide(); }
 
         // ── listener ajaxSuccess (independiente del de Fase 3) ───────────────────
         $(document).ajaxSuccess(function (e, xhr, opts) {
             var u = opts.url || '';
             var r = xhr.responseJSON; if (!r || !r.success) return;
             if (u.indexOf('GetEstadisticasPorNivelEstudio') !== -1 && r.data) {
-                renderTasasNivel(r.data);
                 demoCache.nivel = r.data;
                 renderDemoNivel(r.data);
             } else if (u.indexOf('GetEstadisticasPorCarrera') !== -1 && r.data) {
-                renderCarrera(r.data);
                 demoCache.carreras = r.data;
-                renderDemoSexoCarrera(r.data);
                 renderVulnCarrera(r.data);
-            } else if (u.indexOf('GetEstadisticasMaterias') !== -1 && r.data && r.data.materias) {
-                renderMaterias(r.data.materias);
             }
         });
     });
@@ -1444,7 +1228,7 @@
                             <script>
                                 // ===== Renderers y registro de secciones de tarjetas (Demografia / Sit. Familiar / Vulnerabilidad) =====
                                 (function () {
-                                    var _chDemo = null, _chSitFam = null, _chVuln = null;
+                                    var _chDemo = null, _chSitFam = null;
                                     var COLORES = { econ: '#b3402e', acad: '#dba13a', pers: '#74628f', noVul: '#00897B', sinInfo: '#8a97a0', hombres: '#1f4e5f', mujeres: '#b56d8e' };
 
                                     function renderChartDemografia(d) {
@@ -1488,37 +1272,9 @@
                                         donaSitFam('chartSitFamPad', 'pieSitFamPad', d.padres || 0, tot, COLORES.hombres);
                                         donaSitFam('chartSitFamTrab', 'pieSitFamTrab', d.alumnosTrabajando || 0, tot, COLORES.noVul);
                                     }
-                                    var _chVulnTipo = null, _chVulnFuente = null;
                                     function renderChartVulnerabilidad(d) {
-                                        var ctx = document.getElementById('chartModoVulnerabilidad'); if (!ctx || typeof Chart === 'undefined') return;
-                                        if (_chVuln) _chVuln.destroy();
-                                        var tot = (d.vulnerablesEconomicos || 0) + (d.vulnerablesAcademicos || 0) + (d.vulnerablesPersonales || 0);
-                                        _chVuln = new Chart(ctx, {
-                                            type: 'doughnut',
-                                            data: { labels: ['Económicos', 'Académicos', 'Personales', 'No vulnerables', 'Sin información'], datasets: [{ data: [d.vulnerablesEconomicos || 0, d.vulnerablesAcademicos || 0, d.vulnerablesPersonales || 0, d.noVulnerables || 0, d.sinSeguimiento || 0], backgroundColor: [COLORES.econ, COLORES.acad, COLORES.pers, COLORES.noVul, COLORES.sinInfo] }] },
-                                            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Total de vulnerables: ' + tot } } }
-                                        });
-                                        // Dona solo-vulnerables por tipo (mockup).
-                                        var ctxT = document.getElementById('chartVulnTipo');
-                                        if (ctxT) {
-                                            if (_chVulnTipo) _chVulnTipo.destroy();
-                                            _chVulnTipo = new Chart(ctxT, {
-                                                type: 'doughnut',
-                                                data: { labels: ['Económicos', 'Académicos', 'Personales'], datasets: [{ data: [d.vulnerablesEconomicos || 0, d.vulnerablesAcademicos || 0, d.vulnerablesPersonales || 0], backgroundColor: [COLORES.econ, COLORES.acad, COLORES.pers] }] },
-                                                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Vulnerables: ' + tot } } }
-                                            });
-                                        }
-                                        // Dona fuente de clasificacion (solo llega via AJAX del resumen; el seed no la trae).
-                                        var ctxF = document.getElementById('chartVulnFuente');
-                                        if (ctxF && (d.clasificadosPorSeguimiento !== undefined || d.clasificadosPorIdentificacion !== undefined)) {
-                                            if (_chVulnFuente) _chVulnFuente.destroy();
-                                            _chVulnFuente = new Chart(ctxF, {
-                                                type: 'doughnut',
-                                                data: { labels: ['Por seguimiento del tutor', 'Por identificación (entrevista)'], datasets: [{ data: [d.clasificadosPorSeguimiento || 0, d.clasificadosPorIdentificacion || 0], backgroundColor: ['#00695C', '#dba13a'] }] },
-                                                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
-                                            });
-                                        }
-                                        // Apiladas por carrera: dato de otro endpoint, repinta desde el cache de F4.
+                                        // 2026-07-29: se eliminaron las donas Tipo/Clasificacion/Fuente; solo queda
+                                        // la apilada por carrera (dato de otro endpoint, repinta desde el cache de F4).
                                         if (window.renderVulnCarreraExtra) { try { window.renderVulnCarreraExtra(); } catch (e) { } }
                                     }
 
@@ -1557,7 +1313,9 @@
                                             ModoEstadisticas.registrar('sitfam', { original: '.cuerpoSitFam', charts: '#chartWrapSitFam', botonHost: '#modoHostSitFam', render: renderChartSitFam });
                                             var ss = seedSitFam(); if (ss) ModoEstadisticas.datos('sitfam', ss);
                                         }
-                                        if (document.getElementById('chartWrapVulnerabilidad')) {
+                                        // 2026-07-29: la unica grafica que queda en Vulnerabilidad es la apilada por carrera,
+                                        // que para nivel 3 (sin seccion Carrera) no tiene datos — no registrar el toggle.
+                                        if (document.getElementById('chartWrapVulnerabilidad') && document.getElementById('tablaCarreras')) {
                                             ModoEstadisticas.registrar('vulnerabilidad', { original: '#contenidoVulnerabilidades > .row', charts: '#chartWrapVulnerabilidad', botonHost: '#modoHostVulnerabilidad', render: renderChartVulnerabilidad });
                                             ModoEstadisticas.datos('vulnerabilidad', seedVulnerabilidad());
                                         }
@@ -2113,8 +1871,6 @@
                                                 <div class="demo-graf-col"><h4 class="dash-sub">Sexo por Nivel de Estudio</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartDemoSexoNivel"></canvas></div></div>
                                                 <div class="demo-graf-col"><h4 class="dash-sub">Matrícula por Nivel de Estudio</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartDemoMatriculaNivel"></canvas></div></div>
                                             </div>
-                                            @* Sexo por carrera abajo, a lo ancho de las tres de arriba (pedido del usuario). *@
-                                            <div id="demoSexoCarreraCol" style="margin-top:16px;"><h4 class="dash-sub">Sexo por Carrera (Top 10)</h4><div class="dash-canvas-wrap" style="height:300px;"><canvas id="chartDemoSexoCarrera"></canvas></div></div>
                                         </div>
                                         <div class="panel-body categoria-body cuerpoDemografia" style="display: block; padding: 12px;">
                                             <div class="row">
@@ -2412,10 +2168,6 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div id="tasasNivelWrap" class="dash-graf-row">
-                                        <div class="dash-graf-col"><h4 class="dash-sub">Tasa de Vulnerabilidad (%)</h4><div class="dash-canvas-wrap"><canvas id="chartTasaVuln"></canvas></div></div>
-                                        <div class="dash-graf-col"><h4 class="dash-sub">Tasa de Seguimiento (%)</h4><div class="dash-canvas-wrap"><canvas id="chartTasaSeg"></canvas></div></div>
-                                    </div>
                                 </div>
                             </section>
 
@@ -2497,16 +2249,10 @@
                                                     <strong>Filtro activo:</strong> <span id="nombreFiltroActivoVulnerabilidad"></span>
                                                 </div>
                                             </div>
-                                            @* Vulnerabilidad en modo grafica: 4 charts compactos (mockup). El heatmap Carrera x Tipo
-                                               ya vive en la seccion Carrera; turno/especialidad requeririan backend (fuera). *@
+                                            @* Vulnerabilidad en modo grafica: solo la apilada por carrera (2026-07-29 se
+                                               eliminaron las donas Tipo/Clasificacion/Fuente a pedido de la directora). *@
                                             <div class="modo-chart-wrap" id="chartWrapVulnerabilidad" style="padding: 12px; max-width: none; height: auto;">
-                                                <div class="dash-graf-row">
-                                                    <div class="demo-graf-col"><h4 class="dash-sub">Vulnerabilidad por Tipo</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartVulnTipo"></canvas></div></div>
-                                                    <div class="demo-graf-col"><h4 class="dash-sub">Clasificación General</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartModoVulnerabilidad"></canvas></div></div>
-                                                    <div class="demo-graf-col" id="vulnFuenteCol"><h4 class="dash-sub">Fuente de Clasificación</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartVulnFuente"></canvas></div></div>
-                                                </div>
-                                                @* Por carrera abajo, a lo ancho de las tres donas (pedido del usuario). *@
-                                                <div id="vulnCarreraCol" style="margin-top:16px;"><h4 class="dash-sub">Vulnerabilidad por Carrera (Top 10)</h4><div class="dash-canvas-wrap" style="height:300px;"><canvas id="chartVulnCarrera"></canvas></div></div>
+                                                <div id="vulnCarreraCol"><h4 class="dash-sub">Vulnerabilidad por Carrera (Top 10)</h4><div class="dash-canvas-wrap" style="height:300px;"><canvas id="chartVulnCarrera"></canvas></div></div>
                                             </div>
                                             <div id="contenidoVulnerabilidades">
                                                 <div class="row">
@@ -2783,10 +2529,6 @@
                                                        "Requested unknown parameter"). *@
                                                 </tbody>
                                             </table>
-                                        </div>
-                                        <div class="dash-graf-row">
-                                            <div class="dash-graf-col"><h4 class="dash-sub">Mapa de Calor: Carrera × Tipo de Vulnerabilidad (%)</h4><div id="heatCarreraTipo" class="dash-heat"></div></div>
-                                            <div class="dash-graf-col" id="sexoCarreraWrap"><h4 class="dash-sub">Sexo por Carrera (Top 10)</h4><div class="dash-canvas-wrap"><canvas id="chartSexoCarrera"></canvas></div></div>
                                         </div>
                                     </div>
                                 </section>
@@ -3364,8 +3106,6 @@
                                         <tbody></tbody>
                                     </table>
                                 </div>
-                                <h4 class="dash-sub">Mapa de Calor: Materia × Carrera (% de registros reprobados)</h4>
-                                <div id="heatMateriaCarrera" class="dash-heat"></div>
                                 <div id="materiasNoDisponible" style="display:none; padding: 15px; color: #856404; background: #fff3cd; border-radius: 6px;">
                                     Esta sección no está disponible en este corte (se agregó después de que el corte fue tomado).
                                 </div>
