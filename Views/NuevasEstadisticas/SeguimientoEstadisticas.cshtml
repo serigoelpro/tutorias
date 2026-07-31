@@ -1143,7 +1143,7 @@
                 var d = Math.round(((r.totalVulnerables || 0) - cache.kpisAnt.totalVulnerables) / cache.kpisAnt.totalVulnerables * 1000) / 10;
                 out.push(card(d <= 0 ? 'fa-arrow-trend-down' : 'fa-arrow-trend-up', d <= 0 ? 'ok' : 'riesgo', (d <= 0 ? '▼ ' : '▲ ') + Math.abs(d) + '%', 'Vulnerabilidad vs. año anterior', (d <= 0 ? 'Bajó' : 'Subió') + ' respecto a ' + esc(cache.kpisAnt._nombre || 'el periodo anterior') + '.'));
             }
-            $('#insightsWrap').html(out.length ? out.join('') : '<p class="text-muted small mb-0">Sin datos suficientes para generar insights.</p>');
+            $('#insightsWrap').html(out.length ? out.join('') : '<p class="text-muted small mb-0">Sin datos suficientes para generar hallazgos.</p>');
         }
 
         $(document).ajaxSuccess(function (e, xhr, opts) {
@@ -1632,7 +1632,7 @@
 
                             @* ===== Fase 5: Insights Clave ===== *@
                             <section class="data-block" id="seccionInsights">
-                                <div class="card-header"><h3 class="section-title"><i class="fas fa-lightbulb"></i> Insights Clave</h3></div>
+                                <div class="card-header"><h3 class="section-title"><i class="fas fa-lightbulb"></i> Hallazgos Clave</h3></div>
                                 <div class="card-body"><div id="insightsWrap" class="insights-grid"><p class="text-muted small mb-0">Calculando…</p></div></div>
                             </section>
 
