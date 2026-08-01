@@ -537,8 +537,9 @@
         /* Chevron de colapso */
         .dash-chevron { background:transparent; border:none; color:#fff; cursor:pointer; padding:4px 8px; font-size:14px; transition:transform .15s ease; }
         section.data-block.dash-colapsada .dash-chevron { transform:rotate(180deg); }
-        section.data-block.dash-colapsada > *:not(.card-header):not(script):not(style),
-        section.data-block.dash-colapsada > div:not(.card-header) { display:none !important; }
+        /* 2026-08-01: el ocultado ya NO va por CSS (display:none instantaneo) sino por
+           slideUp/slideDown de jQuery en el script de colapso, para que abra/cierre suave
+           como los paneles internos (Detalle de Vulnerabilidad). La clase queda como estado. */
         /* ===== Dashboard BI (Fase 1): full-bleed + re-estilizado de controles ===== */
         /* Full-bleed SOLO en esta página: el layout envuelve en .container (ancho fijo con
            márgenes blancos); este override vive en el <style> de la vista, no toca otras páginas. */
@@ -945,17 +946,29 @@
             btn.type = 'button'; btn.className = 'dash-chevron'; btn.title = 'Mostrar/ocultar sección';
             btn.innerHTML = '<i class="fas fa-chevron-up"></i>';
             header.appendChild(btn);
-            if (colapsadas.indexOf(slug) !== -1) sec.classList.add('dash-colapsada');
-            btn.addEventListener('click', function () {
+            function cuerpo() { return $(sec).children().not('.card-header, script, style'); }
+            if (colapsadas.indexOf(slug) !== -1) { sec.classList.add('dash-colapsada'); cuerpo().hide(); }
+            function alternar() {
                 sec.classList.toggle('dash-colapsada');
                 var i = colapsadas.indexOf(slug);
                 if (sec.classList.contains('dash-colapsada') && i === -1) colapsadas.push(slug);
                 if (!sec.classList.contains('dash-colapsada') && i !== -1) colapsadas.splice(i, 1);
                 localStorage.setItem(KEY, JSON.stringify(colapsadas));
-                // Al expandir, disparar resize para que Chart.js reacomode las graficas
-                if (!sec.classList.contains('dash-colapsada')) {
-                    window.dispatchEvent(new Event('resize'));
+                // Suave (como los paneles internos): slideUp/slideDown en vez de display:none seco.
+                if (sec.classList.contains('dash-colapsada')) {
+                    cuerpo().slideUp(250);
+                } else {
+                    // Al expandir, disparar resize para que Chart.js reacomode las graficas
+                    cuerpo().slideDown(250, function () { window.dispatchEvent(new Event('resize')); });
                 }
+            }
+            btn.addEventListener('click', function (e) { e.stopPropagation(); alternar(); });
+            // 2026-08-01: toda la franja verde colapsa/expande, no solo el chevron. Se ignoran los
+            // clics sobre controles del header (filtros, botones, historico) para no colapsar al usarlos.
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', function (e) {
+                if (e.target.closest('button, select, input, a, label, option, .hist-wrap, .hist-menu, .badge, .modo-toggle-seccion')) return;
+                alternar();
             });
         });
         // Solo la HORA en la barra (el sello completo iba muy ancho y amontonaba las pildoras);
@@ -1893,26 +1906,26 @@
                                             <div class="row">
                                                 <div class="col-md-3 col-sm-4 col-xs-6" style="margin-bottom: 10px;">
                                                     <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                        <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@totalEstudiantes</div>
-                                                        <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Total Estudiantes</div>
+                                                        <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@totalEstudiantes</div>
+                                                        <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Total Estudiantes</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 col-sm-4 col-xs-6" style="margin-bottom: 10px;">
                                                     <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                        <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@((int)ViewBag.TotalHombres)</div>
-                                                        <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Hombres</div>
+                                                        <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@((int)ViewBag.TotalHombres)</div>
+                                                        <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Hombres</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 col-sm-4 col-xs-6" style="margin-bottom: 10px;">
                                                     <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                        <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@((int)ViewBag.TotalMujeres)</div>
-                                                        <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Mujeres</div>
+                                                        <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@((int)ViewBag.TotalMujeres)</div>
+                                                        <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Mujeres</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 col-sm-4 col-xs-6" style="margin-bottom: 10px;">
                                                     <div class="text-center estudiantes-sin-sexo-card" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688; cursor: pointer; transition: all 0.3s ease;">
-                                                        <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@((int)ViewBag.TotalSinSexo)</div>
-                                                        <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Sin Especificar Sexo</div>
+                                                        <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@((int)ViewBag.TotalSinSexo)</div>
+                                                        <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Sin Especificar Sexo</div>
                                                         <div style="font-size: 0.7rem; color: #009688; margin-top: 5px; font-style: italic;">(Click para ver detalles)</div>
                                                     </div>
                                                 </div>
@@ -1945,26 +1958,26 @@
                                             <div class="row">
                                                 <div class="col-md-3 col-sm-4 col-xs-6" style="margin-bottom: 10px;">
                                                     <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                        <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@((int)ViewBag.Embarazadas)</div>
-                                                        <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Embarazadas</div>
+                                                        <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@((int)ViewBag.Embarazadas)</div>
+                                                        <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Embarazadas</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 col-sm-4 col-xs-6" style="margin-bottom: 10px;">
                                                     <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                        <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@((int)ViewBag.Madres)</div>
-                                                        <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Madres</div>
+                                                        <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@((int)ViewBag.Madres)</div>
+                                                        <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Madres</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 col-sm-4 col-xs-6" style="margin-bottom: 10px;">
                                                     <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                        <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@((int)ViewBag.Padres)</div>
-                                                        <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Padres</div>
+                                                        <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@((int)ViewBag.Padres)</div>
+                                                        <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Padres</div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 col-sm-4 col-xs-6" style="margin-bottom: 10px;">
                                                     <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                        <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@((int)ViewBag.AlumnosTrabajando)</div>
-                                                        <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Estudiantes Trabajando</div>
+                                                        <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@((int)ViewBag.AlumnosTrabajando)</div>
+                                                        <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Estudiantes Trabajando</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2267,44 +2280,38 @@
                                                 <div class="row">
                                                     <div class="col-md-2 col-sm-4 col-xs-6 vuln-card-click" data-vuln-cat="vulnerables" style="margin-bottom: 10px;">
                                                         <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                            <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@totalVulnerables</div>
-                                                            <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Total de Vulnerables</div>
-                                                            <small class="vuln-card-hint">(click para ver alumnos)</small>
+                                                            <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@totalVulnerables</div>
+                                                            <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Total de Vulnerables</div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-2 col-sm-4 col-xs-6 vuln-card-click" data-vuln-cat="personales" style="margin-bottom: 10px;">
                                                         <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                            <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@(vulnerabilidades?.VulnerablesPersonales ?? 0)</div>
-                                                            <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Vulnerables Personales</div>
-                                                            <small class="vuln-card-hint">(click para ver alumnos)</small>
+                                                            <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@(vulnerabilidades?.VulnerablesPersonales ?? 0)</div>
+                                                            <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Vulnerables Personales</div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-2 col-sm-4 col-xs-6 vuln-card-click" data-vuln-cat="economicos" style="margin-bottom: 10px;">
                                                         <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                            <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@(vulnerabilidades?.VulnerablesEconomicos ?? 0)</div>
-                                                            <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Vulnerables Económicos</div>
-                                                            <small class="vuln-card-hint">(click para ver alumnos)</small>
+                                                            <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@(vulnerabilidades?.VulnerablesEconomicos ?? 0)</div>
+                                                            <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Vulnerables Económicos</div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-2 col-sm-4 col-xs-6 vuln-card-click" data-vuln-cat="academicos" style="margin-bottom: 10px;">
                                                         <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                            <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@(vulnerabilidades?.VulnerablesAcademicos ?? 0)</div>
-                                                            <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Vulnerables Académicos</div>
-                                                            <small class="vuln-card-hint">(click para ver alumnos)</small>
+                                                            <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@(vulnerabilidades?.VulnerablesAcademicos ?? 0)</div>
+                                                            <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Vulnerables Académicos</div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-2 col-sm-4 col-xs-6 vuln-card-click" data-vuln-cat="noVulnerables" style="margin-bottom: 10px;">
                                                         <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                            <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@(vulnerabilidades?.NoVulnerables ?? 0)</div>
-                                                            <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">No Vulnerables</div>
-                                                            <small class="vuln-card-hint">(click para ver alumnos)</small>
+                                                            <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@(vulnerabilidades?.NoVulnerables ?? 0)</div>
+                                                            <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">No Vulnerables</div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-2 col-sm-4 col-xs-6 vuln-card-click" data-vuln-cat="sinInformacion" style="margin-bottom: 10px;">
                                                         <div class="text-center" style="padding: 10px; background-color: #e9f8f4; border-radius: 6px; border-left: 3px solid #009688;">
-                                                            <div style="font-size: 1.2rem; font-weight: bold; color: #00695C;">@(vulnerabilidades?.SinSeguimiento ?? 0)</div>
-                                                            <div style="font-size: 0.85rem; color: #00695C; margin-top: 3px;">Sin información</div>
-                                                            <small class="vuln-card-hint">(click para ver alumnos)</small>
+                                                            <div style="font-size: 1.7rem; font-weight: bold; color: #00695C; line-height: 1.2;">@(vulnerabilidades?.SinSeguimiento ?? 0)</div>
+                                                            <div style="font-size: 1rem; font-weight: 600; color: #00695C; margin-top: 4px;">Sin información</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -3709,10 +3716,23 @@
                 </text>
             }
 
-            // Función para expandir/colapsar paneles de categorías (similar a SeguimientosReporte)
+            // Función para expandir/colapsar paneles de categorías (similar a SeguimientosReporte).
+            // 2026-08-01: en Demografía/Sit.Familiar el .modo-chart-wrap (gráficas) queda ENTRE el
+            // header y el .categoria-body, así que next() no alcanzaba nada y el click no hacía
+            // nada. Ahora se colapsan los hermanos VISIBLES (tabla o gráficas, según el modo) y al
+            // reabrir se restauran exactamente los que estaban abiertos.
             $('.categoria-header').click(function () {
-                $(this).next('.categoria-body').slideToggle();
-                var chevron = $(this).find('.glyphicon-chevron-down, .glyphicon-chevron-up');
+                var $h = $(this);
+                var $sib = $h.siblings('.categoria-body, .modo-chart-wrap');
+                var $visibles = $sib.filter(':visible');
+                if ($visibles.length) {
+                    $h.data('colapsoAbiertos', $visibles);
+                    $visibles.slideUp(250);
+                } else {
+                    var $a = $h.data('colapsoAbiertos');
+                    (($a && $a.length) ? $a : $sib.filter('.categoria-body')).slideDown(250, function () { window.dispatchEvent(new Event('resize')); });
+                }
+                var chevron = $h.find('.glyphicon-chevron-down, .glyphicon-chevron-up');
                 chevron.toggleClass('glyphicon-chevron-down glyphicon-chevron-up');
             });
 
