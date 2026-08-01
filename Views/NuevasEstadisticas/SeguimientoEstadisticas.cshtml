@@ -856,8 +856,8 @@
 
                             @* Menu rapido sticky: accesos directos a cada seccion (se arma por JS segun lo que exista en el DOM) *@
                             <nav id="menuRapidoEstadisticas" aria-label="Secciones">
-                                <span id="dashAccionesRapidas" style="display:flex; align-items:center; gap:8px; flex:0 0 auto; order:99;">
-                                    <span style="font-size:11px; color:#6b7280; white-space:nowrap;">Actualizado: <strong id="dashUltimaAct"></strong></span>
+                                <span id="dashAccionesRapidas" style="display:flex; align-items:center; gap:12px; flex:0 0 auto; order:99; margin-left:8px; padding-left:14px; border-left:1px solid #e5e7eb;">
+                                    <span style="font-size:11px; color:#9aa3ab; white-space:nowrap; line-height:1.25; text-align:right;">Actualizado<br /><strong id="dashUltimaAct" style="color:#4b5563;"></strong></span>
                                     <button type="button" id="btnExportarModulo" class="btn btn-success btn-sm" title="Descarga un ZIP con los mismos archivos Excel que las exportaciones por sección (respeta filtros y toggles de bajas)">
                                         <i class="fas fa-file-export"></i> Exportar
                                     </button>
@@ -1663,9 +1663,10 @@
                                 {
                                     <div class="card mt-4 mb-3" style="margin-bottom: 10px;">
                                         <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-md-5" style="margin-bottom: 10px;">
-                                                    <label for="carreraFiltroResumen" class="form-label">Seleccionar Carrera:</label>
+                                            @* 2026-08-01: filtros en UNA fila flexible (los .row/.col los dejaban amontonados). *@
+                                            <div style="display:flex; flex-wrap:wrap; gap:12px 16px; align-items:flex-end;">
+                                                <div style="flex:1 1 240px; min-width:220px;">
+                                                    <label for="carreraFiltroResumen" class="form-label">Carrera:</label>
                                                     <select id="carreraFiltroResumen" class="form-select">
                                                         <option value="">Todas las carreras</option>
                                                         @if (ViewBag.Carreras != null)
@@ -1678,8 +1679,8 @@
                                                         }
                                                     </select>
                                                 </div>
-                                                <div class="col-md-5" style="margin-bottom: 10px;">
-                                                    <label for="especialidadFiltro" class="form-label">Seleccionar Especialidad:</label>
+                                                <div style="flex:1 1 240px; min-width:220px;">
+                                                    <label for="especialidadFiltro" class="form-label">Especialidad:</label>
                                                     <select id="especialidadFiltro" class="form-select">
                                                         <option value="">Todas las especialidades</option>
                                                         @if (ViewBag.Especialidades != null)
@@ -1693,19 +1694,7 @@
                                                         }
                                                     </select>
                                                 </div>
-                                                <div class="col-md-2 d-flex align-items-end">
-                                                    <button id="aplicarFiltro" class="btn btn-success me-2">
-                                                        <i class="fas fa-search me-1"></i>
-                                                        Aplicar
-                                                    </button>
-                                                    <button id="limpiarFiltro" class="btn btn-utt-outline">
-                                                        <i class="fas fa-times me-1"></i>
-                                                        Limpiar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-3" style="margin-bottom: 10px;">
+                                                <div style="flex:0 1 170px; min-width:150px;">
                                                     <label for="gradoFiltroResumen" class="form-label">Cuatrimestre (grado):</label>
                                                     <select id="gradoFiltroResumen" class="form-select">
                                                         <option value="">Todos</option>
@@ -1718,7 +1707,7 @@
                                                         }
                                                     </select>
                                                 </div>
-                                                <div class="col-md-3" style="margin-bottom: 10px;">
+                                                <div style="flex:0 1 150px; min-width:130px;">
                                                     <label for="grupoFiltroResumen" class="form-label">Grupo:</label>
                                                     <select id="grupoFiltroResumen" class="form-select">
                                                         <option value="">Todos</option>
@@ -1731,8 +1720,15 @@
                                                         }
                                                     </select>
                                                 </div>
-                                                <div class="col-md-6 d-flex align-items-end" style="margin-bottom: 10px; color:#777; font-size:.85rem;">
-                                                    Combinables con carrera/especialidad y con el mes de Vulnerabilidad (aplican con el botón Aplicar).
+                                                <div style="flex:0 0 auto; display:flex; gap:8px;">
+                                                    <button id="aplicarFiltro" class="btn btn-success">
+                                                        <i class="fas fa-search me-1"></i>
+                                                        Aplicar
+                                                    </button>
+                                                    <button id="limpiarFiltro" class="btn btn-utt-outline">
+                                                        <i class="fas fa-times me-1"></i>
+                                                        Limpiar
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div id="filtroActivo" class="sga-filter-bar" style="margin-bottom: 10px; margin-top: 10px; display:none;">
@@ -1767,9 +1763,10 @@
                                                 <i class="fas fa-info-circle me-2"></i>
                                                 <strong>Vista de Coordinador:</strong> <span>Mostrando estadísticas de su carrera asignada</span>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-md-8" style="margin-bottom: 10px;">
-                                                    <label for="especialidadFiltro" class="form-label">Seleccionar Especialidad:</label>
+                                            @* 2026-08-01: filtros en UNA fila flexible (mismo acomodo que el bloque de Máster). *@
+                                            <div style="display:flex; flex-wrap:wrap; gap:12px 16px; align-items:flex-end;">
+                                                <div style="flex:1 1 280px; min-width:240px;">
+                                                    <label for="especialidadFiltro" class="form-label">Especialidad:</label>
                                                     <select id="especialidadFiltro" class="form-select">
                                                         <option value="">Todas las especialidades</option>
                                                         @if (ViewBag.Especialidades != null)
@@ -1783,19 +1780,7 @@
                                                         }
                                                     </select>
                                                 </div>
-                                                <div class="col-md-4 d-flex align-items-end">
-                                                    <button id="aplicarFiltro" class="btn btn-success me-2">
-                                                        <i class="fas fa-search me-1"></i>
-                                                        Aplicar
-                                                    </button>
-                                                    <button id="limpiarFiltro" class="btn btn-utt-outline">
-                                                        <i class="fas fa-times me-1"></i>
-                                                        Limpiar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-3" style="margin-bottom: 10px;">
+                                                <div style="flex:0 1 170px; min-width:150px;">
                                                     <label for="gradoFiltroResumen" class="form-label">Cuatrimestre (grado):</label>
                                                     <select id="gradoFiltroResumen" class="form-select">
                                                         <option value="">Todos</option>
@@ -1808,7 +1793,7 @@
                                                         }
                                                     </select>
                                                 </div>
-                                                <div class="col-md-3" style="margin-bottom: 10px;">
+                                                <div style="flex:0 1 150px; min-width:130px;">
                                                     <label for="grupoFiltroResumen" class="form-label">Grupo:</label>
                                                     <select id="grupoFiltroResumen" class="form-select">
                                                         <option value="">Todos</option>
@@ -1821,8 +1806,15 @@
                                                         }
                                                     </select>
                                                 </div>
-                                                <div class="col-md-6 d-flex align-items-end" style="margin-bottom: 10px; color:#777; font-size:.85rem;">
-                                                    Combinables con la especialidad y con el mes de Vulnerabilidad (aplican con el botón Aplicar).
+                                                <div style="flex:0 0 auto; display:flex; gap:8px;">
+                                                    <button id="aplicarFiltro" class="btn btn-success">
+                                                        <i class="fas fa-search me-1"></i>
+                                                        Aplicar
+                                                    </button>
+                                                    <button id="limpiarFiltro" class="btn btn-utt-outline">
+                                                        <i class="fas fa-times me-1"></i>
+                                                        Limpiar
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div id="filtroActivo" class="sga-filter-bar" style="margin-bottom: 10px; margin-top: 10px; display:none;">
