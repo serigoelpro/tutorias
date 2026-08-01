@@ -856,8 +856,8 @@
 
                             @* Menu rapido sticky: accesos directos a cada seccion (se arma por JS segun lo que exista en el DOM) *@
                             <nav id="menuRapidoEstadisticas" aria-label="Secciones">
-                                <span id="dashAccionesRapidas" style="display:flex; align-items:center; gap:12px; flex:0 0 auto; order:99; margin-left:8px; padding-left:14px; border-left:1px solid #e5e7eb;">
-                                    <span style="font-size:11px; color:#9aa3ab; white-space:nowrap; line-height:1.25; text-align:right;">Actualizado<br /><strong id="dashUltimaAct" style="color:#4b5563;"></strong></span>
+                                <span id="dashAccionesRapidas" style="display:flex; align-items:center; gap:12px; flex:0 0 auto; order:99; margin-left:10px; padding-left:14px; border-left:1px solid #dfe3e7;">
+                                    <span id="dashUltimaActWrap" style="font-size:11.5px; color:#9aa3ab; white-space:nowrap;">Actualizado <strong id="dashUltimaAct" style="color:#4b5563;"></strong></span>
                                     <button type="button" id="btnExportarModulo" class="btn btn-success btn-sm" title="Descarga un ZIP con los mismos archivos Excel que las exportaciones por sección (respeta filtros y toggles de bajas)">
                                         <i class="fas fa-file-export"></i> Exportar
                                     </button>
@@ -871,7 +871,7 @@
                                 #menuRapidoEstadisticas { position: sticky; top: 51px; z-index: 1500; background: #fff; padding: 7px 12px; margin: 8px 0 14px; border-radius: 0 0 10px 10px; display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; transition: box-shadow .15s; }
                                 #menuRapidoEstadisticas.pegado { box-shadow: 0 4px 10px rgba(0,0,0,.14); }
                                 /* Carril de pildoras con scroll propio. */
-                                #menuRapidoPills { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; padding-bottom: 2px; }
+                                #menuRapidoPills { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; padding: 0 10px 2px 0; }
                                 .menu-rapido-pill { border: 1px solid #cfd8de; background: #f6f9fa; color: #2c3e50; border-radius: 22px; padding: 5px 12px; font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; flex: 0 0 auto; }
                                 .menu-rapido-pill:hover { background: #2c3e50; color: #fff; }
                                 /* Modo Tablas/Graficas: pildora FLOTANTE abajo-izquierda (2026-08-01, salio de la barra
@@ -958,7 +958,15 @@
                 }
             });
         });
-        var u = document.getElementById('dashUltimaAct'); if (u) u.textContent = new Date().toLocaleString('es-MX');
+        // Solo la HORA en la barra (el sello completo iba muy ancho y amontonaba las pildoras);
+        // la fecha completa queda como tooltip.
+        var u = document.getElementById('dashUltimaAct');
+        if (u) {
+            var ahora = new Date();
+            u.textContent = ahora.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' });
+            var uw = document.getElementById('dashUltimaActWrap');
+            if (uw) uw.title = 'Última actualización: ' + ahora.toLocaleString('es-MX');
+        }
     });
 </script>
 @*
