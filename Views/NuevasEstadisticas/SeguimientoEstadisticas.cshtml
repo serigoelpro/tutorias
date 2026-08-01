@@ -2353,7 +2353,13 @@
                                Carrera" y "Estadísticas por Grupo" ELIMINADAS a pedido del usuario. Sus funciones JS
                                quedan (inofensivas sin su DOM); GetEstadisticasPorCarrera se sigue llamando aparte
                                para alimentar la apilada top-10 de Vulnerabilidad y el hallazgo de carrera. *@
-                            @* Sección de Estadísticas Adicionales (Bajas, PATs, Arrastre) *@
+                            @* Sección de Estadísticas Adicionales (Bajas, PATs, Arrastre).
+                               2026-08-01: DESACTIVADA a pedido del usuario. Para reactivarla en el
+                               futuro basta cambiar el "if (false)" de abajo por "if (true)" (o quitar
+                               el if con sus llaves). El JS de la sección sigue en la página y es
+                               inofensivo sin su DOM (todo guarded por existencia de elementos). *@
+                            if (false)
+                            {
                             <section class="data-block">
                                 <div class="card-header">
                                     <h3 class="section-title">
@@ -2623,6 +2629,7 @@
                                     }
                                 </div>
                             </section>
+                            }
                         }
 
                         @* Estadísticas de Materias Reprobadas (requerimiento dirección) *@
