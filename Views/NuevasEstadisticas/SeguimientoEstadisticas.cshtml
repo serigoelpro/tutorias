@@ -501,6 +501,17 @@
             font-weight: 700;
             white-space: nowrap;
         }
+        /* Avisos informativos (2026-08-01): el azul de Bootstrap gritaba demasiado — se cambia a un
+           gris neutro con acento sutil, solo en esta vista. */
+        .sga-scope .alert-info {
+            background: #f8f9fa !important;
+            border: 1px solid #e5e7eb !important;
+            border-left: 3px solid #90a4ae !important;
+            color: #4b5563 !important;
+            border-radius: 8px;
+            text-transform: none;
+            font-weight: 500;
+        }
         /* El efecto va en el DIV interno (la tarjeta redondeada), no en la columna con padding de
            Bootstrap — si va en la columna, la sombra sale cuadrada y más grande que la tarjeta. */
         .vuln-card-click { cursor: pointer; }
@@ -859,13 +870,15 @@
                                 /* Compacto (pedido 2026-07-28): UNA fila con scroll horizontal si no caben. */
                                 #menuRapidoEstadisticas { position: sticky; top: 51px; z-index: 1500; background: #fff; padding: 7px 12px; margin: 8px 0 14px; border-radius: 0 0 10px 10px; display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; transition: box-shadow .15s; }
                                 #menuRapidoEstadisticas.pegado { box-shadow: 0 4px 10px rgba(0,0,0,.14); }
-                                /* Carril de pildoras con scroll propio; el switch queda FUERA, a la derecha, sin tapar nada. */
+                                /* Carril de pildoras con scroll propio. */
                                 #menuRapidoPills { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; padding-bottom: 2px; }
-                                #menuRapidoEstadisticas #modoSwitchGlobal { margin-left: auto; flex: 0 0 auto; }
                                 .menu-rapido-pill { border: 1px solid #cfd8de; background: #f6f9fa; color: #2c3e50; border-radius: 22px; padding: 5px 12px; font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; flex: 0 0 auto; }
                                 .menu-rapido-pill:hover { background: #2c3e50; color: #fff; }
-                                /* Modo Tablas/Graficas */
-                                .modo-switch { margin-left: auto; display: flex; align-items: center; }
+                                /* Modo Tablas/Graficas: pildora FLOTANTE abajo-izquierda (2026-08-01, salio de la barra
+                                   sticky porque estorbaba a las pildoras y botones; espejo del contador de sesion). */
+                                .modo-switch { display: flex; align-items: center; }
+                                #modoSwitchGlobal { position: fixed; left: 18px; bottom: 18px; z-index: 1600; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,.22); background: #fff; }
+                                #modoSwitchGlobal button { font-size: .9rem; padding: 8px 16px; }
                                 .modo-switch button { border: 1px solid #cfd8de; background: #f6f9fa; color: #2c3e50; padding: 8px 14px; font-size: 1rem; cursor: pointer; }
                                 .modo-switch button:first-child { border-radius: 18px 0 0 18px; }
                                 .modo-switch button:last-child { border-radius: 0 18px 18px 0; border-left: 0; }
@@ -984,9 +997,9 @@
             if (!antCargado) return;
             Object.keys(MAPA_VAR).forEach(function (id) {
                 var $v = $('#' + id + ' .kpi-var'); if (!$v.length) return;
-                if (!kpisAnt) { $v.attr('class', 'kpi-var var-sindatos').text('— Sin datos del periodo anterior'); return; }
+                if (!kpisAnt) { $v.attr('class', 'kpi-var var-sindatos').text('Sin datos del periodo anterior'); return; }
                 var ahora = num(kpisVivo[MAPA_VAR[id]]), antes = num(kpisAnt[MAPA_VAR[id]]);
-                if (ahora === null || antes === null || antes === 0) { $v.attr('class', 'kpi-var var-sindatos').text('—'); return; }
+                if (ahora === null || antes === null || antes === 0) { $v.attr('class', 'kpi-var var-sindatos').text('Sin comparativo'); return; }
                 var delta = Math.round((ahora - antes) * 1000 / antes) / 10;
                 var sentido = $v.data('sentido');
                 var clase = delta === 0 ? 'var-neutra' : (sentido === 'neutral' ? 'var-neutra' : ((delta < 0) === (sentido === 'down') ? 'var-buena' : 'var-mala'));
@@ -1139,7 +1152,7 @@
                         if (t !== null && (!top || t > top.t)) top = { t: t, m: m };
                     }
                 });
-                if (top) out.push(card('fa-book', 'riesgo', top.t + '%', 'Mayor tasa de reprobación', '<b>' + esc(top.m.nombreMateria) + '</b> — ' + top.m.reprobadas + ' de ' + top.m.totalRegistros + ' registros reprobados.'));
+                if (top) out.push(card('fa-book', 'riesgo', top.t + '%', 'Mayor tasa de reprobación', '<b>' + esc(top.m.nombreMateria) + '</b>: ' + top.m.reprobadas + ' de ' + top.m.totalRegistros + ' registros reprobados.'));
             }
             // 2) Factor principal de situación familiar
             if (r) {
@@ -1151,7 +1164,7 @@
             if (cache.carreras && cache.carreras.length) {
                 var c = cache.carreras.map(function (x) { var v = (x.econ || 0) + (x.acad || 0) + (x.pers || 0); return { x: x, p: pct(v, x.cantidad) }; })
                     .filter(function (y) { return y.p !== null && (y.x.cantidad || 0) >= 20; }).sort(function (a, b) { return b.p - a.p; })[0];
-                if (c) out.push(card('fa-graduation-cap', 'alerta', c.p + '%', 'Carrera con mayor vulnerabilidad', '<b>' + esc(c.x.nombre) + '</b> — sobre ' + miles(c.x.cantidad) + ' estudiantes.'));
+                if (c) out.push(card('fa-graduation-cap', 'alerta', c.p + '%', 'Carrera con mayor vulnerabilidad', '<b>' + esc(c.x.nombre) + '</b>, sobre ' + miles(c.x.cantidad) + ' estudiantes.'));
             }
             // 4) Vulnerables sin seguimiento del tutor
             if (r && r.sinSeguimiento > 0) out.push(card('fa-user-clock', 'alerta', miles(r.sinSeguimiento), 'Sin seguimiento del tutor', 'Estudiantes sin clasificación de su tutor (' + pct(r.sinSeguimiento, r.totalEstudiantes) + '% del total).'));
@@ -1246,7 +1259,7 @@
                                             localStorage.setItem(LS_GLOBAL, global);
                                             aplicarTodo();
                                         });
-                                        nav.appendChild(sw);
+                                        document.body.appendChild(sw); // flotante abajo-izquierda; ya no vive en la barra sticky
                                         pintarSwitch();
                                     });
                                 })();
@@ -1623,7 +1636,6 @@
                                         @if (esMasterKpi) { <div class="kpi-var" data-sentido="down">–</div> }
                                     </div>
                                 </div>
-                                <div class="kpi-nota">Los porcentajes se calculan sobre el total de estudiantes activos. Las cifras respetan los filtros aplicados.</div>
                             </section>
 
                             @* ===== Fase 5: Insights Clave ===== *@
@@ -2229,7 +2241,7 @@
                                                         <label class="form-label" style="font-weight: 600; margin-bottom: 5px;">Año:</label>
                                                         <div class="form-control" style="padding: .5rem .75rem; border-radius: 8px; border: 1px solid #e9ecef; background-color: #f8f9fa; color: #495057; display: flex; align-items: center;">
                                                             <strong>@DateTime.Now.Year</strong>
-                                                            <small class="text-muted ms-2">(Año actual)</small>
+                                                            <small class="text-muted" style="margin-left:8px;">(Año actual)</small>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-4 d-flex align-items-end" style="margin-bottom: 10px;">
@@ -2313,7 +2325,11 @@
                                                     }
                                                     @if (tieneDesgloseFuente)
                                                     {
-                                                        <span>Fuente de clasificación &mdash; Por seguimiento del tutor: <strong>@fuenteSeg</strong> &middot; Por identificación (tutor sin seguimiento): <strong style="color:#b26a00;">@fuenteIdent</strong></span>
+                                                        <span style="display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
+                                                            <span style="font-weight:600; color:#607d8b;">Fuente de clasificación:</span>
+                                                            <span style="background:#e9f8f4; color:#00695C; border:1px solid #cfe8e2; border-radius:10px; padding:2px 10px;">Seguimiento del tutor: <strong>@fuenteSeg</strong></span>
+                                                            <span style="background:#fff3e0; color:#b26a00; border:1px solid #f0ddc0; border-radius:10px; padding:2px 10px;">Identificación (sin seguimiento): <strong>@fuenteIdent</strong></span>
+                                                        </span>
                                                     }
                                                     else
                                                     {
@@ -3268,7 +3284,7 @@
                         $menu.append('<li style="padding:6px 14px; color:#888; white-space:nowrap;">Sin cortes aún</li>');
                     } else {
                         cortes.forEach(function (c) {
-                            $('<li style="padding:6px 14px; cursor:pointer; white-space:nowrap;">' + c.nombre + ' — ' + c.fecha + '</li>')
+                            $('<li style="padding:6px 14px; cursor:pointer; white-space:nowrap;">' + c.nombre + ' <small style="color:#888;">(' + c.fecha + ')</small></li>')
                                 .on('mouseenter', function () { $(this).css('background', '#f0f0f0'); })
                                 .on('mouseleave', function () { $(this).css('background', ''); })
                                 .on('click', function (ev) {
@@ -3951,8 +3967,10 @@
                 var $desglose = $('#desgloseFuenteVulnerabilidad');
                 if ($desglose.length) {
                     if (data.clasificadosPorSeguimiento != null) {
-                        $desglose.html('Fuente de clasificación — Por seguimiento del tutor: <strong>' + (data.clasificadosPorSeguimiento || 0) +
-                            '</strong> &middot; Por identificación (tutor sin seguimiento): <strong style="color:#b26a00;">' + (data.clasificadosPorIdentificacion || 0) + '</strong>');
+                        $desglose.html('<span style="display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">' +
+                            '<span style="font-weight:600; color:#607d8b;">Fuente de clasificación:</span>' +
+                            '<span style="background:#e9f8f4; color:#00695C; border:1px solid #cfe8e2; border-radius:10px; padding:2px 10px;">Seguimiento del tutor: <strong>' + (data.clasificadosPorSeguimiento || 0) + '</strong></span>' +
+                            '<span style="background:#fff3e0; color:#b26a00; border:1px solid #f0ddc0; border-radius:10px; padding:2px 10px;">Identificación (sin seguimiento): <strong>' + (data.clasificadosPorIdentificacion || 0) + '</strong></span></span>');
                     } else {
                         $desglose.html('Desglose de fuente: no disponible en este corte.');
                     }
@@ -4258,7 +4276,7 @@
                     success: function (r) {
                         $('#vulnModalSpinner').hide();
                         if (!r || !r.success) { $('#vulnModalError').text('No se pudo obtener la lista: ' + ((r && r.error) || 'error')).show(); return; }
-                        $('#vulnModalTitulo').text((VULN_CAT_NOMBRES[cat] || cat) + ' — ' + r.total + ' alumno' + (r.total === 1 ? '' : 's'));
+                        $('#vulnModalTitulo').text((VULN_CAT_NOMBRES[cat] || cat) + ' (' + r.total + ' alumno' + (r.total === 1 ? '' : 's') + ')');
                         var html = r.alumnos.map(function (a) {
                             var buscar = ((a.matricula || '') + ' ' + (a.nombre || '')).toLowerCase();
                             return '<tr data-buscar="' + buscar.replace(/"/g, '') + '"><td>' + a.matricula + '</td><td>' + (a.nombre || '') + '</td><td>' + (a.especialidad || '') + '</td><td>' + (FUENTE_TXT[a.fuente] || '—') + '</td></tr>';
@@ -5324,7 +5342,7 @@
                     $tb.html('<tr><td colspan="4" class="text-center text-muted py-3">Se necesitan al menos 2 cortes para comparar.</td></tr>');
                     return;
                 }
-                var opts = cortes.map(function (c) { return '<option value="' + c.idCorte + '">' + c.nombre + ' — ' + c.fecha + '</option>'; }).join('');
+                var opts = cortes.map(function (c) { return '<option value="' + c.idCorte + '">' + c.nombre + ' (' + c.fecha + ')</option>'; }).join('');
                 $c1.html(opts); $c2.html(opts);
                 $c2.val(cortes[0].idCorte);
                 $c1.val(cortes[1].idCorte);
