@@ -2935,6 +2935,79 @@
                             </div>
                         </section>
 
+                        @* ===== CUMPLIMIENTO DE TUTORES (2026-08-02, innovación): ataca la queja de dirección
+                           de que "los datos no cuadran porque los tutores no capturan". Por tutor: % de sus
+                           alumnos con seguimiento del periodo, % con entrevista inicial y días sin capturar.
+                           Ranking: los de menor cumplimiento arriba. Fail-closed nivel 3 (solo su carrera). *@
+                        <section class="data-block" id="seccionCumplTutores">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
+                                <h3 class="section-title"><i class="fas fa-clipboard-check me-2"></i>Cumplimiento de Tutores</h3>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span id="cumplResumen" class="badge bg-warning text-dark" style="font-size:12px;"></span>
+                                    <select id="cumplOrden" class="form-select form-select-sm" style="width:auto;" title="Criterio del ranking">
+                                        <option value="cuatri">Ordenar: Menor % del cuatrimestre</option>
+                                        <option value="dias">Ordenar: Más días sin capturar</option>
+                                        <option value="mes">Ordenar: Menor % este mes</option>
+                                    </select>
+                                    <select id="cumplFiltro" class="form-select form-select-sm" style="width:auto;" title="Filtrar tutores por rezago">
+                                        <option value="">Todos los tutores</option>
+                                        <option value="rojo">Más de 30 días sin capturar</option>
+                                        <option value="ambar">Más de 14 días sin capturar</option>
+                                        <option value="sinmes">Sin capturas este mes</option>
+                                        <option value="pend">Con alumnos sin seguimiento</option>
+                                    </select>
+                                    <button type="button" class="btn btn-success btn-sm" id="btnExportarCumpl" title="Descarga el ranking visible en un archivo que abre en Excel">
+                                        <i class="fas fa-file-excel me-1"></i> Exportar a Excel
+                                    </button>
+                                    <span id="modoHostCumpl"></span>
+                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Alumnos del cuatrimestre vigente con al menos un seguimiento o entrevista inicial capturados en el periodo">Periodo vigente</span>
+                                </div>
+                            </div>
+                            <div style="padding: 12px;">
+                                <div id="cumplCargando" class="text-muted" style="padding:8px;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+                                <div id="cumplError" class="alert alert-danger" style="display:none;"></div>
+                                <div id="cumplVacio" class="alert alert-info" style="display:none;">No hay tutores con grupo asignado en el periodo vigente.</div>
+                                <div class="modo-chart-wrap" id="chartWrapCumpl" style="max-width:none; height:auto; padding:0;">
+                                    <div class="dash-graf-row">
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Tutores con Menor % de Seguimiento</h4><div class="dash-canvas-wrap" style="height:300px;"><canvas id="chartCumplPeores"></canvas></div></div>
+                                        <div class="demo-graf-col" style="flex:0 1 340px;"><h4 class="dash-sub">Cumplimiento Global de Seguimiento</h4><div class="dash-canvas-wrap" style="height:300px;"><canvas id="chartCumplGlobal"></canvas></div></div>
+                                    </div>
+                                </div>
+                                <div id="tablaCumplWrap">
+                                    <div class="table-responsive-lg">
+                                        <table id="tablaCumplTutores" class="table table-striped table-hover" style="width:100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center" style="width:44px;">#</th>
+                                                    <th>Tutor</th>
+                                                    <th>Carrera</th>
+                                                    <th class="text-center">Grupos</th>
+                                                    <th class="text-center">Alumnos</th>
+                                                    <th class="text-center" title="Alumnos con al menos un seguimiento capturado en el cuatrimestre">Cuatrimestre</th>
+                                                    <th class="text-center" title="Alumnos con seguimiento capturado en el mes en curso">Este mes</th>
+                                                    <th class="text-center" title="Alumnos con entrevista inicial del periodo">Con entrevista</th>
+                                                    <th class="text-center">Última captura</th>
+                                                    <th class="text-center" title="Verde: 14 o menos. Ámbar: hasta 30. Rojo: más de 30 o sin capturas.">Días sin capturar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        @* Modal de alumnos sin seguimiento por tutor (mismo patron de overlay propio, sin Bootstrap) *@
+                        <div id="cumplModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2000;">
+                            <div style="background:#fff; max-width:640px; margin:6vh auto 0; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.3); max-height:82vh; display:flex; flex-direction:column;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #eee;">
+                                    <strong id="cumplModalTitulo" style="color:#1f2937;"></strong>
+                                    <button type="button" id="cumplModalCerrar" class="btn btn-sm btn-default" title="Cerrar"><i class="fas fa-times"></i></button>
+                                </div>
+                                <div id="cumplModalCuerpo" style="padding:14px 20px; overflow-y:auto;"></div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
     </div>
@@ -5869,6 +5942,172 @@
         }
         // Carga diferida 3s (regla del proyecto). Esta misma respuesta alimenta el KPI de Bajas.
         setTimeout(function () { cargarBajasSec(); }, 3000);
+    });
+</script>
+<script>
+    // ===== Seccion CUMPLIMIENTO DE TUTORES (2026-08-02) =====
+    // Ranking por tutor: % de alumnos con seguimiento/entrevista del periodo y dias sin capturar.
+    // Semaforo: verde >=80%, amarillo >=50%, rojo <50%.
+    $(function () {
+        if (!document.getElementById('seccionCumplTutores')) return;
+        var cacheCT = null, dtCumpl = null, chartsCT = {};
+        var listaCumplActual = []; // lo que se ve en la tabla tras aplicar orden + filtro
+        function escC(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function badgePct(pct) {
+            var color = pct >= 80 ? '#00897B' : (pct >= 50 ? '#dba13a' : '#b3402e');
+            return '<span style="background:' + color + '; color:#fff; border-radius:10px; padding:2px 10px; font-size:12px; white-space:nowrap;">' + pct + '%</span>';
+        }
+        // Semaforo de RECENCIA: aunque un tutor tenga 100% del cuatrimestre, si lleva semanas sin
+        // capturar sale en ambar/rojo (es el caso "capturo en mayo y desaparecio").
+        function badgeDias(dias) {
+            if (dias === null || dias === undefined) return '<span style="background:#b3402e; color:#fff; border-radius:10px; padding:2px 10px; font-size:12px; white-space:nowrap;">Sin capturas</span>';
+            var color = dias <= 14 ? '#00897B' : (dias <= 30 ? '#dba13a' : '#b3402e');
+            return '<span style="background:' + color + '; color:#fff; border-radius:10px; padding:2px 10px; font-size:12px; white-space:nowrap;">' + dias + ' día' + (dias === 1 ? '' : 's') + '</span>';
+        }
+        function pintarCumplTabla(filas) {
+            // El DataTable se crea UNA vez y solo se repueblan filas: destruir/recrear en cambios
+            // rapidos de orden/filtro choca con la carga asincrona del paquete de idioma.
+            if (!dtCumpl) {
+                dtCumpl = $('#tablaCumplTutores').DataTable({
+                    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+                    order: [[0, 'asc']],
+                    pageLength: 15,
+                    lengthChange: false,
+                    columnDefs: [{ targets: [0, 3, 4, 5, 6, 7, 8, 9], className: 'text-center' }],
+                    createdRow: function (row) { row.style.cursor = 'pointer'; }
+                });
+            }
+            dtCumpl.clear();
+            filas.forEach(function (f, i) {
+                dtCumpl.row.add([
+                    '<span style="color:#888;">' + (i + 1) + '</span>',
+                    escC(f.tutor),
+                    escC(f.carrera),
+                    escC(f.grupos),
+                    f.alumnos,
+                    f.conSeguimiento + ' de ' + f.alumnos + ' ' + badgePct(f.pctSeguimiento),
+                    f.conSeguimientoMes + ' de ' + f.alumnos + ' ' + badgePct(f.pctSeguimientoMes),
+                    f.conEntrevista + ' de ' + f.alumnos + ' ' + badgePct(f.pctEntrevista),
+                    (f.ultimaCaptura ? escC(f.ultimaCaptura) : '<span class="text-muted">Sin capturas</span>'),
+                    badgeDias(f.diasSinCaptura)
+                ]);
+            });
+            dtCumpl.order([0, 'asc']).draw();
+        }
+        // Orden + filtro del ranking (client-side, sobre los datos ya cargados).
+        function aplicarVistaCumpl() {
+            var lista = (cacheCT || []).slice();
+            var filtro = $('#cumplFiltro').val();
+            if (filtro === 'rojo') lista = lista.filter(function (f) { return f.diasSinCaptura === null || f.diasSinCaptura > 30; });
+            else if (filtro === 'ambar') lista = lista.filter(function (f) { return f.diasSinCaptura === null || f.diasSinCaptura > 14; });
+            else if (filtro === 'sinmes') lista = lista.filter(function (f) { return (f.conSeguimientoMes || 0) === 0; });
+            else if (filtro === 'pend') lista = lista.filter(function (f) { return (f.alumnosSinSeguimiento || []).length > 0; });
+            var orden = $('#cumplOrden').val();
+            function dias(f) { return f.diasSinCaptura === null ? Number.MAX_VALUE : f.diasSinCaptura; } // sin capturas = el peor
+            if (orden === 'dias') lista.sort(function (a, b) { return dias(b) - dias(a) || a.pctSeguimiento - b.pctSeguimiento; });
+            else if (orden === 'mes') lista.sort(function (a, b) { return a.pctSeguimientoMes - b.pctSeguimientoMes || dias(b) - dias(a); });
+            else lista.sort(function (a, b) { return a.pctSeguimiento - b.pctSeguimiento || a.pctEntrevista - b.pctEntrevista || a.tutor.localeCompare(b.tutor); });
+            listaCumplActual = lista;
+            pintarCumplTabla(lista);
+        }
+        $('#cumplOrden, #cumplFiltro').on('change', aplicarVistaCumpl);
+        // Modal accionable: alumnos del tutor SIN seguimiento del cuatrimestre.
+        // El indice sale de la columna # (posicion en el ranking visible).
+        $('#tablaCumplTutores tbody').on('click', 'tr', function () {
+            var f = listaCumplActual[parseInt($(this).find('td:first').text(), 10) - 1];
+            if (!f) return;
+            $('#cumplModalTitulo').text(f.tutor + ' (' + f.grupos + ')');
+            var sin = f.alumnosSinSeguimiento || [];
+            var h;
+            if (!sin.length) {
+                h = '<p class="text-muted" style="margin:0;">Todos sus alumnos (' + f.alumnos + ') tienen al menos un seguimiento capturado este cuatrimestre. Última captura: ' + (f.ultimaCaptura || '—') + '.</p>';
+            } else {
+                h = '<p style="margin:0 0 8px; color:#b3402e;"><strong>' + sin.length + '</strong> alumno' + (sin.length === 1 ? '' : 's') + ' sin seguimiento del cuatrimestre:</p>' +
+                    '<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">' +
+                    sin.map(function (a, i) {
+                        return '<div style="display:flex; justify-content:space-between; gap:12px; padding:6px 12px;' + (i % 2 ? ' background:#fafbfc;' : '') + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
+                            '<span>' + escC(a.nombre) + '</span><span class="text-muted">' + escC(a.matricula) + '</span></div>';
+                    }).join('') + '</div>';
+            }
+            $('#cumplModalCuerpo').html(h);
+            $('#cumplModalOverlay').css('display', 'block');
+        });
+        function cerrarCumplModal() { $('#cumplModalOverlay').hide(); }
+        $('#cumplModalCerrar').on('click', cerrarCumplModal);
+        $('#cumplModalOverlay').on('click', function (e) { if (e.target === this) cerrarCumplModal(); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#cumplModalOverlay').is(':visible')) cerrarCumplModal(); });
+        // Exportar: CSV con BOM UTF-8 (abre directo en Excel), generado del mismo ranking en pantalla.
+        $('#btnExportarCumpl').on('click', function () {
+            var filas = listaCumplActual.length ? listaCumplActual : (cacheCT || []); // exporta lo visible (orden + filtro)
+            if (!filas.length) return;
+            function celda(v) { v = String(v == null ? '' : v); return '"' + v.replace(/"/g, '""') + '"'; }
+            var lineas = [['#', 'Tutor', 'Carrera', 'Grupos', 'Alumnos', 'Con seguimiento (cuatrimestre)', '% cuatrimestre', 'Con seguimiento (este mes)', '% este mes', 'Con entrevista', '% entrevista', 'Última captura', 'Días sin capturar', 'Alumnos sin seguimiento'].map(celda).join(',')];
+            filas.forEach(function (f, i) {
+                lineas.push([i + 1, f.tutor, f.carrera, f.grupos, f.alumnos, f.conSeguimiento, f.pctSeguimiento + '%', f.conSeguimientoMes, f.pctSeguimientoMes + '%', f.conEntrevista, f.pctEntrevista + '%', f.ultimaCaptura || 'Sin capturas', (f.diasSinCaptura === null ? 'Sin capturas' : f.diasSinCaptura), (f.alumnosSinSeguimiento || []).map(function (a) { return a.matricula; }).join(' ')].map(celda).join(','));
+            });
+            var blob = new Blob(['﻿' + lineas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'CumplimientoTutores.csv';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        });
+        function pintarCumplCharts(filas) {
+            filas = filas || cacheCT || [];
+            if (typeof Chart === 'undefined') return;
+            var peores = filas.slice(0, 10);
+            var elP = document.getElementById('chartCumplPeores');
+            if (elP) {
+                if (chartsCT.peores) chartsCT.peores.destroy();
+                chartsCT.peores = new Chart(elP.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: peores.map(function (f) { return f.tutor; }),
+                        datasets: [{ label: '% de alumnos con seguimiento', data: peores.map(function (f) { return f.pctSeguimiento; }), backgroundColor: peores.map(function (f) { return f.pctSeguimiento >= 80 ? '#00897B' : (f.pctSeguimiento >= 50 ? '#dba13a' : '#b3402e'); }) }]
+                    },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { min: 0, max: 100, ticks: { callback: function (v) { return v + '%'; } } }, y: { ticks: { font: { size: 10 } } } } }
+                });
+            }
+            var elG = document.getElementById('chartCumplGlobal');
+            if (elG) {
+                var totAl = 0, totSeg = 0;
+                filas.forEach(function (f) { totAl += f.alumnos; totSeg += f.conSeguimiento; });
+                if (chartsCT.global) chartsCT.global.destroy();
+                chartsCT.global = new Chart(elG.getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: ['Con seguimiento', 'Sin seguimiento'], datasets: [{ data: [totSeg, Math.max(0, totAl - totSeg)], backgroundColor: ['#00897B', '#b3402e'] }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        }
+        if (window.ModoEstadisticas) {
+            ModoEstadisticas.registrar('cumplTutores', { original: '#tablaCumplWrap', charts: '#chartWrapCumpl', botonHost: '#modoHostCumpl', render: pintarCumplCharts });
+        }
+        function cargarCumpl(_retry) {
+            $('#cumplCargando').show(); $('#cumplError, #cumplVacio').hide();
+            $.ajax({
+                url: '@Url.Action("GetCumplimientoTutores", "NuevasEstadisticas")',
+                type: 'POST',
+                success: function (r) {
+                    $('#cumplCargando').hide();
+                    if (!r || !r.success) { $('#cumplError').text('No se pudo obtener el cumplimiento: ' + ((r && r.error) || 'error desconocido')).show(); return; }
+                    cacheCT = r.data || [];
+                    if (!cacheCT.length) { $('#cumplVacio').show(); $('#cumplResumen').text(''); return; }
+                    var totAl = 0, totSeg = 0;
+                    cacheCT.forEach(function (f) { totAl += f.alumnos; totSeg += f.conSeguimiento; });
+                    $('#cumplResumen').text(cacheCT.length + ' tutores · ' + (totAl ? Math.round(totSeg * 1000 / totAl) / 10 : 0) + '% de alumnos con seguimiento');
+                    aplicarVistaCumpl();
+                    if (window.ModoEstadisticas) { ModoEstadisticas.datos('cumplTutores', cacheCT); } else { pintarCumplCharts(cacheCT); }
+                },
+                error: function () {
+                    if (!_retry) { setTimeout(function () { cargarCumpl(true); }, 1500); return; } // reintento 1 vez (patron existente)
+                    $('#cumplCargando').hide();
+                    $('#cumplError').text('Error de conexión al cargar el cumplimiento de tutores.').show();
+                }
+            });
+        }
+        // Carga diferida 3.5s: despues de las demas cargas perezosas para no amontonar AJAX.
+        setTimeout(function () { cargarCumpl(); }, 3500);
     });
 </script>
 }

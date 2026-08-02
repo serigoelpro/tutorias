@@ -4994,6 +4994,130 @@ namespace Plataforma_Web.Controllers
             }
         }
 
+        // ===== Cumplimiento de tutores (2026-08-02, propuesta de innovación) =====
+        // Por cada tutor con grupo asignado en el cuatrimestre vigente (TutoriaGrupals):
+        // % de sus alumnos con al menos un seguimiento del periodo, % con entrevista inicial
+        // del periodo y días desde su última captura. Ataca la queja de dirección de que
+        // "los datos no cuadran porque los tutores no capturan". Fail-closed: nivel 3 solo
+        // ve los tutores de su carrera; Máster ve todos.
+        [HttpPost]
+        public ActionResult GetCumplimientoTutores()
+        {
+            try
+            {
+                db.Database.CommandTimeout = 300;
+                Usuario usuario = Session["Usuario"] as Usuario;
+                int? carreraFiltro = (usuario != null && usuario.IdNivel == 3) ? (int?)usuario.IdCarrera : null;
+
+                var periodoCumpl = PeriodoHelper.Obtener(DateTime.Now);
+                int anio = periodoCumpl.Anio, numPeriodo = periodoCumpl.NumPeriodo;
+                DateTime inicio = periodoCumpl.Inicio, fin = periodoCumpl.Fin;
+
+                var asignaciones = db.TutoriaGrupals
+                    .Where(t => t.Año == anio && t.IdPeriodo == numPeriodo)
+                    .ToList();
+                if (carreraFiltro.HasValue)
+                    asignaciones = asignaciones.Where(t => t.IdCarrera == carreraFiltro.Value).ToList();
+                if (!asignaciones.Any())
+                    return Json(new { success = true, data = new object[0], periodo = periodoCumpl.Nombre });
+
+                // Alumnos activos del periodo; el match alumno->grupo usa las mismas llaves que
+                // AsesorController.Grupo (carrera+grado+grupo+turno, ya acotado a año/periodo).
+                var alumnosPeriodo = db.DatosPersonales
+                    .Where(a => a.Año == anio && a.IdPeriodo == numPeriodo && a.Estado)
+                    .Select(a => new { a.IdPersona, a.IdCarrera, a.IdGrado, a.IdGrupo, a.IdTurno, a.Matricula, a.Nombre })
+                    .ToList();
+                var infoAlumno = new Dictionary<int, Tuple<string, string>>();
+                foreach (var a in alumnosPeriodo)
+                    if (!infoAlumno.ContainsKey(a.IdPersona))
+                        infoAlumno[a.IdPersona] = Tuple.Create((a.Matricula ?? "").Trim(), (a.Nombre ?? "").Trim());
+
+                // Solo seguimientos CON CONTENIDO (vulnerabilidad o problematica capturada): la
+                // importacion masiva dejo filas de seguimiento vacias y contarlas daria 100% falso
+                // (mismo criterio que la cascada de vulnerabilidad, que hoy reporta 0 por seguimiento).
+                var seguimientosPeriodo = (from s in db.Seguimientoes
+                                           join i in db.Individuals on s.IdIndividual equals i.IdIndividual
+                                           where s.Fecha >= inicio && s.Fecha <= fin
+                                              && ((s.Vulnerabilidad != null && s.Vulnerabilidad.Trim() != "")
+                                                  || (s.Problematica != null && s.Problematica.Trim() != ""))
+                                           select new { i.IdPersona, s.Fecha }).ToList();
+                var ultimoSegPorPersona = seguimientosPeriodo
+                    .GroupBy(x => x.IdPersona)
+                    .ToDictionary(g => g.Key, g => g.Max(x => x.Fecha));
+                // "Este mes": la foto del momento (conecta con la Fuente de clasificación, que
+                // por defecto filtra por el mes en curso).
+                DateTime inicioMesActual = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                var conSegEsteMes = new HashSet<int>(seguimientosPeriodo
+                    .Where(x => x.Fecha >= inicioMesActual).Select(x => x.IdPersona).Distinct());
+                var conEntrevistaPeriodo = new HashSet<int>(db.EntrevistaInicials
+                    .Where(e => e.Fecha >= inicio && e.Fecha <= fin)
+                    .Select(e => e.IdPersona).Distinct().ToList());
+
+                var nombresCarreraCumpl = db.Carreras.ToList().ToDictionary(c => c.IdCarrera, c => (c.Nombre ?? "").Trim());
+                var nombresGradoCumpl = db.Gradoes.ToList().ToDictionary(g => g.IdGrado, g => (g.Nombre ?? "").Trim());
+                var nombresGrupoCumpl = db.Grupoes.ToList().ToDictionary(g => g.IdGrupo, g => (g.Nombre ?? "").Trim());
+                var idsTutores = asignaciones.Select(t => t.IdUsuario).Distinct().ToList();
+                var nombresTutores = db.Usuarios.Where(u => idsTutores.Contains(u.IdUsuario)).ToList()
+                    .ToDictionary(u => u.IdUsuario, u => ((u.NombreCompleto ?? u.UserName) ?? ("Tutor " + u.IdUsuario)).Trim());
+
+                var filas = asignaciones.GroupBy(t => t.IdUsuario).Select(g =>
+                {
+                    var idsAlumnosTutor = new List<int>();
+                    var etiquetasGrupos = new List<string>();
+                    foreach (var asg in g)
+                    {
+                        etiquetasGrupos.Add(
+                            (nombresGradoCumpl.ContainsKey(asg.IdGrado) ? nombresGradoCumpl[asg.IdGrado] : "?") +
+                            (nombresGrupoCumpl.ContainsKey(asg.IdGrupo) ? nombresGrupoCumpl[asg.IdGrupo] : "?"));
+                        idsAlumnosTutor.AddRange(alumnosPeriodo
+                            .Where(a => a.IdCarrera == asg.IdCarrera && a.IdGrado == asg.IdGrado
+                                     && a.IdGrupo == asg.IdGrupo && a.IdTurno == asg.IdTurno)
+                            .Select(a => a.IdPersona));
+                    }
+                    var idsAlumnos = idsAlumnosTutor.Distinct().ToList();
+                    int totalAl = idsAlumnos.Count;
+                    int conSeg = idsAlumnos.Count(id => ultimoSegPorPersona.ContainsKey(id));
+                    int conEnt = idsAlumnos.Count(id => conEntrevistaPeriodo.Contains(id));
+                    int conSegMes = idsAlumnos.Count(id => conSegEsteMes.Contains(id));
+                    DateTime? ultima = idsAlumnos
+                        .Where(id => ultimoSegPorPersona.ContainsKey(id))
+                        .Select(id => (DateTime?)ultimoSegPorPersona[id])
+                        .DefaultIfEmpty(null).Max();
+                    // Para el modal accionable: quiénes de sus alumnos NO tienen seguimiento del periodo.
+                    var sinSeguimiento = idsAlumnos
+                        .Where(id => !ultimoSegPorPersona.ContainsKey(id) && infoAlumno.ContainsKey(id))
+                        .Select(id => new { matricula = infoAlumno[id].Item1, nombre = infoAlumno[id].Item2 })
+                        .OrderBy(x => x.nombre)
+                        .ToList();
+                    var primeraAsg = g.First();
+                    return new
+                    {
+                        tutor = nombresTutores.ContainsKey(g.Key) ? nombresTutores[g.Key] : ("Tutor " + g.Key),
+                        carrera = nombresCarreraCumpl.ContainsKey(primeraAsg.IdCarrera) ? nombresCarreraCumpl[primeraAsg.IdCarrera] : "",
+                        grupos = string.Join(", ", etiquetasGrupos.OrderBy(x => x)),
+                        alumnos = totalAl,
+                        conSeguimiento = conSeg,
+                        pctSeguimiento = totalAl > 0 ? Math.Round(conSeg * 100.0 / totalAl, 1) : 0,
+                        conEntrevista = conEnt,
+                        pctEntrevista = totalAl > 0 ? Math.Round(conEnt * 100.0 / totalAl, 1) : 0,
+                        conSeguimientoMes = conSegMes,
+                        pctSeguimientoMes = totalAl > 0 ? Math.Round(conSegMes * 100.0 / totalAl, 1) : 0,
+                        ultimaCaptura = ultima.HasValue ? ultima.Value.ToString("dd/MM/yyyy") : null,
+                        diasSinCaptura = ultima.HasValue ? (int?)(DateTime.Now - ultima.Value).Days : null,
+                        alumnosSinSeguimiento = sinSeguimiento
+                    };
+                })
+                .OrderBy(f => f.pctSeguimiento).ThenBy(f => f.pctEntrevista).ThenBy(f => f.tutor)
+                .ToList();
+
+                return Json(new { success = true, data = filas, periodo = periodoCumpl.Nombre });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
         // Método AJAX para obtener estadísticas de PATs bajo demanda
         [HttpPost]
         public JsonResult GetEstadisticasPATs()
