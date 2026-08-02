@@ -3019,6 +3019,28 @@
                             </div>
                         </div>
 
+                        @* Mini-ficha flotante (2026-08-02): botón flotante que abre un panel compacto y
+                           ARRASTRABLE con buscador de alumno — para consultar sin perder el scroll. *@
+                        <button type="button" id="fab360" title="Buscar alumno (ficha rápida flotante)"
+                                style="position:fixed; left:18px; bottom:64px; z-index:1940; width:44px; height:44px; border-radius:50%; border:none; background:#2c3e50; color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.25); cursor:pointer; font-size:16px;">
+                            <i class="fas fa-user-graduate"></i>
+                        </button>
+                        <div id="mini360" style="display:none; position:fixed; left:70px; bottom:64px; z-index:1945; width:370px; max-width:92vw; background:#fff; border-radius:12px; box-shadow:0 10px 34px rgba(0,0,0,.3); overflow:hidden;">
+                            <div id="mini360Handle" style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 12px; background:#2c3e50; color:#fff; cursor:move; user-select:none;">
+                                <span style="font-size:13px; font-weight:600;"><i class="fas fa-arrows-alt me-1" style="opacity:.7;"></i> Ficha rápida</span>
+                                <button type="button" id="mini360Cerrar" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;" title="Cerrar"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div style="padding:10px 12px;">
+                                <div style="display:flex; gap:6px;">
+                                    <input type="text" id="mini360Buscar" class="form-control form-control-sm" placeholder="Matrícula o nombre..." style="border-radius:8px;" />
+                                    <button type="button" class="btn btn-success btn-sm" id="mini360BtnBuscar"><i class="fas fa-search"></i></button>
+                                </div>
+                                <div id="mini360Cuerpo" style="max-height:52vh; overflow-y:auto; margin-top:10px; font-size:13px;">
+                                    <p class="text-muted" style="margin:0; font-size:12.5px;">Busca un alumno para ver su resumen sin salir de donde estás.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         @* ===== FICHA DEL ALUMNO 360° (2026-08-02, innovación): todo el expediente del alumno
                            en una pantalla — datos, tutor, clasificación con fuente, materias con intentos,
                            línea de tiempo de seguimientos, entrevista y bajas. Fail-closed nivel 3. *@
@@ -6299,6 +6321,94 @@
         }
         $('#a360BtnBuscar').on('click', buscar);
         $('#a360Buscar').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+
+        // ===== MINI-FICHA FLOTANTE (arrastrable, estilo mini-player) =====
+        var $mini = $('#mini360');
+        $('#fab360').on('click', function () {
+            $mini.toggle();
+            if ($mini.is(':visible')) $('#mini360Buscar').focus();
+        });
+        $('#mini360Cerrar').on('click', function () { $mini.hide(); });
+        // Arrastre: se toma del encabezado; el panel pasa a coordenadas left/top libres.
+        (function () {
+            var panel = document.getElementById('mini360'), handle = document.getElementById('mini360Handle');
+            var arrastrando = false, sx = 0, sy = 0, px = 0, py = 0;
+            handle.addEventListener('mousedown', function (e) {
+                if (e.target.closest('button')) return;
+                arrastrando = true; sx = e.clientX; sy = e.clientY;
+                var rect = panel.getBoundingClientRect(); px = rect.left; py = rect.top;
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', function (e) {
+                if (!arrastrando) return;
+                var nl = px + e.clientX - sx, nt = py + e.clientY - sy;
+                nl = Math.max(0, Math.min(window.innerWidth - 80, nl));
+                nt = Math.max(0, Math.min(window.innerHeight - 46, nt));
+                panel.style.left = nl + 'px'; panel.style.top = nt + 'px';
+                panel.style.right = 'auto'; panel.style.bottom = 'auto';
+            });
+            document.addEventListener('mouseup', function () { arrastrando = false; });
+        })();
+        function miniMsg(html) { $('#mini360Cuerpo').html(html); }
+        function pintarMini(d) {
+            var c = colorClasif(d.clasificacion);
+            var rep = 0, ext = 0;
+            (d.materias || []).forEach(function (m) { if (m.estado === 'Extraordinario') ext++; else rep++; });
+            var ult = (d.seguimientos || []).slice(0, 3);
+            miniMsg(
+                '<div style="font-weight:700; color:#1f2937;">' + escA(d.nombre) + '</div>' +
+                '<div style="color:#888; font-size:12px; margin-bottom:6px;">' + escA(d.matricula) + ' · ' + escA(d.carrera) + (d.grupo ? ' · Grupo ' + escA(d.grupo) : '') + '</div>' +
+                '<div style="background:' + c + '; color:#fff; border-radius:8px; padding:5px 10px; display:inline-block; margin-bottom:8px;">' +
+                '<strong>' + escA(d.clasificacion) + '</strong> <span style="font-size:11px; opacity:.9;">(' + escA(d.fuente) + ')</span></div>' +
+                '<div style="margin-bottom:6px;"><i class="fas fa-user-tie" style="color:#607d8b; width:16px;"></i> ' + (d.tutor ? escA(d.tutor) : '<span class="text-muted">Sin tutor asignado</span>') + '</div>' +
+                '<div style="margin-bottom:6px;"><i class="fas fa-book" style="color:#607d8b; width:16px;"></i> ' +
+                ((rep + ext) ? (rep + ' en arrastre · ' + ext + ' en extraordinario') : 'Sin materias reprobadas') + '</div>' +
+                ((d.bajas && d.bajas.length) ? '<div style="margin-bottom:6px;"><i class="fas fa-user-slash" style="color:#b3402e; width:16px;"></i> Baja: ' + escA(d.bajas[0].fecha) + ' (' + escA(d.bajas[0].causa || 'sin causa') + ')</div>' : '') +
+                ((d.canalizaciones && d.canalizaciones.length) ? '<div style="margin-bottom:6px;"><i class="fas fa-hand-holding-heart" style="color:#607d8b; width:16px;"></i> ' + d.canalizaciones.length + ' canalización' + (d.canalizaciones.length === 1 ? '' : 'es') + ' (últ. ' + escA(d.canalizaciones[0].fecha) + ')</div>' : '') +
+                (ult.length ? ('<div style="margin-top:8px; font-weight:600; color:#455a64; font-size:12px;">Últimos seguimientos</div>' +
+                    ult.map(function (s) {
+                        return '<div style="border-left:2px solid ' + colorClasif(s.vulnerabilidad) + '; padding:2px 0 2px 8px; margin-top:4px;">' +
+                            '<span style="color:#888; font-size:11.5px;">' + escA(s.fecha) + '</span>' + (s.vulnerabilidad ? ' · <strong style="font-size:11.5px; color:' + colorClasif(s.vulnerabilidad) + ';">' + escA(s.vulnerabilidad) + '</strong>' : '') +
+                            (s.problematica ? '<div style="font-size:12px; color:#374151;">' + escA(s.problematica).slice(0, 140) + '</div>' : '') + '</div>';
+                    }).join('')) : '<div class="text-muted" style="font-size:12px; margin-top:6px;">Sin seguimientos capturados.</div>') +
+                '<button type="button" class="btn btn-utt-outline btn-sm" id="mini360VerCompleta" data-id="' + d.idPersona + '" style="margin-top:10px; width:100%;"><i class="fas fa-id-card me-1"></i> Ver ficha completa</button>'
+            );
+        }
+        function miniCargar(idPersona) {
+            miniMsg('<p class="text-muted" style="margin:0;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>');
+            $.post('@Url.Action("GetAlumno360", "NuevasEstadisticas")', { idPersona: idPersona }, function (r) {
+                if (!r || !r.success) { miniMsg('<p style="color:#b3402e; margin:0;">' + escA((r && r.error) || 'No se pudo cargar.') + '</p>'); return; }
+                pintarMini(r.data);
+            }, 'json').fail(function () { miniMsg('<p style="color:#b3402e; margin:0;">Error de conexión.</p>'); });
+        }
+        function miniBuscar() {
+            var q = ($('#mini360Buscar').val() || '').trim();
+            if (q.length < 3) { miniMsg('<p style="color:#b26a00; margin:0;">Escribe al menos 3 caracteres.</p>'); return; }
+            miniMsg('<p class="text-muted" style="margin:0;"><i class="fas fa-spinner fa-spin"></i> Buscando...</p>');
+            $.post('@Url.Action("BuscarAlumno360", "NuevasEstadisticas")', { q: q }, function (r) {
+                if (!r || !r.success) { miniMsg('<p style="color:#b3402e; margin:0;">' + escA((r && r.error) || 'Error al buscar.') + '</p>'); return; }
+                var lista = r.data || [];
+                if (!lista.length) { miniMsg('<p class="text-muted" style="margin:0;">Sin coincidencias para "' + escA(q) + '".</p>'); return; }
+                if (lista.length === 1) { miniCargar(lista[0].idPersona); return; }
+                miniMsg(lista.map(function (a, i) {
+                    return '<div class="mini360-sug" data-id="' + a.idPersona + '" style="padding:6px 8px; cursor:pointer; border-radius:6px;' + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
+                        escA(a.nombre) + ' <small class="text-muted">(' + escA(a.matricula) + ' · ' + escA(a.carrera) + ')</small></div>';
+                }).join(''));
+            }, 'json').fail(function () { miniMsg('<p style="color:#b3402e; margin:0;">Error de conexión.</p>'); });
+        }
+        $('#mini360BtnBuscar').on('click', miniBuscar);
+        $('#mini360Buscar').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); miniBuscar(); } });
+        $('#mini360Cuerpo').on('click', '.mini360-sug', function () { miniCargar($(this).data('id')); });
+        $('#mini360Cuerpo').on('mouseenter', '.mini360-sug', function () { $(this).css('background', '#eef3f7'); })
+                           .on('mouseleave', '.mini360-sug', function () { $(this).css('background', ''); });
+        // "Ver ficha completa": carga la seccion grande y baja hasta ella.
+        $('#mini360Cuerpo').on('click', '#mini360VerCompleta', function () {
+            var id = $(this).data('id');
+            var $chev = $('#seccionAlumno360.dash-colapsada .dash-chevron');
+            if ($chev.length) $chev.trigger('click');
+            cargarFicha(id);
+            document.getElementById('seccionAlumno360').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
         $('#a360Sugerencias').on('click', '.a360-sug', function () { cargarFicha($(this).data('id')); });
         $('#a360Sugerencias').on('mouseenter', '.a360-sug', function () { $(this).css('background', '#eef3f7'); })
                              .on('mouseleave', '.a360-sug', function (e) { $(this).css('background', $(this).index() % 2 ? '#fafbfc' : ''); });
