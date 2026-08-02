@@ -5118,6 +5118,182 @@ namespace Plataforma_Web.Controllers
             }
         }
 
+        public class Alumno360MateriaRow
+        {
+            public string Materia { get; set; }
+            public string Estado { get; set; }
+            public int Intentos { get; set; }
+        }
+
+        // ===== Vista del Alumno 360° (2026-08-02, propuesta de innovación) =====
+        // Ficha única por alumno: datos, tutor, clasificación de vulnerabilidad con fuente,
+        // materias reprobadas/extraordinario con intentos, línea de tiempo de seguimientos,
+        // entrevista inicial y bajas. Fail-closed: nivel 3 solo alumnos de su carrera.
+
+        [HttpPost]
+        public ActionResult BuscarAlumno360(string q)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 3)
+                    return Json(new { success = true, data = new object[0] });
+                string termino = q.Trim();
+                Usuario usuario = Session["Usuario"] as Usuario;
+                int? carreraFiltro = (usuario != null && usuario.IdNivel == 3) ? (int?)usuario.IdCarrera : null;
+
+                var query = db.DatosPersonales.Where(a => a.Estado &&
+                    (a.Matricula.Contains(termino) || a.Nombre.Contains(termino)));
+                if (carreraFiltro.HasValue)
+                    query = query.Where(a => a.IdCarrera == carreraFiltro.Value);
+
+                var nombresCarrera360 = db.Carreras.ToList().ToDictionary(c => c.IdCarrera, c => (c.Nombre ?? "").Trim());
+                // Proyección (no materializar la entidad completa: DatosPersonales tiene columnas
+                // con desajuste de mapeo y truena el SELECT *).
+                var coincidencias = query
+                    .OrderByDescending(a => a.Año).ThenByDescending(a => a.IdPeriodo).ThenBy(a => a.Nombre)
+                    .Select(a => new { a.IdPersona, a.Matricula, a.Nombre, a.IdCarrera })
+                    .Take(10).ToList()
+                    .Select(a => new
+                    {
+                        idPersona = a.IdPersona,
+                        matricula = (a.Matricula ?? "").Trim(),
+                        nombre = (a.Nombre ?? "").Trim(),
+                        carrera = nombresCarrera360.ContainsKey(a.IdCarrera) ? nombresCarrera360[a.IdCarrera] : ""
+                    }).ToList();
+                return Json(new { success = true, data = coincidencias });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.GetBaseException().Message });
+            }
+        }
+
+        [HttpPost]
+        public ActionResult GetAlumno360(int idPersona)
+        {
+            try
+            {
+                db.Database.CommandTimeout = 300;
+                // Proyección (ver BuscarAlumno360: la entidad completa truena por mapeo).
+                var dp = db.DatosPersonales.Where(x => x.IdPersona == idPersona)
+                    .Select(x => new { x.IdPersona, x.Matricula, x.Nombre, x.IdCarrera, x.Especialidad, x.IdGrado, x.IdGrupo, x.IdTurno, x.Sexo, x.Año, x.IdPeriodo })
+                    .FirstOrDefault();
+                if (dp == null)
+                    return Json(new { success = false, error = "Alumno no encontrado." });
+                Usuario usuario = Session["Usuario"] as Usuario;
+                if (usuario != null && usuario.IdNivel == 3 && dp.IdCarrera != usuario.IdCarrera)
+                    return Json(new { success = false, error = "Sin acceso a alumnos de otra carrera." });
+
+                var nomCarrera = db.Carreras.Where(c => c.IdCarrera == dp.IdCarrera).Select(c => c.Nombre).FirstOrDefault() ?? "";
+                var nomGrado = db.Gradoes.Where(g => g.IdGrado == dp.IdGrado).Select(g => g.Nombre).FirstOrDefault() ?? "";
+                var nomGrupo = db.Grupoes.Where(g => g.IdGrupo == dp.IdGrupo).Select(g => g.Nombre).FirstOrDefault() ?? "";
+                var nomTurno = db.Turnoes.Where(t => t.IdTurno == dp.IdTurno).Select(t => t.Nombre).FirstOrDefault() ?? "";
+
+                // Tutor asignado: mismo match que AsesorController.Grupo / Cumplimiento de Tutores.
+                var asignacionTutor = db.TutoriaGrupals.FirstOrDefault(t =>
+                    t.Año == dp.Año && t.IdPeriodo == dp.IdPeriodo && t.IdCarrera == dp.IdCarrera &&
+                    t.IdGrado == dp.IdGrado && t.IdGrupo == dp.IdGrupo && t.IdTurno == dp.IdTurno);
+                string tutorNombre = null;
+                if (asignacionTutor != null)
+                {
+                    tutorNombre = db.Usuarios.Where(u => u.IdUsuario == asignacionTutor.IdUsuario)
+                        .Select(u => u.NombreCompleto).FirstOrDefault();
+                }
+
+                // Línea de tiempo de seguimientos (más recientes primero, tope 60).
+                var seguimientos = (from s in db.Seguimientoes
+                                    join i in db.Individuals on s.IdIndividual equals i.IdIndividual
+                                    where i.IdPersona == idPersona
+                                    orderby s.Fecha descending
+                                    select new { s.Fecha, s.Vulnerabilidad, s.Problematica, s.Accion })
+                                   .Take(60).ToList()
+                                   .Select(s => new
+                                   {
+                                       fecha = s.Fecha.ToString("dd/MM/yyyy"),
+                                       vulnerabilidad = (s.Vulnerabilidad ?? "").Trim(),
+                                       problematica = (s.Problematica ?? "").Trim(),
+                                       accion = (s.Accion ?? "").Trim()
+                                   }).ToList();
+
+                var entrevista = db.EntrevistaInicials.Where(e => e.IdPersona == idPersona)
+                    .OrderByDescending(e => e.Fecha)
+                    .Select(e => new { e.Fecha, e.Vulnerable }).FirstOrDefault();
+
+                // SQL crudo: la entidad EF de MateriasAlumno no tiene mapeo de tabla utilizable
+                // (todo el módulo de Materias consulta con SQL directo, mismo patrón aquí).
+                var materias = db.Database.SqlQuery<Alumno360MateriaRow>(@"
+                        SELECT m.Nombre AS Materia, ma.Estado AS Estado,
+                               ISNULL(ma.IntentosExtraordinarios, 0) AS Intentos
+                        FROM MateriasAlumno ma
+                        INNER JOIN Materias m ON ma.IdMateria = m.IdMateria
+                        WHERE ma.IdPersona = @idPersona AND ma.Estado IN ('Reprobada', 'Extraordinario')",
+                        new System.Data.SqlClient.SqlParameter("@idPersona", idPersona))
+                    .ToList()
+                    .Select(m => new { materia = (m.Materia ?? "").Trim(), estado = m.Estado, intentos = m.Intentos })
+                    .OrderByDescending(m => m.intentos).ThenBy(m => m.materia).ToList();
+
+                var bajas = db.Bajas.Where(b => b.IdPersona == idPersona)
+                    .OrderByDescending(b => b.Fecha).ToList()
+                    .Select(b => new { fecha = b.Fecha.ToString("dd/MM/yyyy"), causa = (b.Causa ?? "").Trim() }).ToList();
+
+                // Clasificación con fuente (misma cascada, simplificada al alumno): último seguimiento
+                // con contenido del periodo vigente -> fuente tutor; si no, entrevista -> identificación;
+                // si no, sin información.
+                var periodo360 = PeriodoHelper.Obtener(DateTime.Now);
+                var ultimoSegPeriodo = (from s in db.Seguimientoes
+                                        join i in db.Individuals on s.IdIndividual equals i.IdIndividual
+                                        where i.IdPersona == idPersona
+                                           && s.Fecha >= periodo360.Inicio && s.Fecha <= periodo360.Fin
+                                           && s.Vulnerabilidad != null && s.Vulnerabilidad.Trim() != ""
+                                        orderby s.Fecha descending
+                                        select s.Vulnerabilidad).FirstOrDefault();
+                string clasificacion, fuente;
+                if (!string.IsNullOrWhiteSpace(ultimoSegPeriodo))
+                {
+                    clasificacion = ultimoSegPeriodo.Trim();
+                    fuente = "Seguimiento del tutor";
+                }
+                else if (entrevista != null && !string.IsNullOrWhiteSpace(entrevista.Vulnerable))
+                {
+                    clasificacion = entrevista.Vulnerable.Trim();
+                    fuente = "Identificación (entrevista inicial)";
+                }
+                else
+                {
+                    clasificacion = "Sin información";
+                    fuente = "Sin capturas";
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        idPersona = dp.IdPersona,
+                        matricula = (dp.Matricula ?? "").Trim(),
+                        nombre = (dp.Nombre ?? "").Trim(),
+                        carrera = nomCarrera.Trim(),
+                        especialidad = (dp.Especialidad ?? "").Trim(),
+                        grupo = (nomGrado + nomGrupo).Trim(),
+                        turno = nomTurno.Trim(),
+                        sexo = (dp.Sexo ?? "").Trim(),
+                        periodoAlumno = dp.Año + " · periodo " + dp.IdPeriodo,
+                        tutor = (tutorNombre ?? "").Trim(),
+                        clasificacion,
+                        fuente,
+                        entrevista = entrevista == null ? null : new { fecha = entrevista.Fecha.ToString("dd/MM/yyyy"), vulnerable = (entrevista.Vulnerable ?? "").Trim() },
+                        materias,
+                        seguimientos,
+                        bajas
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.GetBaseException().Message });
+            }
+        }
+
         // Método AJAX para obtener estadísticas de PATs bajo demanda
         [HttpPost]
         public JsonResult GetEstadisticasPATs()

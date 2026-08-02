@@ -3008,6 +3008,48 @@
                             </div>
                         </div>
 
+                        @* ===== FICHA DEL ALUMNO 360° (2026-08-02, innovación): todo el expediente del alumno
+                           en una pantalla — datos, tutor, clasificación con fuente, materias con intentos,
+                           línea de tiempo de seguimientos, entrevista y bajas. Fail-closed nivel 3. *@
+                        <section class="data-block" id="seccionAlumno360">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
+                                <h3 class="section-title"><i class="fas fa-id-card me-2"></i>Ficha del Alumno (360°)</h3>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="text" id="a360Buscar" class="form-control form-control-sm" placeholder="Matrícula o nombre (mín. 3 letras)..." style="width:280px; border-radius:8px;" />
+                                    <button type="button" class="btn btn-success btn-sm" id="a360BtnBuscar"><i class="fas fa-search me-1"></i> Buscar</button>
+                                </div>
+                            </div>
+                            <div style="padding: 14px;">
+                                <div id="a360Ayuda" class="text-muted" style="padding:8px;">Busca un alumno por matrícula o nombre para ver su expediente completo: clasificación de vulnerabilidad, materias, seguimientos, entrevista y bajas.</div>
+                                <div id="a360Cargando" class="text-muted" style="display:none; padding:8px;"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>
+                                <div id="a360Error" class="alert alert-danger" style="display:none;"></div>
+                                <div id="a360Sugerencias" style="display:none;"></div>
+                                <div id="a360Ficha" style="display:none;">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:12px;">
+                                        <div>
+                                            <div id="a360Nombre" style="font-size:1.35rem; font-weight:700; color:#1f2937;"></div>
+                                            <div id="a360Chips" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+                                        </div>
+                                        <div id="a360Clasif" style="border-radius:10px; padding:10px 16px; min-width:220px; text-align:center;"></div>
+                                    </div>
+                                    <div class="dash-graf-row" style="align-items:stretch;">
+                                        <div class="demo-graf-col">
+                                            <h4 class="dash-sub">Materias Reprobadas y en Extraordinario</h4>
+                                            <div id="a360Materias"></div>
+                                            <h4 class="dash-sub" style="margin-top:14px;">Entrevista Inicial</h4>
+                                            <div id="a360Entrevista"></div>
+                                            <h4 class="dash-sub" style="margin-top:14px;">Bajas Registradas</h4>
+                                            <div id="a360Bajas"></div>
+                                        </div>
+                                        <div class="demo-graf-col">
+                                            <h4 class="dash-sub">Línea de Tiempo de Seguimientos</h4>
+                                            <div id="a360Timeline" style="max-height:460px; overflow-y:auto; border:1px solid #eceff1; border-radius:8px; padding:10px 14px;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
                     </div>
                 </div>
     </div>
@@ -6108,6 +6150,113 @@
         }
         // Carga diferida 3.5s: despues de las demas cargas perezosas para no amontonar AJAX.
         setTimeout(function () { cargarCumpl(); }, 3500);
+    });
+</script>
+<script>
+    // ===== FICHA DEL ALUMNO 360° (2026-08-02) =====
+    $(function () {
+        if (!document.getElementById('seccionAlumno360')) return;
+        function escA(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function chip(texto, titulo) {
+            return '<span title="' + escA(titulo || '') + '" style="background:#eceff1; color:#455a64; border-radius:10px; padding:3px 10px; font-size:12px; white-space:nowrap;">' + escA(texto) + '</span>';
+        }
+        // Color del banner segun la clasificacion (mismos tonos del dashboard).
+        function colorClasif(texto) {
+            var t = (texto || '').toUpperCase();
+            if (t.indexOf('ECON') >= 0) return '#b3402e';
+            if (t.indexOf('ACAD') >= 0) return '#b26a00';
+            if (t.indexOf('PERS') >= 0) return '#74628f';
+            if (t.indexOf('NO VULNERABLE') >= 0 || t === 'NO VULNERABLE') return '#00897B';
+            return '#78909c'; // sin informacion / otros
+        }
+        function mostrar(id) {
+            $('#a360Ayuda, #a360Cargando, #a360Error, #a360Sugerencias, #a360Ficha').hide();
+            if (id) $('#' + id).show();
+        }
+        function pintarFicha(d) {
+            $('#a360Nombre').text(d.nombre + ' (' + d.matricula + ')');
+            var chips = [chip(d.carrera, 'Carrera')];
+            if (d.especialidad) chips.push(chip(d.especialidad, 'Especialidad'));
+            if (d.grupo) chips.push(chip('Grupo ' + d.grupo, 'Grado y grupo'));
+            if (d.turno) chips.push(chip(d.turno, 'Turno'));
+            if (d.sexo) chips.push(chip(d.sexo, 'Sexo'));
+            chips.push(chip(d.tutor ? ('Tutor: ' + d.tutor) : 'Sin tutor asignado', 'Tutor del grupo en el periodo'));
+            $('#a360Chips').html(chips.join(''));
+            var c = colorClasif(d.clasificacion);
+            $('#a360Clasif').css({ background: c, color: '#fff' }).html(
+                '<div style="font-size:1.05rem; font-weight:700;">' + escA(d.clasificacion) + '</div>' +
+                '<div style="font-size:11.5px; opacity:.9;">Fuente: ' + escA(d.fuente) + '</div>');
+            // Materias
+            if (d.materias && d.materias.length) {
+                $('#a360Materias').html('<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">' +
+                    d.materias.map(function (m, i) {
+                        var badge = m.estado === 'Extraordinario'
+                            ? '<span style="background:#fff3e0; color:#b26a00; border-radius:10px; padding:2px 8px; font-size:11.5px;">Extraordinario · ' + m.intentos + ' intento' + (m.intentos === 1 ? '' : 's') + '</span>'
+                            : '<span style="background:#fdecea; color:#b3402e; border-radius:10px; padding:2px 8px; font-size:11.5px;">Arrastre' + (m.intentos ? ' · ' + m.intentos + ' intento' + (m.intentos === 1 ? '' : 's') : '') + '</span>';
+                        return '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:6px 12px;' + (i % 2 ? ' background:#fafbfc;' : '') + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
+                            '<span>' + escA(m.materia) + '</span>' + badge + '</div>';
+                    }).join('') + '</div>');
+            } else {
+                $('#a360Materias').html('<p class="text-muted" style="margin:0;">Sin materias reprobadas ni en extraordinario.</p>');
+            }
+            // Entrevista
+            $('#a360Entrevista').html(d.entrevista
+                ? '<p style="margin:0;">Capturada el <strong>' + escA(d.entrevista.fecha) + '</strong>' + (d.entrevista.vulnerable ? ' · Identificado como: <strong>' + escA(d.entrevista.vulnerable) + '</strong>' : '') + '</p>'
+                : '<p class="text-muted" style="margin:0;">Sin entrevista inicial registrada.</p>');
+            // Bajas
+            $('#a360Bajas').html(d.bajas && d.bajas.length
+                ? d.bajas.map(function (b) { return '<p style="margin:0 0 4px;"><span style="background:#fdecea; color:#b3402e; border-radius:10px; padding:2px 8px; font-size:11.5px;">' + escA(b.fecha) + '</span> ' + escA(b.causa || 'Sin causa registrada') + '</p>'; }).join('')
+                : '<p class="text-muted" style="margin:0;">Sin bajas registradas.</p>');
+            // Timeline
+            if (d.seguimientos && d.seguimientos.length) {
+                $('#a360Timeline').html(d.seguimientos.map(function (s) {
+                    var c2 = colorClasif(s.vulnerabilidad);
+                    return '<div style="position:relative; padding:0 0 14px 18px; border-left:2px solid #e0e5e9;">' +
+                        '<span style="position:absolute; left:-6px; top:2px; width:10px; height:10px; border-radius:50%; background:' + c2 + ';"></span>' +
+                        '<div style="font-size:12px; color:#888;">' + escA(s.fecha) + (s.vulnerabilidad ? ' · <strong style="color:' + c2 + ';">' + escA(s.vulnerabilidad) + '</strong>' : '') + '</div>' +
+                        (s.problematica ? '<div style="font-size:13px; color:#374151;">' + escA(s.problematica) + '</div>' : '') +
+                        (s.accion ? '<div style="font-size:12px; color:#607d8b;">Acción: ' + escA(s.accion) + '</div>' : '') +
+                        '</div>';
+                }).join(''));
+            } else {
+                $('#a360Timeline').html('<p class="text-muted" style="margin:0;">Sin seguimientos capturados.</p>');
+            }
+            mostrar('a360Ficha');
+        }
+        function cargarFicha(idPersona) {
+            mostrar('a360Cargando');
+            $.post('@Url.Action("GetAlumno360", "NuevasEstadisticas")', { idPersona: idPersona }, function (r) {
+                if (!r || !r.success) { mostrar('a360Error'); $('#a360Error').text((r && r.error) || 'No se pudo cargar la ficha.'); return; }
+                pintarFicha(r.data);
+            }, 'json').fail(function () { mostrar('a360Error'); $('#a360Error').text('Error de conexión al cargar la ficha.'); });
+        }
+        function buscar() {
+            // Si la seccion esta colapsada, expandirla: el buscador vive en el header y el
+            // resultado quedaria oculto.
+            var $chev = $('#seccionAlumno360.dash-colapsada .dash-chevron');
+            if ($chev.length) $chev.trigger('click');
+            var q = ($('#a360Buscar').val() || '').trim();
+            if (q.length < 3) { mostrar('a360Error'); $('#a360Error').text('Escribe al menos 3 caracteres de la matrícula o el nombre.'); return; }
+            mostrar('a360Cargando');
+            $.post('@Url.Action("BuscarAlumno360", "NuevasEstadisticas")', { q: q }, function (r) {
+                if (!r || !r.success) { mostrar('a360Error'); $('#a360Error').text((r && r.error) || 'Error al buscar.'); return; }
+                var lista = r.data || [];
+                if (!lista.length) { mostrar('a360Error'); $('#a360Error').text('Sin coincidencias para "' + q + '".'); return; }
+                if (lista.length === 1) { cargarFicha(lista[0].idPersona); return; }
+                $('#a360Sugerencias').html('<p style="margin:0 0 8px; color:#607d8b;">Se encontraron ' + lista.length + ' coincidencias, elige una:</p>' +
+                    '<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">' +
+                    lista.map(function (a, i) {
+                        return '<div class="a360-sug" data-id="' + a.idPersona + '" style="display:flex; justify-content:space-between; gap:12px; padding:8px 12px; cursor:pointer;' + (i % 2 ? ' background:#fafbfc;' : '') + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
+                            '<span>' + escA(a.nombre) + ' <small class="text-muted">(' + escA(a.matricula) + ')</small></span><span class="text-muted">' + escA(a.carrera) + '</span></div>';
+                    }).join('') + '</div>');
+                mostrar('a360Sugerencias');
+            }, 'json').fail(function () { mostrar('a360Error'); $('#a360Error').text('Error de conexión al buscar.'); });
+        }
+        $('#a360BtnBuscar').on('click', buscar);
+        $('#a360Buscar').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
+        $('#a360Sugerencias').on('click', '.a360-sug', function () { cargarFicha($(this).data('id')); });
+        $('#a360Sugerencias').on('mouseenter', '.a360-sug', function () { $(this).css('background', '#eef3f7'); })
+                             .on('mouseleave', '.a360-sug', function (e) { $(this).css('background', $(this).index() % 2 ? '#fafbfc' : ''); });
     });
 </script>
 }
