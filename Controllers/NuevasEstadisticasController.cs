@@ -5126,6 +5126,52 @@ namespace Plataforma_Web.Controllers
             public int Intentos { get; set; }
         }
 
+        // Buscador de tutores para la ficha flotante (tutores con grupo en el periodo vigente).
+        [HttpPost]
+        public ActionResult BuscarTutor360(string q)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 3)
+                    return Json(new { success = true, data = new object[0] });
+                string termino = q.Trim();
+                Usuario usuario = Session["Usuario"] as Usuario;
+                int? carreraFiltro = (usuario != null && usuario.IdNivel == 3) ? (int?)usuario.IdCarrera : null;
+
+                var periodoB = PeriodoHelper.Obtener(DateTime.Now);
+                var asignacionesB = db.TutoriaGrupals
+                    .Where(t => t.Año == periodoB.Anio && t.IdPeriodo == periodoB.NumPeriodo);
+                if (carreraFiltro.HasValue)
+                    asignacionesB = asignacionesB.Where(t => t.IdCarrera == carreraFiltro.Value);
+                var idsTutoresB = asignacionesB.Select(t => t.IdUsuario).Distinct().ToList();
+
+                var nombresCarreraB = db.Carreras.ToList().ToDictionary(c => c.IdCarrera, c => (c.Nombre ?? "").Trim());
+                var tutores = db.Usuarios
+                    .Where(u => idsTutoresB.Contains(u.IdUsuario) && u.NombreCompleto.Contains(termino))
+                    .Select(u => new { u.IdUsuario, u.NombreCompleto, u.IdCarrera })
+                    .Take(10).ToList()
+                    .Select(u => new
+                    {
+                        idUsuario = u.IdUsuario,
+                        nombre = (u.NombreCompleto ?? "").Trim(),
+                        carrera = nombresCarreraB.ContainsKey(u.IdCarrera) ? nombresCarreraB[u.IdCarrera] : ""
+                    })
+                    .OrderBy(u => u.nombre).ToList();
+                return Json(new { success = true, data = tutores });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.GetBaseException().Message });
+            }
+        }
+
+        public class TutorMateriasAlumnoRow
+        {
+            public int IdPersona { get; set; }
+            public int Reprobadas { get; set; }
+            public int Extraordinarios { get; set; }
+        }
+
         // ===== Ficha del Tutor 360° (2026-08-02): expediente del tutor, integrado al tablero de
         // Cumplimiento (click en el nombre). Fail-closed: nivel 3 solo tutores de su carrera. =====
         [HttpPost]
@@ -5264,6 +5310,41 @@ namespace Plataforma_Web.Controllers
                     .Select(id => new { matricula = infoAlumnoT[id].Item1, nombre = infoAlumnoT[id].Item2 })
                     .OrderBy(x => x.nombre).ToList();
 
+                // Detalle por alumno (para el "Ver alumnos a detalle" de la ficha): clasificación,
+                // última captura y materias reprobadas/extraordinario de cada uno.
+                var materiasPorAlumno = new Dictionary<int, TutorMateriasAlumnoRow>();
+                if (idsAlumnos.Any())
+                {
+                    var idsCsvDet = string.Join(",", idsAlumnos); // ids internos (int), no input de usuario
+                    materiasPorAlumno = db.Database.SqlQuery<TutorMateriasAlumnoRow>(
+                        @"SELECT ma.IdPersona AS IdPersona,
+                                 SUM(CASE WHEN ma.Estado = 'Reprobada' THEN 1 ELSE 0 END) AS Reprobadas,
+                                 SUM(CASE WHEN ma.Estado = 'Extraordinario' THEN 1 ELSE 0 END) AS Extraordinarios
+                          FROM MateriasAlumno ma
+                          WHERE ma.IdPersona IN (" + idsCsvDet + @") AND ma.Estado IN ('Reprobada', 'Extraordinario')
+                          GROUP BY ma.IdPersona").ToList()
+                        .ToDictionary(x => x.IdPersona, x => x);
+                }
+                var alumnosDetalle = idsAlumnos
+                    .Where(id => infoAlumnoT.ContainsKey(id))
+                    .Select(id =>
+                    {
+                        string texto = ultimoSegPorAlumno.ContainsKey(id) ? (ultimoSegPorAlumno[id].Vulnerabilidad ?? "") : "";
+                        if (string.IsNullOrWhiteSpace(texto) && vulnEntrevista.ContainsKey(id)) texto = vulnEntrevista[id];
+                        var mat = materiasPorAlumno.ContainsKey(id) ? materiasPorAlumno[id] : null;
+                        return new
+                        {
+                            idPersona = id,
+                            matricula = infoAlumnoT[id].Item1,
+                            nombre = infoAlumnoT[id].Item2,
+                            clasificacion = string.IsNullOrWhiteSpace(texto) ? "Sin información" : texto.Trim(),
+                            ultimaCaptura = ultimoSegPorAlumno.ContainsKey(id) ? ultimoSegPorAlumno[id].Fecha.ToString("dd/MM/yyyy") : null,
+                            reprobadas = mat != null ? mat.Reprobadas : 0,
+                            extraordinarios = mat != null ? mat.Extraordinarios : 0
+                        };
+                    })
+                    .OrderBy(a => a.nombre).ToList();
+
                 return Json(new
                 {
                     success = true,
@@ -5291,6 +5372,7 @@ namespace Plataforma_Web.Controllers
                                 .Select(g => new { tipo = g.Key, n = g.Count() }).OrderByDescending(x => x.n).ToList()
                         },
                         alumnosSinSeguimiento = alumnosSinSeg,
+                        alumnosDetalle,
                         historial
                     }
                 });

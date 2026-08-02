@@ -3036,6 +3036,25 @@
                                 style="position:fixed; left:18px; bottom:64px; z-index:1940; width:44px; height:44px; border-radius:50%; border:none; background:#2c3e50; color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.25); cursor:pointer; font-size:16px;">
                             <i class="fas fa-user-graduate"></i>
                         </button>
+                        <button type="button" id="fabTutor360" title="Buscar tutor (ficha flotante)"
+                                style="position:fixed; left:18px; bottom:114px; z-index:1940; width:44px; height:44px; border-radius:50%; border:none; background:#00695C; color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.25); cursor:pointer; font-size:16px;">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </button>
+                        <div id="miniT360" style="display:none; position:fixed; left:70px; bottom:114px; z-index:1944; width:330px; max-width:92vw; background:#fff; border-radius:12px; box-shadow:0 10px 34px rgba(0,0,0,.3); overflow:hidden;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 12px; background:#00695C; color:#fff;">
+                                <span style="font-size:13px; font-weight:600;"><i class="fas fa-chalkboard-teacher me-1" style="opacity:.8;"></i> Buscar tutor</span>
+                                <button type="button" id="miniT360Cerrar" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;" title="Cerrar"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div style="padding:10px 12px;">
+                                <div style="display:flex; gap:6px;">
+                                    <input type="text" id="miniT360Buscar" class="form-control form-control-sm" placeholder="Nombre del tutor..." style="border-radius:8px;" />
+                                    <button type="button" class="btn btn-success btn-sm" id="miniT360BtnBuscar"><i class="fas fa-search"></i></button>
+                                </div>
+                                <div id="miniT360Cuerpo" style="max-height:40vh; overflow-y:auto; margin-top:8px; font-size:13px;">
+                                    <p class="text-muted" style="margin:0; font-size:12.5px;">Busca un tutor del periodo vigente; al elegirlo se abre su ficha flotante.</p>
+                                </div>
+                            </div>
+                        </div>
                         <div id="mini360" style="display:none; position:fixed; left:70px; bottom:64px; z-index:1945; width:370px; max-width:92vw; background:#fff; border-radius:12px; box-shadow:0 10px 34px rgba(0,0,0,.3); overflow:hidden;">
                             <div id="mini360Handle" style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 12px; background:#2c3e50; color:#fff; cursor:move; user-select:none;">
                                 <span style="font-size:13px; font-weight:600;"><i class="fas fa-arrows-alt me-1" style="opacity:.7;"></i> Ficha rápida</span>
@@ -6070,7 +6089,7 @@
             filas.forEach(function (f, i) {
                 dtCumpl.row.add([
                     '<span style="color:#888;">' + (i + 1) + '</span>',
-                    '<span class="tutor360-link" data-idusuario="' + f.idUsuario + '" title="Ver ficha del tutor" style="color:#00695C; font-weight:600; cursor:pointer; text-decoration:underline dotted;">' + escC(f.tutor) + '</span>',
+                    '<span class="tutor360-link" data-idusuario="' + f.idUsuario + '" title="Ver ficha del tutor" style="color:#00695C; font-weight:600; cursor:pointer;">' + escC(f.tutor) + '</span>',
                     escC(f.carrera),
                     escC(f.grupos),
                     f.alumnos,
@@ -6110,6 +6129,14 @@
         }
         function chipT(texto, bg, color) {
             return '<span style="background:' + (bg || '#eceff1') + '; color:' + (color || '#455a64') + '; border-radius:10px; padding:3px 10px; font-size:12px; white-space:nowrap;">' + escC(texto) + '</span>';
+        }
+        function colorClasifT(texto) {
+            var t = (texto || '').toUpperCase();
+            if (t.indexOf('ECON') >= 0) return '#b3402e';
+            if (t.indexOf('ACAD') >= 0) return '#b26a00';
+            if (t.indexOf('PERS') >= 0) return '#74628f';
+            if (t.indexOf('NO VULNERABLE') >= 0) return '#00897B';
+            return '#78909c';
         }
         function tituloTutor(texto) {
             $('#tutor360Titulo').html('<i class="fas fa-arrows-alt me-1" style="opacity:.7;"></i> ' + escC(texto));
@@ -6164,7 +6191,20 @@
                         ((d.historial || []).length
                             ? '<div style="max-height:150px; overflow-y:auto;">' + d.historial.slice(0, 10).map(function (h) { return '<div style="font-size:12.5px; color:#374151; margin-top:3px;"><span style="color:#888;">' + escC(h.periodo) + '</span> · Grupo ' + escC(h.grupo) + ' · ' + escC(h.carrera) + '</div>'; }).join('') + '</div>'
                             : '<p class="text-muted" style="margin:0;">Sin historial.</p>') +
-                    '</div></div>';
+                    '</div></div>' +
+                    // Detalle alumno por alumno (colapsado por defecto para no abrumar).
+                    '<button type="button" class="btn btn-utt-outline btn-sm" id="tutor360ToggleDetalle" style="width:100%; margin-top:10px;"><i class="fas fa-users me-1"></i> Ver alumnos a detalle (' + ((d.alumnosDetalle || []).length) + ')</button>' +
+                    '<div id="tutor360Detalle" style="display:none; margin-top:10px; border:1px solid #eceff1; border-radius:8px; overflow:hidden; max-height:300px; overflow-y:auto;">' +
+                    '<table class="table table-striped table-sm" style="margin:0; font-size:12.5px;"><thead><tr><th>Alumno</th><th class="text-center">Clasificación</th><th class="text-center">Últ. seguimiento</th><th class="text-center">Reprobadas</th><th class="text-center">Extraordinario</th></tr></thead><tbody>' +
+                    (d.alumnosDetalle || []).map(function (a) {
+                        var cCla = colorClasifT(a.clasificacion);
+                        return '<tr class="tutor360-alumno" data-idpersona="' + a.idPersona + '" title="Ver mini-ficha del alumno" style="cursor:pointer;">' +
+                            '<td>' + escC(a.nombre) + ' <small class="text-muted">(' + escC(a.matricula) + ')</small></td>' +
+                            '<td class="text-center"><span style="background:' + cCla + '; color:#fff; border-radius:10px; padding:1px 8px; font-size:11px; white-space:nowrap;">' + escC(a.clasificacion) + '</span></td>' +
+                            '<td class="text-center">' + (a.ultimaCaptura || '<span class="text-muted">—</span>') + '</td>' +
+                            '<td class="text-center">' + a.reprobadas + '</td>' +
+                            '<td class="text-center">' + a.extraordinarios + '</td></tr>';
+                    }).join('') + '</tbody></table></div>';
                 $('#tutor360Cuerpo').html(html);
             }, 'json').fail(function () { $('#tutor360Cuerpo').html('<p style="color:#b3402e; margin:0;">Error de conexión.</p>'); });
         }
@@ -6173,6 +6213,14 @@
             // (que abre el modal de alumnos sin seguimiento).
             e.stopImmediatePropagation();
             abrirTutor360($(this).data('idusuario'));
+        });
+        window.abrirTutor360 = abrirTutor360; // el buscador flotante de tutores (script de la ficha 360) la usa
+        $('#tutor360Cuerpo').on('click', '#tutor360ToggleDetalle', function () {
+            $('#tutor360Detalle').slideToggle(200);
+        });
+        // Click en un alumno del detalle -> abre su mini-ficha flotante (script de la ficha 360).
+        $('#tutor360Cuerpo').on('click', '.tutor360-alumno', function () {
+            if (window.Alumno360Mini) window.Alumno360Mini.abrirCon($(this).data('idpersona'));
         });
         $('#tutor360Cerrar').on('click', function () { $('#tutor360Overlay').hide(); });
         $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#tutor360Overlay').is(':visible')) $('#tutor360Overlay').hide(); });
@@ -6507,6 +6555,38 @@
         $('#mini360BtnBuscar').on('click', miniBuscar);
         $('#mini360Buscar').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); miniBuscar(); } });
         $('#mini360Cuerpo').on('click', '.mini360-sug', function () { miniCargar($(this).data('id')); });
+        // Para que la ficha del tutor pueda abrir la mini-ficha de un alumno de su detalle.
+        window.Alumno360Mini = { abrirCon: function (idPersona) { $mini.show(); miniCargar(idPersona); } };
+        // ===== Buscador flotante de TUTORES (abre la ficha del tutor al elegir) =====
+        var $miniT = $('#miniT360');
+        $('#fabTutor360').on('click', function () {
+            $miniT.toggle();
+            if ($miniT.is(':visible')) $('#miniT360Buscar').focus();
+        });
+        $('#miniT360Cerrar').on('click', function () { $miniT.hide(); });
+        function miniTMsg(html) { $('#miniT360Cuerpo').html(html); }
+        function miniTBuscar() {
+            var q = ($('#miniT360Buscar').val() || '').trim();
+            if (q.length < 3) { miniTMsg('<p style="color:#b26a00; margin:0;">Escribe al menos 3 letras del nombre.</p>'); return; }
+            miniTMsg('<p class="text-muted" style="margin:0;"><i class="fas fa-spinner fa-spin"></i> Buscando...</p>');
+            $.post('@Url.Action("BuscarTutor360", "NuevasEstadisticas")', { q: q }, function (r) {
+                if (!r || !r.success) { miniTMsg('<p style="color:#b3402e; margin:0;">' + escA((r && r.error) || 'Error al buscar.') + '</p>'); return; }
+                var lista = r.data || [];
+                if (!lista.length) { miniTMsg('<p class="text-muted" style="margin:0;">Sin tutores con grupo este periodo para "' + escA(q) + '".</p>'); return; }
+                if (lista.length === 1 && window.abrirTutor360) { window.abrirTutor360(lista[0].idUsuario); $miniT.hide(); return; }
+                miniTMsg(lista.map(function (t, i) {
+                    return '<div class="miniT360-sug" data-id="' + t.idUsuario + '" style="padding:6px 8px; cursor:pointer; border-radius:6px;' + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
+                        escA(t.nombre) + ' <small class="text-muted">(' + escA(t.carrera) + ')</small></div>';
+                }).join(''));
+            }, 'json').fail(function () { miniTMsg('<p style="color:#b3402e; margin:0;">Error de conexión.</p>'); });
+        }
+        $('#miniT360BtnBuscar').on('click', miniTBuscar);
+        $('#miniT360Buscar').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); miniTBuscar(); } });
+        $('#miniT360Cuerpo').on('click', '.miniT360-sug', function () {
+            if (window.abrirTutor360) { window.abrirTutor360($(this).data('id')); $miniT.hide(); }
+        });
+        $('#miniT360Cuerpo').on('mouseenter', '.miniT360-sug', function () { $(this).css('background', '#eef3f7'); })
+                            .on('mouseleave', '.miniT360-sug', function () { $(this).css('background', ''); });
         $('#mini360Cuerpo').on('mouseenter', '.mini360-sug', function () { $(this).css('background', '#eef3f7'); })
                            .on('mouseleave', '.mini360-sug', function () { $(this).css('background', ''); });
         // "Ver ficha completa": carga la seccion grande y baja hasta ella.
