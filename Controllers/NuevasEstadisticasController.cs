@@ -5092,6 +5092,7 @@ namespace Plataforma_Web.Controllers
                     var primeraAsg = g.First();
                     return new
                     {
+                        idUsuario = g.Key,
                         tutor = nombresTutores.ContainsKey(g.Key) ? nombresTutores[g.Key] : ("Tutor " + g.Key),
                         carrera = nombresCarreraCumpl.ContainsKey(primeraAsg.IdCarrera) ? nombresCarreraCumpl[primeraAsg.IdCarrera] : "",
                         grupos = string.Join(", ", etiquetasGrupos.OrderBy(x => x)),
@@ -5123,6 +5124,181 @@ namespace Plataforma_Web.Controllers
             public string Materia { get; set; }
             public string Estado { get; set; }
             public int Intentos { get; set; }
+        }
+
+        // ===== Ficha del Tutor 360° (2026-08-02): expediente del tutor, integrado al tablero de
+        // Cumplimiento (click en el nombre). Fail-closed: nivel 3 solo tutores de su carrera. =====
+        [HttpPost]
+        public ActionResult GetTutor360(int idUsuario)
+        {
+            try
+            {
+                db.Database.CommandTimeout = 300;
+                Usuario usuarioSesion = Session["Usuario"] as Usuario;
+
+                var periodoT = PeriodoHelper.Obtener(DateTime.Now);
+                DateTime inicio = periodoT.Inicio, fin = periodoT.Fin;
+
+                var asignaciones = db.TutoriaGrupals
+                    .Where(t => t.IdUsuario == idUsuario && t.Año == periodoT.Anio && t.IdPeriodo == periodoT.NumPeriodo)
+                    .ToList();
+                if (usuarioSesion != null && usuarioSesion.IdNivel == 3 &&
+                    asignaciones.Any() && asignaciones.All(a => a.IdCarrera != usuarioSesion.IdCarrera))
+                    return Json(new { success = false, error = "Sin acceso a tutores de otra carrera." });
+
+                var tutorInfo = db.Usuarios.Where(u => u.IdUsuario == idUsuario)
+                    .Select(u => new { u.NombreCompleto, u.UserName, u.IdCarrera }).FirstOrDefault();
+                if (tutorInfo == null)
+                    return Json(new { success = false, error = "Tutor no encontrado." });
+
+                var nombresCarreraT = db.Carreras.ToList().ToDictionary(c => c.IdCarrera, c => (c.Nombre ?? "").Trim());
+                var nombresGradoT = db.Gradoes.ToList().ToDictionary(g => g.IdGrado, g => (g.Nombre ?? "").Trim());
+                var nombresGrupoT = db.Grupoes.ToList().ToDictionary(g => g.IdGrupo, g => (g.Nombre ?? "").Trim());
+                Func<int, int, string> etiquetaGrupoT = (idGrado, idGrupo) =>
+                    (nombresGradoT.ContainsKey(idGrado) ? nombresGradoT[idGrado] : "?") +
+                    (nombresGrupoT.ContainsKey(idGrupo) ? nombresGrupoT[idGrupo] : "?");
+
+                // Alumnos a cargo (mismo match del tablero de cumplimiento).
+                var alumnosTutor = new List<int>();
+                var infoAlumnoT = new Dictionary<int, Tuple<string, string>>();
+                foreach (var asg in asignaciones)
+                {
+                    var alumnosGrupo = db.DatosPersonales
+                        .Where(a => a.Año == periodoT.Anio && a.IdPeriodo == periodoT.NumPeriodo && a.Estado
+                                 && a.IdCarrera == asg.IdCarrera && a.IdGrado == asg.IdGrado
+                                 && a.IdGrupo == asg.IdGrupo && a.IdTurno == asg.IdTurno)
+                        .Select(a => new { a.IdPersona, a.Matricula, a.Nombre }).ToList();
+                    foreach (var a in alumnosGrupo)
+                    {
+                        alumnosTutor.Add(a.IdPersona);
+                        if (!infoAlumnoT.ContainsKey(a.IdPersona))
+                            infoAlumnoT[a.IdPersona] = Tuple.Create((a.Matricula ?? "").Trim(), (a.Nombre ?? "").Trim());
+                    }
+                }
+                var idsAlumnos = alumnosTutor.Distinct().ToList();
+
+                // Seguimientos con contenido del periodo, de SUS alumnos (lista vacía => 0 filas).
+                var segsTutor = (from s in db.Seguimientoes
+                                 join i in db.Individuals on s.IdIndividual equals i.IdIndividual
+                                 where idsAlumnos.Contains(i.IdPersona)
+                                    && s.Fecha >= inicio && s.Fecha <= fin
+                                    && ((s.Vulnerabilidad != null && s.Vulnerabilidad.Trim() != "")
+                                        || (s.Problematica != null && s.Problematica.Trim() != ""))
+                                 select new { i.IdPersona, s.Fecha, s.Vulnerabilidad }).ToList();
+
+                var ultimoSegPorAlumno = segsTutor.GroupBy(x => x.IdPersona)
+                    .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Fecha).First());
+                DateTime inicioMes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                var conSegMesSet = new HashSet<int>(segsTutor.Where(x => x.Fecha >= inicioMes).Select(x => x.IdPersona).Distinct());
+                var conEntrevistaSet = idsAlumnos.Any()
+                    ? new HashSet<int>(db.EntrevistaInicials
+                        .Where(e => idsAlumnos.Contains(e.IdPersona) && e.Fecha >= inicio && e.Fecha <= fin)
+                        .Select(e => e.IdPersona).Distinct().ToList())
+                    : new HashSet<int>();
+
+                int totalAl = idsAlumnos.Count;
+                int conSeg = idsAlumnos.Count(id => ultimoSegPorAlumno.ContainsKey(id));
+                DateTime? ultimaCap = segsTutor.Any() ? (DateTime?)segsTutor.Max(x => x.Fecha) : null;
+
+                // Actividad: capturas por mes del periodo (para ver si trabaja parejo o en una sentada).
+                var actividadMeses = Enumerable.Range(0, 4)
+                    .Select(k => inicio.AddMonths(k)).Where(mIni => mIni <= fin)
+                    .Select(mIni => new
+                    {
+                        mes = mIni.ToString("MMMM", new System.Globalization.CultureInfo("es-MX")),
+                        capturas = segsTutor.Count(x => x.Fecha.Year == mIni.Year && x.Fecha.Month == mIni.Month)
+                    }).ToList();
+
+                // Estado de sus alumnos: clasificación simple (últ. seguimiento del periodo → entrevista → sin info).
+                var vulnEntrevista = idsAlumnos.Any()
+                    ? db.EntrevistaInicials.Where(e => idsAlumnos.Contains(e.IdPersona))
+                        .Select(e => new { e.IdPersona, e.Fecha, e.Vulnerable }).ToList()
+                        .GroupBy(e => e.IdPersona)
+                        .ToDictionary(g => g.Key, g => (g.OrderByDescending(e => e.Fecha).First().Vulnerable ?? "").Trim())
+                    : new Dictionary<int, string>();
+                int econ = 0, acad = 0, pers = 0, noVul = 0, sinInfo = 0;
+                foreach (var id in idsAlumnos)
+                {
+                    string texto = ultimoSegPorAlumno.ContainsKey(id) ? (ultimoSegPorAlumno[id].Vulnerabilidad ?? "") : "";
+                    if (string.IsNullOrWhiteSpace(texto) && vulnEntrevista.ContainsKey(id)) texto = vulnEntrevista[id];
+                    var t = (texto ?? "").Trim().ToUpperInvariant();
+                    if (t == "") { sinInfo++; }
+                    else if (t.Contains("ECON")) econ++;
+                    else if (t.Contains("ACAD")) acad++;
+                    else if (t.Contains("PERS")) pers++;
+                    else noVul++;
+                }
+
+                // Alumnos con materias reprobadas/extraordinario y bajas del periodo en sus grupos.
+                int alumnosConReprobadas = 0;
+                if (idsAlumnos.Any())
+                {
+                    var idsCsv = string.Join(",", idsAlumnos); // ids internos (int), no input de usuario
+                    alumnosConReprobadas = db.Database.SqlQuery<int>(
+                        "SELECT COUNT(DISTINCT ma.IdPersona) FROM MateriasAlumno ma WHERE ma.IdPersona IN (" + idsCsv + ") AND ma.Estado IN ('Reprobada','Extraordinario')").First();
+                }
+                int bajasPeriodo = idsAlumnos.Any()
+                    ? db.Bajas.Count(b => idsAlumnos.Contains(b.IdPersona) && b.Fecha >= inicio && b.Fecha <= fin)
+                    : 0;
+
+                // Canalizaciones REALIZADAS por el tutor (indicador positivo: sí actúa).
+                var canalizacionesTutor = (from c in db.Canalizaciones
+                                           join t in db.TipoCanalizaciones on c.IdTipoCanalizacion equals t.IdTipoCanalizacion
+                                           where c.IdUsuario == idUsuario
+                                           orderby c.Fecha descending
+                                           select new { c.Fecha, t.Descripcion }).ToList();
+
+                // Historial de grupos en otros cuatrimestres (antigüedad como tutor).
+                var historial = db.TutoriaGrupals.Where(t => t.IdUsuario == idUsuario)
+                    .ToList()
+                    .OrderByDescending(t => t.Año).ThenByDescending(t => t.IdPeriodo)
+                    .Select(t => new
+                    {
+                        periodo = PeriodoHelper.Obtener(t.Año, t.IdPeriodo).Nombre,
+                        grupo = etiquetaGrupoT(t.IdGrado, t.IdGrupo),
+                        carrera = nombresCarreraT.ContainsKey(t.IdCarrera) ? nombresCarreraT[t.IdCarrera] : ""
+                    }).ToList();
+
+                var alumnosSinSeg = idsAlumnos
+                    .Where(id => !ultimoSegPorAlumno.ContainsKey(id) && infoAlumnoT.ContainsKey(id))
+                    .Select(id => new { matricula = infoAlumnoT[id].Item1, nombre = infoAlumnoT[id].Item2 })
+                    .OrderBy(x => x.nombre).ToList();
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        idUsuario,
+                        nombre = ((tutorInfo.NombreCompleto ?? tutorInfo.UserName) ?? "").Trim(),
+                        carrera = nombresCarreraT.ContainsKey(tutorInfo.IdCarrera) ? nombresCarreraT[tutorInfo.IdCarrera] : "",
+                        periodo = periodoT.Nombre,
+                        grupos = asignaciones.Select(a => etiquetaGrupoT(a.IdGrado, a.IdGrupo)).OrderBy(x => x).ToList(),
+                        alumnos = totalAl,
+                        conSeguimiento = conSeg,
+                        pctSeguimiento = totalAl > 0 ? Math.Round(conSeg * 100.0 / totalAl, 1) : 0,
+                        conSeguimientoMes = idsAlumnos.Count(id => conSegMesSet.Contains(id)),
+                        conEntrevista = idsAlumnos.Count(id => conEntrevistaSet.Contains(id)),
+                        ultimaCaptura = ultimaCap.HasValue ? ultimaCap.Value.ToString("dd/MM/yyyy") : null,
+                        diasSinCaptura = ultimaCap.HasValue ? (int?)(DateTime.Now - ultimaCap.Value).Days : null,
+                        actividad = actividadMeses,
+                        estadoAlumnos = new { econ, acad, pers, noVul, sinInfo, conReprobadas = alumnosConReprobadas, bajasPeriodo },
+                        canalizaciones = new
+                        {
+                            total = canalizacionesTutor.Count,
+                            ultima = canalizacionesTutor.Any() ? canalizacionesTutor.First().Fecha.ToString("dd/MM/yyyy") : null,
+                            porTipo = canalizacionesTutor.GroupBy(c => (c.Descripcion ?? "").Trim())
+                                .Select(g => new { tipo = g.Key, n = g.Count() }).OrderByDescending(x => x.n).ToList()
+                        },
+                        alumnosSinSeguimiento = alumnosSinSeg,
+                        historial
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = ex.GetBaseException().Message });
+            }
         }
 
         // ===== Vista del Alumno 360° (2026-08-02, propuesta de innovación) =====

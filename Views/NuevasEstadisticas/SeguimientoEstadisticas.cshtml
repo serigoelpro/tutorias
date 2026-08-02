@@ -3019,6 +3019,18 @@
                             </div>
                         </div>
 
+                        @* Ficha del Tutor 360° (2026-08-02): overlay que abre el click en el nombre del tutor
+                           en el tablero de Cumplimiento. *@
+                        <div id="tutor360Overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2000;">
+                            <div style="background:#fff; max-width:760px; margin:5vh auto 0; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.3); max-height:86vh; display:flex; flex-direction:column;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #eee;">
+                                    <strong id="tutor360Titulo" style="color:#1f2937;"></strong>
+                                    <button type="button" id="tutor360Cerrar" class="btn btn-sm btn-default" title="Cerrar"><i class="fas fa-times"></i></button>
+                                </div>
+                                <div id="tutor360Cuerpo" style="padding:14px 20px; overflow-y:auto; font-size:13.5px;"></div>
+                            </div>
+                        </div>
+
                         @* Mini-ficha flotante (2026-08-02): botón flotante que abre un panel compacto y
                            ARRASTRABLE con buscador de alumno — para consultar sin perder el scroll. *@
                         <button type="button" id="fab360" title="Buscar alumno (ficha rápida flotante)"
@@ -6059,7 +6071,7 @@
             filas.forEach(function (f, i) {
                 dtCumpl.row.add([
                     '<span style="color:#888;">' + (i + 1) + '</span>',
-                    escC(f.tutor),
+                    '<span class="tutor360-link" data-idusuario="' + f.idUsuario + '" title="Ver ficha del tutor" style="color:#00695C; font-weight:600; cursor:pointer; text-decoration:underline dotted;">' + escC(f.tutor) + '</span>',
                     escC(f.carrera),
                     escC(f.grupos),
                     f.alumnos,
@@ -6089,6 +6101,81 @@
             pintarCumplTabla(lista);
         }
         $('#cumplOrden, #cumplFiltro').on('change', aplicarVistaCumpl);
+        // ===== FICHA DEL TUTOR 360° (integrada: click en el nombre del tutor) =====
+        function barraActividad(mes, n, max) {
+            var w = max > 0 ? Math.round(n * 100 / max) : 0;
+            return '<div style="display:flex; align-items:center; gap:8px; margin-top:4px;">' +
+                '<span style="width:86px; font-size:12px; color:#607d8b; text-transform:capitalize;">' + escC(mes) + '</span>' +
+                '<div style="flex:1; background:#eceff1; border-radius:6px; height:16px; overflow:hidden;"><div style="width:' + w + '%; height:100%; background:#00897B;"></div></div>' +
+                '<strong style="width:46px; text-align:right; font-size:12px;">' + n + '</strong></div>';
+        }
+        function chipT(texto, bg, color) {
+            return '<span style="background:' + (bg || '#eceff1') + '; color:' + (color || '#455a64') + '; border-radius:10px; padding:3px 10px; font-size:12px; white-space:nowrap;">' + escC(texto) + '</span>';
+        }
+        function abrirTutor360(idUsuario) {
+            $('#tutor360Titulo').text('Ficha del Tutor');
+            $('#tutor360Cuerpo').html('<p class="text-muted" style="margin:0;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>');
+            $('#tutor360Overlay').css('display', 'block');
+            $.post('@Url.Action("GetTutor360", "NuevasEstadisticas")', { idUsuario: idUsuario }, function (r) {
+                if (!r || !r.success) { $('#tutor360Cuerpo').html('<p style="color:#b3402e; margin:0;">' + escC((r && r.error) || 'No se pudo cargar la ficha.') + '</p>'); return; }
+                var d = r.data;
+                $('#tutor360Titulo').text(d.nombre + ' · ' + d.carrera);
+                var maxAct = Math.max.apply(null, (d.actividad || []).map(function (a) { return a.capturas; }).concat([1]));
+                var e = d.estadoAlumnos || {};
+                var html =
+                    '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">' +
+                    chipT('Grupos: ' + ((d.grupos || []).join(', ') || 'Sin grupos'), '#eceff1') +
+                    chipT(d.alumnos + ' alumnos a cargo', '#e9f8f4', '#00695C') +
+                    ((d.canalizaciones && d.canalizaciones.total) ? chipT(d.canalizaciones.total + ' canalizaciones realizadas', '#e9f8f4', '#00695C') : '') +
+                    chipT(d.periodo, '#eceff1') + '</div>' +
+                    '<div class="dash-graf-row" style="margin-bottom:4px;">' +
+                    '<div class="demo-graf-col">' +
+                        '<h4 class="dash-sub">Cumplimiento</h4>' +
+                        '<div style="margin-bottom:5px;">Seguimiento del cuatrimestre: <strong>' + d.conSeguimiento + ' de ' + d.alumnos + '</strong> ' + badgePct(d.pctSeguimiento) + '</div>' +
+                        '<div style="margin-bottom:5px;">Con captura este mes: <strong>' + d.conSeguimientoMes + ' de ' + d.alumnos + '</strong></div>' +
+                        '<div style="margin-bottom:5px;">Con entrevista inicial: <strong>' + d.conEntrevista + ' de ' + d.alumnos + '</strong></div>' +
+                        '<div>Última captura: <strong>' + (d.ultimaCaptura || 'Sin capturas') + '</strong> ' + badgeDias(d.diasSinCaptura) + '</div>' +
+                        '<h4 class="dash-sub" style="margin-top:14px;">Actividad del cuatrimestre</h4>' +
+                        (d.actividad || []).map(function (a) { return barraActividad(a.mes, a.capturas, maxAct); }).join('') +
+                        '<h4 class="dash-sub" style="margin-top:14px;">Canalizaciones que ha realizado</h4>' +
+                        ((d.canalizaciones && d.canalizaciones.total)
+                            ? ('<div>' + d.canalizaciones.porTipo.map(function (t) { return chipT(t.tipo + ': ' + t.n, '#fff3e0', '#b26a00'); }).join(' ') + '</div>' +
+                               '<div style="color:#888; font-size:12px; margin-top:4px;">Última: ' + escC(d.canalizaciones.ultima) + '</div>')
+                            : '<p class="text-muted" style="margin:0;">Sin canalizaciones registradas.</p>') +
+                    '</div>' +
+                    '<div class="demo-graf-col">' +
+                        '<h4 class="dash-sub">Estado de sus alumnos</h4>' +
+                        '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">' +
+                        chipT('Económicos: ' + (e.econ || 0), '#fdecea', '#b3402e') +
+                        chipT('Académicos: ' + (e.acad || 0), '#fff3e0', '#b26a00') +
+                        chipT('Personales: ' + (e.pers || 0), '#efeaf5', '#74628f') +
+                        chipT('No vulnerables: ' + (e.noVul || 0), '#e9f8f4', '#00695C') +
+                        chipT('Sin información: ' + (e.sinInfo || 0)) + '</div>' +
+                        '<div style="margin-bottom:4px;">Con materias reprobadas/extraordinario: <strong>' + (e.conReprobadas || 0) + '</strong></div>' +
+                        '<div style="margin-bottom:10px;">Bajas del periodo en sus grupos: <strong>' + (e.bajasPeriodo || 0) + '</strong></div>' +
+                        '<h4 class="dash-sub">Alumnos sin seguimiento</h4>' +
+                        ((d.alumnosSinSeguimiento || []).length
+                            ? '<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden; max-height:170px; overflow-y:auto;">' +
+                              d.alumnosSinSeguimiento.map(function (a, i) { return '<div style="display:flex; justify-content:space-between; gap:10px; padding:5px 10px;' + (i % 2 ? ' background:#fafbfc;' : '') + '"><span>' + escC(a.nombre) + '</span><span class="text-muted">' + escC(a.matricula) + '</span></div>'; }).join('') + '</div>'
+                            : '<p class="text-muted" style="margin:0 0 10px;">Todos sus alumnos tienen seguimiento del cuatrimestre.</p>') +
+                        '<h4 class="dash-sub" style="margin-top:14px;">Historial como tutor</h4>' +
+                        ((d.historial || []).length
+                            ? '<div style="max-height:150px; overflow-y:auto;">' + d.historial.slice(0, 10).map(function (h) { return '<div style="font-size:12.5px; color:#374151; margin-top:3px;"><span style="color:#888;">' + escC(h.periodo) + '</span> · Grupo ' + escC(h.grupo) + ' · ' + escC(h.carrera) + '</div>'; }).join('') + '</div>'
+                            : '<p class="text-muted" style="margin:0;">Sin historial.</p>') +
+                    '</div></div>';
+                $('#tutor360Cuerpo').html(html);
+            }, 'json').fail(function () { $('#tutor360Cuerpo').html('<p style="color:#b3402e; margin:0;">Error de conexión.</p>'); });
+        }
+        $('#tablaCumplTutores tbody').on('click', '.tutor360-link', function (e) {
+            // Ambos handlers delegan en el mismo tbody: cortar tambien el handler de la fila
+            // (que abre el modal de alumnos sin seguimiento).
+            e.stopImmediatePropagation();
+            abrirTutor360($(this).data('idusuario'));
+        });
+        $('#tutor360Cerrar').on('click', function () { $('#tutor360Overlay').hide(); });
+        $('#tutor360Overlay').on('click', function (e) { if (e.target === this) $('#tutor360Overlay').hide(); });
+        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#tutor360Overlay').is(':visible')) $('#tutor360Overlay').hide(); });
+
         // Modal accionable: alumnos del tutor SIN seguimiento del cuatrimestre.
         // El indice sale de la columna # (posicion en el ranking visible).
         $('#tablaCumplTutores tbody').on('click', 'tr', function () {
