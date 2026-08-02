@@ -5236,6 +5236,30 @@ namespace Plataforma_Web.Controllers
                     .OrderByDescending(b => b.Fecha).ToList()
                     .Select(b => new { fecha = b.Fecha.ToString("dd/MM/yyyy"), causa = (b.Causa ?? "").Trim() }).ToList();
 
+                // Canalizaciones del alumno (psicología / atención): a dónde se envió y en qué quedó.
+                var canalizaciones = (from c in db.Canalizaciones
+                                      join t in db.TipoCanalizaciones on c.IdTipoCanalizacion equals t.IdTipoCanalizacion
+                                      where c.IdPersona == idPersona
+                                      orderby c.Fecha descending
+                                      select new { c.Fecha, t.Descripcion, c.MotivoCanalizacion, c.Status })
+                                     .ToList()
+                                     .Select(c => new
+                                     {
+                                         fecha = c.Fecha.ToString("dd/MM/yyyy"),
+                                         tipo = (c.Descripcion ?? "").Trim(),
+                                         motivo = (c.MotivoCanalizacion ?? "").Trim(),
+                                         status = (c.Status ?? "").Trim()
+                                     }).ToList();
+
+                // Contexto de situación familiar (mismos criterios del Resumen Detallado:
+                // AspectosPersonales.IdHijo==1 tiene hijos, IdEmbarazo==2 embarazada;
+                // EntrevistaInicial.IdTrabajo==1 trabaja).
+                var aspectosPers = db.AspectosPersonales.Where(ap => ap.IdPersona == idPersona)
+                    .Select(ap => new { ap.IdHijo, ap.IdEmbarazo }).FirstOrDefault();
+                bool tieneHijos = aspectosPers != null && aspectosPers.IdHijo == 1;
+                bool estaEmbarazada = aspectosPers != null && aspectosPers.IdEmbarazo == 2;
+                bool trabaja = db.EntrevistaInicials.Any(e => e.IdPersona == idPersona && e.IdTrabajo == 1);
+
                 // Clasificación con fuente (misma cascada, simplificada al alumno): último seguimiento
                 // con contenido del periodo vigente -> fuente tutor; si no, entrevista -> identificación;
                 // si no, sin información.
@@ -5282,9 +5306,11 @@ namespace Plataforma_Web.Controllers
                         clasificacion,
                         fuente,
                         entrevista = entrevista == null ? null : new { fecha = entrevista.Fecha.ToString("dd/MM/yyyy"), vulnerable = (entrevista.Vulnerable ?? "").Trim() },
+                        situacionFamiliar = new { tieneHijos, embarazada = estaEmbarazada, trabaja },
                         materias,
                         seguimientos,
-                        bajas
+                        bajas,
+                        canalizaciones
                     }
                 });
             }
