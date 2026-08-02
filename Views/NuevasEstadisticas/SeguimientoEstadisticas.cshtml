@@ -501,6 +501,22 @@
             font-weight: 700;
             white-space: nowrap;
         }
+        /* Scrollbars limpias en TODO el dashboard (2026-08-02): la barra clásica de Windows se veía
+           tosca dentro de paneles y modales. Delgada, redondeada y sin flechas; aplica a cualquier
+           contenedor con scroll de esta vista (paneles flotantes, modales, tablas, carril de píldoras). */
+        .sga-scope * { scrollbar-width: thin; scrollbar-color: #c3ccd3 transparent; }
+        .sga-scope *::-webkit-scrollbar { width: 8px; height: 8px; }
+        .sga-scope *::-webkit-scrollbar-track { background: transparent; }
+        .sga-scope *::-webkit-scrollbar-thumb { background: #c3ccd3; border-radius: 8px; }
+        .sga-scope *::-webkit-scrollbar-thumb:hover { background: #9aa7b0; }
+        .sga-scope *::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+        /* Los cuerpos de los paneles flotantes solo scrollean en vertical: cualquier desborde
+           horizontal se corta y el texto largo se parte (evita la barra horizontal fantasma). */
+        #mini360Cuerpo, #tutor360Cuerpo, #miniT360Cuerpo, #a360Timeline, #cumplModalCuerpo, #vulnModalCuerpo, #reprobAlumnoModalCuerpo {
+            overflow-x: hidden !important;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
         /* Impresión de la Ficha del Alumno 360° (2026-08-02): al imprimir con el botón de la
            sección, solo se imprime la ficha (el resto del dashboard y el layout se ocultan). */
         @@media print {
@@ -3057,7 +3073,7 @@
                         </div>
                         @* resize:both = agarradera nativa en la esquina inferior derecha; al cerrar se
                            limpia width/height inline y vuelve al tamaño por defecto. *@
-                        <div id="mini360" style="display:none; position:fixed; left:70px; bottom:64px; z-index:1945; width:370px; min-width:290px; max-width:96vw; min-height:180px; max-height:92vh; background:#fff; border-radius:12px; box-shadow:0 10px 34px rgba(0,0,0,.3); overflow:hidden; resize:both; flex-direction:column;">
+                        <div id="mini360" style="display:none; position:fixed; left:70px; bottom:64px; z-index:2050; width:370px; min-width:290px; max-width:96vw; min-height:180px; max-height:92vh; background:#fff; border-radius:12px; box-shadow:0 10px 34px rgba(0,0,0,.3); overflow:hidden; resize:both; flex-direction:column;">
                             <div id="mini360Handle" style="flex:0 0 auto; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 12px; background:#2c3e50; color:#fff; cursor:move; user-select:none;">
                                 <span style="font-size:13px; font-weight:600;"><i class="fas fa-arrows-alt me-1" style="opacity:.7;"></i> Ficha rápida</span>
                                 <button type="button" id="mini360Cerrar" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;" title="Cerrar"><i class="fas fa-times"></i></button>
@@ -4609,7 +4625,8 @@
                         $('#vulnModalTitulo').text((VULN_CAT_NOMBRES[cat] || cat) + ' (' + r.total + ' alumno' + (r.total === 1 ? '' : 's') + ')');
                         var html = r.alumnos.map(function (a) {
                             var buscar = ((a.matricula || '') + ' ' + (a.nombre || '')).toLowerCase();
-                            return '<tr data-buscar="' + buscar.replace(/"/g, '') + '"><td>' + a.matricula + '</td><td>' + (a.nombre || '') + '</td><td>' + (a.especialidad || '') + '</td><td>' + (FUENTE_TXT[a.fuente] || '—') + '</td></tr>';
+                            // 2026-08-02: fila clickeable -> abre la mini-ficha 360 del alumno.
+                            return '<tr class="abrir-mini360" data-matricula="' + (a.matricula || '').replace(/"/g, '') + '" data-buscar="' + buscar.replace(/"/g, '') + '" title="Ver mini-ficha del alumno" style="cursor:pointer;"><td>' + a.matricula + '</td><td>' + (a.nombre || '') + '</td><td>' + (a.especialidad || '') + '</td><td>' + (FUENTE_TXT[a.fuente] || '—') + '</td></tr>';
                         }).join('');
                         $('#vulnModalTabla tbody').html(html);
                         $('#vulnModalTabla').show();
@@ -5978,8 +5995,9 @@
                 return h + '</div>';
             }
             $('#reprobAlumnoModalCuerpo').html(
-                (lista('Reprobada', 'Reprobadas (arrastre)', '#b3402e') + lista('Extraordinario', 'En extraordinario', '#b26a00')) ||
-                '<p class="text-muted">Sin materias.</p>');
+                ((lista('Reprobada', 'Reprobadas (arrastre)', '#b3402e') + lista('Extraordinario', 'En extraordinario', '#b26a00')) ||
+                '<p class="text-muted">Sin materias.</p>') +
+                '<button type="button" class="btn btn-utt-outline btn-sm abrir-mini360" data-matricula="' + escR(a.matricula) + '" style="width:100%; margin-top:10px;"><i class="fas fa-id-card me-1"></i> Ver mini-ficha del alumno</button>');
             $('#reprobAlumnoModalOverlay').css('display', 'block');
         });
         function cerrarReprobModal() { $('#reprobAlumnoModalOverlay').hide(); }
@@ -6271,10 +6289,10 @@
             if (!sin.length) {
                 h = '<p class="text-muted" style="margin:0;">Todos sus alumnos (' + f.alumnos + ') tienen al menos un seguimiento capturado este cuatrimestre. Última captura: ' + (f.ultimaCaptura || '—') + '.</p>';
             } else {
-                h = '<p style="margin:0 0 8px; color:#b3402e;"><strong>' + sin.length + '</strong> alumno' + (sin.length === 1 ? '' : 's') + ' sin seguimiento del cuatrimestre:</p>' +
+                h = '<p style="margin:0 0 8px; color:#b3402e;"><strong>' + sin.length + '</strong> alumno' + (sin.length === 1 ? '' : 's') + ' sin seguimiento del cuatrimestre (click para ver su mini-ficha):</p>' +
                     '<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">' +
                     sin.map(function (a, i) {
-                        return '<div style="display:flex; justify-content:space-between; gap:12px; padding:6px 12px;' + (i % 2 ? ' background:#fafbfc;' : '') + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
+                        return '<div class="abrir-mini360" data-matricula="' + escC(a.matricula) + '" title="Ver mini-ficha del alumno" style="display:flex; justify-content:space-between; gap:12px; padding:6px 12px; cursor:pointer;' + (i % 2 ? ' background:#fafbfc;' : '') + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
                             '<span>' + escC(a.nombre) + '</span><span class="text-muted">' + escC(a.matricula) + '</span></div>';
                     }).join('') + '</div>';
             }
@@ -6582,7 +6600,27 @@
         $('#mini360Buscar').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); miniBuscar(); } });
         $('#mini360Cuerpo').on('click', '.mini360-sug', function () { miniCargar($(this).data('id')); });
         // Para que la ficha del tutor pueda abrir la mini-ficha de un alumno de su detalle.
-        window.Alumno360Mini = { abrirCon: function (idPersona) { $mini.css('display', 'flex'); miniCargar(idPersona); } };
+        window.Alumno360Mini = {
+            abrirCon: function (idPersona) { $mini.css('display', 'flex'); miniCargar(idPersona); },
+            // Por matrícula (los modales del dashboard solo traen matrícula): resuelve el id con el buscador.
+            abrirPorMatricula: function (matricula) {
+                if (!matricula) return;
+                $mini.css('display', 'flex');
+                miniMsg('<p class="text-muted" style="margin:0;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>');
+                $.post('@Url.Action("BuscarAlumno360", "NuevasEstadisticas")', { q: matricula }, function (r) {
+                    var lista = (r && r.success && r.data) || [];
+                    var exacto = lista.filter(function (a) { return (a.matricula || '').toUpperCase() === String(matricula).trim().toUpperCase(); });
+                    var elegido = exacto.length ? exacto[0] : (lista.length ? lista[0] : null);
+                    if (!elegido) { miniMsg('<p class="text-muted" style="margin:0;">No se encontró al alumno ' + escA(matricula) + '.</p>'); return; }
+                    miniCargar(elegido.idPersona);
+                }, 'json').fail(function () { miniMsg('<p style="color:#b3402e; margin:0;">Error de conexión.</p>'); });
+            }
+        };
+        // Conector universal: cualquier elemento .abrir-mini360 con data-matricula (modal de
+        // vulnerabilidad, modal del alumno reprobado, modal del tutor) abre la mini-ficha.
+        $(document).on('click', '.abrir-mini360', function () {
+            window.Alumno360Mini.abrirPorMatricula($(this).data('matricula'));
+        });
         // ===== Buscador flotante de TUTORES (abre la ficha del tutor al elegir) =====
         var $miniT = $('#miniT360');
         $('#fabTutor360').on('click', function () {
