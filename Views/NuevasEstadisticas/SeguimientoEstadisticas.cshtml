@@ -3022,12 +3022,12 @@
                         @* Ficha del Tutor 360° (2026-08-02): panel FLOTANTE Y ARRASTRABLE (como la mini-ficha
                            de alumno) que abre el click en el nombre del tutor en el tablero de Cumplimiento;
                            sin fondo oscuro, para poder seguir viendo/scrolleando el dashboard detrás. *@
-                        <div id="tutor360Overlay" style="display:none; position:fixed; top:7vh; left:calc(50% - 380px); z-index:1960; width:760px; max-width:94vw; background:#fff; border-radius:10px; box-shadow:0 12px 38px rgba(0,0,0,.35); max-height:86vh; display:none; flex-direction:column; overflow:hidden;">
-                            <div id="tutor360Handle" style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 18px; background:#2c3e50; color:#fff; cursor:move; user-select:none;">
+                        <div id="tutor360Overlay" style="display:none; position:fixed; top:7vh; left:calc(50% - 380px); z-index:1960; width:760px; min-width:360px; max-width:96vw; min-height:220px; max-height:92vh; background:#fff; border-radius:10px; box-shadow:0 12px 38px rgba(0,0,0,.35); flex-direction:column; overflow:hidden; resize:both;">
+                            <div id="tutor360Handle" style="flex:0 0 auto; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 18px; background:#2c3e50; color:#fff; cursor:move; user-select:none;">
                                 <strong id="tutor360Titulo" style="font-size:14px;"><i class="fas fa-arrows-alt me-1" style="opacity:.7;"></i></strong>
                                 <button type="button" id="tutor360Cerrar" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;" title="Cerrar"><i class="fas fa-times"></i></button>
                             </div>
-                            <div id="tutor360Cuerpo" style="padding:14px 20px; overflow-y:auto; font-size:13.5px;"></div>
+                            <div id="tutor360Cuerpo" style="flex:1 1 auto; min-height:0; max-height:78vh; padding:14px 20px; overflow-y:auto; font-size:13.5px;"></div>
                         </div>
 
                         @* Mini-ficha flotante (2026-08-02): botón flotante que abre un panel compacto y
@@ -3055,17 +3055,19 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="mini360" style="display:none; position:fixed; left:70px; bottom:64px; z-index:1945; width:370px; max-width:92vw; background:#fff; border-radius:12px; box-shadow:0 10px 34px rgba(0,0,0,.3); overflow:hidden;">
-                            <div id="mini360Handle" style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 12px; background:#2c3e50; color:#fff; cursor:move; user-select:none;">
+                        @* resize:both = agarradera nativa en la esquina inferior derecha; al cerrar se
+                           limpia width/height inline y vuelve al tamaño por defecto. *@
+                        <div id="mini360" style="display:none; position:fixed; left:70px; bottom:64px; z-index:1945; width:370px; min-width:290px; max-width:96vw; min-height:180px; max-height:92vh; background:#fff; border-radius:12px; box-shadow:0 10px 34px rgba(0,0,0,.3); overflow:hidden; resize:both; flex-direction:column;">
+                            <div id="mini360Handle" style="flex:0 0 auto; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 12px; background:#2c3e50; color:#fff; cursor:move; user-select:none;">
                                 <span style="font-size:13px; font-weight:600;"><i class="fas fa-arrows-alt me-1" style="opacity:.7;"></i> Ficha rápida</span>
                                 <button type="button" id="mini360Cerrar" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;" title="Cerrar"><i class="fas fa-times"></i></button>
                             </div>
-                            <div style="padding:10px 12px;">
-                                <div style="display:flex; gap:6px;">
+                            <div style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column; padding:10px 12px;">
+                                <div style="flex:0 0 auto; display:flex; gap:6px;">
                                     <input type="text" id="mini360Buscar" class="form-control form-control-sm" placeholder="Matrícula o nombre..." style="border-radius:8px;" />
                                     <button type="button" class="btn btn-success btn-sm" id="mini360BtnBuscar"><i class="fas fa-search"></i></button>
                                 </div>
-                                <div id="mini360Cuerpo" style="max-height:52vh; overflow-y:auto; margin-top:10px; font-size:13px;">
+                                <div id="mini360Cuerpo" style="flex:1 1 auto; min-height:0; max-height:52vh; overflow-y:auto; margin-top:10px; font-size:13px;">
                                     <p class="text-muted" style="margin:0; font-size:12.5px;">Busca un alumno para ver su resumen sin salir de donde estás.</p>
                                 </div>
                             </div>
@@ -6215,6 +6217,19 @@
             abrirTutor360($(this).data('idusuario'));
         });
         window.abrirTutor360 = abrirTutor360; // el buscador flotante de tutores (script de la ficha 360) la usa
+        // Redimensionable con resize:both; al cerrar vuelve al tamaño por defecto.
+        var tutorResetSize = (function () {
+            var panel = document.getElementById('tutor360Overlay'), cuerpo = document.getElementById('tutor360Cuerpo');
+            if (!panel) return function () { };
+            var defW = panel.style.width, defH = panel.style.height;
+            if (window.ResizeObserver) {
+                new ResizeObserver(function () {
+                    if (panel.style.width !== defW || panel.style.height !== defH) cuerpo.style.maxHeight = 'none';
+                }).observe(panel);
+            }
+            return function () { panel.style.width = defW; panel.style.height = defH; cuerpo.style.maxHeight = '78vh'; };
+        })();
+        function cerrarTutor360() { $('#tutor360Overlay').hide(); tutorResetSize(); }
         $('#tutor360Cuerpo').on('click', '#tutor360ToggleDetalle', function () {
             $('#tutor360Detalle').slideToggle(200);
         });
@@ -6222,8 +6237,8 @@
         $('#tutor360Cuerpo').on('click', '.tutor360-alumno', function () {
             if (window.Alumno360Mini) window.Alumno360Mini.abrirCon($(this).data('idpersona'));
         });
-        $('#tutor360Cerrar').on('click', function () { $('#tutor360Overlay').hide(); });
-        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#tutor360Overlay').is(':visible')) $('#tutor360Overlay').hide(); });
+        $('#tutor360Cerrar').on('click', cerrarTutor360);
+        $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#tutor360Overlay').is(':visible')) cerrarTutor360(); });
         // Arrastre del panel (mismo patron que la mini-ficha de alumno): se toma del encabezado.
         (function () {
             var panel = document.getElementById('tutor360Overlay'), handle = document.getElementById('tutor360Handle');
@@ -6478,13 +6493,24 @@
         $('#a360BtnBuscar').on('click', buscar);
         $('#a360Buscar').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); buscar(); } });
 
-        // ===== MINI-FICHA FLOTANTE (arrastrable, estilo mini-player) =====
+        // ===== MINI-FICHA FLOTANTE (arrastrable y redimensionable, estilo mini-player) =====
         var $mini = $('#mini360');
-        $('#fab360').on('click', function () {
-            $mini.toggle();
-            if ($mini.is(':visible')) $('#mini360Buscar').focus();
-        });
-        $('#mini360Cerrar').on('click', function () { $mini.hide(); });
+        // Redimensionable con resize:both; al cerrar vuelve al tamaño por defecto.
+        var miniResetSize = (function () {
+            var panel = document.getElementById('mini360'), cuerpo = document.getElementById('mini360Cuerpo');
+            var defW = panel.style.width, defH = panel.style.height;
+            if (window.ResizeObserver) {
+                new ResizeObserver(function () {
+                    // Si el usuario cambió el tamaño, soltar el tope del cuerpo para que el contenido crezca.
+                    if (panel.style.width !== defW || panel.style.height !== defH) cuerpo.style.maxHeight = 'none';
+                }).observe(panel);
+            }
+            return function () { panel.style.width = defW; panel.style.height = defH; cuerpo.style.maxHeight = '52vh'; };
+        })();
+        function abrirMini() { $mini.css('display', 'flex'); $('#mini360Buscar').focus(); }
+        function cerrarMini() { $mini.hide(); miniResetSize(); }
+        $('#fab360').on('click', function () { if ($mini.is(':visible')) cerrarMini(); else abrirMini(); });
+        $('#mini360Cerrar').on('click', cerrarMini);
         // Arrastre: se toma del encabezado; el panel pasa a coordenadas left/top libres.
         (function () {
             var panel = document.getElementById('mini360'), handle = document.getElementById('mini360Handle');
@@ -6556,7 +6582,7 @@
         $('#mini360Buscar').on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); miniBuscar(); } });
         $('#mini360Cuerpo').on('click', '.mini360-sug', function () { miniCargar($(this).data('id')); });
         // Para que la ficha del tutor pueda abrir la mini-ficha de un alumno de su detalle.
-        window.Alumno360Mini = { abrirCon: function (idPersona) { $mini.show(); miniCargar(idPersona); } };
+        window.Alumno360Mini = { abrirCon: function (idPersona) { $mini.css('display', 'flex'); miniCargar(idPersona); } };
         // ===== Buscador flotante de TUTORES (abre la ficha del tutor al elegir) =====
         var $miniT = $('#miniT360');
         $('#fabTutor360').on('click', function () {
