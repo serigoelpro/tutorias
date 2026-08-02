@@ -3019,16 +3019,15 @@
                             </div>
                         </div>
 
-                        @* Ficha del Tutor 360° (2026-08-02): overlay que abre el click en el nombre del tutor
-                           en el tablero de Cumplimiento. *@
-                        <div id="tutor360Overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2000;">
-                            <div style="background:#fff; max-width:760px; margin:5vh auto 0; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.3); max-height:86vh; display:flex; flex-direction:column;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #eee;">
-                                    <strong id="tutor360Titulo" style="color:#1f2937;"></strong>
-                                    <button type="button" id="tutor360Cerrar" class="btn btn-sm btn-default" title="Cerrar"><i class="fas fa-times"></i></button>
-                                </div>
-                                <div id="tutor360Cuerpo" style="padding:14px 20px; overflow-y:auto; font-size:13.5px;"></div>
+                        @* Ficha del Tutor 360° (2026-08-02): panel FLOTANTE Y ARRASTRABLE (como la mini-ficha
+                           de alumno) que abre el click en el nombre del tutor en el tablero de Cumplimiento;
+                           sin fondo oscuro, para poder seguir viendo/scrolleando el dashboard detrás. *@
+                        <div id="tutor360Overlay" style="display:none; position:fixed; top:7vh; left:calc(50% - 380px); z-index:1960; width:760px; max-width:94vw; background:#fff; border-radius:10px; box-shadow:0 12px 38px rgba(0,0,0,.35); max-height:86vh; display:none; flex-direction:column; overflow:hidden;">
+                            <div id="tutor360Handle" style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 18px; background:#2c3e50; color:#fff; cursor:move; user-select:none;">
+                                <strong id="tutor360Titulo" style="font-size:14px;"><i class="fas fa-arrows-alt me-1" style="opacity:.7;"></i></strong>
+                                <button type="button" id="tutor360Cerrar" style="background:transparent; border:none; color:#fff; cursor:pointer; font-size:14px;" title="Cerrar"><i class="fas fa-times"></i></button>
                             </div>
+                            <div id="tutor360Cuerpo" style="padding:14px 20px; overflow-y:auto; font-size:13.5px;"></div>
                         </div>
 
                         @* Mini-ficha flotante (2026-08-02): botón flotante que abre un panel compacto y
@@ -6112,14 +6111,17 @@
         function chipT(texto, bg, color) {
             return '<span style="background:' + (bg || '#eceff1') + '; color:' + (color || '#455a64') + '; border-radius:10px; padding:3px 10px; font-size:12px; white-space:nowrap;">' + escC(texto) + '</span>';
         }
+        function tituloTutor(texto) {
+            $('#tutor360Titulo').html('<i class="fas fa-arrows-alt me-1" style="opacity:.7;"></i> ' + escC(texto));
+        }
         function abrirTutor360(idUsuario) {
-            $('#tutor360Titulo').text('Ficha del Tutor');
+            tituloTutor('Ficha del Tutor');
             $('#tutor360Cuerpo').html('<p class="text-muted" style="margin:0;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>');
-            $('#tutor360Overlay').css('display', 'block');
+            $('#tutor360Overlay').css('display', 'flex');
             $.post('@Url.Action("GetTutor360", "NuevasEstadisticas")', { idUsuario: idUsuario }, function (r) {
                 if (!r || !r.success) { $('#tutor360Cuerpo').html('<p style="color:#b3402e; margin:0;">' + escC((r && r.error) || 'No se pudo cargar la ficha.') + '</p>'); return; }
                 var d = r.data;
-                $('#tutor360Titulo').text(d.nombre + ' · ' + d.carrera);
+                tituloTutor(d.nombre + ' · ' + d.carrera);
                 var maxAct = Math.max.apply(null, (d.actividad || []).map(function (a) { return a.capturas; }).concat([1]));
                 var e = d.estadoAlumnos || {};
                 var html =
@@ -6173,8 +6175,27 @@
             abrirTutor360($(this).data('idusuario'));
         });
         $('#tutor360Cerrar').on('click', function () { $('#tutor360Overlay').hide(); });
-        $('#tutor360Overlay').on('click', function (e) { if (e.target === this) $('#tutor360Overlay').hide(); });
         $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#tutor360Overlay').is(':visible')) $('#tutor360Overlay').hide(); });
+        // Arrastre del panel (mismo patron que la mini-ficha de alumno): se toma del encabezado.
+        (function () {
+            var panel = document.getElementById('tutor360Overlay'), handle = document.getElementById('tutor360Handle');
+            if (!panel || !handle) return;
+            var arrastrando = false, sx = 0, sy = 0, px = 0, py = 0;
+            handle.addEventListener('mousedown', function (e) {
+                if (e.target.closest('button')) return;
+                arrastrando = true; sx = e.clientX; sy = e.clientY;
+                var rect = panel.getBoundingClientRect(); px = rect.left; py = rect.top;
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', function (e) {
+                if (!arrastrando) return;
+                var nl = px + e.clientX - sx, nt = py + e.clientY - sy;
+                nl = Math.max(0, Math.min(window.innerWidth - 120, nl));
+                nt = Math.max(0, Math.min(window.innerHeight - 46, nt));
+                panel.style.left = nl + 'px'; panel.style.top = nt + 'px';
+            });
+            document.addEventListener('mouseup', function () { arrastrando = false; });
+        })();
 
         // Modal accionable: alumnos del tutor SIN seguimiento del cuatrimestre.
         // El indice sale de la columna # (posicion en el ranking visible).
