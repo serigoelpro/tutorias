@@ -688,6 +688,7 @@ namespace Plataforma_Web.Controllers
             public Dictionary<string, int> BajasPorCausa { get; set; }
             public Dictionary<string, int> BajasPorCarrera { get; set; }
             public Dictionary<string, int> BajasPorVulnerabilidad { get; set; }
+            public Dictionary<string, int> BajasPorEspecialidad { get; set; }
         }
 
         // Clase modelo para estadísticas de PATs
@@ -5114,7 +5115,8 @@ namespace Plataforma_Web.Controllers
                 {
                     BajasPorCausa = new Dictionary<string, int>(),
                     BajasPorCarrera = new Dictionary<string, int>(),
-                    BajasPorVulnerabilidad = new Dictionary<string, int>()
+                    BajasPorVulnerabilidad = new Dictionary<string, int>(),
+                    BajasPorEspecialidad = new Dictionary<string, int>()
                 };
 
                 // Obtener todas las bajas con información de carrera
@@ -5184,6 +5186,19 @@ namespace Plataforma_Web.Controllers
                     estadistica.BajasPorCarrera[item.Carrera] = item.Cantidad;
                 }
 
+                // Estadísticas por especialidad del alumno (2026-08-01, sección Bajas del dashboard).
+                // dp.Especialidad es texto libre: se agrupa normalizado sin acentos y se muestra la
+                // variante más frecuente; sin especialidad capturada => fuera del desglose.
+                foreach (var g in bajasConCarrera
+                             .Where(x => !string.IsNullOrWhiteSpace(x.Especialidad))
+                             .GroupBy(x => NormalizarSinAcentos(x.Especialidad.Trim()).ToUpperInvariant()))
+                {
+                    var etiquetaEsp = g.GroupBy(x => x.Especialidad.Trim())
+                                       .OrderByDescending(v => v.Count())
+                                       .First().Key;
+                    estadistica.BajasPorEspecialidad[etiquetaEsp] = g.Count();
+                }
+
                 // Estadísticas por vulnerabilidad (misma normalización que causas)
                 foreach (var g in bajasConCarrera
                              .Where(x => !string.IsNullOrWhiteSpace(x.Baja.Vulnerabilidad))
@@ -5202,7 +5217,8 @@ namespace Plataforma_Web.Controllers
                 {
                     BajasPorCausa = new Dictionary<string, int>(),
                     BajasPorCarrera = new Dictionary<string, int>(),
-                    BajasPorVulnerabilidad = new Dictionary<string, int>()
+                    BajasPorVulnerabilidad = new Dictionary<string, int>(),
+                    BajasPorEspecialidad = new Dictionary<string, int>()
                 };
             }
         }

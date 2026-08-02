@@ -1067,9 +1067,9 @@
             $.post('@Url.Action("GetEstadisticasPorEspecialidad", "NuevasEstadisticas")', {}, null, 'json');
             // ajaxSuccess lo captura automaticamente arriba — no se necesita callback aqui.
         }
-        // Disparo inicial de Bajas: su seccion es perezosa (pestaña) y sin esto el KPI queda vacio.
-        // La respuesta la consume el listener ajaxSuccess de arriba; no se pinta nada aqui.
-        $.post('@Url.Action("GetEstadisticasBajas", "NuevasEstadisticas")');
+        // 2026-08-01: el disparo inicial de Bajas ya no hace falta aqui — la nueva seccion "Bajas"
+        // (al final de la pagina) hace el POST a GetEstadisticasBajas a los 3s y este listener
+        // ajaxSuccess toma esa misma respuesta para el KPI.
     });
 </script>
 <script>
@@ -2897,6 +2897,44 @@
                             </div>
                         </section>
 
+                        @* ===== BAJAS (2026-08-01): desglose del periodo vigente por causa/carrera/especialidad.
+                           Modo GRAFICAS: barras. Modo TABLAS: rankings en tabla. Datos: GetEstadisticasBajas
+                           (fail-closed nivel 3: servidor fuerza su carrera). *@
+                        <section class="data-block" id="seccionBajasResumen">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
+                                <h3 class="section-title"><i class="fas fa-user-slash me-2"></i>Bajas</h3>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span id="bajasSecTotal" class="badge bg-danger" style="font-size:12px;"></span>
+                                    <span id="modoHostBajasSec"></span>
+                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Bajas del cuatrimestre vigente (o posteriores al último corte)">Periodo vigente</span>
+                                </div>
+                            </div>
+                            <div style="padding: 12px;">
+                                <div id="bajasSecCargando" class="text-muted" style="padding:8px;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+                                <div id="bajasSecError" class="alert alert-danger" style="display:none;"></div>
+                                <div class="modo-chart-wrap" id="chartWrapBajasSec" style="max-width:none; height:auto; padding:0;">
+                                    <div class="dash-graf-row">
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Bajas por Causa</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartBajasSecCausa"></canvas></div></div>
+                                        @if ((ViewBag.UsuarioNivel as int? ?? 0) == 4)
+                                        {
+                                            <div class="demo-graf-col"><h4 class="dash-sub">Carreras con Más Bajas</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartBajasSecCarreras"></canvas></div></div>
+                                        }
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Especialidades con Más Bajas</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartBajasSecEspecialidades"></canvas></div></div>
+                                    </div>
+                                </div>
+                                <div id="tablasBajasSecWrap">
+                                    <div class="dash-graf-row">
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Bajas por Causa</h4><table class="table table-striped table-sm"><thead><tr><th class="text-center" style="width:44px;">#</th><th>Causa</th><th class="text-center">Bajas</th></tr></thead><tbody id="tbodyBajasSecCausa"></tbody></table></div>
+                                        @if ((ViewBag.UsuarioNivel as int? ?? 0) == 4)
+                                        {
+                                            <div class="demo-graf-col"><h4 class="dash-sub">Carreras con Más Bajas</h4><table class="table table-striped table-sm"><thead><tr><th class="text-center" style="width:44px;">#</th><th>Carrera</th><th class="text-center">Bajas</th></tr></thead><tbody id="tbodyBajasSecCarreras"></tbody></table></div>
+                                        }
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Especialidades con Más Bajas</h4><table class="table table-striped table-sm"><thead><tr><th class="text-center" style="width:44px;">#</th><th>Especialidad</th><th class="text-center">Bajas</th></tr></thead><tbody id="tbodyBajasSecEspecialidades"></tbody></table></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
                     </div>
                 </div>
     </div>
@@ -3416,7 +3454,8 @@
                     if (!r.success) { $tbody.html('<tr><td colspan="10" class="text-center text-danger">Error: ' + r.error + '</td></tr>'); return; }
                     var d = r.data;
                     if (window.ModoEstadisticas) ModoEstadisticas.datos('nivel', d);
-                    var total = d.total || 1;
+                    // 2026-08-01: se quitó la columna de porcentaje (pedido del usuario); la tabla
+                    // vuelve a las 9 columnas del render inicial del servidor.
                     function fila(nombre, n) {
                         return '<tr>' +
                             '<td class="fw-bold">' + nombre + '</td>' +
@@ -3428,7 +3467,6 @@
                             '<td class="text-center"><span class="badge bg-secondary">' + n.pers + '</span></td>' +
                             '<td class="text-center"><span class="badge bg-success">' + n.noVul + '</span></td>' +
                             '<td class="text-center"><span class="badge bg-dark">' + n.sinSeg + '</span></td>' +
-                            '<td class="text-center" title="' + n.total + ' de los ' + total + ' alumnos estudian este nivel">' + (total > 0 ? (n.total / total * 100).toFixed(1) : '0.0') + '% <small style="color:#888;">(' + n.total + ' de ' + total + ')</small></td>' +
                             '</tr>';
                     }
                     $tbody.html(fila('TSU', d.tsu) + fila('Ingeniería', d.ingenieria) + fila('Licenciatura', d.licenciatura));
@@ -5765,6 +5803,72 @@
         $('#reprobAlumnoModalCerrar').on('click', cerrarReprobModal);
         $('#reprobAlumnoModalOverlay').on('click', function (e) { if (e.target === this) cerrarReprobModal(); });
         $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#reprobAlumnoModalOverlay').is(':visible')) cerrarReprobModal(); });
+    });
+</script>
+<script>
+    // ===== Seccion BAJAS (2026-08-01): causa / carreras / especialidades del periodo vigente =====
+    // 1 POST a GetEstadisticasBajas (la misma respuesta alimenta el KPI de Bajas via ajaxSuccess).
+    $(function () {
+        if (!document.getElementById('seccionBajasResumen')) return;
+        var chartsBS = {};
+        function barrasBS(canvasId, pares, color) {
+            var el = document.getElementById(canvasId);
+            if (!el || typeof Chart === 'undefined') return;
+            if (chartsBS[canvasId]) { chartsBS[canvasId].destroy(); delete chartsBS[canvasId]; }
+            chartsBS[canvasId] = new Chart(el.getContext('2d'), {
+                type: 'bar',
+                data: { labels: pares.map(function (p) { return p[0]; }), datasets: [{ label: 'Bajas', data: pares.map(function (p) { return p[1]; }), backgroundColor: color }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { precision: 0 } }, y: { ticks: { font: { size: 10 } } } } }
+            });
+        }
+        function pares(dic) {
+            return Object.keys(dic || {}).map(function (k) { return [k, dic[k]]; })
+                .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 10);
+        }
+        function escB(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        var cacheBS = null;
+        function pintarBajasCharts(d) {
+            d = d || cacheBS; if (!d) return;
+            barrasBS('chartBajasSecCausa', pares(d.BajasPorCausa), '#b3402e');
+            barrasBS('chartBajasSecCarreras', pares(d.BajasPorCarrera), '#74628f');
+            barrasBS('chartBajasSecEspecialidades', pares(d.BajasPorEspecialidad), '#dba13a');
+        }
+        function pintarBajasTablas(d) {
+            function llenar(id, ps) {
+                var $tb = $('#' + id); if (!$tb.length) return;
+                $tb.html(ps.length
+                    ? ps.map(function (p, i) { return '<tr><td class="text-center" style="color:#888;">' + (i + 1) + '</td><td>' + escB(p[0]) + '</td><td class="text-center"><strong>' + p[1] + '</strong></td></tr>'; }).join('')
+                    : '<tr><td colspan="3" class="text-center text-muted">Sin bajas en el periodo</td></tr>');
+            }
+            llenar('tbodyBajasSecCausa', pares(d.BajasPorCausa));
+            llenar('tbodyBajasSecCarreras', pares(d.BajasPorCarrera));
+            llenar('tbodyBajasSecEspecialidades', pares(d.BajasPorEspecialidad));
+        }
+        if (window.ModoEstadisticas) {
+            ModoEstadisticas.registrar('bajasSec', { original: '#tablasBajasSecWrap', charts: '#chartWrapBajasSec', botonHost: '#modoHostBajasSec', render: pintarBajasCharts });
+        }
+        function cargarBajasSec(_retry) {
+            $('#bajasSecCargando').show(); $('#bajasSecError').hide();
+            $.ajax({
+                url: '@Url.Action("GetEstadisticasBajas", "NuevasEstadisticas")',
+                type: 'POST',
+                success: function (r) {
+                    $('#bajasSecCargando').hide();
+                    if (!r || !r.success || !r.data) { $('#bajasSecError').text('No se pudieron obtener las bajas: ' + ((r && r.error) || 'error desconocido')).show(); return; }
+                    cacheBS = r.data;
+                    $('#bajasSecTotal').text('Total: ' + (r.data.TotalBajas || 0));
+                    pintarBajasTablas(r.data);
+                    if (window.ModoEstadisticas) { ModoEstadisticas.datos('bajasSec', r.data); } else { pintarBajasCharts(r.data); }
+                },
+                error: function () {
+                    if (!_retry) { setTimeout(function () { cargarBajasSec(true); }, 1500); return; } // reintento 1 vez (patron existente)
+                    $('#bajasSecCargando').hide();
+                    $('#bajasSecError').text('Error de conexión al cargar Bajas.').show();
+                }
+            });
+        }
+        // Carga diferida 3s (regla del proyecto). Esta misma respuesta alimenta el KPI de Bajas.
+        setTimeout(function () { cargarBajasSec(); }, 3000);
     });
 </script>
 }
