@@ -513,6 +513,40 @@ namespace Plataforma_Web.Controllers
             return Content(sec.DatosJson, "application/json");
         }
 
+        // Sirve un snapshot cuyo contenido incluye TODAS las carreras: nivel 4 lo recibe crudo,
+        // nivel 3 recibe solo los elementos de su carrera (fail-closed, igual que en vivo).
+        private ActionResult ServirSnapshotFiltradoPorCarrera(int corteId, string seccion, string rutaLista, string campoCarrera)
+        {
+            var sec = db.EstadisticasHistoricoSecciones
+                .FirstOrDefault(s => s.IdCorte == corteId && s.Seccion == seccion);
+            if (sec == null || string.IsNullOrEmpty(sec.DatosJson))
+                return Json(new { success = false, message = "Sin datos de esta sección en ese corte" });
+
+            Usuario usuario = Session["Usuario"] as Usuario;
+            if (usuario == null || usuario.IdNivel != 3)
+                return Content(sec.DatosJson, "application/json");
+
+            var nombreCarrera = db.Carreras
+                .Where(c => c.IdCarrera == usuario.IdCarrera)
+                .Select(c => c.Nombre)
+                .FirstOrDefault() ?? "";
+            var carreraNorm = NormalizarSinAcentos(nombreCarrera.Trim());
+
+            var raiz = Newtonsoft.Json.Linq.JObject.Parse(sec.DatosJson);
+            var lista = string.IsNullOrEmpty(rutaLista)
+                ? raiz["data"] as Newtonsoft.Json.Linq.JArray
+                : (raiz["data"] == null ? null : raiz["data"][rutaLista] as Newtonsoft.Json.Linq.JArray);
+            if (lista == null)
+                return Json(new { success = false, message = "Sin datos de esta sección en ese corte" });
+
+            var filtrada = new Newtonsoft.Json.Linq.JArray(
+                lista.Where(t => NormalizarSinAcentos(((string)t[campoCarrera] ?? "").Trim())
+                    .Equals(carreraNorm, StringComparison.OrdinalIgnoreCase)));
+            if (string.IsNullOrEmpty(rutaLista)) raiz["data"] = filtrada;
+            else raiz["data"][rutaLista] = filtrada;
+            return Content(raiz.ToString(Newtonsoft.Json.Formatting.None), "application/json");
+        }
+
         // Puebla los ViewBag de las secciones server-side (demografia, nivel de estudio)
         // desde el snapshot guardado. El JSON viene envuelto en {"success":true,"data":{...}}.
         private void PoblarViewBagDesdeCorte(int corteId, PlataformaWeb.Models.Historico.EstadisticasHistoricoCorte corte)
@@ -5001,10 +5035,15 @@ namespace Plataforma_Web.Controllers
         // "los datos no cuadran porque los tutores no capturan". Fail-closed: nivel 3 solo
         // ve los tutores de su carrera; Máster ve todos.
         [HttpPost]
-        public ActionResult GetCumplimientoTutores()
+        public ActionResult GetCumplimientoTutores(int? corteId = null)
         {
             try
             {
+                if (corteId.HasValue)
+                {
+                    return ServirSnapshotFiltradoPorCarrera(corteId.Value, "CumplimientoTutores", null, "carrera");
+                }
+
                 db.Database.CommandTimeout = 300;
                 Usuario usuario = Session["Usuario"] as Usuario;
                 int? carreraFiltro = (usuario != null && usuario.IdNivel == 3) ? (int?)usuario.IdCarrera : null;
@@ -6250,10 +6289,15 @@ namespace Plataforma_Web.Controllers
         // GetEstadisticasMaterias (los numeros cuadran con esa seccion) + IdGrado/IdGrupo del
         // registro de inscripcion. Sin snapshot de corte: seccion solo en vivo.
         [HttpPost]
-        public ActionResult GetReprobadosDetalle(int? carreraId = null, int? especialidadId = null, int? gradoId = null, int? grupoId = null)
+        public ActionResult GetReprobadosDetalle(int? corteId = null, int? carreraId = null, int? especialidadId = null, int? gradoId = null, int? grupoId = null)
         {
             try
             {
+                if (corteId.HasValue)
+                {
+                    return ServirSnapshotFiltradoPorCarrera(corteId.Value, "ReprobadosDetalle", "registros", "carreraNombre");
+                }
+
                 // Fail-closed nivel 3: solo SU carrera (usuario.IdCarrera esta en el espacio de
                 // Tutorias.Carreras, el mismo que dp.IdCarrera).
                 var usuarioSesion = Session["Usuario"] as Usuario;
@@ -6468,6 +6512,8 @@ namespace Plataforma_Web.Controllers
                     { "Grupo",               ((JsonResult)GetEstadisticasPorGrupo(null)).Data },
                     { "Bajas",               ((JsonResult)GetEstadisticasBajas(null)).Data },
                     { "MateriasReprobadas",  ((JsonResult)GetEstadisticasMaterias(null, null, false)).Data },
+                    { "ReprobadosDetalle",   ((JsonResult)GetReprobadosDetalle(null, null, null, null, null)).Data },
+                    { "CumplimientoTutores", ((JsonResult)GetCumplimientoTutores(null)).Data },
                 };
 
                 using (var tx = db.Database.BeginTransaction())

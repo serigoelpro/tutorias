@@ -2834,8 +2834,14 @@
                                         <option value="">Todos los grupos</option>
                                         @if (ViewBag.FiltroGrupos != null) { foreach (var gp in (Dictionary<int, string>)ViewBag.FiltroGrupos) { <option value="@gp.Key">@gp.Value</option> } }
                                     </select>
+                                    <span id="rotuloHistReprob" class="badge bg-warning text-dark" style="display:none; align-self:center;"></span>
+                                    <div class="hist-wrap" style="position:relative; display:inline-block;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistReprob" title="Ver un corte histórico de esta sección">
+                                            <i class="fas fa-clock-rotate-left me-1"></i> Histórico
+                                        </button>
+                                        <ul class="hist-menu" id="menuHistReprob" style="display:none; position:absolute; right:0; top:100%; z-index:1050; background:#fff; color:#000; border:1px solid #ddd; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); list-style:none; margin:4px 0 0; padding:4px 0; min-width:240px; max-height:280px; overflow:auto;"></ul>
+                                    </div>
                                     <span id="modoHostReprob"></span>
-                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Estas secciones no guardan histórico de cortes">Sección en vivo</span>
                                 </div>
                             </div>
                             <div style="padding: 12px;">
@@ -2876,8 +2882,14 @@
                             <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
                                 <h3 class="section-title"><i class="fas fa-exclamation-circle me-2"></i>Extraordinarios</h3>
                                 <div class="d-flex gap-2 align-items-center">
+                                    <span id="rotuloHistExtra" class="badge bg-warning text-dark" style="display:none; align-self:center;"></span>
+                                    <div class="hist-wrap" style="position:relative; display:inline-block;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistExtra" title="Ver un corte histórico de esta sección">
+                                            <i class="fas fa-clock-rotate-left me-1"></i> Histórico
+                                        </button>
+                                        <ul class="hist-menu" id="menuHistExtra" style="display:none; position:absolute; right:0; top:100%; z-index:1050; background:#fff; color:#000; border:1px solid #ddd; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); list-style:none; margin:4px 0 0; padding:4px 0; min-width:240px; max-height:280px; overflow:auto;"></ul>
+                                    </div>
                                     <span id="modoHostExtra"></span>
-                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Usa los filtros de la sección Reprobados">Filtros: sección Reprobados · Sección en vivo</span>
                                 </div>
                             </div>
                             <div style="padding: 12px;">
@@ -2915,7 +2927,13 @@
                             <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
                                 <h3 class="section-title"><i class="fas fa-user-graduate me-2"></i>Alumnos con Materias Reprobadas</h3>
                                 <div class="d-flex gap-2 align-items-center">
-                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Usa los filtros de la sección Reprobados">Filtros: sección Reprobados · Sección en vivo</span>
+                                    <span id="rotuloHistAlumnosRep" class="badge bg-warning text-dark" style="display:none; align-self:center;"></span>
+                                    <div class="hist-wrap" style="position:relative; display:inline-block;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistAlumnosRep" title="Ver un corte histórico de esta sección">
+                                            <i class="fas fa-clock-rotate-left me-1"></i> Histórico
+                                        </button>
+                                        <ul class="hist-menu" id="menuHistAlumnosRep" style="display:none; position:absolute; right:0; top:100%; z-index:1050; background:#fff; color:#000; border:1px solid #ddd; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); list-style:none; margin:4px 0 0; padding:4px 0; min-width:240px; max-height:280px; overflow:auto;"></ul>
+                                    </div>
                                 </div>
                             </div>
                             <div style="padding: 12px;">
@@ -2945,6 +2963,13 @@
                             <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
                                 <h3 class="section-title"><i class="fas fa-user-slash me-2"></i>Bajas</h3>
                                 <div class="d-flex gap-2 align-items-center">
+                                    <span id="rotuloHistBajasSec" class="badge bg-warning text-dark" style="display:none; align-self:center;"></span>
+                                    <div class="hist-wrap" style="position:relative; display:inline-block;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistBajasSec" title="Ver un corte histórico de esta sección">
+                                            <i class="fas fa-clock-rotate-left me-1"></i> Histórico
+                                        </button>
+                                        <ul class="hist-menu" id="menuHistBajasSec" style="display:none; position:absolute; right:0; top:100%; z-index:1050; background:#fff; color:#000; border:1px solid #ddd; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); list-style:none; margin:4px 0 0; padding:4px 0; min-width:240px; max-height:280px; overflow:auto;"></ul>
+                                    </div>
                                     <span id="bajasSecTotal" class="badge" style="font-size:12px; background:rgba(255,255,255,.18); color:#fff; font-weight:500;"></span>
                                     <span id="modoHostBajasSec"></span>
                                     <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Bajas del cuatrimestre vigente (o posteriores al último corte)">Periodo vigente</span>
@@ -2984,6 +3009,13 @@
                             <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
                                 <h3 class="section-title"><i class="fas fa-clipboard-check me-2"></i>Cumplimiento de Tutores</h3>
                                 <div class="d-flex gap-2 align-items-center">
+                                    <span id="rotuloHistCumpl" class="badge bg-warning text-dark" style="display:none; align-self:center;"></span>
+                                    <div class="hist-wrap" style="position:relative; display:inline-block;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistCumpl" title="Ver un corte histórico de esta sección">
+                                            <i class="fas fa-clock-rotate-left me-1"></i> Histórico
+                                        </button>
+                                        <ul class="hist-menu" id="menuHistCumpl" style="display:none; position:absolute; left:0; top:100%; z-index:1050; background:#fff; color:#000; border:1px solid #ddd; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); list-style:none; margin:4px 0 0; padding:4px 0; min-width:240px; max-height:280px; overflow:auto;"></ul>
+                                    </div>
                                     <span id="cumplResumen" class="badge" style="font-size:12px; background:rgba(255,255,255,.18); color:#fff; font-weight:500;"></span>
                                     <select id="cumplOrden" class="form-select form-select-sm" style="width:auto;" title="Criterio del ranking">
                                         <option value="cuatri">Ordenar: Menor % del cuatrimestre</option>
@@ -5834,6 +5866,10 @@
         } }
 
         var chartsRD = {};
+        var histRegs = { rep: null, ext: null, alu: null }; // datos congelados por sección (null = en vivo)
+        function regsRep() { return histRegs.rep || (window.ReprobDetalle && ReprobDetalle.cache) || []; }
+        function regsExt() { return histRegs.ext || (window.ReprobDetalle && ReprobDetalle.cache) || []; }
+        function regsAlu() { return histRegs.alu || (window.ReprobDetalle && ReprobDetalle.cache) || []; }
         function barTop10(canvasId, pares, color, desglose) {
             var el = document.getElementById(canvasId);
             if (!el || typeof Chart === 'undefined') return;
@@ -5907,20 +5943,22 @@
             };
         }
         // Modo GRAFICAS: barras. (Se re-dibuja al cambiar de modo: un canvas oculto queda en blanco.)
-        function pintarCharts(regs) {
-            var t = calcularTops(regs || []);
-            barTop10('chartReprobMaterias', t.repM, '#b3402e');
-            barTop10('chartReprobCarreras', t.repC, '#b3402e');
-            barTop10('chartReprobEspecialidades', t.repE, '#b3402e');
-            barTop10('chartReprobGrupos', t.repG, '#b3402e', t.repGDes);
-            barTop10('chartExtraMaterias', t.extM, '#dba13a');
-            barTop10('chartExtraCarreras', t.extC, '#dba13a');
-            barTop10('chartExtraEspecialidades', t.extE, '#dba13a');
-            barTop10('chartExtraGrupos', t.extG, '#dba13a', t.extGDes);
+        function pintarCharts() {
+            var tRep = calcularTops(regsRep());
+            var tExt = calcularTops(regsExt());
+            barTop10('chartReprobMaterias', tRep.repM, '#b3402e');
+            barTop10('chartReprobCarreras', tRep.repC, '#b3402e');
+            barTop10('chartReprobEspecialidades', tRep.repE, '#b3402e');
+            barTop10('chartReprobGrupos', tRep.repG, '#b3402e', tRep.repGDes);
+            barTop10('chartExtraMaterias', tExt.extM, '#dba13a');
+            barTop10('chartExtraCarreras', tExt.extC, '#dba13a');
+            barTop10('chartExtraEspecialidades', tExt.extE, '#dba13a');
+            barTop10('chartExtraGrupos', tExt.extG, '#dba13a', tExt.extGDes);
         }
         // Modo TABLAS: los mismos rankings como tablas #/nombre/registros.
-        function pintarTablas(regs) {
-            var t = calcularTops(regs || []);
+        function pintarTablas() {
+            var tRep = calcularTops(regsRep());
+            var tExt = calcularTops(regsExt());
             function llenar(id, pares, desglose) {
                 var $tb = $('#' + id); if (!$tb.length) return;
                 var cols = desglose ? 4 : 3;
@@ -5931,18 +5969,19 @@
                     }).join('')
                     : '<tr><td colspan="' + cols + '" class="text-center text-muted">Sin datos</td></tr>');
             }
-            llenar('tbodyRepMaterias', t.repM); llenar('tbodyRepCarreras', t.repC); llenar('tbodyRepEspecialidades', t.repE); llenar('tbodyRepGrupos', t.repG, t.repGDes);
-            llenar('tbodyExtMaterias', t.extM); llenar('tbodyExtCarreras', t.extC); llenar('tbodyExtEspecialidades', t.extE); llenar('tbodyExtGrupos', t.extG, t.extGDes);
+            llenar('tbodyRepMaterias', tRep.repM); llenar('tbodyRepCarreras', tRep.repC); llenar('tbodyRepEspecialidades', tRep.repE); llenar('tbodyRepGrupos', tRep.repG, tRep.repGDes);
+            llenar('tbodyExtMaterias', tExt.extM); llenar('tbodyExtCarreras', tExt.extC); llenar('tbodyExtEspecialidades', tExt.extE); llenar('tbodyExtGrupos', tExt.extG, tExt.extGDes);
         }
         function pintar(regs) {
-            pintarTablas(regs);
+            // Tras actualizar cache, renderizar con orígenes independientes por sección
+            pintarTablas();
             if (window.ModoEstadisticas) {
-                ModoEstadisticas.datos('reprobTops', regs); // el framework llama pintarCharts solo si la seccion esta en Graficas
-                ModoEstadisticas.datos('extraTops', regs);
+                ModoEstadisticas.datos('reprobTops', regsRep()); // el framework llama pintarCharts solo si la seccion esta en Graficas
+                ModoEstadisticas.datos('extraTops', regsExt());
             } else {
-                pintarCharts(regs);
+                pintarCharts();
             }
-            if (window.ReprobDetalle && window.ReprobDetalle.onDatos) window.ReprobDetalle.onDatos(regs); // tabla (Task 3)
+            if (window.ReprobDetalle && window.ReprobDetalle.onDatos) window.ReprobDetalle.onDatos(regsAlu()); // tabla (Task 3)
         }
         var SELS = '#carreraFiltroReprob, #especialidadFiltroReprob, #gradoFiltroReprob, #grupoFiltroReprob';
         function cargar(_retry) {
@@ -5957,7 +5996,8 @@
                     grupoId: $('#grupoFiltroReprob').val() || null
                 },
                 success: function (r) {
-                    $('#reprobCargando').hide(); $(SELS).prop('disabled', false);
+                    $('#reprobCargando').hide();
+                    if (!histRegs.rep) $(SELS).prop('disabled', false);
                     if (!r || !r.success) {
                         $('#reprobError').text('No se pudieron obtener los datos: ' + ((r && r.error) || 'error desconocido')).show();
                         return;
@@ -5967,7 +6007,7 @@
                 },
                 error: function () {
                     if (!_retry) { setTimeout(function () { cargar(true); }, 1500); return; } // reintento 1 vez (patron existente)
-                    $('#reprobCargando').hide(); $(SELS).prop('disabled', false);
+                    $('#reprobCargando').hide(); if (!histRegs.rep) $(SELS).prop('disabled', false);
                     $('#reprobError').text('Error de conexión al cargar Reprobados/Extraordinarios.').show();
                 }
             });
@@ -6050,6 +6090,41 @@
         $('#reprobAlumnoModalCerrar').on('click', cerrarReprobModal);
         $('#reprobAlumnoModalOverlay').on('click', function (e) { if (e.target === this) cerrarReprobModal(); });
         $(document).on('keydown', function (e) { if (e.key === 'Escape' && $('#reprobAlumnoModalOverlay').is(':visible')) cerrarReprobModal(); });
+
+        // ===== Histórico independiente por sección (Task 3, 2026-08-02) =====
+        function cargarHistSeccion(clave, corteId) {
+            if (!corteId) {
+                histRegs[clave] = null;
+                if (clave === 'rep') $(SELS).prop('disabled', false).attr('title', '');
+                repintar();
+                return;
+            }
+            if (clave === 'rep') $(SELS).prop('disabled', true).attr('title', 'Filtro disponible solo en vivo');
+            $.ajax({
+                url: '@Url.Action("GetReprobadosDetalle", "NuevasEstadisticas")',
+                type: 'POST', data: { corteId: corteId },
+                success: function (r) {
+                    if (!r || !r.success) { alert((r && r.message) || 'Sin datos de esta sección en ese corte'); return; }
+                    histRegs[clave] = (r.data && r.data.registros) || [];
+                    repintar();
+                },
+                error: function () { alert('Error de conexión al cargar el corte.'); }
+            });
+        }
+        function repintar() {
+            pintarTablas();
+            if (window.ModoEstadisticas) { ModoEstadisticas.datos('reprobTops', regsRep()); ModoEstadisticas.datos('extraTops', regsExt()); }
+            else { pintarCharts(); }
+            if (window.ReprobDetalle && ReprobDetalle.onDatos) ReprobDetalle.onDatos(regsAlu());
+        }
+        if (typeof initHistoricoSeccion === 'function') {
+            initHistoricoSeccion({ btn: '#btnHistReprob', menu: '#menuHistReprob', rotulo: '#rotuloHistReprob',
+                onCorte: function (c) { cargarHistSeccion('rep', c.idCorte); }, onVivo: function () { cargarHistSeccion('rep', null); } });
+            initHistoricoSeccion({ btn: '#btnHistExtra', menu: '#menuHistExtra', rotulo: '#rotuloHistExtra',
+                onCorte: function (c) { cargarHistSeccion('ext', c.idCorte); }, onVivo: function () { cargarHistSeccion('ext', null); } });
+            initHistoricoSeccion({ btn: '#btnHistAlumnosRep', menu: '#menuHistAlumnosRep', rotulo: '#rotuloHistAlumnosRep',
+                onCorte: function (c) { cargarHistSeccion('alu', c.idCorte); }, onVivo: function () { cargarHistSeccion('alu', null); } });
+        }
     });
 </script>
 <script>
@@ -6094,28 +6169,40 @@
         if (window.ModoEstadisticas) {
             ModoEstadisticas.registrar('bajasSec', { original: '#tablasBajasSecWrap', charts: '#chartWrapBajasSec', botonHost: '#modoHostBajasSec', render: pintarBajasCharts });
         }
-        function cargarBajasSec(_retry) {
+        var corteBajasSecActual = null;
+        window.cargarBajasSec = function cargarBajasSec(corteId, _retry) {
+            corteBajasSecActual = corteId || null;
             $('#bajasSecCargando').show(); $('#bajasSecError').hide();
+            var data = {};
+            if (corteId) { data.corteId = corteId; }
             $.ajax({
                 url: '@Url.Action("GetEstadisticasBajas", "NuevasEstadisticas")',
                 type: 'POST',
+                data: data,
                 success: function (r) {
                     $('#bajasSecCargando').hide();
-                    if (!r || !r.success || !r.data) { $('#bajasSecError').text('No se pudieron obtener las bajas: ' + ((r && r.error) || 'error desconocido')).show(); return; }
+                    if (!r || !r.success || !r.data) { $('#bajasSecError').text('No se pudieron obtener las bajas: ' + ((r && r.message) || (r && r.error) || 'error desconocido')).show(); return; }
                     cacheBS = r.data;
                     $('#bajasSecTotal').text('Total: ' + (r.data.TotalBajas || 0));
                     pintarBajasTablas(r.data);
                     if (window.ModoEstadisticas) { ModoEstadisticas.datos('bajasSec', r.data); } else { pintarBajasCharts(r.data); }
                 },
                 error: function () {
-                    if (!_retry) { setTimeout(function () { cargarBajasSec(true); }, 1500); return; } // reintento 1 vez (patron existente)
+                    if (!_retry) { setTimeout(function () { window.cargarBajasSec(corteId, true); }, 1500); return; } // reintento 1 vez (patron existente)
                     $('#bajasSecCargando').hide();
                     $('#bajasSecError').text('Error de conexión al cargar Bajas.').show();
                 }
             });
-        }
+        };
         // Carga diferida 3s (regla del proyecto). Esta misma respuesta alimenta el KPI de Bajas.
-        setTimeout(function () { cargarBajasSec(); }, 3000);
+        setTimeout(function () { window.cargarBajasSec(null); }, 3000);
+        if (typeof initHistoricoSeccion === 'function') {
+            initHistoricoSeccion({
+                btn: '#btnHistBajasSec', menu: '#menuHistBajasSec', rotulo: '#rotuloHistBajasSec',
+                onCorte: function (c) { window.cargarBajasSec(c.idCorte); },
+                onVivo: function () { window.cargarBajasSec(null); }
+            });
+        }
     });
 </script>
 <script>
@@ -6396,14 +6483,19 @@
         if (window.ModoEstadisticas) {
             ModoEstadisticas.registrar('cumplTutores', { original: '#tablaCumplWrap', charts: '#chartWrapCumpl', botonHost: '#modoHostCumpl', render: pintarCumplCharts });
         }
-        function cargarCumpl(_retry) {
+        function cargarCumpl(corteIdHist, _retry) {
             $('#cumplCargando').show(); $('#cumplError, #cumplVacio').hide();
             $.ajax({
                 url: '@Url.Action("GetCumplimientoTutores", "NuevasEstadisticas")',
                 type: 'POST',
+                data: { corteId: corteIdHist || null },
                 success: function (r) {
                     $('#cumplCargando').hide();
-                    if (!r || !r.success) { $('#cumplError').text('No se pudo obtener el cumplimiento: ' + ((r && r.error) || 'error desconocido')).show(); return; }
+                    if (!r || !r.success) {
+                        var msg = (r && r.message) ? r.message : ('No se pudo obtener el cumplimiento: ' + ((r && r.error) || 'error desconocido'));
+                        $('#cumplError').text(msg).show();
+                        return;
+                    }
                     cacheCT = r.data || [];
                     if (!cacheCT.length) { $('#cumplVacio').show(); $('#cumplResumen').text(''); return; }
                     var totAl = 0, totSeg = 0;
@@ -6413,14 +6505,21 @@
                     if (window.ModoEstadisticas) { ModoEstadisticas.datos('cumplTutores', cacheCT); } else { pintarCumplCharts(cacheCT); }
                 },
                 error: function () {
-                    if (!_retry) { setTimeout(function () { cargarCumpl(true); }, 1500); return; } // reintento 1 vez (patron existente)
+                    if (!_retry) { setTimeout(function () { cargarCumpl(corteIdHist, true); }, 1500); return; } // reintento 1 vez (patron existente)
                     $('#cumplCargando').hide();
                     $('#cumplError').text('Error de conexión al cargar el cumplimiento de tutores.').show();
                 }
             });
         }
         // Carga diferida 3.5s: despues de las demas cargas perezosas para no amontonar AJAX.
-        setTimeout(function () { cargarCumpl(); }, 3500);
+        setTimeout(function () { cargarCumpl(null); }, 3500);
+        if (typeof initHistoricoSeccion === 'function') {
+            initHistoricoSeccion({
+                btn: '#btnHistCumpl', menu: '#menuHistCumpl', rotulo: '#rotuloHistCumpl',
+                onCorte: function (c) { cargarCumpl(c.idCorte); },
+                onVivo: function () { cargarCumpl(null); }
+            });
+        }
     });
 </script>
 <script>
