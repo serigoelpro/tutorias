@@ -4782,6 +4782,10 @@
                 });
             }
             $('#contenidoVulnerabilidades').on('click', '.vuln-card-click', function () { abrirVulnModal($(this).data('vuln-cat')); });
+            // 2026-08-03: al ocultar el panel Detalle de Vulnerabilidad se perdio la puerta al modal de
+            // alumnos; la tarjeta KPI "Sin Seguimiento" ahora abre la lista (mismo modal/endpoint).
+            $('#kpiSinSeg').css('cursor', 'pointer').attr('title', 'Click para ver la lista de alumnos sin seguimiento')
+                .on('click', function () { abrirVulnModal('sinInformacion'); });
             function cerrarVulnModal() { $('#vulnModalOverlay').hide(); }
             $('#vulnModalCerrar').on('click', cerrarVulnModal);
             $('#vulnModalOverlay').on('click', function (e) { if (e.target === this) cerrarVulnModal(); });
