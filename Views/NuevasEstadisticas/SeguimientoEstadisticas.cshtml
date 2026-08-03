@@ -1269,22 +1269,27 @@
                         if (t !== null && (!top || t > top.t)) top = { t: t, m: m };
                     }
                 });
-                if (top) out.push(card('fa-book', 'riesgo', top.t + '%', 'Mayor tasa de reprobación', '<b>' + esc(top.m.nombreMateria) + '</b>: ' + top.m.reprobadas + ' de ' + top.m.totalRegistros + ' registros reprobados.'));
+                @* 2026-08-03: sin porcentaje, sin "X de Y registros" y SIN cifra grande (pedido del usuario). *@
+                if (top) out.push(card('fa-book', 'riesgo', '', 'Mayor tasa de reprobación', '<b style="font-size:1.1rem;">' + esc(top.m.nombreMateria) + '</b>'));
             }
             // 2) Factor principal de situación familiar
             if (r) {
                 var f = [['embarazadas', 'estudiantes embarazadas'], ['madres', 'madres de familia'], ['padres', 'padres de familia'], ['alumnosTrabajando', 'estudiantes que trabajan']]
                     .map(function (x) { return { n: r[x[0]] || 0, t: x[1] }; }).sort(function (a, b) { return b.n - a.n; })[0];
-                if (f && f.n > 0) out.push(card('fa-house-user', 'info', miles(f.n), 'Factor familiar principal', esc(f.t.charAt(0).toUpperCase() + f.t.slice(1)) + ' (' + pct(f.n, r.totalEstudiantes) + '% del total).'));
+                @* 2026-08-03: sin cifra grande ni "(X% del total)"; el factor va resaltado (pedido del usuario). *@
+                if (f && f.n > 0) out.push(card('fa-house-user', 'info', '', 'Factor familiar principal', '<b style="font-size:1.1rem;">' + esc(f.t.charAt(0).toUpperCase() + f.t.slice(1)) + '</b>'));
             }
             // 3) Carrera con mayor vulnerabilidad % (solo Máster — cache.carreras solo existe si la sección Carrera cargó)
             if (cache.carreras && cache.carreras.length) {
                 var c = cache.carreras.map(function (x) { var v = (x.econ || 0) + (x.acad || 0) + (x.pers || 0); return { x: x, p: pct(v, x.cantidad) }; })
                     .filter(function (y) { return y.p !== null && (y.x.cantidad || 0) >= 20; }).sort(function (a, b) { return b.p - a.p; })[0];
-                if (c) out.push(card('fa-graduation-cap', 'alerta', c.p + '%', 'Carrera con mayor vulnerabilidad', '<b>' + esc(c.x.nombre) + '</b>, sobre ' + miles(c.x.cantidad) + ' estudiantes.'));
+                @* 2026-08-03: sin porcentaje, sin "sobre N estudiantes" y SIN cifra grande (pedido del usuario). *@
+                if (c) out.push(card('fa-graduation-cap', 'alerta', '', 'Carrera con mayor vulnerabilidad', '<b style="font-size:1.1rem;">' + esc(c.x.nombre) + '</b>'));
             }
             // 4) Vulnerables sin seguimiento del tutor
-            if (r && r.sinSeguimiento > 0) out.push(card('fa-user-clock', 'alerta', miles(r.sinSeguimiento), 'Sin seguimiento del tutor', 'Estudiantes sin clasificación de su tutor (' + pct(r.sinSeguimiento, r.totalEstudiantes) + '% del total).'));
+            @* 2026-08-03: tarjeta "Sin seguimiento del tutor" OCULTA a peticion del usuario (NO borrar).
+            if (r && r.sinSeguimiento > 0) out.push(card('fa-user-clock', 'alerta', miles(r.sinSeguimiento), 'Sin seguimiento del tutor', 'Estudiantes sin clasificación de su tutor.'));
+            *@
             // 5) Variación de vulnerabilidad vs. año anterior (solo si hay corte previo — Fase 3)
             if (r && cache.kpisAnt && cache.kpisAnt.totalVulnerables > 0) {
                 var d = Math.round(((r.totalVulnerables || 0) - cache.kpisAnt.totalVulnerables) / cache.kpisAnt.totalVulnerables * 1000) / 10;
@@ -1728,6 +1733,8 @@
                                         <div class="kpi-pct">–</div>
                                         @if (esMasterKpi) { <div class="kpi-var" data-sentido="down">–</div> }
                                     </div>
+                                    @* 2026-08-03: tarjetas ocultas a peticion del usuario (NO borrar, solo comentadas).
+                                       El JS que las llena tiene guards de DOM, no truena si no existen.
                                     <div class="kpi-card" id="kpiAfectados">
                                         <i class="fas fa-user-xmark kpi-icono"></i>
                                         <div class="kpi-titulo">Alumnos con Reprobadas/Extra</div>
@@ -1747,6 +1754,7 @@
                                         <div class="kpi-cifra">–</div>
                                         @if (esMasterKpi) { <div class="kpi-var" data-sentido="down">–</div> }
                                     </div>
+                                    *@
                                     <div class="kpi-card" id="kpiBajas">
                                         <i class="fas fa-user-slash kpi-icono"></i>
                                         <div class="kpi-titulo">Bajas</div>
@@ -2236,8 +2244,10 @@
                                         <div class="modo-chart-wrap" id="chartWrapNivel" style="max-width:none; height:auto; padding:12px;">
                                             <div class="dash-graf-row">
                                                 <div class="demo-graf-col"><h4 class="dash-sub">Distribución de Vulnerabilidad</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartNivelDona"></canvas></div></div>
-                                                <div class="demo-graf-col"><h4 class="dash-sub">Composición por Nivel</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartModoNivel"></canvas></div></div>
-                                                <div class="demo-graf-col"><h4 class="dash-sub">Composición por Nivel (100%)</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartNivelPct"></canvas></div></div>
+                                                <div class="demo-graf-col"><h4 class="dash-sub">Alumnos por Nivel</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartModoNivel"></canvas></div></div>
+                                                @* 2026-08-03: grafica "Porcentaje por Nivel" oculta a peticion del usuario (NO borrar; el render tiene guard if(ctxP)).
+                                                <div class="demo-graf-col"><h4 class="dash-sub">Porcentaje por Nivel</h4><div class="dash-canvas-wrap" style="height:240px;"><canvas id="chartNivelPct"></canvas></div></div>
+                                                *@
                                             </div>
                                             @* Apilada por carrera (movida desde la seccion Vulnerabilidad de abajo, 2026-08-01). *@
                                             <div id="vulnCarreraCol" style="margin-top:12px;"><h4 class="dash-sub">Vulnerabilidad por Carrera (Top 10)</h4><div class="dash-canvas-wrap" style="height:300px;"><canvas id="chartVulnCarrera"></canvas></div></div>
@@ -2320,6 +2330,11 @@
                                 </div>
                                 <div class="card-body">
                                     @* Categoría: Vulnerabilidad *@
+                                    @* 2026-08-03: panel "Detalle de Vulnerabilidad" (filtros mes/año + tarjetas) OCULTO
+                                       a peticion del usuario con if(false) recuperable (NO borrar). El JS de
+                                       actualizarVulnerabilidades usa selectores jQuery: sin este DOM es no-op. *@
+                                    @if (false)
+                                    {
                                     <div class="panel panel-success" style="margin-bottom: 10px;">
                                         <div class="panel-heading categoria-header" style="cursor: pointer; background-color: #009688; border-color: #009688;">
                                             <h5 style="margin: 0; color: white; font-size: 1rem; padding: 8px 0;">
@@ -2412,6 +2427,10 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                @* 2026-08-03: franja "Fuente de clasificación" oculta a peticion del usuario (NO borrar).
+                                                   El JS que la refresca tiene guard if ($desglose.length), no truena sin el div. *@
+                                                @if (false)
+                                                {
                                                 <div id="desgloseFuenteVulnerabilidad" class="text-center" style="margin-top: 8px; padding: 8px; background-color: #f5f5f5; border-radius: 6px; font-size: 0.85rem; color: #555;">
                                                     @{
                                                         bool tieneDesgloseFuente = false;
@@ -2440,9 +2459,11 @@
                                                         <span>Desglose de fuente: no disponible en este corte.</span>
                                                     }
                                                 </div>
+                                                }
                                             </div>
                                         </div>
                                     </div>
+                                    }
                                 </div>
                             </section>
 
@@ -2737,6 +2758,11 @@
                             /* Tabla de materias con scroll propio: el encabezado se queda fijo */
                             #wrapTablaMaterias thead th { position: sticky; top: 0; z-index: 2; }
                         </style>
+                        @* 2026-08-03: seccion Materias Reprobadas OCULTA a peticion del usuario con if(false) recuperable
+                           (NO borrar). cargarMaterias sigue llamando GetEstadisticasMaterias con guards de DOM porque
+                           alimentaba KPIs/hallazgos; sin su DOM simplemente no pinta nada. *@
+                        @if (false)
+                        {
                         <section class="data-block" id="seccionMaterias">
                             <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
                                 <h3 class="section-title">
@@ -2849,6 +2875,7 @@
                                 </div>
                             </div>
                         </section>
+                        }
 
                         @* ===== REPROBADOS (restaurada 2026-08-01, como antes de la fusión): top-10 en vivo desde GetReprobadosDetalle ===== *@
                         <section class="data-block" id="seccionReprobados">
@@ -2976,43 +3003,10 @@
                             </div>
                         </section>
 
-                        @* ===== ALUMNOS CON MATERIAS REPROBADAS (restaurada 2026-08-01; conserva ranking # y Total) ===== *@
-                        <section class="data-block" id="seccionAlumnosReprobados">
-                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
-                                <h3 class="section-title"><i class="fas fa-user-graduate me-2"></i>Alumnos con Materias Reprobadas</h3>
-                                <div class="d-flex gap-2 align-items-center">
-                                    <span id="rotuloHistAlumnosRep" class="badge bg-warning text-dark" style="display:none; align-self:center;"></span>
-                                    <div class="hist-wrap" style="position:relative; display:inline-block;">
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistAlumnosRep" title="Ver un corte histórico de esta sección">
-                                            <i class="fas fa-clock-rotate-left me-1"></i> Histórico
-                                        </button>
-                                        <ul class="hist-menu" id="menuHistAlumnosRep" style="display:none; position:absolute; right:0; top:100%; z-index:1050; background:#fff; color:#000; border:1px solid #ddd; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); list-style:none; margin:4px 0 0; padding:4px 0; min-width:240px; max-height:280px; overflow:auto;"></ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="padding: 12px;">
-                                <p class="text-muted" style="font-size:0.85rem;">Haz click en un alumno para ver sus materias reprobadas y en extraordinario.</p>
-                                <div class="table-responsive-lg">
-                                    <table id="tablaAlumnosReprobados" class="table table-striped table-hover" style="width:100%;">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-center" style="width:56px;">#</th>
-                                                <th>Alumno</th>
-                                                <th class="text-center">Grado y grupo</th>
-                                                <th class="text-center">Reprobadas</th>
-                                                <th class="text-center">Extraordinario</th>
-                                                <th class="text-center">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </section>
-
                         @* ===== BAJAS (2026-08-01): desglose del periodo vigente por causa/carrera/especialidad.
                            Modo GRAFICAS: barras. Modo TABLAS: rankings en tabla. Datos: GetEstadisticasBajas
-                           (fail-closed nivel 3: servidor fuerza su carrera). *@
+                           (fail-closed nivel 3: servidor fuerza su carrera). 2026-08-03: movida ARRIBA de
+                           Alumnos con Materias Reprobadas a pedido del usuario. *@
                         <section class="data-block" id="seccionBajasResumen">
                             <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
                                 <h3 class="section-title"><i class="fas fa-user-slash me-2"></i>Bajas</h3>
@@ -3055,6 +3049,87 @@
                             </div>
                         </section>
 
+                        @* ===== ALUMNOS CON MATERIAS REPROBADAS (restaurada 2026-08-01; conserva ranking # y Total) ===== *@
+                        <section class="data-block" id="seccionAlumnosReprobados">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
+                                <h3 class="section-title"><i class="fas fa-user-graduate me-2"></i>Alumnos con Materias Reprobadas</h3>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span id="rotuloHistAlumnosRep" class="badge bg-warning text-dark" style="display:none; align-self:center;"></span>
+                                    <div class="hist-wrap" style="position:relative; display:inline-block;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistAlumnosRep" title="Ver un corte histórico de esta sección">
+                                            <i class="fas fa-clock-rotate-left me-1"></i> Histórico
+                                        </button>
+                                        <ul class="hist-menu" id="menuHistAlumnosRep" style="display:none; position:absolute; right:0; top:100%; z-index:1050; background:#fff; color:#000; border:1px solid #ddd; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); list-style:none; margin:4px 0 0; padding:4px 0; min-width:240px; max-height:280px; overflow:auto;"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            @* 2026-08-03: id para ocultar el cuerpo en modo Graficas (la seccion es solo tabla). *@
+                            <div style="padding: 12px;" id="cuerpoAlumnosReprobados">
+                                <p class="text-muted" style="font-size:0.85rem;">Haz click en un alumno para ver sus materias reprobadas y en extraordinario.</p>
+                                <div class="table-responsive-lg">
+                                    <table id="tablaAlumnosReprobados" class="table table-striped table-hover" style="width:100%;">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center" style="width:56px;">#</th>
+                                                <th>Alumno</th>
+                                                <th class="text-center">Grado y grupo</th>
+                                                <th class="text-center">Reprobadas</th>
+                                                <th class="text-center">Extraordinario</th>
+                                                <th class="text-center">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+
+                        @* 2026-08-03: la seccion BAJAS se movio ARRIBA de Alumnos con Materias Reprobadas. *@
+                        @if (false)
+                        {
+                        <section class="data-block" id="seccionBajasResumenViejo">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="margin-bottom: 10px;">
+                                <h3 class="section-title"><i class="fas fa-user-slash me-2"></i>Bajas</h3>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span id="rotuloHistBajasSec" class="badge bg-warning text-dark" style="display:none; align-self:center;"></span>
+                                    <div class="hist-wrap" style="position:relative; display:inline-block;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnHistBajasSec" title="Ver un corte histórico de esta sección">
+                                            <i class="fas fa-clock-rotate-left me-1"></i> Histórico
+                                        </button>
+                                        <ul class="hist-menu" id="menuHistBajasSec" style="display:none; position:absolute; right:0; top:100%; z-index:1050; background:#fff; color:#000; border:1px solid #ddd; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.15); list-style:none; margin:4px 0 0; padding:4px 0; min-width:240px; max-height:280px; overflow:auto;"></ul>
+                                    </div>
+                                    <span id="bajasSecTotal" class="badge" style="font-size:12px; background:rgba(255,255,255,.18); color:#fff; font-weight:500;"></span>
+                                    <span id="modoHostBajasSec"></span>
+                                    <span style="font-size:11px; color:rgba(255,255,255,.85); white-space:nowrap;" title="Bajas del cuatrimestre vigente (o posteriores al último corte)">Periodo vigente</span>
+                                </div>
+                            </div>
+                            <div style="padding: 12px;">
+                                <div id="bajasSecCargando" class="text-muted" style="padding:8px;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+                                <div id="bajasSecError" class="alert alert-danger" style="display:none;"></div>
+                                <div class="modo-chart-wrap" id="chartWrapBajasSec" style="max-width:none; height:auto; padding:0;">
+                                    <div class="dash-graf-row">
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Bajas por Causa</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartBajasSecCausa"></canvas></div></div>
+                                        @if ((ViewBag.UsuarioNivel as int? ?? 0) == 4)
+                                        {
+                                            <div class="demo-graf-col"><h4 class="dash-sub">Carreras con Más Bajas</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartBajasSecCarreras"></canvas></div></div>
+                                        }
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Especialidades con Más Bajas</h4><div class="dash-canvas-wrap" style="height:280px;"><canvas id="chartBajasSecEspecialidades"></canvas></div></div>
+                                    </div>
+                                </div>
+                                <div id="tablasBajasSecWrap">
+                                    <div class="dash-graf-row">
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Bajas por Causa</h4><table class="table table-striped table-sm"><thead><tr><th class="text-center" style="width:44px;">#</th><th>Causa</th><th class="text-center">Bajas</th></tr></thead><tbody id="tbodyBajasSecCausa"></tbody></table></div>
+                                        @if ((ViewBag.UsuarioNivel as int? ?? 0) == 4)
+                                        {
+                                            <div class="demo-graf-col"><h4 class="dash-sub">Carreras con Más Bajas</h4><table class="table table-striped table-sm"><thead><tr><th class="text-center" style="width:44px;">#</th><th>Carrera</th><th class="text-center">Bajas</th></tr></thead><tbody id="tbodyBajasSecCarreras"></tbody></table></div>
+                                        }
+                                        <div class="demo-graf-col"><h4 class="dash-sub">Especialidades con Más Bajas</h4><table class="table table-striped table-sm"><thead><tr><th class="text-center" style="width:44px;">#</th><th>Especialidad</th><th class="text-center">Bajas</th></tr></thead><tbody id="tbodyBajasSecEspecialidades"></tbody></table></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        }
+
                         @* ===== CUMPLIMIENTO DE TUTORES (2026-08-02, innovación): ataca la queja de dirección
                            de que "los datos no cuadran porque los tutores no capturan". Por tutor: % de sus
                            alumnos con seguimiento del periodo, % con entrevista inicial y días sin capturar.
@@ -3094,12 +3169,16 @@
                                 <div id="cumplCargando" class="text-muted" style="padding:8px;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
                                 <div id="cumplError" class="alert alert-danger" style="display:none;"></div>
                                 <div id="cumplVacio" class="alert alert-info" style="display:none;">No hay tutores con grupo asignado en el periodo vigente.</div>
+                                @* 2026-08-03: graficas de Cumplimiento OCULTAS a peticion del usuario (NO borrar);
+                                   la seccion queda SOLO en tabla, visible en ambos modos. pintarCumplCharts tiene
+                                   guards getElementById, no truena sin los canvas.
                                 <div class="modo-chart-wrap" id="chartWrapCumpl" style="max-width:none; height:auto; padding:0;">
                                     <div class="dash-graf-row">
                                         <div class="demo-graf-col"><h4 class="dash-sub">Tutores con Menor % de Seguimiento</h4><div class="dash-canvas-wrap" style="height:300px;"><canvas id="chartCumplPeores"></canvas></div></div>
                                         <div class="demo-graf-col" style="flex:0 1 340px;"><h4 class="dash-sub">Cumplimiento Global de Seguimiento</h4><div class="dash-canvas-wrap" style="height:300px;"><canvas id="chartCumplGlobal"></canvas></div></div>
                                     </div>
                                 </div>
+                                *@
                                 <div id="tablaCumplWrap">
                                     <div class="table-responsive-lg">
                                         <table id="tablaCumplTutores" class="table table-striped table-hover" style="width:100%;">
@@ -5926,6 +6005,13 @@
             if (g === undefined || l === undefined) return null;
             return g + l;
         }
+        // 2026-08-03: etiqueta grupo + especialidad para el Top 10 Grupos de REPROBADOS (pedido del usuario).
+        function etiquetaGrupoEsp(r) {
+            var g = etiquetaGrupo(r);
+            if (!g) return null;
+            var e = (r.especialidad || '').trim();
+            return e ? g + ' — ' + e : g;
+        }
         function top10(regs, keyFn) {
             var acc = {};
             regs.forEach(function (r) {
@@ -5959,9 +6045,9 @@
             function porCarrera(r) { return r.carreraNombre; }
             function porEsp(r) { return (r.especialidad || '').trim() || null; }
             return {
-                repM: top10(rep, porMateria), repC: top10(rep, porCarrera), repE: top10(rep, porEsp), repG: top10(rep, etiquetaGrupo),
-                extM: top10(ext, porMateria), extC: top10(ext, porCarrera), extE: top10(ext, porEsp), extG: top10(ext, etiquetaGrupo),
-                repGDes: desgloseCarreras(rep, etiquetaGrupo), extGDes: desgloseCarreras(ext, etiquetaGrupo)
+                repM: top10(rep, porMateria), repC: top10(rep, porCarrera), repE: top10(rep, porEsp), repG: top10(rep, etiquetaGrupoEsp),
+                extM: top10(ext, porMateria), extC: top10(ext, porCarrera), extE: top10(ext, porEsp), extG: top10(ext, etiquetaGrupoEsp),
+                repGDes: desgloseCarreras(rep, etiquetaGrupoEsp), extGDes: desgloseCarreras(ext, etiquetaGrupoEsp)
             };
         }
         // Modo GRAFICAS: barras. (Se re-dibuja al cambiar de modo: un canvas oculto queda en blanco.)
@@ -6042,6 +6128,11 @@
                 ModoEstadisticas.registrar('reprobTops', { original: '#tablasReprobWrap', charts: '#chartWrapReprob', botonHost: '#modoHostReprob', render: pintarCharts });
             if (document.getElementById('chartWrapExtra'))
                 ModoEstadisticas.registrar('extraTops', { original: '#tablasExtraWrap', charts: '#chartWrapExtra', botonHost: '#modoHostExtra', render: pintarCharts });
+            // 2026-08-03: Alumnos con Materias Reprobadas es SOLO tabla — en modo Graficas se oculta
+            // el cuerpo (charts apunta a un selector vacio y el render es no-op; el framework lo tolera).
+            if (document.getElementById('cuerpoAlumnosReprobados'))
+                // original = la SECCION completa: en Graficas desaparece toda (header incluido), no queda franja vacia.
+                ModoEstadisticas.registrar('alumnosRep', { original: '#seccionAlumnosReprobados', charts: '#chartWrapAlumnosRepInexistente', render: function () { } });
         }
         $(SELS).on('change', function () { cargar(); });
         if (window.initCascadaEspecialidad) window.initCascadaEspecialidad('#carreraFiltroReprob', '#especialidadFiltroReprob');
@@ -6094,11 +6185,12 @@
                     ' <span style="background:' + color + '; color:#fff; border-radius:10px; padding:1px 8px; font-size:12px; vertical-align:2px;">' + items.length + '</span></h5>' +
                     '<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">';
                 items.forEach(function (m, idx) {
-                    var badge = m.intentos
-                        ? '<span style="background:#fff3e0; color:#b26a00; border:1px solid #f0ddc0; border-radius:10px; padding:2px 10px; font-size:11.5px; white-space:nowrap;">' + m.intentos + (m.intentos === 1 ? ' intento' : ' intentos') + ' de extraordinario</span>'
-                        : '<span style="background:#eceff1; color:#607d8b; border:1px solid #dfe5e8; border-radius:10px; padding:2px 10px; font-size:11.5px; white-space:nowrap;">Sin intento</span>';
+                    // 2026-08-03: badge de intentos OCULTO a peticion del usuario (solo se listan las materias).
+                    // var badge = m.intentos
+                    //     ? '<span style="background:#fff3e0; color:#b26a00; border:1px solid #f0ddc0; border-radius:10px; padding:2px 10px; font-size:11.5px; white-space:nowrap;">' + m.intentos + (m.intentos === 1 ? ' intento' : ' intentos') + ' de extraordinario</span>'
+                    //     : '<span style="background:#eceff1; color:#607d8b; border:1px solid #dfe5e8; border-radius:10px; padding:2px 10px; font-size:11.5px; white-space:nowrap;">Sin intento</span>';
                     h += '<div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:7px 12px;' + (idx % 2 ? ' background:#fafbfc;' : '') + (idx ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
-                        '<span style="color:#1f2937;">' + escR(m.materia) + '</span>' + badge + '</div>';
+                        '<span style="color:#1f2937;">' + escR(m.materia) + '</span></div>';
                 });
                 return h + '</div>';
             }
@@ -6502,8 +6594,13 @@
                 });
             }
         }
+        // 2026-08-03: graficas de Cumplimiento MUERTAS (comentadas en el markup). La seccion queda
+        // solo-tabla y se OCULTA en modo Graficas (mismo patron que alumnosRep: charts apunta a un
+        // selector vacio y el render es no-op). Registro original:
+        // ModoEstadisticas.registrar('cumplTutores', { original: '#tablaCumplWrap', charts: '#chartWrapCumpl', botonHost: '#modoHostCumpl', render: pintarCumplCharts });
         if (window.ModoEstadisticas) {
-            ModoEstadisticas.registrar('cumplTutores', { original: '#tablaCumplWrap', charts: '#chartWrapCumpl', botonHost: '#modoHostCumpl', render: pintarCumplCharts });
+            // original = la SECCION completa: en Graficas desaparece toda (header incluido), no queda franja vacia.
+            ModoEstadisticas.registrar('cumplTutores', { original: '#seccionCumplTutores', charts: '#chartWrapCumplInexistente', render: function () { } });
         }
         function cargarCumpl(corteIdHist, _retry) {
             $('#cumplCargando').show(); $('#cumplError, #cumplVacio').hide();
