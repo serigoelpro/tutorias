@@ -171,6 +171,13 @@ namespace Plataforma_Web.Controllers
         private static Dictionary<int, string> _cacheNombresCarreras = null;
         private static object _lockCache = new object();
 
+        // Cuentas de prueba/demo sembradas a mano (p.ej. TEST50ESTADIAS / "ALUMNO PRUEBA ...")
+        // NO son alumnos: fuera de la poblacion de estadisticas en cualquier BD (local o servidor).
+        // Contains/StartsWith se traducen a SQL con la collation CI de la BD (case-insensitive).
+        private static readonly System.Linq.Expressions.Expression<Func<Plataforma_Web.Data.Alumno, bool>> EsAlumnoReal =
+            a => (a.Matricula == null || !(a.Matricula.StartsWith("TEST") || a.Matricula.Contains("DEMO") || a.Matricula.Contains("PRUEBA")))
+              && (a.Nombre == null || !a.Nombre.Contains("PRUEBA"));
+
         // Método optimizado para cargar todos los nombres de carreras de una vez
         private Dictionary<int, string> CargarNombresCarreras(List<int> idsCarreras)
         {
@@ -434,7 +441,7 @@ namespace Plataforma_Web.Controllers
         {
             var p = periodo ?? PeriodoHelper.Obtener(DateTime.Now);
             var desde = CorteAplicable(p.Inicio, p.Fin) ?? p.Inicio;
-            return new HashSet<string>(
+            var set = new HashSet<string>(
                 db.Bajas
                     .Where(b => b.Activo == true && b.Matricula != null
                                 && b.Fecha >= desde && b.Fecha <= p.Fin)
@@ -444,6 +451,33 @@ namespace Plataforma_Web.Controllers
                     .Where(m => !string.IsNullOrEmpty(m)),
                 StringComparer.OrdinalIgnoreCase
             );
+            set.UnionWith(ObtenerMatriculasBajaViejaSinReingreso());
+            return set;
+        }
+
+        private HashSet<string> _bajasViejasSinReingreso;
+
+        /// <summary>
+        /// Matriculas con baja VIGENTE (Activo=1) de periodos ANTERIORES y sin ninguna marca de
+        /// reingreso: ex-alumnos cuya cuenta quedo habilitada por error. Se excluyen de la poblacion
+        /// siempre (una baja anulada Activo=0 NO cuenta: significa que la baja ya no aplica).
+        /// </summary>
+        private HashSet<string> ObtenerMatriculasBajaViejaSinReingreso()
+        {
+            if (_bajasViejasSinReingreso == null)
+            {
+                var p = PeriodoHelper.Obtener(DateTime.Now);
+                _bajasViejasSinReingreso = new HashSet<string>(
+                    db.Bajas
+                        .Where(b => b.Activo == true && b.Matricula != null && b.Fecha < p.Inicio
+                                    && !db.Bajas.Any(r => r.Matricula == b.Matricula && r.Reingreso == 1))
+                        .Select(b => b.Matricula)
+                        .ToList()
+                        .Select(m => NormalizarMatricula(m))
+                        .Where(m => !string.IsNullOrEmpty(m)),
+                    StringComparer.OrdinalIgnoreCase);
+            }
+            return _bajasViejasSinReingreso;
         }
 
         private bool _corteVigenteCargado;
@@ -819,8 +853,7 @@ namespace Plataforma_Web.Controllers
                     System.Diagnostics.Debug.WriteLine("=== FIN DEBUG COORDINADOR ===");
                 }
 
-                // IMPORTANTE: Obtener alumnos directamente desde GestionUsuarios.Alumnos (sin filtrar por habilitado)
-                // Esta es la lógica correcta según el controlador de referencia
+                // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
 
                 // Si es coordinador, filtrar por IdArea
@@ -833,6 +866,7 @@ namespace Plataforma_Web.Controllers
                 // IMPORTANTE: Replica exactamente la consulta SQL: WHERE Matricula IS NOT NULL AND Matricula <> ''
                 // La consulta SQL NO usa DISTINCT en el COUNT(*), cuenta todas las filas que cumplen la condición
                 var alumnosData = alumnosQuery
+                    .Where(a => a.Habilitado == true).Where(EsAlumnoReal)
                     .Select(a => new { a.Matricula, a.IdCarrera })
                     .ToList();
 
@@ -947,23 +981,10 @@ namespace Plataforma_Web.Controllers
                     return sexoUpper == "M" || sexoUpper == "MUJER" || sexoUpper == "FEMENINO";
                 });
 
-                // Solo contar como "Sin sexo" si tiene registro en alguna de las dos tablas Y su Sexo es 'No especificado' OR IS NULL
-                // Replica: WHEN TieneRegistro = 1 AND (SexoFinal = 'No especificado' OR SexoFinal IS NULL)
-                int totalSinSexo = alumnosMatriculas.Count(m =>
-                {
-                    // Normalizar matrícula para búsqueda en el diccionario
-                    string matriculaNormalizada = m?.Trim() ?? "";
-                    if (string.IsNullOrEmpty(matriculaNormalizada) || !sexoInfoPorMatricula.ContainsKey(matriculaNormalizada)) return false;
-                    var info = sexoInfoPorMatricula[matriculaNormalizada];
-                    // Primero verificar que tiene registro (TieneRegistro = 1)
-                    if (!info.TieneRegistro) return false;
-                    // Luego verificar que SexoFinal = 'No especificado' OR IS NULL
-                    var sexo = info.Sexo;
-                    if (sexo == null) return true; // IS NULL
-                    // Replica comparación exacta con 'No especificado'
-                    sexo = sexo.Trim();
-                    return sexo == "" || sexo.Equals("No especificado", StringComparison.OrdinalIgnoreCase);
-                });
+                // "Sin especificar sexo" = complemento (Total - H - M): incluye tanto registros con
+                // sexo vacio/"No especificado" como alumnos SIN registro en DatosPersonales/Entrevista
+                // (antes estos ultimos no caian en ninguna tarjeta y H+M+SinSexo != Total).
+                int totalSinSexo = alumnosMatriculas.Count - totalHombres - totalMujeres;
 
                 // IMPORTANTE: Traer los datos primero y filtrar en memoria para que la normalización funcione correctamente
                 // (las matrículas en Alumnos pueden tener espacios al final que SQL no maneja correctamente)
@@ -1253,16 +1274,9 @@ namespace Plataforma_Web.Controllers
                                     sexo.Equals("Mujer", StringComparison.OrdinalIgnoreCase) ||
                                     sexo.Equals("Femenino", StringComparison.OrdinalIgnoreCase));
                         });
-                        // Solo contar como "Sin sexo" si tiene registro Y su Sexo es 'No especificado' OR IS NULL
-                        int sinSexo = matriculasCarrera.Count(m =>
-                        {
-                            if (!sexoInfoPorMatricula.ContainsKey(m)) return false;
-                            var info = sexoInfoPorMatricula[m];
-                            if (!info.TieneRegistro) return false;
-                            var sexo = info.Sexo ?? "";
-                            sexo = sexo.Trim();
-                            return sexo == "" || sexo.Equals("No especificado", StringComparison.OrdinalIgnoreCase);
-                        });
+                        // "Sin sexo" = complemento (Cantidad - H - M): incluye alumnos sin registro
+                        // en DatosPersonales/Entrevista (antes no caian en ninguna columna).
+                        int sinSexo = matriculasCarrera.Count - hombres - mujeres;
 
                         // IMPORTANTE: Usar CalcularVulnerabilidades para cada carrera
                         // IMPORTANTE: Para la tabla por carrera, si no hay filtros aplicados,
@@ -1597,8 +1611,7 @@ namespace Plataforma_Web.Controllers
                     idAreaCoordinador = MapearIdCarreraCoordinadorAIdArea(usuario.IdCarrera);
                 }
 
-                // IMPORTANTE: Obtener alumnos directamente desde GestionUsuarios.Alumnos (sin filtrar por habilitado)
-                // Esta es la lógica correcta según el controlador de referencia
+                // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
 
                 // Si es coordinador, filtrar por IdArea
@@ -1608,9 +1621,8 @@ namespace Plataforma_Web.Controllers
                 }
 
                 // Obtener todas las matrículas directamente desde Alumnos
-                // IMPORTANTE: Replica exactamente la consulta SQL: WHERE Matricula IS NOT NULL AND Matricula <> ''
-                // La consulta SQL NO usa DISTINCT en el COUNT(*), cuenta todas las filas que cumplen la condición
                 var alumnosData = alumnosQuery
+                    .Where(a => a.Habilitado == true).Where(EsAlumnoReal)
                     .Select(a => a.Matricula)
                     .ToList();
 
@@ -1673,23 +1685,9 @@ namespace Plataforma_Web.Controllers
                     return sexoUpper == "M" || sexoUpper == "MUJER" || sexoUpper == "FEMENINO";
                 });
 
-                // Solo contar como "Sin sexo" si tiene registro Y su Sexo es 'No especificado' OR IS NULL
-                // Replica: WHEN TieneRegistro = 1 AND (SexoFinal = 'No especificado' OR SexoFinal IS NULL)
-                int totalSinSexo = alumnosMatriculas.Count(m =>
-                {
-                    // Normalizar matrícula para búsqueda en el diccionario
-                    string matriculaNormalizada = m?.Trim() ?? "";
-                    if (string.IsNullOrEmpty(matriculaNormalizada) || !sexoInfoPorMatricula.ContainsKey(matriculaNormalizada)) return false;
-                    var info = sexoInfoPorMatricula[matriculaNormalizada];
-                    // Primero verificar que tiene registro (TieneRegistro = 1)
-                    if (!info.TieneRegistro) return false;
-                    // Luego verificar que SexoFinal = 'No especificado' OR IS NULL
-                    var sexo = info.Sexo;
-                    if (sexo == null) return true; // IS NULL
-                    // Replica comparación exacta con 'No especificado'
-                    sexo = sexo.Trim();
-                    return sexo == "" || sexo.Equals("No especificado", StringComparison.OrdinalIgnoreCase);
-                });
+                // "Sin especificar sexo" = complemento (Total - H - M): incluye tambien alumnos sin
+                // registro en DatosPersonales/Entrevista (antes no caian en ninguna tarjeta).
+                int totalSinSexo = alumnosMatriculas.Count - totalHombres - totalMujeres;
 
                 // Calcular vulnerabilidades usando la lógica de consulta_vulnerabilidades_filtrada.sql
                 // Validar que mes y periodo no se usen juntos
@@ -1780,7 +1778,7 @@ namespace Plataforma_Web.Controllers
                 // El año siempre es el año actual
                 int añoActual = año ?? DateTime.Now.Year;
 
-                // Obtener alumnos directamente desde GestionUsuarios.Alumnos
+                // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
 
                 // Si es coordinador, filtrar por IdArea (fail-closed: ignora carreraId del cliente)
@@ -1796,6 +1794,7 @@ namespace Plataforma_Web.Controllers
 
                 // Obtener todas las matrículas
                 var alumnosData = alumnosQuery
+                    .Where(a => a.Habilitado == true).Where(EsAlumnoReal)
                     .Select(a => a.Matricula)
                     .ToList();
 
@@ -1937,7 +1936,7 @@ namespace Plataforma_Web.Controllers
             try
             {
                 var totalAlumnos = usuariosDb.Alumnos.Count();
-                var totalHabilitados = usuariosDb.Alumnos.Where(a => a.Habilitado == true).Count();
+                var totalHabilitados = usuariosDb.Alumnos.Where(a => a.Habilitado == true).Where(EsAlumnoReal).Count();
 
                 return Json(new
                 {
@@ -1985,12 +1984,13 @@ namespace Plataforma_Web.Controllers
                         return Json(new { success = true, data = new object[0] });
                 }
 
+                // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
                 if (idAreaCoordinador.HasValue)
                     alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == idAreaCoordinador.Value);
 
                 var alumnosData = alumnosQuery
-                    .Where(a => a.Matricula != null && a.Matricula != "")
+                    .Where(a => a.Habilitado == true && a.Matricula != null && a.Matricula != "")
                     .Select(a => new { a.Matricula, a.IdCarrera })
                     .ToList();
 
@@ -2092,6 +2092,7 @@ namespace Plataforma_Web.Controllers
                         return Json(new { success = true, data = new { total = 0, tsu = (object)null, ingenieria = (object)null, licenciatura = (object)null } });
                 }
 
+                // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
                 if (idAreaCoordinador.HasValue)
                     alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == idAreaCoordinador.Value);
@@ -2102,6 +2103,7 @@ namespace Plataforma_Web.Controllers
                 }
 
                 var alumnosMatriculas = alumnosQuery
+                    .Where(a => a.Habilitado == true).Where(EsAlumnoReal)
                     .Select(a => a.Matricula)
                     .ToList()
                     .Where(m => !string.IsNullOrWhiteSpace(m))
@@ -3229,6 +3231,7 @@ namespace Plataforma_Web.Controllers
                 int vulnerablesEconomicos = 0;
                 int vulnerablesAcademicos = 0;
                 int vulnerablesPersonales = 0;
+                int alumnosVulnerablesUnicos = 0;
                 int noVulnerables = 0;
                 int sinSeguimiento = 0;
 
@@ -3314,13 +3317,16 @@ namespace Plataforma_Web.Controllers
                         if (esEcon) vulnerablesEconomicos++;
                         if (esAcad) vulnerablesAcademicos++;
                         if (esPers) vulnerablesPersonales++;
+                        if (esEcon || esAcad || esPers) alumnosVulnerablesUnicos++;
                         if (esNoVul) noVulnerables++;
                         if (porIdentificacion) clasificadosPorIdentificacion++;
                         else clasificadosPorSeguimiento++;
                     }
                 }
 
-                int totalVulnerables = vulnerablesEconomicos + vulnerablesAcademicos + vulnerablesPersonales;
+                // "Estudiantes Vulnerables" = alumnos con AL MENOS una vulnerabilidad (cada persona
+                // cuenta una vez, aunque tenga varias categorías) — no la suma de las 3 tarjetas.
+                int totalVulnerables = alumnosVulnerablesUnicos;
 
                 System.Diagnostics.Debug.WriteLine($"=== RESULTADOS FINALES ===");
                 System.Diagnostics.Debug.WriteLine($"Total Estudiantes: {totalEstudiantes}");
@@ -3401,7 +3407,7 @@ namespace Plataforma_Web.Controllers
                 // Obtener lista de alumnos habilitados
                 // IMPORTANTE: Usar NormalizarMatricula para eliminar NBSP y otros caracteres invisibles
                 var alumnosMatriculasRaw = usuariosDb.Alumnos
-                    .Where(a => a.Habilitado == true)
+                    .Where(a => a.Habilitado == true).Where(EsAlumnoReal)
                     .Select(a => a.Matricula)
                     .ToList();
                 var alumnosMatriculas = alumnosMatriculasRaw
@@ -3576,7 +3582,7 @@ namespace Plataforma_Web.Controllers
                     return Json(new { success = false, error = "Sesión expirada" });
                 }
 
-                // Obtener TODOS los alumnos (habilitados y no habilitados) para resumen detallado
+                // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
 
                 // Si es coordinador (nivel 3), mapear su IdCarrera (de Tutorias) a IdArea (de EstadiasUTTN)
@@ -3600,7 +3606,7 @@ namespace Plataforma_Web.Controllers
                     alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == carreraId.Value);
                 }
 
-                var alumnosMatriculas = alumnosQuery.Select(a => a.Matricula).ToList();
+                var alumnosMatriculas = alumnosQuery.Where(a => a.Habilitado == true).Where(EsAlumnoReal).Select(a => a.Matricula).ToList();
                 var alumnosMatriculasHashSet = new HashSet<string>(alumnosMatriculas);
 
                 // Si se especifica una especialidad, filtrar por ella
@@ -3624,66 +3630,71 @@ namespace Plataforma_Web.Controllers
                     }
                 }
 
-                // Obtener información de carrera desde Alumnos para todos los estudiantes
+                // Obtener información de carrera (y nombre, para alumnos sin DatosPersonales) desde Alumnos
                 var alumnosInfo = usuariosDb.Alumnos
                     .Where(a => alumnosMatriculasHashSet.Contains(a.Matricula))
-                    .Select(a => new { a.Matricula, a.IdCarrera })
+                    .Select(a => new { a.Matricula, a.IdCarrera, a.Nombre, a.ApellidoPaterno, a.ApellidoMaterno })
                     .ToList()
-                    .GroupBy(a => a.Matricula)
-                    .ToDictionary(g => g.Key, g => g.First());
+                    .GroupBy(a => NormalizarMatricula(a.Matricula), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-                // Buscar estudiantes sin sexo usando la consulta SQL proporcionada:
-                // WHERE Sexo = 'No especificado' OR Sexo IS NULL
-                // Obtener el registro MÁS RECIENTE por matrícula para cada estudiante sin sexo
-                var estudiantesSinSexoQuery = tutoriasDb.DatosPersonales
-                    .Where(d => alumnosMatriculasHashSet.Contains(d.Matricula) &&
-                               (d.Sexo == null || d.Sexo.Trim() == "" || d.Sexo.Trim().Equals("No especificado", StringComparison.OrdinalIgnoreCase)))
-                    .Select(d => new { d.Matricula, d.Nombre, d.IdCarrera, d.IdGrado, d.IdGrupo, d.Fecha, d.Sexo })
-                    .ToList()
-                    .GroupBy(x => x.Matricula)
-                    .Select(g => g.OrderByDescending(x => x.Fecha).First())
+                // "Sin especificar sexo" = complemento (Total - H - M), MISMA clasificacion que las
+                // tarjetas (ObtenerSexoPorMatricula: DatosPersonales + Entrevista). Incluye alumnos
+                // sin registro en ambas tablas (antes el modal no los listaba y descuadraba).
+                var matsNorm = alumnosMatriculas
+                    .Select(m => NormalizarMatricula(m))
+                    .Where(m => !string.IsNullOrEmpty(m))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
+                var sexoPorMat = ObtenerSexoPorMatricula(matsNorm);
+                Func<string, bool> esHombreOMujer = m =>
+                {
+                    if (!sexoPorMat.ContainsKey(m)) return false;
+                    var s = (sexoPorMat[m].Sexo ?? "").Trim().ToUpperInvariant();
+                    return s == "H" || s == "HOMBRE" || s == "MASCULINO"
+                        || s == "M" || s == "MUJER" || s == "FEMENINO";
+                };
+                var matsSinSexo = matsNorm.Where(m => !esHombreOMujer(m)).ToList();
+                var matsSinSexoHash = new HashSet<string>(matsSinSexo, StringComparer.OrdinalIgnoreCase);
+
+                // Registro mas reciente de DatosPersonales (si existe) para nombre/grado/grupo
+                var dpSinSexo = tutoriasDb.DatosPersonales
+                    .Where(d => d.Matricula != null)
+                    .Select(d => new { d.Matricula, d.Nombre, d.IdCarrera, d.IdGrado, d.IdGrupo, d.Fecha })
+                    .ToList()
+                    .Where(d => matsSinSexoHash.Contains(NormalizarMatricula(d.Matricula)))
+                    .GroupBy(d => NormalizarMatricula(d.Matricula), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Fecha).First(), StringComparer.OrdinalIgnoreCase);
 
                 var estudiantesSinSexoList = new List<EstudianteSinSexoInfo>();
 
-                foreach (var estudiante in estudiantesSinSexoQuery)
+                foreach (var mat in matsSinSexo)
                 {
-                    // Obtener información de carrera (prioridad: Alumnos > DatosPersonales)
-                    // IMPORTANTE: Usar IdCarrera de Alumnos para que coincida con el filtrado
-                    int idCarrera = 0;
-                    string nombre = "Sin nombre";
-                    int idGrado = 0;
-                    int idGrupo = 0;
+                    var dp = dpSinSexo.ContainsKey(mat) ? dpSinSexo[mat] : null;
+                    string nombre = (dp != null && !string.IsNullOrWhiteSpace(dp.Nombre)) ? dp.Nombre.Trim() : null;
+                    int idCarrera = 0, idGrado = 0, idGrupo = 0;
 
-                    if (!string.IsNullOrWhiteSpace(estudiante.Nombre))
+                    if (alumnosInfo.ContainsKey(mat))
                     {
-                        nombre = estudiante.Nombre.Trim();
+                        var al = alumnosInfo[mat];
+                        idCarrera = al.IdCarrera;
+                        if (nombre == null)
+                        {
+                            var completo = ((al.Nombre ?? "") + " " + (al.ApellidoPaterno ?? "") + " " + (al.ApellidoMaterno ?? "")).Trim();
+                            if (!string.IsNullOrWhiteSpace(completo)) nombre = completo;
+                        }
                     }
-
-                    // Obtener IdCarrera de Alumnos (prioridad) para que coincida con el filtrado
-                    if (alumnosInfo.ContainsKey(estudiante.Matricula))
+                    if (idCarrera == 0 && dp != null && dp.IdCarrera > 0) idCarrera = dp.IdCarrera;
+                    if (dp != null)
                     {
-                        idCarrera = alumnosInfo[estudiante.Matricula].IdCarrera;
-                    }
-                    // Si no está en Alumnos, usar el de DatosPersonales
-                    else if (estudiante.IdCarrera > 0)
-                    {
-                        idCarrera = estudiante.IdCarrera;
-                    }
-
-                    if (estudiante.IdGrado > 0)
-                    {
-                        idGrado = estudiante.IdGrado;
-                    }
-                    if (estudiante.IdGrupo > 0)
-                    {
-                        idGrupo = estudiante.IdGrupo;
+                        if (dp.IdGrado > 0) idGrado = dp.IdGrado;
+                        if (dp.IdGrupo > 0) idGrupo = dp.IdGrupo;
                     }
 
                     estudiantesSinSexoList.Add(new EstudianteSinSexoInfo
                     {
-                        Matricula = estudiante.Matricula,
-                        Nombre = nombre,
+                        Matricula = mat,
+                        Nombre = nombre ?? "Sin nombre",
                         IdCarrera = idCarrera,
                         IdGrado = idGrado,
                         IdGrupo = idGrupo
@@ -3697,7 +3708,7 @@ namespace Plataforma_Web.Controllers
                     nombre = e.Nombre ?? "Sin nombre",
                     matricula = e.Matricula,
                     carrera = e.IdCarrera > 0 ? GetNombreCarreraSimple(e.IdCarrera) : "Sin carrera",
-                    grupo = e.IdGrado > 0 ? $"{e.IdGrado}{GetLetraGrupo(e.IdGrupo)}" : GetLetraGrupo(e.IdGrupo)
+                    grupo = e.IdGrado > 0 ? $"{e.IdGrado}{GetLetraGrupo(e.IdGrupo)}" : (e.IdGrupo > 0 ? GetLetraGrupo(e.IdGrupo) : "—")
                 }).OrderBy(e => e.nombre).ToList();
 
                 return Json(new { success = true, data = resultado });
@@ -3776,7 +3787,9 @@ namespace Plataforma_Web.Controllers
         // (registro mas reciente por matricula; cobertura 100% en activos — ver filtros-task0-hallazgo.md).
         private List<string> ObtenerPoblacionResumen(Usuario usuario, int? especialidadId, int? carreraId, bool incluirBajas, int? grupoId = null, int? gradoId = null, string sexo = null)
         {
-            // Obtener TODOS los alumnos (habilitados y no habilitados) para resumen detallado
+            // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
+            // La cuenta se deshabilita al darse de baja y se rehabilita al reingresar, asi que
+            // Habilitado==0 son bajas sin reingreso (de este cuatrimestre o anteriores).
             var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
 
             if (usuario.IdNivel == 3)
@@ -3797,12 +3810,39 @@ namespace Plataforma_Web.Controllers
             // Sin esto, matrículas con NBSP/tabs en GestionUsuarios.Alumnos no coinciden con sus
             // contrapartes en Tutorias (que CalcularVulnerabilidades normaliza vía NormalizarMatricula),
             // causando que esos alumnos caigan en sinSeguimiento en vez de su categoría real.
-            var alumnosMatriculas = alumnosQuery.Select(a => a.Matricula).ToList()
+            var alumnosMatriculas = alumnosQuery.Where(a => a.Habilitado == true).Where(EsAlumnoReal).Select(a => a.Matricula).ToList()
                 .Where(m => !string.IsNullOrWhiteSpace(m))
                 .Select(m => NormalizarMatricula(m))
                 .Where(m => !string.IsNullOrEmpty(m))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
+
+            if (incluirBajas)
+            {
+                // "Incluir Bajas" = activos + los dados de baja de ESTE cuatrimestre (sus cuentas
+                // suelen estar ya deshabilitadas). Ex-alumnos de periodos anteriores nunca entran.
+                var pInc = PeriodoHelper.Obtener(DateTime.Now);
+                var desdeInc = CorteAplicable(pInc.Inicio, pInc.Fin) ?? pInc.Inicio;
+                var matsBajaPeriodo = new HashSet<string>(
+                    db.Bajas
+                        .Where(b => b.Activo == true && b.Matricula != null
+                                    && b.Fecha >= desdeInc && b.Fecha <= pInc.Fin)
+                        .Select(b => b.Matricula)
+                        .ToList()
+                        .Select(m => NormalizarMatricula(m))
+                        .Where(m => !string.IsNullOrEmpty(m)),
+                    StringComparer.OrdinalIgnoreCase);
+                if (matsBajaPeriodo.Any())
+                {
+                    var extras = alumnosQuery.Where(a => a.Habilitado != true).Where(EsAlumnoReal).Select(a => a.Matricula).ToList()
+                        .Where(m => !string.IsNullOrWhiteSpace(m))
+                        .Select(m => NormalizarMatricula(m))
+                        .Where(m => !string.IsNullOrEmpty(m) && matsBajaPeriodo.Contains(m));
+                    alumnosMatriculas = alumnosMatriculas.Concat(extras)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+            }
 
             if (!incluirBajas)
             {
@@ -3821,6 +3861,12 @@ namespace Plataforma_Web.Controllers
                 if (matriculasBaja.Any())
                     alumnosMatriculas = alumnosMatriculas.Where(m => !matriculasBaja.Contains(m)).ToList();
             }
+
+            // Ex-alumnos con baja vigente de periodos anteriores sin reingreso: fuera SIEMPRE
+            // (aun con incluirBajas — ese toggle solo re-suma las bajas de ESTE cuatrimestre).
+            var bajasViejas = ObtenerMatriculasBajaViejaSinReingreso();
+            if (bajasViejas.Any())
+                alumnosMatriculas = alumnosMatriculas.Where(m => !bajasViejas.Contains(m)).ToList();
 
             if (especialidadId.HasValue)
             {
@@ -3961,15 +4007,9 @@ namespace Plataforma_Web.Controllers
                         sexo.Equals("Femenino", StringComparison.OrdinalIgnoreCase));
             });
 
-            int totalSinSexo = alumnosMatriculas.Count(m =>
-            {
-                if (!sexoInfoPorMatricula.ContainsKey(m)) return false;
-                var info = sexoInfoPorMatricula[m];
-                if (!info.TieneRegistro) return false;
-                var sexo = info.Sexo ?? "";
-                sexo = sexo.Trim();
-                return sexo == "" || sexo.Equals("No especificado", StringComparison.OrdinalIgnoreCase);
-            });
+            // "Sin especificar sexo" = complemento (Total - H - M): incluye tambien alumnos sin
+            // registro en DatosPersonales/Entrevista (antes no caian en ninguna tarjeta).
+            int totalSinSexo = totalEstudiantes - totalHombres - totalMujeres;
 
             var datosPersonalesCompletos = tutoriasDb.DatosPersonales
                 .Where(dp => alumnosMatriculasHashSet.Contains(dp.Matricula))
@@ -4261,11 +4301,13 @@ namespace Plataforma_Web.Controllers
                 if (usuario.IdNivel == 3)
                     idAreaCoordinador = MapearIdCarreraCoordinadorAIdArea(usuario.IdCarrera);
 
+                // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
                 if (idAreaCoordinador.HasValue)
                     alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == idAreaCoordinador.Value);
 
                 var alumnosMatriculas = alumnosQuery
+                    .Where(a => a.Habilitado == true).Where(EsAlumnoReal)
                     .Select(a => a.Matricula)
                     .ToList()
                     .Where(m => !string.IsNullOrWhiteSpace(m))
@@ -4289,7 +4331,7 @@ namespace Plataforma_Web.Controllers
 
                 var vulnerabilidades = CalcularVulnerabilidades(alumnosMatriculas, idAreaCoordinador, null, null, mesParaFiltro, añoActual, null);
 
-                int totalVulnerablesTarjetas = vulnerabilidades.VulnerablesPersonales + vulnerabilidades.VulnerablesEconomicos + vulnerabilidades.VulnerablesAcademicos;
+                int totalVulnerablesTarjetas = vulnerabilidades.TotalVulnerables; // alumnos únicos con al menos una vulnerabilidad
 
                 string Pct(int v) => totalEstudiantes > 0 ? Math.Round((double)v / totalEstudiantes * 100, 1).ToString("0.0") + "%" : "0.0%";
 
@@ -4335,7 +4377,7 @@ namespace Plataforma_Web.Controllers
                         row++;
                     }
 
-                    Fila("Total de vulnerables (personales + económicos + académicos)", totalVulnerablesTarjetas);
+                    Fila("Total de estudiantes vulnerables (con al menos una vulnerabilidad)", totalVulnerablesTarjetas);
                     Fila("Vulnerables personales", vulnerabilidades.VulnerablesPersonales);
                     Fila("Vulnerables económicos", vulnerabilidades.VulnerablesEconomicos);
                     Fila("Vulnerables académicos", vulnerabilidades.VulnerablesAcademicos);
@@ -4387,14 +4429,14 @@ namespace Plataforma_Web.Controllers
 
                 int añoActual = año ?? DateTime.Now.Year;
 
-                // Obtener alumnos
+                // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
                 var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
                 if (idAreaCoordinador.HasValue)
                 {
                     alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == idAreaCoordinador.Value);
                 }
 
-                var alumnosMatriculasRaw = alumnosQuery.Select(a => a.Matricula).ToList();
+                var alumnosMatriculasRaw = alumnosQuery.Where(a => a.Habilitado == true).Where(EsAlumnoReal).Select(a => a.Matricula).ToList();
                 var alumnosMatriculas = alumnosMatriculasRaw
                     .Where(m => !string.IsNullOrWhiteSpace(m))
                     .Select(m => NormalizarMatricula(m))
@@ -4529,6 +4571,7 @@ namespace Plataforma_Web.Controllers
             if (usuario.IdNivel == 3)
                 idAreaCoordinador = MapearIdCarreraCoordinadorAIdArea(usuario.IdCarrera);
 
+            // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
             var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
             if (idAreaCoordinador.HasValue)
                 alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == idAreaCoordinador.Value);
@@ -4536,6 +4579,7 @@ namespace Plataforma_Web.Controllers
                 alumnosQuery = alumnosQuery.Where(a => false);
 
             var alumnosMatriculas = alumnosQuery
+                .Where(a => a.Habilitado == true).Where(EsAlumnoReal)
                 .Select(a => a.Matricula)
                 .ToList()
                 .Where(m => !string.IsNullOrWhiteSpace(m))
@@ -4730,12 +4774,13 @@ namespace Plataforma_Web.Controllers
                 }
             }
 
+            // Poblacion = alumnos ACTIVOS (decision de direccion 2026-08-03): Habilitado==1.
             var alumnosQuery = usuariosDb.Alumnos.AsQueryable();
             if (idAreaCoordinador.HasValue)
                 alumnosQuery = alumnosQuery.Where(a => a.IdCarrera == idAreaCoordinador.Value);
 
             var alumnosData = alumnosQuery
-                .Where(a => a.Matricula != null && a.Matricula != "")
+                .Where(a => a.Habilitado == true && a.Matricula != null && a.Matricula != "")
                 .Select(a => new { a.Matricula, a.IdCarrera })
                 .ToList();
 
@@ -5455,8 +5500,51 @@ namespace Plataforma_Web.Controllers
                         idPersona = a.IdPersona,
                         matricula = (a.Matricula ?? "").Trim(),
                         nombre = (a.Nombre ?? "").Trim(),
-                        carrera = nombresCarrera360.ContainsKey(a.IdCarrera) ? nombresCarrera360[a.IdCarrera] : ""
-                    }).ToList();
+                        carrera = nombresCarrera360.ContainsKey(a.IdCarrera) ? nombresCarrera360[a.IdCarrera] : "",
+                        sinTutorias = false
+                    }).ToList<object>();
+
+                // Complementar con alumnos activos de GestionUsuarios que NO tienen DatosPersonales.
+                // Se usan IDs negativos (-IdAlumno) como idPersona para distinguirlos en GetAlumno360.
+                int espacioLibre = 10 - coincidencias.Count;
+                if (espacioLibre > 0)
+                {
+                    // Matrículas ya encontradas (para excluir duplicados).
+                    var matriculasYaEncontradas = coincidencias
+                        .Select(c => ((dynamic)c).matricula.ToString().ToUpper()).ToList();
+
+                    var qAlumnos = usuariosDb.Alumnos
+                        .Where(a => a.Habilitado == true)
+                        .Where(EsAlumnoReal)
+                        .Where(a => a.Matricula.Contains(termino) || a.Nombre.Contains(termino)
+                               || a.ApellidoPaterno.Contains(termino) || a.ApellidoMaterno.Contains(termino));
+
+                    // Nivel 3 (coordinador): filtrar por su carrera usando el mismo espacio IdArea.
+                    if (carreraFiltro.HasValue)
+                    {
+                        int? idAreaCoord = MapearIdCarreraCoordinadorAIdArea(carreraFiltro.Value);
+                        if (idAreaCoord.HasValue)
+                            qAlumnos = qAlumnos.Where(a => a.IdCarrera == idAreaCoord.Value);
+                    }
+
+                    var sinReg = qAlumnos
+                        .Select(a => new { a.IdAlumno, a.Matricula, a.Nombre, a.ApellidoPaterno, a.ApellidoMaterno, a.IdCarrera })
+                        .Take(espacioLibre + matriculasYaEncontradas.Count) // holgura para descartar duplicados
+                        .ToList()
+                        .Where(a => !matriculasYaEncontradas.Contains((a.Matricula ?? "").Trim().ToUpper()))
+                        .Take(espacioLibre)
+                        .Select(a => (object)new
+                        {
+                            idPersona = -a.IdAlumno,  // ID negativo = alumno sin DatosPersonales
+                            matricula = (a.Matricula ?? "").Trim(),
+                            nombre = ((a.Nombre ?? "") + " " + (a.ApellidoPaterno ?? "") + " " + (a.ApellidoMaterno ?? "")).Trim(),
+                            carrera = GetNombreCarreraSimple(a.IdCarrera),
+                            sinTutorias = true
+                        }).ToList();
+
+                    coincidencias.AddRange(sinReg);
+                }
+
                 return Json(new { success = true, data = coincidencias });
             }
             catch (Exception ex)
@@ -5471,6 +5559,62 @@ namespace Plataforma_Web.Controllers
             try
             {
                 db.Database.CommandTimeout = 300;
+
+                // Alumno sin registro en Tutorías: idPersona negativo = -IdAlumno de GestionUsuarios.
+                if (idPersona < 0)
+                {
+                    int idAlumno = -idPersona;
+                    var alumnoGU = usuariosDb.Alumnos
+                        .Where(a => a.IdAlumno == idAlumno && a.Habilitado == true)
+                        .Where(EsAlumnoReal)
+                        .Select(a => new { a.IdAlumno, a.Matricula, a.Nombre, a.ApellidoPaterno, a.ApellidoMaterno, a.IdCarrera, a.FechaSesion, a.FechaRegistro })
+                        .FirstOrDefault();
+                    if (alumnoGU == null)
+                        return Json(new { success = false, error = "Alumno no encontrado." });
+
+                    Usuario usuarioSesion = Session["Usuario"] as Usuario;
+                    if (usuarioSesion != null && usuarioSesion.IdNivel == 3)
+                    {
+                        int? idAreaCoord = MapearIdCarreraCoordinadorAIdArea(usuarioSesion.IdCarrera);
+                        if (!idAreaCoord.HasValue || alumnoGU.IdCarrera != idAreaCoord.Value)
+                            return Json(new { success = false, error = "Sin acceso a alumnos de otra carrera." });
+                    }
+
+                    string nombreCompleto = ((alumnoGU.Nombre ?? "") + " " + (alumnoGU.ApellidoPaterno ?? "") + " " + (alumnoGU.ApellidoMaterno ?? "")).Trim();
+                    string carreraGU = GetNombreCarreraSimple(alumnoGU.IdCarrera);
+                    string ultimaSesion = alumnoGU.FechaSesion.HasValue
+                        ? alumnoGU.FechaSesion.Value.ToString("dd/MM/yyyy")
+                        : (alumnoGU.FechaRegistro.HasValue ? alumnoGU.FechaRegistro.Value.ToString("dd/MM/yyyy") : "Sin sesión registrada");
+
+                    return Json(new
+                    {
+                        success = true,
+                        data = new
+                        {
+                            idPersona,
+                            matricula = (alumnoGU.Matricula ?? "").Trim(),
+                            nombre = nombreCompleto,
+                            carrera = carreraGU,
+                            especialidad = "",
+                            grupo = "",
+                            turno = "",
+                            sexo = "",
+                            periodoAlumno = "Última sesión: " + ultimaSesion,
+                            tutor = "",
+                            clasificacion = "Sin información",
+                            fuente = "Sin capturas",
+                            entrevista = (object)null,
+                            situacionFamiliar = new { tieneHijos = false, embarazada = false, trabaja = false },
+                            materias = new object[0],
+                            seguimientos = new object[0],
+                            bajas = new object[0],
+                            canalizaciones = new object[0],
+                            sinTutorias = true,
+                            sinTutoriasMsg = "Sin registro en Tutorías: nunca se le ha capturado entrevista inicial ni seguimiento."
+                        }
+                    });
+                }
+
                 // Proyección (ver BuscarAlumno360: la entidad completa truena por mapeo).
                 var dp = db.DatosPersonales.Where(x => x.IdPersona == idPersona)
                     .Select(x => new { x.IdPersona, x.Matricula, x.Nombre, x.IdCarrera, x.Especialidad, x.IdGrado, x.IdGrupo, x.IdTurno, x.Sexo, x.Año, x.IdPeriodo })
@@ -5531,7 +5675,14 @@ namespace Plataforma_Web.Controllers
 
                 var bajas = db.Bajas.Where(b => b.IdPersona == idPersona)
                     .OrderByDescending(b => b.Fecha).ToList()
-                    .Select(b => new { fecha = b.Fecha.ToString("dd/MM/yyyy"), causa = (b.Causa ?? "").Trim() }).ToList();
+                    .Select(b => new
+                    {
+                        fecha = b.Fecha.ToString("dd/MM/yyyy"),
+                        // Activo=0 = baja ANULADA (ya no aplica: reingreso o captura revertida) — se
+                        // muestra con etiqueta para que la ficha cuente la historia completa.
+                        causa = (b.Causa ?? "").Trim() + (b.Activo == true ? "" : " — anulada/reingresó"),
+                        anulada = b.Activo != true
+                    }).ToList();
 
                 // Canalizaciones del alumno (psicología / atención): a dónde se envió y en qué quedó.
                 var canalizaciones = (from c in db.Canalizaciones

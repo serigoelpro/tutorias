@@ -467,6 +467,61 @@
         }
 
         /* Estilos para el modal */
+        /* El menu rapido sticky usa z-index 1500 y el modal de Bootstrap 3 abre en 1050 →
+           quedaba cortado debajo y su backdrop no cubria. Subir modal y backdrop encima. */
+        #modalEstudiantesSinSexo {
+            z-index: 2050;
+        }
+
+        /* Backdrop: sube encima de la navbar fija (1030) y del menu sticky (1500).
+           background + opacity explícitos para no depender de las reglas de Bootstrap 3.0.0
+           que en esta versión no definen background en la clase base. */
+        .modal-backdrop {
+            z-index: 1990;
+            background-color: #000 !important;
+            opacity: 0 !important;
+        }
+        .modal-backdrop.in {
+            opacity: 0.55 !important;
+        }
+
+        /* Bajar la navbar mientras el modal está abierto para que el backdrop la cubra */
+        body.modal-open .navbar-fixed-top {
+            z-index: 1020 !important;
+        }
+
+        /* Modal dialog: ancho grande (Bootstrap 3.0.0 no tiene .modal-lg) y margen
+           superior para no quedar pegado debajo de la navbar */
+        #modalEstudiantesSinSexo .modal-dialog {
+            width: 760px;
+            margin-top: 60px;
+            margin-bottom: 30px;
+        }
+
+        /* Modal body: scroll horizontal si la tabla no cabe */
+        #modalEstudiantesSinSexo .modal-body {
+            overflow-x: auto;
+            padding: 15px;
+        }
+
+        /* Tabla: contenida dentro del modal sin desborde */
+        #modalEstudiantesSinSexo .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        #modalEstudiantesSinSexo .table {
+            width: 100%;
+            max-width: 100%;
+            table-layout: auto;
+        }
+
+        /* Celdas: evitar que nombres largos rompan el layout */
+        #modalEstudiantesSinSexo .table td,
+        #modalEstudiantesSinSexo .table th {
+            word-break: break-word;
+        }
+
         #modalEstudiantesSinSexo .modal-header {
             border-bottom: 2px solid #00796b;
         }
@@ -3181,38 +3236,6 @@
 
                     </div>
                 </div>
-    </div>
-</div>
-
-@* Modal para mostrar estudiantes sin sexo especificado *@
-<div class="modal fade" id="modalEstudiantesSinSexo" tabindex="-1" role="dialog" aria-labelledby="modalEstudiantesSinSexoLabel">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header" style="background-color: #009688; color: white;">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: white;">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title" id="modalEstudiantesSinSexoLabel">
-                    <i class="fas fa-users me-2"></i>
-                    Estudiantes Sin Sexo Especificado
-                </h4>
-            </div>
-            <div class="modal-body">
-                <div id="loadingEstudiantesSinSexo" class="text-center" style="padding: 20px;">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Cargando...</span>
-                    </div>
-                    <p class="mt-2">Cargando estudiantes...</p>
-                </div>
-                <div id="contenidoEstudiantesSinSexo" style="display: none;">
-                    <div id="listaEstudiantesSinSexo"></div>
-                </div>
-                <div id="errorEstudiantesSinSexo" class="alert alert-danger" style="display: none;"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -6549,23 +6572,35 @@
             if (d.grupo) chips.push(chip('Grupo ' + d.grupo, 'Grado y grupo'));
             if (d.turno) chips.push(chip(d.turno, 'Turno'));
             if (d.sexo) chips.push(chip(d.sexo, 'Sexo'));
-            chips.push(chip(d.tutor ? ('Tutor: ' + d.tutor) : 'Sin tutor asignado', 'Tutor del grupo en el periodo'));
+            if (!d.sinTutorias) chips.push(chip(d.tutor ? ('Tutor: ' + d.tutor) : 'Sin tutor asignado', 'Tutor del grupo en el periodo'));
             // Contexto de situación familiar (chips ámbar para distinguir del resto).
             function chipCtx(t, titulo) { return '<span title="' + escA(titulo || '') + '" style="background:#fff3e0; color:#b26a00; border:1px solid #f0ddc0; border-radius:10px; padding:3px 10px; font-size:12px; white-space:nowrap;">' + escA(t) + '</span>'; }
-            var sf = d.situacionFamiliar || {};
-            if (sf.trabaja) chips.push(chipCtx('Trabaja', 'Reportó trabajar en su entrevista inicial'));
-            if (sf.embarazada) chips.push(chipCtx('Embarazada', 'Reportado en aspectos personales'));
-            else if (sf.tieneHijos) {
-                var esMujer = /^(M|MUJER|FEMENINO)$/i.test((d.sexo || '').trim());
-                chips.push(chipCtx(esMujer ? 'Madre de familia' : 'Padre de familia', 'Reportó tener hijos en aspectos personales'));
+            if (!d.sinTutorias) {
+                var sf = d.situacionFamiliar || {};
+                if (sf.trabaja) chips.push(chipCtx('Trabaja', 'Reportó trabajar en su entrevista inicial'));
+                if (sf.embarazada) chips.push(chipCtx('Embarazada', 'Reportado en aspectos personales'));
+                else if (sf.tieneHijos) {
+                    var esMujer = /^(M|MUJER|FEMENINO)$/i.test((d.sexo || '').trim());
+                    chips.push(chipCtx(esMujer ? 'Madre de familia' : 'Padre de familia', 'Reportó tener hijos en aspectos personales'));
+                }
             }
             $('#a360Chips').html(chips.join(''));
+            // Aviso "sin registro en Tutorías"
+            if (d.sinTutorias) {
+                $('#a360Ficha').find('.a360-sinreg-aviso').remove();
+                $('#a360Nombre').after('<div class="a360-sinreg-aviso" style="margin:8px 0 4px; padding:10px 14px; background:#fff8e1; border:1px solid #ffe082; border-radius:8px; color:#7c5c00; font-size:13.5px;"><i class="fas fa-exclamation-triangle me-2" style="color:#e6a817;"></i>' + escA(d.sinTutoriasMsg || 'Sin registro en Tutorías: nunca se le ha capturado entrevista inicial ni seguimiento.') + '</div>');
+            } else {
+                $('#a360Ficha').find('.a360-sinreg-aviso').remove();
+            }
             var c = colorClasif(d.clasificacion);
-            $('#a360Clasif').css({ background: c, color: '#fff' }).html(
-                '<div style="font-size:1.05rem; font-weight:700;">' + escA(d.clasificacion) + '</div>' +
-                '<div style="font-size:11.5px; opacity:.9;">Fuente: ' + escA(d.fuente) + '</div>');
+            var clasifHtml = d.sinTutorias
+                ? '<div style="font-size:1.05rem; font-weight:700; color:#555;">Sin información</div><div style="font-size:11.5px; color:#888;">Sin capturas en Tutorías</div>'
+                : ('<div style="font-size:1.05rem; font-weight:700;">' + escA(d.clasificacion) + '</div><div style="font-size:11.5px; opacity:.9;">Fuente: ' + escA(d.fuente) + '</div>');
+            $('#a360Clasif').css(d.sinTutorias ? { background: '#e0e0e0', color: '#555' } : { background: c, color: '#fff' }).html(clasifHtml);
             // Materias
-            if (d.materias && d.materias.length) {
+            if (d.sinTutorias) {
+                $('#a360Materias').html('<p class="text-muted" style="margin:0;">No disponible — sin registro en Tutorías.</p>');
+            } else if (d.materias && d.materias.length) {
                 $('#a360Materias').html('<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">' +
                     d.materias.map(function (m, i) {
                         var badge = m.estado === 'Extraordinario'
@@ -6578,30 +6613,44 @@
                 $('#a360Materias').html('<p class="text-muted" style="margin:0;">Sin materias reprobadas ni en extraordinario.</p>');
             }
             // Entrevista
-            $('#a360Entrevista').html(d.entrevista
-                ? '<p style="margin:0;">Capturada el <strong>' + escA(d.entrevista.fecha) + '</strong>' + (d.entrevista.vulnerable ? ' · Identificado como: <strong>' + escA(d.entrevista.vulnerable) + '</strong>' : '') + '</p>'
-                : '<p class="text-muted" style="margin:0;">Sin entrevista inicial registrada.</p>');
+            if (d.sinTutorias) {
+                $('#a360Entrevista').html('<p class="text-muted" style="margin:0;">No disponible — sin registro en Tutorías.</p>');
+            } else {
+                $('#a360Entrevista').html(d.entrevista
+                    ? '<p style="margin:0;">Capturada el <strong>' + escA(d.entrevista.fecha) + '</strong>' + (d.entrevista.vulnerable ? ' · Identificado como: <strong>' + escA(d.entrevista.vulnerable) + '</strong>' : '') + '</p>'
+                    : '<p class="text-muted" style="margin:0;">Sin entrevista inicial registrada.</p>');
+            }
             // Canalizaciones
-            $('#a360Canalizaciones').html(d.canalizaciones && d.canalizaciones.length
-                ? '<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">' +
-                  d.canalizaciones.map(function (c, i) {
-                      var st = (c.status || '').toUpperCase();
-                      var colorSt = st.indexOf('ATEND') >= 0 || st.indexOf('CERRAD') >= 0 || st.indexOf('CONCLU') >= 0 ? '#00897B' : '#b26a00';
-                      return '<div style="padding:7px 12px;' + (i % 2 ? ' background:#fafbfc;' : '') + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
-                          '<div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">' +
-                          '<span><span style="color:#888; font-size:12px;">' + escA(c.fecha) + '</span> · <strong>' + escA(c.tipo || 'Canalización') + '</strong></span>' +
-                          (c.status ? '<span style="background:' + colorSt + '; color:#fff; border-radius:10px; padding:2px 10px; font-size:11.5px; white-space:nowrap;">' + escA(c.status) + '</span>' : '') +
-                          '</div>' +
-                          (c.motivo ? '<div style="font-size:12.5px; color:#607d8b;">' + escA(c.motivo) + '</div>' : '') +
-                          '</div>';
-                  }).join('') + '</div>'
-                : '<p class="text-muted" style="margin:0;">Sin canalizaciones registradas.</p>');
+            if (d.sinTutorias) {
+                $('#a360Canalizaciones').html('<p class="text-muted" style="margin:0;">No disponible — sin registro en Tutorías.</p>');
+            } else {
+                $('#a360Canalizaciones').html(d.canalizaciones && d.canalizaciones.length
+                    ? '<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">' +
+                      d.canalizaciones.map(function (c, i) {
+                          var st = (c.status || '').toUpperCase();
+                          var colorSt = st.indexOf('ATEND') >= 0 || st.indexOf('CERRAD') >= 0 || st.indexOf('CONCLU') >= 0 ? '#00897B' : '#b26a00';
+                          return '<div style="padding:7px 12px;' + (i % 2 ? ' background:#fafbfc;' : '') + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
+                              '<div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">' +
+                              '<span><span style="color:#888; font-size:12px;">' + escA(c.fecha) + '</span> · <strong>' + escA(c.tipo || 'Canalización') + '</strong></span>' +
+                              (c.status ? '<span style="background:' + colorSt + '; color:#fff; border-radius:10px; padding:2px 10px; font-size:11.5px; white-space:nowrap;">' + escA(c.status) + '</span>' : '') +
+                              '</div>' +
+                              (c.motivo ? '<div style="font-size:12.5px; color:#607d8b;">' + escA(c.motivo) + '</div>' : '') +
+                              '</div>';
+                      }).join('') + '</div>'
+                    : '<p class="text-muted" style="margin:0;">Sin canalizaciones registradas.</p>');
+            }
             // Bajas
-            $('#a360Bajas').html(d.bajas && d.bajas.length
-                ? d.bajas.map(function (b) { return '<p style="margin:0 0 4px;"><span style="background:#fdecea; color:#b3402e; border-radius:10px; padding:2px 8px; font-size:11.5px;">' + escA(b.fecha) + '</span> ' + escA(b.causa || 'Sin causa registrada') + '</p>'; }).join('')
-                : '<p class="text-muted" style="margin:0;">Sin bajas registradas.</p>');
+            if (d.sinTutorias) {
+                $('#a360Bajas').html('<p class="text-muted" style="margin:0;">No disponible — sin registro en Tutorías.</p>');
+            } else {
+                $('#a360Bajas').html(d.bajas && d.bajas.length
+                    ? d.bajas.map(function (b) { return '<p style="margin:0 0 4px;"><span style="background:#fdecea; color:#b3402e; border-radius:10px; padding:2px 8px; font-size:11.5px;">' + escA(b.fecha) + '</span> ' + escA(b.causa || 'Sin causa registrada') + '</p>'; }).join('')
+                    : '<p class="text-muted" style="margin:0;">Sin bajas registradas.</p>');
+            }
             // Timeline
-            if (d.seguimientos && d.seguimientos.length) {
+            if (d.sinTutorias) {
+                $('#a360Timeline').html('<p class="text-muted" style="margin:0;">Sin seguimientos — este alumno nunca ha sido atendido por un tutor.</p>');
+            } else if (d.seguimientos && d.seguimientos.length) {
                 $('#a360Timeline').html(d.seguimientos.map(function (s) {
                     var c2 = colorClasif(s.vulnerabilidad);
                     return '<div style="position:relative; padding:0 0 14px 18px; border-left:2px solid #e0e5e9;">' +
@@ -6646,8 +6695,9 @@
                 $('#a360Sugerencias').html('<p style="margin:0 0 8px; color:#607d8b;">Se encontraron ' + lista.length + ' coincidencias, elige una:</p>' +
                     '<div style="border:1px solid #eceff1; border-radius:8px; overflow:hidden;">' +
                     lista.map(function (a, i) {
+                        var sufijo = a.sinTutorias ? ' <span style="color:#b26a00; font-size:11px;">(sin registro en Tutorías)</span>' : '';
                         return '<div class="a360-sug" data-id="' + a.idPersona + '" style="display:flex; justify-content:space-between; gap:12px; padding:8px 12px; cursor:pointer;' + (i % 2 ? ' background:#fafbfc;' : '') + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
-                            '<span>' + escA(a.nombre) + ' <small class="text-muted">(' + escA(a.matricula) + ')</small></span><span class="text-muted">' + escA(a.carrera) + '</span></div>';
+                            '<span>' + escA(a.nombre) + sufijo + ' <small class="text-muted">(' + escA(a.matricula) + ')</small></span><span class="text-muted">' + escA(a.carrera) + '</span></div>';
                     }).join('') + '</div>');
                 mostrar('a360Sugerencias');
             }, 'json').fail(function () { mostrar('a360Error'); $('#a360Error').text('Error de conexión al buscar.'); });
@@ -6696,25 +6746,33 @@
         function miniMsg(html) { $('#mini360Cuerpo').html(html); }
         function pintarMini(d) {
             var c = colorClasif(d.clasificacion);
+            var sinRegAviso = d.sinTutorias
+                ? '<div style="margin-bottom:8px; padding:7px 10px; background:#fff8e1; border:1px solid #ffe082; border-radius:6px; color:#7c5c00; font-size:12px;"><i class="fas fa-exclamation-triangle me-1" style="color:#e6a817;"></i>' + escA(d.sinTutoriasMsg || 'Sin registro en Tutorías.') + '</div>'
+                : '';
             var rep = 0, ext = 0;
             (d.materias || []).forEach(function (m) { if (m.estado === 'Extraordinario') ext++; else rep++; });
             var ult = (d.seguimientos || []).slice(0, 3);
             miniMsg(
                 '<div style="font-weight:700; color:#1f2937;">' + escA(d.nombre) + '</div>' +
                 '<div style="color:#888; font-size:12px; margin-bottom:6px;">' + escA(d.matricula) + ' · ' + escA(d.carrera) + (d.grupo ? ' · Grupo ' + escA(d.grupo) : '') + '</div>' +
-                '<div style="background:' + c + '; color:#fff; border-radius:8px; padding:5px 10px; display:inline-block; margin-bottom:8px;">' +
-                '<strong>' + escA(d.clasificacion) + '</strong> <span style="font-size:11px; opacity:.9;">(' + escA(d.fuente) + ')</span></div>' +
-                '<div style="margin-bottom:6px;"><i class="fas fa-user-tie" style="color:#607d8b; width:16px;"></i> ' + (d.tutor ? escA(d.tutor) : '<span class="text-muted">Sin tutor asignado</span>') + '</div>' +
-                '<div style="margin-bottom:6px;"><i class="fas fa-book" style="color:#607d8b; width:16px;"></i> ' +
-                ((rep + ext) ? (rep + ' en arrastre · ' + ext + ' en extraordinario') : 'Sin materias reprobadas') + '</div>' +
-                ((d.bajas && d.bajas.length) ? '<div style="margin-bottom:6px;"><i class="fas fa-user-slash" style="color:#b3402e; width:16px;"></i> Baja: ' + escA(d.bajas[0].fecha) + ' (' + escA(d.bajas[0].causa || 'sin causa') + ')</div>' : '') +
-                ((d.canalizaciones && d.canalizaciones.length) ? '<div style="margin-bottom:6px;"><i class="fas fa-hand-holding-heart" style="color:#607d8b; width:16px;"></i> ' + d.canalizaciones.length + ' canalización' + (d.canalizaciones.length === 1 ? '' : 'es') + ' (últ. ' + escA(d.canalizaciones[0].fecha) + ')</div>' : '') +
-                (ult.length ? ('<div style="margin-top:8px; font-weight:600; color:#455a64; font-size:12px;">Últimos seguimientos</div>' +
-                    ult.map(function (s) {
-                        return '<div style="border-left:2px solid ' + colorClasif(s.vulnerabilidad) + '; padding:2px 0 2px 8px; margin-top:4px;">' +
-                            '<span style="color:#888; font-size:11.5px;">' + escA(s.fecha) + '</span>' + (s.vulnerabilidad ? ' · <strong style="font-size:11.5px; color:' + colorClasif(s.vulnerabilidad) + ';">' + escA(s.vulnerabilidad) + '</strong>' : '') +
-                            (s.problematica ? '<div style="font-size:12px; color:#374151;">' + escA(s.problematica).slice(0, 140) + '</div>' : '') + '</div>';
-                    }).join('')) : '<div class="text-muted" style="font-size:12px; margin-top:6px;">Sin seguimientos capturados.</div>') +
+                sinRegAviso +
+                (d.sinTutorias
+                    ? '<div style="background:#e0e0e0; color:#555; border-radius:8px; padding:5px 10px; display:inline-block; margin-bottom:8px; font-size:12px;">Sin información · Sin capturas en Tutorías</div>'
+                    : ('<div style="background:' + c + '; color:#fff; border-radius:8px; padding:5px 10px; display:inline-block; margin-bottom:8px;">' +
+                       '<strong>' + escA(d.clasificacion) + '</strong> <span style="font-size:11px; opacity:.9;">(' + escA(d.fuente) + ')</span></div>')) +
+                (!d.sinTutorias ? '<div style="margin-bottom:6px;"><i class="fas fa-user-tie" style="color:#607d8b; width:16px;"></i> ' + (d.tutor ? escA(d.tutor) : '<span class="text-muted">Sin tutor asignado</span>') + '</div>' : '') +
+                (!d.sinTutorias ? ('<div style="margin-bottom:6px;"><i class="fas fa-book" style="color:#607d8b; width:16px;"></i> ' +
+                ((rep + ext) ? (rep + ' en arrastre · ' + ext + ' en extraordinario') : 'Sin materias reprobadas') + '</div>') : '') +
+                (!d.sinTutorias && d.bajas && d.bajas.length ? '<div style="margin-bottom:6px;"><i class="fas fa-user-slash" style="color:#b3402e; width:16px;"></i> Baja: ' + escA(d.bajas[0].fecha) + ' (' + escA(d.bajas[0].causa || 'sin causa') + ')</div>' : '') +
+                (!d.sinTutorias && d.canalizaciones && d.canalizaciones.length ? '<div style="margin-bottom:6px;"><i class="fas fa-hand-holding-heart" style="color:#607d8b; width:16px;"></i> ' + d.canalizaciones.length + ' canalización' + (d.canalizaciones.length === 1 ? '' : 'es') + ' (últ. ' + escA(d.canalizaciones[0].fecha) + ')</div>' : '') +
+                (d.sinTutorias
+                    ? '<div class="text-muted" style="font-size:12px; margin-top:6px;">Sin seguimientos — nunca atendido por un tutor.</div>'
+                    : (ult.length ? ('<div style="margin-top:8px; font-weight:600; color:#455a64; font-size:12px;">Últimos seguimientos</div>' +
+                        ult.map(function (s) {
+                            return '<div style="border-left:2px solid ' + colorClasif(s.vulnerabilidad) + '; padding:2px 0 2px 8px; margin-top:4px;">' +
+                                '<span style="color:#888; font-size:11.5px;">' + escA(s.fecha) + '</span>' + (s.vulnerabilidad ? ' · <strong style="font-size:11.5px; color:' + colorClasif(s.vulnerabilidad) + ';">' + escA(s.vulnerabilidad) + '</strong>' : '') +
+                                (s.problematica ? '<div style="font-size:12px; color:#374151;">' + escA(s.problematica).slice(0, 140) + '</div>' : '') + '</div>';
+                        }).join('')) : '<div class="text-muted" style="font-size:12px; margin-top:6px;">Sin seguimientos capturados.</div>')) +
                 '<button type="button" class="btn btn-utt-outline btn-sm" id="mini360VerCompleta" data-id="' + d.idPersona + '" style="margin-top:10px; width:100%;"><i class="fas fa-id-card me-1"></i> Ver ficha completa</button>'
             );
         }
@@ -6735,8 +6793,9 @@
                 if (!lista.length) { miniMsg('<p class="text-muted" style="margin:0;">Sin coincidencias para "' + escA(q) + '".</p>'); return; }
                 if (lista.length === 1) { miniCargar(lista[0].idPersona); return; }
                 miniMsg(lista.map(function (a, i) {
+                    var sufijo = a.sinTutorias ? ' <span style="color:#b26a00; font-size:11px;">(sin reg.)</span>' : '';
                     return '<div class="mini360-sug" data-id="' + a.idPersona + '" style="padding:6px 8px; cursor:pointer; border-radius:6px;' + (i ? ' border-top:1px solid #f1f3f4;' : '') + '">' +
-                        escA(a.nombre) + ' <small class="text-muted">(' + escA(a.matricula) + ' · ' + escA(a.carrera) + ')</small></div>';
+                        escA(a.nombre) + sufijo + ' <small class="text-muted">(' + escA(a.matricula) + ' · ' + escA(a.carrera) + ')</small></div>';
                 }).join(''));
             }, 'json').fail(function () { miniMsg('<p style="color:#b3402e; margin:0;">Error de conexión.</p>'); });
         }
