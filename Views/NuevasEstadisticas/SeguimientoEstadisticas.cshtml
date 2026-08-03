@@ -316,6 +316,20 @@
             border: 1px solid #e9ecef;
         }
 
+        /* Flecha propia: la nativa se pega al borde derecho e ignora el padding.
+           El chevron va a .75rem del borde (mismo respiro que el padding izquierdo). */
+        .data-block select.form-control,
+        .data-block select.form-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%234a5560' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right .75rem center;
+            background-size: 12px 12px;
+            padding-right: 2.1rem;
+        }
+
         .sga-scope .panel-info {
             border-color: #cfe8e2;
         }
@@ -2266,7 +2280,7 @@
                                                 <div class="row">
                                                     <div class="col-md-4" style="margin-bottom: 10px;">
                                                         <label for="mesFiltroVulnerabilidad" class="form-label" style="font-weight: 600; margin-bottom: 5px;">Mes:</label>
-                                                        <select id="mesFiltroVulnerabilidad" class="form-select" style="padding: .5rem .75rem; border-radius: 8px; border: 1px solid #e9ecef;">
+                                                        <select id="mesFiltroVulnerabilidad" class="form-select" style="border-radius: 8px; border: 1px solid #e9ecef;">
                                                             <option value="">No aplicado</option>
                                                             @if (ViewBag.NombresMeses != null)
                                                             {
